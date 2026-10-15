@@ -1,0 +1,10 @@
+BMN Liquid Chrome Edition — checks
+
+- ZIP structure check: pending after packaging.
+- JavaScript syntax check: pending after packaging.
+- HTML structural checks: new Creator and Official Links sections present.
+- Interaction checks implemented in code: theme toggle, filters/search, project modal/share/copy, local LIVE editor, glass sliders/accent including gold, navigation command palette, mobile menu, site-link copy, contact share/mailto fallback.
+- Not claimed: full live-browser/device testing. Deploy to Vercel and test on the target iPhone browser.
+- BMN LIVE remains browser-local; real shared publishing requires backend integration.
+
+Optical refraction enhancement: embedded SVG turbulence/displacement filter and progressive CSS backdrop-filter application added. Browsers that do not support SVG filters in backdrop-filter retain the normal blur/saturation fallback. Visual browser verification is still required after deployment.
