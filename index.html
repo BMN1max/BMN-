@@ -28,6 +28,32 @@ section{padding:70px 0}.section-head{display:flex;align-items:end;justify-conten
 @media(max-width:850px){.navlinks{display:none}.hero{grid-template-columns:1fr;gap:12px;padding-top:95px;min-height:auto}.hero-copy{max-width:680px}.hero-art{width:min(74vw,400px);margin:20px auto 10px}.card,.card.wide{grid-column:span 6}.card.full{grid-column:span 12}.live-layout{grid-template-columns:1fr}.process{grid-template-columns:repeat(2,1fr)}.social-grid{grid-template-columns:1fr}.social-card{min-height:92px}.about-grid{grid-template-columns:1fr}.section-head{align-items:start;flex-direction:column}.section-sub{max-width:600px}}
 @media(max-width:560px){.wrap{width:calc(100% - 24px)}.topbar{top:8px;width:calc(100% - 16px);min-height:56px;border-radius:19px;padding:7px 8px 7px 14px}.brand{font-size:16px}.icon-btn{width:36px;height:36px}.hero{padding-top:95px;padding-bottom:30px}h1{font-size:clamp(56px,16vw,82px);margin:22px 0 18px}.hero-copy{font-size:16px}.hero-art{width:min(83vw,350px)}section{padding:50px 0}.grid{gap:10px}.card,.card.wide,.card.full{grid-column:span 12;min-height:auto;padding:22px;border-radius:24px}.card .art-tile{height:100px;margin-top:20px}.process{grid-template-columns:1fr 1fr;gap:9px}.step{padding:16px;min-height:170px}.step h3{font-size:16px;margin-top:17px}.live-panel{padding:22px}.contact-box{border-radius:27px}.dock{bottom:max(8px,env(safe-area-inset-bottom));width:max-content;gap:0;padding:5px}.dock a,.dock button{padding:10px 9px;font-size:10px}.footer{padding-bottom:105px;flex-direction:column;align-items:flex-start}.sheet{padding:20px;border-radius:25px}.swatch{width:26px;height:26px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.fluid,.ribbon,.hero-art,.art-orb,.art-tile:after{animation:none!important}.reveal{opacity:1;transform:none;filter:none;transition:none}*{transition-duration:.01ms!important}}
+
+body[data-modal-open="true"]{overflow:hidden;overscroll-behavior:none;}
+/* Fixed navigation must never inherit the generic glass hover lift. On touch
+   screens a tap can leave :hover active, which previously moved these bars. */
+.topbar.glass:hover,.topbar.apple-clear-glass:hover,.topbar.apple-liquid-glass:hover{
+  transform:translateX(-50%);top:12px;
+}
+.dock.glass:hover,.dock.apple-clear-glass:hover,.dock.apple-liquid-glass:hover{
+  transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));
+}
+.sheet.glass:hover,.sheet.apple-clear-glass:hover,.sheet.apple-liquid-glass:hover{
+  transform:none;position:relative;
+}
+.topbar,.dock,.scrim,.sheet{overflow-anchor:none;}
+.topbar,.dock{will-change:auto;}
+button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+@media(max-width:560px){
+  .topbar.glass:hover,.topbar.apple-clear-glass:hover,.topbar.apple-liquid-glass:hover{top:8px;transform:translateX(-50%);}
+  .dock.glass:hover,.dock.apple-clear-glass:hover,.dock.apple-liquid-glass:hover{bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);}
+}
+@media(hover:none){
+  .topbar:hover,.dock:hover,.sheet:hover{transform:none;}
+  .topbar.glass:hover,.topbar.apple-clear-glass:hover,.topbar.apple-liquid-glass:hover{transform:translateX(-50%);}
+  .dock.glass:hover,.dock.apple-clear-glass:hover,.dock.apple-liquid-glass:hover{transform:translateX(-50%);}
+  .glass:hover,.apple-clear-glass:hover,.apple-liquid-glass:hover{background:var(--clear-glass-bg);}
+}
 </style>
 </head>
 <body>
@@ -64,7 +90,7 @@ $('#powerToggle').addEventListener('click',()=>setPower($('#powerToggle').getAtt
 const moods={blue:['rgba(0,122,255,.25)','rgba(177,90,255,.19)','rgba(45,231,218,.17)'],violet:['rgba(126,76,255,.22)','rgba(255,45,125,.16)','rgba(54,166,255,.18)'],mint:['rgba(25,205,185,.21)','rgba(53,145,255,.17)','rgba(255,209,102,.12)'],pearl:['rgba(255,255,255,.13)','rgba(101,154,255,.17)','rgba(255,209,102,.13)']};
 function setMood(m){const c=moods[m]||moods.blue;root.style.setProperty('--tint-a',c[0]);root.style.setProperty('--tint-b',c[1]);root.style.setProperty('--tint-c',c[2]);$$('.swatch').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===m)));try{localStorage.setItem('bmn-mood',m)}catch(e){}}
 $$('.swatch').forEach(b=>b.addEventListener('click',()=>setMood(b.dataset.mood)));try{setMood(localStorage.getItem('bmn-mood')||'blue')}catch(e){}
-const settings=$('#settingsScrim'),install=$('#installScrim');function openSettings(){settings.classList.add('open')}function closeSettings(){settings.classList.remove('open')}$('#settingsOpen').addEventListener('click',openSettings);$('#dockSettings').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);settings.addEventListener('click',e=>{if(e.target===settings)closeSettings()});
+const settings=$('#settingsScrim'),install=$('#installScrim');let savedScrollY=0;function openSettings(){if(settings.classList.contains('open'))return;savedScrollY=window.scrollY;settings.classList.add('open');document.body.dataset.modalOpen='true';$('#settingsClose').focus({preventScroll:true})}function closeSettings(){if(!settings.classList.contains('open'))return;settings.classList.remove('open');delete document.body.dataset.modalOpen}$('#settingsOpen').addEventListener('click',openSettings);$('#dockSettings').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);settings.addEventListener('click',e=>{if(e.target===settings)closeSettings()});
 function showInstallHelp(){closeSettings();install.classList.add('open')}$('#installHelp').addEventListener('click',showInstallHelp);$('#installClose').addEventListener('click',()=>install.classList.remove('open'));install.addEventListener('click',e=>{if(e.target===install)install.classList.remove('open')});
 $('#sleepButton').addEventListener('click',()=>{closeSettings();body.classList.add('sleeping')});$('#wakeButton').addEventListener('click',()=>body.classList.remove('sleeping'));window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSettings();install.classList.remove('open');body.classList.remove('sleeping')}});
 function pointerGlow(e){root.style.setProperty('--mx',e.clientX+'px');root.style.setProperty('--my',e.clientY+'px')}window.addEventListener('pointermove',pointerGlow,{passive:true});
