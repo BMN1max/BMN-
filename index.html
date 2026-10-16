@@ -183,10 +183,179 @@ body.light .glass,body.light .apple-clear-glass,body.light .apple-liquid-glass{b
  .topbar{backdrop-filter:blur(5px) saturate(145%);-webkit-backdrop-filter:blur(5px) saturate(145%)}
  .glass,.apple-clear-glass,.apple-liquid-glass{backdrop-filter:blur(3px) saturate(140%);-webkit-backdrop-filter:blur(3px) saturate(140%)}
 }
+/* BMN® liquid-lens enhancement inspired by the supplied WebGL reference.
+   This is a lightweight specular lens treatment, not a fake DOM-refraction claim.
+   It keeps real HTML controls interactive and avoids SVG displacement filters. */
+.glass,.apple-clear-glass,.apple-liquid-glass{
+ --lens-x:50%;--lens-y:20%;
+}
+.glass:after,.apple-clear-glass:after,.apple-liquid-glass:after{
+ border-color:rgba(228,244,255,.13);
+ background:
+  radial-gradient(ellipse 38% 54% at var(--lens-x) var(--lens-y),rgba(175,224,255,.095),transparent 74%),
+  linear-gradient(112deg,transparent 0%,rgba(255,255,255,.035) 18%,transparent 36%,transparent 72%,rgba(116,187,255,.025) 100%);
+ opacity:.9;
+ transition:background-position .18s ease,border-color .25s ease;
+}
+.glass-lens:before,.apple-liquid-glass:before{
+ background:
+  radial-gradient(ellipse 34% 58% at var(--lens-x) var(--lens-y),rgba(255,255,255,.13),transparent 76%),
+  linear-gradient(135deg,rgba(239,248,255,.12),transparent 25%,transparent 70%,rgba(255,255,255,.035));
+}
+.glass-lens:hover,.apple-liquid-glass:hover{
+ border-color:rgba(202,232,255,.43);
+ box-shadow:inset 1px 1px 0 rgba(255,255,255,.31),inset -1px -1px 0 rgba(255,255,255,.035),0 14px 38px -12px rgba(32,120,220,.20);
+}
+body.light .glass:after,body.light .apple-clear-glass:after,body.light .apple-liquid-glass:after{
+ border-color:rgba(255,255,255,.32);
+ background:radial-gradient(ellipse 38% 54% at var(--lens-x) var(--lens-y),rgba(90,155,255,.075),transparent 74%),linear-gradient(112deg,transparent,rgba(255,255,255,.13) 20%,transparent 38%,transparent 72%,rgba(110,155,255,.035));
+}
+@media(hover:none){
+ .glass-lens:hover,.apple-liquid-glass:hover{box-shadow:var(--clear-glass-specular),var(--clear-glass-shadow)}
+}
 @media(prefers-reduced-motion:reduce){
  .scene,.fluid,.ribbon,.hero-art{animation:none!important}
+ .glass:after,.apple-clear-glass:after,.apple-liquid-glass:after{transition:none!important}
  *,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
+
+
+/* BMN® traditional liquid-glass trial — adapted from the supplied sample.
+   Keeps the portfolio intact and deliberately avoids SVG displacement filters. */
+:root{
+  --lens-specular:rgba(245,251,255,.48);
+  --lens-cyan:rgba(0,242,254,.09);
+  --lens-violet:rgba(151,104,255,.075);
+  --lens-rose:rgba(255,45,85,.045);
+}
+.scene{
+ background:
+  radial-gradient(ellipse at 76% 24%,var(--lens-rose),transparent 29%),
+  radial-gradient(ellipse at 18% 78%,rgba(255,170,55,.065),transparent 25%),
+  radial-gradient(ellipse at var(--mx) var(--my),var(--lens-cyan),transparent 34%),
+  radial-gradient(ellipse at 15% 20%,var(--tint-a),transparent 38%),
+  radial-gradient(ellipse at 86% 64%,var(--tint-b),transparent 37%),var(--bg);
+}
+/* Brighter razor-thin edge, inner liquid reflection and moving lens light. */
+.glass-lens,.apple-liquid-glass,.apple-clear-glass{
+ border-color:rgba(226,241,255,.32);
+ box-shadow:inset 1px 1px 0 var(--lens-specular),
+            inset -1px -1px 0 rgba(0,0,0,.035),
+            0 18px 48px -20px rgba(0,0,0,.34);
+}
+.glass-lens:before,.apple-liquid-glass:before,.apple-clear-glass:before{
+ background:
+  radial-gradient(ellipse 42% 58% at var(--lens-x,50%) var(--lens-y,20%),rgba(226,246,255,.16),transparent 76%),
+  linear-gradient(135deg,rgba(255,255,255,.15),transparent 22%,transparent 68%,rgba(255,255,255,.035));
+ opacity:.92;
+}
+.glass-lens:after,.apple-liquid-glass:after,.apple-clear-glass:after{
+ inset:1px;
+ border-color:rgba(242,249,255,.16);
+ background:
+  radial-gradient(ellipse 45% 60% at var(--lens-x,50%) var(--lens-y,20%),var(--lens-violet),transparent 78%),
+  linear-gradient(112deg,transparent 8%,rgba(255,255,255,.045) 21%,transparent 34%,transparent 76%,rgba(111,196,255,.035));
+}
+/* The hover zoom is limited to content cards; fixed navigation never jumps. */
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .card.glass-lens:hover,.social-card.glass-lens:hover,.contact-box.glass-lens:hover,.step.glass-lens:hover{
+  transform:translateY(-3px) scale(1.012);
+  border-color:rgba(232,246,255,.48);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.48),
+             inset -1px -1px 0 rgba(255,255,255,.045),
+             0 22px 52px -18px rgba(45,126,220,.24);
+ }
+ .hero-art.glass-lens:hover{transform:scale(1.025) rotate(1deg);}
+}
+body.light{
+ --lens-specular:rgba(255,255,255,.88);
+ --lens-cyan:rgba(0,160,220,.055);
+ --lens-violet:rgba(151,104,255,.045);
+ --lens-rose:rgba(255,45,85,.025);
+}
+body.light .glass-lens,body.light .apple-liquid-glass,body.light .apple-clear-glass{
+ border-color:rgba(255,255,255,.70);
+ box-shadow:inset 1px 1px 0 var(--lens-specular),inset -1px -1px 0 rgba(40,55,80,.025),0 16px 42px -18px rgba(50,72,110,.17);
+}
+@media(hover:none){
+ .card.glass-lens:hover,.social-card.glass-lens:hover,.contact-box.glass-lens:hover,.step.glass-lens:hover{transform:none;}
+}
+@media(prefers-reduced-motion:reduce){
+ .glass-lens:before,.glass-lens:after,.apple-liquid-glass:before,.apple-liquid-glass:after,.apple-clear-glass:before,.apple-clear-glass:after{transition:none!important;}
+}
+
+
+/* BMN Liquid Matrix enhancement: optical grid, live specular tracking and restrained 3D tilt. */
+.scene:after{
+ content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+ background-image:linear-gradient(rgba(225,241,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(225,241,255,.055) 1px,transparent 1px);
+ background-size:42px 42px;
+ -webkit-mask-image:radial-gradient(ellipse at center,#000 5%,transparent 82%);
+ mask-image:radial-gradient(ellipse at center,#000 5%,transparent 82%);
+}
+.glass-lens:before,.apple-clear-glass:before,.apple-liquid-glass:before{
+ background:
+  radial-gradient(ellipse 250px 190px at var(--lens-x,50%) var(--lens-y,20%),rgba(240,250,255,.19),transparent 76%),
+  linear-gradient(135deg,rgba(255,255,255,.14),transparent 23%,transparent 70%,rgba(255,255,255,.035));
+}
+/* 3D transforms are limited to visual cards, never the fixed topbar or bottom dock. */
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .bmn-tilt-target{
+  transform:perspective(1100px) rotateX(var(--bmn-tilt-x,0deg)) rotateY(var(--bmn-tilt-y,0deg)) translateY(var(--bmn-lift,0px)) scale(var(--bmn-scale,1)) !important;
+  transform-style:preserve-3d;will-change:transform;
+  transition:transform .18s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s;
+ }
+ .bmn-tilt-target:hover{--bmn-lift:-2px;--bmn-scale:1.008;}
+}
+@media(hover:none),(prefers-reduced-motion:reduce){
+ .scene:after{opacity:.12}
+ .bmn-tilt-target{transform:none!important;will-change:auto}
+}
+body.low-power .scene:after{opacity:.1}
+
+
+
+/* BMN® Optical Core v2 — adapted from the latest Liquid Glass Core Engine sample.
+   Keeps the actual portfolio; no SVG displacement or text-warping filters. */
+:root{
+ --bmn-ray-x:50%;--bmn-ray-y:20%;
+ --bmn-edge:rgba(235,247,255,.42);
+ --bmn-chrome:rgba(255,255,255,.025);
+}
+.scene:after{
+ opacity:.25;
+ background-size:36px 36px;
+ background-image:linear-gradient(rgba(236,247,255,.052) 1px,transparent 1px),linear-gradient(90deg,rgba(236,247,255,.052) 1px,transparent 1px);
+}
+.fluid{filter:blur(42px) saturate(165%);opacity:.72;}
+.glass,.apple-clear-glass,.apple-liquid-glass{
+ --lens-x:50%;--lens-y:20%;
+ background-color:var(--bmn-chrome);
+ border-color:var(--bmn-edge);
+ backdrop-filter:blur(4px) saturate(155%);
+ -webkit-backdrop-filter:blur(4px) saturate(155%);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset -1px -1px 0 rgba(0,0,0,.035),0 18px 46px -20px rgba(0,0,0,.34);
+}
+.glass-lens:before,.glass:before,.apple-clear-glass:before,.apple-liquid-glass:before{
+ background:radial-gradient(ellipse 250px 190px at var(--lens-x,50%) var(--lens-y,20%),rgba(241,250,255,.18),transparent 76%),linear-gradient(135deg,rgba(255,255,255,.15),transparent 23%,transparent 70%,rgba(255,255,255,.035));
+ opacity:.92;
+}
+.glass-lens:after,.glass:after,.apple-clear-glass:after,.apple-liquid-glass:after{
+ border-color:rgba(240,248,255,.13);
+ background:radial-gradient(ellipse 42% 58% at var(--lens-x,50%) var(--lens-y,20%),rgba(108,180,255,.075),transparent 78%),linear-gradient(112deg,transparent 8%,rgba(255,255,255,.045) 21%,transparent 34%,transparent 76%,rgba(114,196,255,.035));
+}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .bmn-tilt-target{transform:perspective(1200px) rotateX(var(--bmn-tilt-x,0deg)) rotateY(var(--bmn-tilt-y,0deg)) translateY(var(--bmn-lift,0px)) scale(var(--bmn-scale,1))!important;transform-style:preserve-3d;will-change:transform;transition:transform .22s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s;}
+ .bmn-tilt-target:hover{--bmn-lift:-2px;--bmn-scale:1.008;border-color:rgba(235,248,255,.52);}
+}
+body.light .glass,body.light .apple-clear-glass,body.light .apple-liquid-glass{background-color:rgba(255,255,255,.035);border-color:rgba(255,255,255,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset -1px -1px 0 rgba(40,55,80,.025),0 16px 42px -18px rgba(50,72,110,.17);}
+body.light .glass:before,body.light .apple-clear-glass:before,body.light .apple-liquid-glass:before{background:radial-gradient(ellipse 250px 190px at var(--lens-x,50%) var(--lens-y,20%),rgba(91,157,255,.10),transparent 76%),linear-gradient(135deg,rgba(255,255,255,.5),transparent 26%,transparent 72%,rgba(112,155,220,.035));}
+@media(max-width:600px){
+ .glass,.apple-clear-glass,.apple-liquid-glass{backdrop-filter:blur(3px) saturate(145%);-webkit-backdrop-filter:blur(3px) saturate(145%);}
+ .scene:after{opacity:.14;}
+}
+@media(hover:none),(prefers-reduced-motion:reduce){.bmn-tilt-target{transform:none!important;will-change:auto;}.scene:after{opacity:.12;}}
+body.low-power .scene:after{opacity:.08;}
 
 </style>
 </head>
@@ -227,10 +396,46 @@ $$('.swatch').forEach(b=>b.addEventListener('click',()=>setMood(b.dataset.mood))
 const settings=$('#settingsScrim'),install=$('#installScrim');let savedScrollY=0;function openSettings(){if(settings.classList.contains('open'))return;savedScrollY=window.scrollY;settings.classList.add('open');document.body.dataset.modalOpen='true';$('#settingsClose').focus({preventScroll:true})}function closeSettings(){if(!settings.classList.contains('open'))return;settings.classList.remove('open');delete document.body.dataset.modalOpen}$('#settingsOpen').addEventListener('click',openSettings);$('#dockSettings').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);settings.addEventListener('click',e=>{if(e.target===settings)closeSettings()});
 function showInstallHelp(){closeSettings();install.classList.add('open')}$('#installHelp').addEventListener('click',showInstallHelp);$('#installClose').addEventListener('click',()=>install.classList.remove('open'));install.addEventListener('click',e=>{if(e.target===install)install.classList.remove('open')});
 $('#sleepButton').addEventListener('click',()=>{closeSettings();body.classList.add('sleeping')});$('#wakeButton').addEventListener('click',()=>body.classList.remove('sleeping'));window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSettings();install.classList.remove('open');body.classList.remove('sleeping')}});
-function pointerGlow(e){root.style.setProperty('--mx',e.clientX+'px');root.style.setProperty('--my',e.clientY+'px')}window.addEventListener('pointermove',pointerGlow,{passive:true});
+function pointerGlow(e){root.style.setProperty('--mx',e.clientX+'px');root.style.setProperty('--my',e.clientY+'px')}
+window.addEventListener('pointermove',pointerGlow,{passive:true});
+/* Keep the subtle lens highlight attached to each real glass surface. */
+const lensSurfaces=$$('.glass-lens,.apple-clear-glass,.apple-liquid-glass');
+lensSurfaces.forEach(surface=>surface.addEventListener('pointermove',e=>{
+ const r=surface.getBoundingClientRect();
+ surface.style.setProperty('--lens-x',Math.max(0,Math.min(100,(e.clientX-r.left)/Math.max(1,r.width)*100))+'%');
+ surface.style.setProperty('--lens-y',Math.max(0,Math.min(100,(e.clientY-r.top)/Math.max(1,r.height)*100))+'%');
+},{passive:true}));
 const reveals=$$('.reveal:not(.visible)');if('IntersectionObserver'in window&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!body.classList.contains('low-power')){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}}),{threshold:.10,rootMargin:'0px 0px -35px 0px'});reveals.forEach(el=>observer.observe(el))}else reveals.forEach(el=>el.classList.add('visible'));
 const progress=$('#scrollProgress');function updateProgress(){const max=document.documentElement.scrollHeight-innerHeight;progress.style.width=(max>0?scrollY/max*100:0)+'%'}window.addEventListener('scroll',updateProgress,{passive:true});updateProgress();
 const sections=$$('main section[id]'),navLinks=$$('.navlinks a,.dock a');if('IntersectionObserver'in window){const navObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id))}}),{rootMargin:'-35% 0px -55% 0px'});sections.forEach(s=>navObserver.observe(s))}
+
+/* Liquid Matrix pointer engine: specular tracking plus gentle card tilt on desktop. */
+const tiltQuery=window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+const tiltTargets=$$('.card,.step,.social-card,.hero-art,.contact-box,.live-panel,.about-panel');
+if(tiltQuery.matches){
+ tiltTargets.forEach(surface=>{
+  surface.classList.add('bmn-tilt-target');
+  surface.addEventListener('pointermove',e=>{
+   if(body.classList.contains('low-power'))return;
+   const r=surface.getBoundingClientRect();
+   const x=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width)));
+   const y=Math.max(0,Math.min(1,(e.clientY-r.top)/Math.max(1,r.height)));
+   surface.style.setProperty('--bmn-tilt-x',((.5-y)*4.2).toFixed(2)+'deg');
+   surface.style.setProperty('--bmn-tilt-y',((x-.5)*4.2).toFixed(2)+'deg');
+   surface.style.setProperty('--lens-x',(x*100).toFixed(1)+'%');
+   surface.style.setProperty('--lens-y',(y*100).toFixed(1)+'%');
+  },{passive:true});
+  surface.addEventListener('pointerleave',()=>{
+   surface.style.setProperty('--bmn-tilt-x','0deg');
+   surface.style.setProperty('--bmn-tilt-y','0deg');
+   surface.style.setProperty('--bmn-lift','0px');
+   surface.style.setProperty('--bmn-scale','1');
+   surface.style.setProperty('--lens-x','50%');
+   surface.style.setProperty('--lens-y','20%');
+  },{passive:true});
+ });
+}
+
 })();
 </script>
 </body>
