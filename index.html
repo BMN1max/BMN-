@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#05070c">
 <meta name="description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
 <meta name="color-scheme" content="dark light">
-<title>BMN® — Creator · Editor · Storyteller</title>
+<title>BMN® — Crystal Clear Liquid Glass | Creator · Editor · Storyteller</title>
 <style>
  :root{color-scheme:dark;--bg:#0d1117;--fg:#f7f9ff;--muted:#c0c9dc;--line:rgba(232,239,255,.28);--clear-glass-bg:rgba(255,255,255,.03);--clear-glass-border:rgba(255,255,255,.25);--clear-glass-specular:inset 1px 1px 0 0 rgba(255,255,255,.4),inset -1px -1px 0 0 rgba(255,255,255,.05);--clear-glass-shadow:0 10px 30px -5px rgba(0,0,0,.15);--glass-bg:var(--clear-glass-bg);--glass-border:var(--clear-glass-border);--glass-shine:var(--clear-glass-specular);--glass-shadow:var(--clear-glass-shadow);--glass:var(--glass-bg);--glass-hi:rgba(255,255,255,.06);--blue:#58aaff;--cyan:#59f1e6;--violet:#b18cff;--rose:#ff5c8a;--gold:#ffd166;--mx:50%;--my:35%;--edge:rgba(255,255,255,.42);--motion:1;--tint-a:rgba(0,122,255,.30);--tint-b:rgba(177,90,255,.23);--tint-c:rgba(0,242,254,.22)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;min-height:100vh;overflow-x:hidden;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;letter-spacing:-.012em;transition:background .5s,color .35s}body.light{color-scheme:light;--bg:#eef2f9;--fg:#1b2232;--muted:#596579;--line:rgba(35,48,75,.2);--clear-glass-bg:rgba(255,255,255,.03);--clear-glass-border:rgba(255,255,255,.42);--clear-glass-specular:inset 1px 1px 0 0 rgba(255,255,255,.82),inset -1px -1px 0 0 rgba(40,55,80,.04);--clear-glass-shadow:0 10px 30px -5px rgba(28,40,65,.13);--glass-bg:var(--clear-glass-bg);--glass-border:var(--clear-glass-border);--glass-shine:var(--clear-glass-specular);--glass-shadow:var(--clear-glass-shadow);--glass:var(--glass-bg);--glass-hi:rgba(255,255,255,.06);--edge:rgba(255,255,255,.65);--tint-a:rgba(84,166,255,.15);--tint-b:rgba(181,133,255,.12);--tint-c:rgba(65,214,196,.1)}body.low-power *,body.low-power *:before,body.low-power *:after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}body.sleeping:after{content:"";position:fixed;z-index:1000;inset:0;background:rgba(3,6,12,.94);backdrop-filter:blur(22px);display:grid;place-items:center}body.sleeping .wake-screen{display:grid}a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}::selection{background:rgba(157,232,237,.35)}
@@ -357,6 +357,112 @@ body.light .glass:before,body.light .apple-clear-glass:before,body.light .apple-
 @media(hover:none),(prefers-reduced-motion:reduce){.bmn-tilt-target{transform:none!important;will-change:auto;}.scene:after{opacity:.12;}}
 body.low-power .scene:after{opacity:.08;}
 
+
+/* BMN® Vue-inspired liquid lens pass.
+   Inspired by the interaction model of polidario/Frontend-Projects/liquid-glass-vue:
+   pointer-aware specular highlights and dimensional glass surfaces. This is a
+   framework-free adaptation for BMN's existing HTML site, not copied Vue source.
+   Deliberately keeps edges sharp and avoids SVG displacement/refraction filters. */
+:root{--liquid-x:50%;--liquid-y:22%;--liquid-energy:.7;--liquid-edge:rgba(228,245,255,.38)}
+.glass-lens,.apple-clear-glass,.apple-liquid-glass{
+ background-color:var(--clear-glass-bg);
+ background-image:radial-gradient(ellipse 38% 54% at var(--liquid-x) var(--liquid-y),rgba(196,231,255,calc(.105 * var(--liquid-energy))),transparent 78%);
+ border-color:var(--liquid-edge);
+}
+.glass-lens:before,.apple-clear-glass:before,.apple-liquid-glass:before{
+ background-image:
+  radial-gradient(ellipse 35% 50% at var(--liquid-x) var(--liquid-y),rgba(255,255,255,calc(.17 * var(--liquid-energy))),transparent 78%),
+  linear-gradient(135deg,rgba(255,255,255,.13),transparent 23%,transparent 69%,rgba(255,255,255,.025));
+ transition:opacity .22s ease,border-color .22s ease;
+}
+.glass-lens:after,.apple-clear-glass:after,.apple-liquid-glass:after{
+ background-image:
+  radial-gradient(ellipse 40% 54% at var(--liquid-x) var(--liquid-y),rgba(127,195,255,calc(.09 * var(--liquid-energy))),transparent 78%),
+  linear-gradient(112deg,transparent 8%,rgba(255,255,255,.045) 21%,transparent 34%,transparent 76%,rgba(119,207,255,.035));
+}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .glass-lens:hover,.apple-clear-glass:hover,.apple-liquid-glass:hover{
+  --liquid-edge:rgba(238,249,255,.58);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.52),inset -1px -1px 0 rgba(255,255,255,.035),0 18px 46px -22px rgba(69,151,255,.27);
+ }
+}
+body.light{--liquid-edge:rgba(255,255,255,.74)}
+body.low-power{--liquid-energy:.28}
+@media(hover:none),(prefers-reduced-motion:reduce){
+ .glass-lens,.apple-clear-glass,.apple-liquid-glass{background-image:none}
+}
+
+
+/* BMN® Crystal Clear Liquid Glass — final visual pass.
+   Inspired by the interaction style of polidario/Frontend-Projects/liquid-glass-vue.
+   Framework-free CSS adaptation: clear surfaces, specular rims and a pointer-aware
+   lens sheen. Keeps the original BMN content and controls; no SVG displacement maps. */
+:root{
+  --bmn-crystal-fill:rgba(255,255,255,.025);
+  --bmn-crystal-rim:rgba(226,243,255,.48);
+  --bmn-crystal-glint:rgba(255,255,255,.66);
+}
+.glass,.apple-clear-glass,.apple-liquid-glass{
+  background-color:var(--bmn-crystal-fill);
+  background-image:
+    radial-gradient(ellipse 42% 58% at var(--lens-x,50%) var(--lens-y,18%),rgba(177,225,255,.075),transparent 78%),
+    linear-gradient(138deg,rgba(255,255,255,.035),transparent 24%,transparent 74%,rgba(120,190,255,.018));
+  border:1px solid var(--bmn-crystal-rim);
+  backdrop-filter:blur(3px) saturate(165%);
+  -webkit-backdrop-filter:blur(3px) saturate(165%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.48),inset 1px 0 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(170,213,255,.07),0 16px 42px -22px rgba(0,0,0,.48);
+}
+.glass:before,.apple-clear-glass:before,.apple-liquid-glass:before{
+  inset:0;
+  background:
+    radial-gradient(ellipse 34% 52% at var(--lens-x,50%) var(--lens-y,18%),rgba(255,255,255,.22),transparent 78%),
+    linear-gradient(116deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.055) 9%,transparent 24%,transparent 72%,rgba(102,186,255,.045) 100%);
+  opacity:.88;
+}
+.glass:after,.apple-clear-glass:after,.apple-liquid-glass:after{
+  inset:1px;
+  border:1px solid rgba(255,255,255,.105);
+  background:
+    radial-gradient(ellipse 46% 60% at var(--lens-x,50%) var(--lens-y,18%),rgba(139,208,255,.095),transparent 78%),
+    linear-gradient(155deg,rgba(255,255,255,.035),transparent 28%,transparent 78%,rgba(255,255,255,.018));
+  opacity:1;
+}
+.glass-lens,.apple-liquid-glass{background-color:var(--bmn-crystal-fill)}
+.pill,.icon-btn,.dock a,.dock button,.close-btn{
+  background-color:rgba(255,255,255,.035);
+  border-color:rgba(225,242,255,.40);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.40),inset 0 -1px 0 rgba(255,255,255,.045),0 7px 22px rgba(0,0,0,.11);
+  backdrop-filter:blur(5px) saturate(165%);
+  -webkit-backdrop-filter:blur(5px) saturate(165%);
+}
+.pill:hover,.icon-btn:hover,.dock a:hover,.dock button:hover,.close-btn:hover{
+  background-color:rgba(255,255,255,.09);
+  border-color:rgba(245,251,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.58),0 9px 25px rgba(72,155,255,.14);
+}
+body.light{
+  --bmn-crystal-fill:rgba(255,255,255,.025);
+  --bmn-crystal-rim:rgba(255,255,255,.82);
+}
+body.light .glass,body.light .apple-clear-glass,body.light .apple-liquid-glass{
+  background-color:rgba(255,255,255,.025);
+  border-color:rgba(255,255,255,.82);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),inset 1px 0 0 rgba(255,255,255,.44),0 16px 42px -22px rgba(50,72,110,.20);
+}
+body.light .glass:before,body.light .apple-clear-glass:before,body.light .apple-liquid-glass:before{
+  background:radial-gradient(ellipse 36% 54% at var(--lens-x,50%) var(--lens-y,18%),rgba(105,171,255,.12),transparent 78%),linear-gradient(116deg,rgba(255,255,255,.62),transparent 28%,transparent 74%,rgba(110,160,235,.045));
+}
+@media(max-width:600px){
+  .glass,.apple-clear-glass,.apple-liquid-glass{backdrop-filter:blur(2px) saturate(155%);-webkit-backdrop-filter:blur(2px) saturate(155%)}
+  .topbar,.dock{background-color:rgba(255,255,255,.035)}
+}
+@media(hover:none){
+  .glass:hover,.apple-clear-glass:hover,.apple-liquid-glass:hover{transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .glass,.apple-clear-glass,.apple-liquid-glass,.pill,.icon-btn,.dock a,.dock button{transition:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -396,7 +502,7 @@ $$('.swatch').forEach(b=>b.addEventListener('click',()=>setMood(b.dataset.mood))
 const settings=$('#settingsScrim'),install=$('#installScrim');let savedScrollY=0;function openSettings(){if(settings.classList.contains('open'))return;savedScrollY=window.scrollY;settings.classList.add('open');document.body.dataset.modalOpen='true';$('#settingsClose').focus({preventScroll:true})}function closeSettings(){if(!settings.classList.contains('open'))return;settings.classList.remove('open');delete document.body.dataset.modalOpen}$('#settingsOpen').addEventListener('click',openSettings);$('#dockSettings').addEventListener('click',openSettings);$('#settingsClose').addEventListener('click',closeSettings);settings.addEventListener('click',e=>{if(e.target===settings)closeSettings()});
 function showInstallHelp(){closeSettings();install.classList.add('open')}$('#installHelp').addEventListener('click',showInstallHelp);$('#installClose').addEventListener('click',()=>install.classList.remove('open'));install.addEventListener('click',e=>{if(e.target===install)install.classList.remove('open')});
 $('#sleepButton').addEventListener('click',()=>{closeSettings();body.classList.add('sleeping')});$('#wakeButton').addEventListener('click',()=>body.classList.remove('sleeping'));window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSettings();install.classList.remove('open');body.classList.remove('sleeping')}});
-function pointerGlow(e){root.style.setProperty('--mx',e.clientX+'px');root.style.setProperty('--my',e.clientY+'px')}
+function pointerGlow(e){root.style.setProperty('--mx',e.clientX+'px');root.style.setProperty('--my',e.clientY+'px');root.style.setProperty('--liquid-x',e.clientX+'px');root.style.setProperty('--liquid-y',e.clientY+'px')}
 window.addEventListener('pointermove',pointerGlow,{passive:true});
 /* Keep the subtle lens highlight attached to each real glass surface. */
 const lensSurfaces=$$('.glass-lens,.apple-clear-glass,.apple-liquid-glass');
@@ -404,6 +510,8 @@ lensSurfaces.forEach(surface=>surface.addEventListener('pointermove',e=>{
  const r=surface.getBoundingClientRect();
  surface.style.setProperty('--lens-x',Math.max(0,Math.min(100,(e.clientX-r.left)/Math.max(1,r.width)*100))+'%');
  surface.style.setProperty('--lens-y',Math.max(0,Math.min(100,(e.clientY-r.top)/Math.max(1,r.height)*100))+'%');
+ surface.style.setProperty('--liquid-x',Math.max(0,Math.min(100,(e.clientX-r.left)/Math.max(1,r.width)*100))+'%');
+ surface.style.setProperty('--liquid-y',Math.max(0,Math.min(100,(e.clientY-r.top)/Math.max(1,r.height)*100))+'%');
 },{passive:true}));
 const reveals=$$('.reveal:not(.visible)');if('IntersectionObserver'in window&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!body.classList.contains('low-power')){const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}}),{threshold:.10,rootMargin:'0px 0px -35px 0px'});reveals.forEach(el=>observer.observe(el))}else reveals.forEach(el=>el.classList.add('visible'));
 const progress=$('#scrollProgress');function updateProgress(){const max=document.documentElement.scrollHeight-innerHeight;progress.style.width=(max>0?scrollY/max*100:0)+'%'}window.addEventListener('scroll',updateProgress,{passive:true});updateProgress();
