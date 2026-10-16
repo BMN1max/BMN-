@@ -489,79 +489,6 @@ body:not(.community-mode) .community-page{display:none!important}
 body.community-mode .topbar{width:min(1180px,calc(100% - 24px))}
 @media(max-width:850px){.community-hero,.community-main-grid{grid-template-columns:1fr}.community-sidebar{position:static}.create-panel.large{grid-template-columns:1fr}.community-hero-side{min-height:220px}}
 @media(max-width:560px){.view-switch button{padding:8px 9px}.community-hero-main,.community-hero-side{border-radius:27px;padding:22px}.community-hero-main h1{font-size:clamp(48px,15vw,72px)}.community-stat-grid{gap:8px}.platform-page{padding-top:34px}}
-
-/* BMN LiquidAss-inspired web glass layer: adaptive lens, specular sweep, depth-aware highlights. */
-.liquidass-glass{--lx:50%;--ly:35%;--glow:0;--tilt-x:0deg;--tilt-y:0deg;}
-.liquidass-glass::before{background:
- radial-gradient(120px 80px at var(--lx) var(--ly),rgba(255,255,255,.15),transparent 65%),
- linear-gradient(115deg,rgba(255,255,255,.13),transparent 19%,transparent 68%,rgba(255,255,255,.045));
- opacity:calc(.48 + var(--glow) * .25);transition:opacity .28s ease,background-position .18s ease;}
-.liquidass-glass::after{border-color:rgba(255,255,255,calc(.055 + var(--glow) * .10));box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);}
-.liquidass-glass .liquidass-shine{position:absolute;inset:-45%;z-index:0!important;pointer-events:none;background:linear-gradient(112deg,transparent 42%,rgba(255,255,255,.12) 49%,transparent 56%);transform:translate3d(calc((var(--lx) - 50%) * .16),calc((var(--ly) - 50%) * .10),0) rotate(8deg);opacity:calc(.08 + var(--glow) * .18);mix-blend-mode:screen;transition:opacity .2s ease,transform .25s cubic-bezier(.16,1,.3,1);}
-.liquidass-glass.is-pressing{transform:scale(.992)!important;}
-.liquidass-glass[data-liquidass="lens"]{box-shadow:inset 1px 1px 0 rgba(255,255,255,.42),inset -1px -1px 0 rgba(255,255,255,.05),0 14px 36px -10px rgba(0,0,0,.24);}
-body.light .liquidass-glass::before{background:radial-gradient(130px 90px at var(--lx) var(--ly),rgba(255,255,255,.38),transparent 68%),linear-gradient(115deg,rgba(255,255,255,.28),transparent 22%,transparent 70%,rgba(255,255,255,.08));}
-@media (prefers-reduced-motion:reduce){.liquidass-glass::before,.liquidass-glass .liquidass-shine{transition:none!important}.liquidass-glass .liquidass-shine{display:none}}
-
-
-/* Liquid (Gl)ass-inspired v2: stronger optical layering, still browser-safe.
-   Keep the project's clear-glass base tint, border and 4px blur unchanged. */
-.liquidass-glass{
-  --lx:50%;--ly:18%;--glow:0;
-  background-color:var(--clear-glass-bg)!important;
-  background-image:
-    radial-gradient(ellipse at var(--lx) var(--ly),rgba(255,255,255,calc(.11 + var(--glow)*.12)),transparent 42%),
-    radial-gradient(ellipse at calc(var(--lx) + 16%) calc(var(--ly) + 35%),rgba(97,174,255,calc(.035 + var(--glow)*.045)),transparent 58%);
-  border-color:var(--clear-glass-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.48),
-    inset 1px 0 0 rgba(255,255,255,.14),
-    inset -1px -1px 0 rgba(255,255,255,.055),
-    0 12px 34px rgba(0,0,0,.13);
-  -webkit-backdrop-filter:blur(4px) saturate(120%);
-  backdrop-filter:blur(4px) saturate(120%);
-  transform:translateZ(0);
-  transition:background-color .25s ease,border-color .25s ease,box-shadow .25s ease;
-}
-.liquidass-glass:before{
-  inset:0!important;border-radius:inherit!important;pointer-events:none!important;
-  background:
-    radial-gradient(ellipse at var(--lx) var(--ly),rgba(255,255,255,.22),transparent 24%),
-    linear-gradient(122deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.035) 13%,transparent 31%,transparent 72%,rgba(157,198,255,.07) 100%),
-    linear-gradient(180deg,rgba(255,255,255,.09),transparent 24%,transparent 80%,rgba(255,255,255,.025))!important;
-  opacity:calc(.52 + var(--glow)*.35)!important;
-  mix-blend-mode:screen;
-}
-.liquidass-glass:after{
-  inset:1px!important;border-radius:inherit!important;pointer-events:none!important;
-  border:1px solid rgba(255,255,255,.095)!important;
-  background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 18%,transparent 80%,rgba(255,255,255,.035))!important;
-  box-shadow:inset 0 0 0 1px rgba(110,170,255,.025);
-}
-.liquidass-glass>.liquidass-shine{
-  position:absolute!important;z-index:0!important;inset:-1px!important;display:block;pointer-events:none!important;
-  border-radius:inherit;opacity:calc(.28 + var(--glow)*.55);
-  background:
-    radial-gradient(ellipse 42% 54% at var(--lx) var(--ly),rgba(255,255,255,.23),transparent 68%),
-    linear-gradient(112deg,transparent 20%,rgba(255,255,255,.055) 37%,rgba(255,255,255,.16) 39%,rgba(255,255,255,.025) 42%,transparent 59%);
-  mix-blend-mode:screen;transition:opacity .22s ease;
-}
-.liquidass-glass>*:not(.liquidass-shine){position:relative;z-index:1}
-.liquidass-glass.is-pressing{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.36),inset 0 0 0 1px rgba(255,255,255,.07),0 5px 16px rgba(0,0,0,.10);
-  filter:saturate(1.08);
-}
-body.light .liquidass-glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.86),inset 1px 0 0 rgba(255,255,255,.52),inset -1px -1px 0 rgba(62,89,130,.035),0 10px 28px rgba(55,75,110,.09)}
-body.light .liquidass-glass:before{opacity:calc(.34 + var(--glow)*.28)!important}
-@media(hover:hover) and (pointer:fine){
- .liquidass-glass:hover{border-color:rgba(255,255,255,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.56),inset 1px 0 0 rgba(255,255,255,.17),0 14px 38px rgba(0,0,0,.16)}
-}
-@media(hover:none){
- .liquidass-glass{background-image:radial-gradient(ellipse at 22% 0%,rgba(255,255,255,.10),transparent 38%),linear-gradient(145deg,rgba(255,255,255,.045),transparent 42%,rgba(94,156,255,.025))}
- .liquidass-glass>.liquidass-shine{opacity:.28}
-}
-@media(prefers-reduced-motion:reduce){.liquidass-glass,.liquidass-glass:before,.liquidass-glass>.liquidass-shine{transition:none!important}}
-
 </style>
 
 <style id="bmn-platform-features">
@@ -625,48 +552,6 @@ body.community-mode .community-page.reveal{opacity:1;transform:none}
 @media(max-width:980px){.community-redesign{grid-template-columns:180px minmax(0,1fr)}.community-rightbar{display:none}.community-feature{grid-template-columns:1fr}}
 @media(max-width:700px){body.community-mode .wrap{width:min(100% - 18px,680px)}.community-redesign{grid-template-columns:1fr}.community-rail{position:static}.community-rail-card{padding:11px}.community-brand-lockup{display:flex;align-items:center;justify-content:space-between;padding:5px 7px 11px}.community-nav{display:flex;overflow:auto}.community-nav button{width:auto;white-space:nowrap}.community-mini-profile{display:none}.community-topline{align-items:flex-end}.community-topline h1{font-size:34px}.community-create{padding:9px 12px}.community-feature-main{min-height:245px}.community-feature-main h2{margin-top:48px;font-size:48px}.community-feature-side{min-height:auto;gap:10px}.body.community-mode .dock{display:flex!important}.body.community-mode .dock a:nth-child(1),body.community-mode .dock a:nth-child(2){display:none!important}body.community-mode #community .community-post{grid-template-columns:110px minmax(0,1fr)}body.community-mode #community .post-preview{height:105px}body.community-mode #community .post-actions{flex-wrap:wrap}}
 </style>
-
-
-/* BMN Liquid edge renderer — animated refraction-like rim. The displacement is
-   intentionally confined to the reflective edge so text and controls stay crisp. */
-.liquidass-glass{--edge-hot:0;--swim-angle:0deg;overflow:hidden;isolation:isolate;}
-.liquidass-glass>.liquidass-edge{
-  position:absolute!important;z-index:2!important;inset:-2px!important;display:block!important;
-  pointer-events:none!important;border-radius:inherit!important;padding:1.5px!important;
-  background:
-    conic-gradient(from var(--edge-turn,0deg) at var(--lx,50%) var(--ly,25%),
-      rgba(255,255,255,.82),rgba(110,190,255,.38) 8%,transparent 17%,
-      rgba(205,188,255,.42) 28%,transparent 38%,rgba(255,255,255,.18) 48%,
-      transparent 60%,rgba(91,231,244,.42) 72%,transparent 83%,rgba(255,255,255,.62));
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;
-  filter:url(#bmn-liquid-edge);opacity:calc(.38 + var(--glow)*.48);
-  mix-blend-mode:screen;transform:translate3d(0,0,0);
-  animation:bmnEdgeSwim 8s ease-in-out infinite alternate;
-  transition:opacity .3s ease;
-}
-.liquidass-glass:after{
-  border:1px solid rgba(255,255,255,.12)!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),inset 0 1px 0 rgba(255,255,255,.16)!important;
-}
-.liquidass-glass:before{
-  background:
-    radial-gradient(ellipse 180px 95px at var(--lx,50%) var(--ly,18%),rgba(255,255,255,.19),transparent 72%),
-    linear-gradient(115deg,rgba(255,255,255,.20),transparent 18%,transparent 67%,rgba(95,174,255,.065)),
-    linear-gradient(180deg,rgba(255,255,255,.075),transparent 22%,transparent 78%,rgba(255,255,255,.025))!important;
-}
-.liquidass-glass>.liquidass-shine{z-index:1!important;inset:-12%!important;}
-.liquidass-glass.is-pressing>.liquidass-edge{opacity:.95;animation-duration:2.4s;}
-@keyframes bmnEdgeSwim{
-  0%{--edge-turn:0deg;transform:translate3d(-.2px,0,0) scale(1);}
-  50%{--edge-turn:180deg;transform:translate3d(.25px,-.15px,0) scale(1.001);}
-  100%{--edge-turn:360deg;transform:translate3d(0,.2px,0) scale(1);}
-}
-body.light .liquidass-glass>.liquidass-edge{opacity:calc(.30 + var(--glow)*.42);mix-blend-mode:normal;}
-@media(hover:none){.liquidass-glass>.liquidass-edge{opacity:.55;animation-duration:12s;}}
-@media(prefers-reduced-motion:reduce){.liquidass-glass>.liquidass-edge{animation:none!important;filter:none!important;opacity:.48;}}
-body.low-power .liquidass-glass>.liquidass-edge{animation:none!important;filter:none!important;}
-
 </style>
 </head>
 <body>
@@ -782,14 +667,6 @@ body.low-power .liquidass-glass>.liquidass-edge{animation:none!important;filter:
 <div class="scrim" id="settingsScrim" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="sheet glass glass-lens"><div class="sheet-top"><div><span class="kicker">BMN / PERSONALISE</span><h2 id="settingsTitle">Your experience.</h2></div><button class="close-btn" id="settingsClose" aria-label="Close settings">×</button></div><div class="setting-row"><div><strong>Low Power Mode</strong><small>Pause decorative motion and use a lighter visual experience.</small></div><button class="switch" id="powerToggle" role="switch" aria-checked="false" aria-label="Toggle low power mode"></button></div><div class="setting-row"><div><strong>Appearance</strong><small>Switch between dark and light themes.</small></div><button class="pill" id="themeSetting">Toggle theme ◐</button></div><div class="setting-row"><div><strong>Background mood</strong><small>Choose a calm colour atmosphere.</small></div><div class="swatches"><button class="swatch" data-mood="blue" aria-label="Aurora blue background" aria-pressed="true" style="background:linear-gradient(135deg,#007aff,#b18cff)"></button><button class="swatch" data-mood="violet" aria-label="Violet rose background" aria-pressed="false" style="background:linear-gradient(135deg,#8b5cff,#ff5c8a)"></button><button class="swatch" data-mood="mint" aria-label="Cyan mint background" aria-pressed="false" style="background:linear-gradient(135deg,#59f1e6,#35a7ff)"></button><button class="swatch" data-mood="pearl" aria-label="Pearl gold background" aria-pressed="false" style="background:linear-gradient(135deg,#fff1bd,#c8d8ff)"></button></div></div><div class="setting-row"><div><strong>Sleep screen</strong><small>Dim the page until you tap wake. This does not put your device to sleep.</small></div><button class="pill" id="sleepButton">Sleep page ◐</button></div><div class="setting-row"><div><strong>Add to Home Screen</strong><small>Keep BMN one tap away from your iPhone or Android home screen.</small></div><button class="pill" id="installHelp">How to add +</button></div><p class="sheet-copy">Settings are local to this page. Low Power Mode reduces animation; it does not change your phone’s system power settings. Add to Home Screen availability depends on the browser and hosting setup.</p></div></div>
 <div class="wake-screen" id="wakeScreen"><div><span class="kicker">BMN® · REST MODE</span><h2 style="font-size:clamp(34px,8vw,60px)">Taking a quiet moment.</h2><p style="color:#b5bdcb;max-width:320px;line-height:1.6">The page is dimmed. Your device is not asleep.</p><button id="wakeButton">Wake BMN</button></div></div>
 <div class="scrim" id="installScrim" role="dialog" aria-modal="true" aria-labelledby="installTitle"><div class="sheet glass"><div class="sheet-top"><div><span class="kicker">QUICK ACCESS</span><h2 id="installTitle">Add BMN to Home Screen.</h2></div><button class="close-btn" id="installClose" aria-label="Close instructions">×</button></div><p class="sheet-copy"><strong style="color:var(--fg)">On iPhone (Safari)</strong><br>1. Open this website in Safari.<br>2. Tap the Share button.<br>3. Choose “Add to Home Screen”.<br>4. Tap Add.</p><p class="sheet-copy"><strong style="color:var(--fg)">On Android (Chrome)</strong><br>1. Open this website in Chrome.<br>2. Tap the three-dot menu.<br>3. Choose “Add to Home screen” or “Install app”, if offered.</p><p class="sheet-copy modal-note">This is a standalone HTML page. For a full installable web app with offline support, the hosted project needs a web app manifest and service worker too.</p></div></div>
-<svg aria-hidden="true" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" focusable="false">
-  <filter id="bmn-liquid-edge" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.018 0.055" numOctaves="2" seed="11" result="edgeNoise">
-      <animate attributeName="baseFrequency" values="0.018 0.055;0.026 0.038;0.018 0.055" dur="9s" repeatCount="indefinite"/>
-    </feTurbulence>
-    <feDisplacementMap in="SourceGraphic" in2="edgeNoise" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>
 <script>
 (()=>{'use strict';
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
@@ -884,42 +761,6 @@ function mountCommunityPanels(){
  mount.dataset.mounted='true';
 }
 mountCommunityPanels();
-})();
-
-
-/* LiquidAss-inspired browser renderer. It recreates the optical cues, not iOS private APIs. */
-(function(){
-  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)');
-  const coarse=window.matchMedia('(pointer: coarse)');
-  const selector='.glass,.apple-clear-glass,.apple-liquid-glass';
-  function decorate(root=document){
-    root.querySelectorAll(selector+':not(.liquidass-glass)').forEach(el=>{
-      el.classList.add('liquidass-glass'); el.dataset.liquidass='lens';
-      if(!Array.from(el.children).some(c=>c.classList.contains('liquidass-shine'))){
-        const shine=document.createElement('span'); shine.className='liquidass-shine'; shine.setAttribute('aria-hidden','true'); el.prepend(shine);
-      }
-      if(!Array.from(el.children).some(c=>c.classList.contains('liquidass-edge'))){
-        const edge=document.createElement('span'); edge.className='liquidass-edge'; edge.setAttribute('aria-hidden','true'); el.appendChild(edge);
-      }
-    });
-  }
-  decorate();
-  const observer=new MutationObserver(records=>{for(const record of records){record.addedNodes.forEach(node=>{if(node.nodeType===1){if(node.matches?.(selector))decorate(node.parentNode||document);else decorate(node);}})}});
-  observer.observe(document.body,{childList:true,subtree:true});
-  let active=null, frame=0, lastEvent=null;
-  function paint(){frame=0;if(!active||!lastEvent)return;const r=active.getBoundingClientRect();if(!r.width||!r.height)return;
-    const x=Math.max(0,Math.min(100,(lastEvent.clientX-r.left)/r.width*100));
-    const y=Math.max(0,Math.min(100,(lastEvent.clientY-r.top)/r.height*100));
-    active.style.setProperty('--lx',x.toFixed(1)+'%');active.style.setProperty('--ly',y.toFixed(1)+'%');active.style.setProperty('--glow','.9');
-  }
-  if(!reduce.matches&&!coarse.matches){
-    document.addEventListener('pointerover',e=>{const next=e.target.closest?.('.liquidass-glass');if(active&&active!==next)active.style.setProperty('--glow','0');active=next;},{passive:true});
-    document.addEventListener('pointermove',e=>{const next=e.target.closest?.('.liquidass-glass');if(!next)return;active=next;lastEvent=e;if(!frame)frame=requestAnimationFrame(paint);},{passive:true});
-    document.addEventListener('pointerout',e=>{if(!e.relatedTarget||!e.target.closest?.('.liquidass-glass'))return;const left=e.target.closest('.liquidass-glass');if(!left.contains(e.relatedTarget)){left.style.setProperty('--glow','0');if(active===left)active=null;}},{passive:true});
-  }
-  document.addEventListener('pointerdown',e=>{const t=e.target.closest?.('.liquidass-glass');if(t){t.classList.add('is-pressing');if(coarse.matches){const r=t.getBoundingClientRect();t.style.setProperty('--lx',Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))+'%');t.style.setProperty('--ly',Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100))+'%');t.style.setProperty('--glow','.7');}}},{passive:true});
-  const release=e=>{document.querySelectorAll('.liquidass-glass.is-pressing').forEach(t=>t.classList.remove('is-pressing'));};
-  document.addEventListener('pointerup',release,{passive:true});document.addEventListener('pointercancel',release,{passive:true});
 })();
 </script>
 </body>
