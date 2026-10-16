@@ -464,12 +464,34 @@ body.light .glass:before,body.light .apple-clear-glass:before,body.light .apple-
 }
 
 </style>
+
+<style id="bmn-platform-features">
+/* BMN Creator Platform layer — preserves the existing Liquid Glass system. */
+.platform-hero{padding:18px;border-radius:28px;margin:0 0 22px}
+.platform-hero h2{font-size:clamp(30px,5vw,52px);margin:6px 0 10px}
+.platform-hero p{color:var(--muted);max-width:680px;line-height:1.65;margin:0}
+.platform-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.platform-search{flex:1;min-width:220px;min-height:45px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.035);color:var(--fg);padding:0 16px;outline:none}
+.platform-search:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(89,241,230,.08)}
+.platform-filters{display:flex;gap:7px;overflow:auto;scrollbar-width:none}
+.platform-filters::-webkit-scrollbar{display:none}
+.platform-filter{border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--muted);border-radius:999px;padding:9px 13px;white-space:nowrap}
+.platform-filter.active{color:var(--fg);background:rgba(255,255,255,.11);border-color:var(--edge)}
+.creator-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.creator-card{padding:18px;border-radius:24px;display:flex;gap:13px;align-items:center;min-height:100px}
+.creator-avatar{width:48px;height:48px;border-radius:17px;display:grid;place-items:center;flex:0 0 48px;background:linear-gradient(135deg,rgba(88,170,255,.28),rgba(177,140,255,.24));border:1px solid rgba(255,255,255,.3);font-weight:800}
+.creator-card strong{display:block;font-size:14px}.creator-card small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.community-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.community-post{padding:20px;border-radius:27px}.post-preview{height:190px;border-radius:20px;margin-bottom:16px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 9%),linear-gradient(135deg,rgba(0,122,255,.28),rgba(177,90,255,.22) 55%,rgba(255,92,138,.12))}.post-preview span{font-size:36px}.post-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}.post-meta strong{font-size:14px}.post-meta small{color:var(--muted);font-size:11px}.post-actions{display:flex;gap:7px;margin-top:13px}.post-action{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:999px;padding:8px 11px;color:var(--muted);font-size:11px}.post-action.liked{color:#ff7b9d;border-color:rgba(255,92,138,.35)}
+.create-panel{padding:22px;border-radius:27px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}.create-panel h3{margin:0 0 7px;font-size:24px}.create-panel p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.create-button{border:1px solid rgba(222,239,255,.42);background:linear-gradient(120deg,rgba(88,170,255,.18),rgba(177,140,255,.14));border-radius:999px;padding:13px 18px;color:var(--fg);white-space:nowrap}
+@media(max-width:700px){.creator-grid,.community-grid{grid-template-columns:1fr}.create-panel{grid-template-columns:1fr}.create-button{width:100%}}
+</style>
 </head>
 <body>
 
 <div class="scene" aria-hidden="true"><div class="fluid f1"></div><div class="fluid f2"></div><div class="fluid f3"></div><div class="fluid f4"></div><div class="ribbon r1"></div><div class="ribbon r2"></div></div>
 <div class="scroll-progress" id="scrollProgress"></div>
-<header class="topbar glass glass-lens"><a class="brand" href="#home" aria-label="BMN home">BMN<sup>®</sup></a><nav class="navlinks" aria-label="Main navigation"><a href="#work">Edits</a><a href="#live">Activity</a><a href="#about">About</a><a href="#socials">Socials</a><a href="#contact">Contact</a></nav><div class="top-actions"><button class="icon-btn" id="themeToggle" aria-label="Toggle light and dark appearance" title="Appearance">◐</button><button class="icon-btn" id="settingsOpen" aria-label="Open website settings" title="Website settings">☷</button></div></header>
+<header class="topbar glass glass-lens"><a class="brand" href="#home" aria-label="BMN home">BMN<sup>®</sup></a><nav class="navlinks" aria-label="Main navigation"><a href="#work">Edits</a><a href="#live">Activity</a><a href="#about">About</a><a href="#socials">Socials</a><a href="#community">Community</a><a href="#contact">Contact</a></nav><div class="top-actions"><button class="icon-btn" id="themeToggle" aria-label="Toggle light and dark appearance" title="Appearance">◐</button><button class="icon-btn" id="settingsOpen" aria-label="Open website settings" title="Website settings">☷</button></div></header>
 <main class="wrap">
 <section class="hero" id="home"><div class="reveal visible"><span class="eyebrow glass"><i class="live-dot"></i> NIGERIAN CREATOR · EDITOR · STORYTELLER</span><h1>Made of moments.<br><span class="gradient">Cut with feeling.</span></h1><p class="hero-copy">I’m BMN — a Nigerian digital creator focused on video edits, short-form entertainment, memes, livestream clips, satire and visual storytelling. I turn moments into edits with rhythm, energy and personality.</p><div class="actions"><a class="pill primary" href="#work">Explore my edits <span>↘</span></a><a class="pill" href="#socials">Find me online ↗</a></div><div class="tag-row"><span class="tag">Video editing</span><span class="tag">Visual storytelling</span><span class="tag">Internet culture</span><span class="tag">Graphic design</span></div></div><div class="hero-art glass glass-lens reveal delay-2" aria-label="Abstract liquid chrome artwork"><div class="orbit"></div><div class="art-orb"></div><span class="orb-caption">BMN® · visual identity</span></div></section>
 <section id="work" class="reveal"><div class="section-head"><div><span class="kicker">01 / Selected creative work</span><h2>Edits that carry a feeling.</h2></div><p class="section-sub">A home for my video edits, visual experiments and the ideas behind them.</p></div><div class="grid"><article class="card wide glass glass-lens"><span class="number">FEATURED PROJECT · 001</span><h3>Things I Will Do When I Become the President of Nigeria</h3><p>A satirical video concept using humour, timing and editing to give a familiar topic a creative twist.</p><div class="art-tile"></div></article><article class="card glass"><span class="number">02 / VIDEO EDITS</span><h3>Rhythm, impact, replay.</h3><p>Cutting footage around music, pacing, transitions and the moments that make an edit hit.</p><div class="art-tile silver"></div></article><article class="card glass"><span class="number">03 / INTERNET CULTURE</span><h3>Moments worth reshaping.</h3><p>Memes, entertainment clips and livestream moments explored through a creator’s point of view.</p><div class="art-tile warm"></div></article><article class="card glass"><span class="number">04 / VISUAL DESIGN</span><h3>Look as intentional as the cut.</h3><p>Graphic design, typography, colour and visual details that help an idea feel complete.</p><div class="art-tile silver"></div></article></div></section>
@@ -477,10 +499,51 @@ body.light .glass:before,body.light .apple-clear-glass:before,body.light .apple-
 <section id="process" class="reveal"><div class="section-head"><div><span class="kicker">03 / How I edit</span><h2>From raw moment to final cut.</h2></div><p class="section-sub">A simple view of the creative choices that shape an edit.</p></div><div class="process"><article class="step glass"><strong>STEP 01</strong><h3>Find the moment</h3><p>Start with the scene, sound, joke or emotion worth building around.</p></article><article class="step glass"><strong>STEP 02</strong><h3>Shape the rhythm</h3><p>Trim the unnecessary and give each cut a reason to be there.</p></article><article class="step glass"><strong>STEP 03</strong><h3>Build the feel</h3><p>Bring together sound, colour, transitions and visual focus.</p></article><article class="step glass"><strong>STEP 04</strong><h3>Share the story</h3><p>Finish the piece so the original idea comes through clearly.</p></article></div></section>
 <section id="about" class="reveal"><div class="section-head"><div><span class="kicker">04 / About BMN</span><h2>A name with a point of view.</h2></div></div><div class="about-grid"><div class="about-panel glass glass-lens"><p class="statement">Creating stories, shaping culture, and building a digital identity.</p></div><div class="about-panel glass"><h3 style="font-size:24px;margin:0 0 12px">BMN® — Bene Meritum Nomen</h3><p>My creator identity is built around editing, entertainment, graphic design and digital storytelling. I’m exploring ways to make online moments feel memorable through pacing, humour and visuals.</p><p>Based in Nigeria, I’m building my creative presence one project at a time. This website is focused on my work, my editing interests and the platforms where you can find me.</p><div class="tag-row"><span class="tag">Creator</span><span class="tag">Editor</span><span class="tag">Storyteller</span></div></div></div></section>
 <section id="socials" class="reveal"><div class="section-head"><div><span class="kicker">05 / My social platforms</span><h2>Follow the work.</h2></div><p class="section-sub">These are my public profiles. Follow, watch my work or reach out through the platforms.</p></div><div class="social-grid"><a class="social-card glass" href="https://www.tiktok.com/@thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>TikTok</strong><small>@thisisbmn<br>Short-form edits & internet culture</small></span><span class="social-icon">↗</span></a><a class="social-card glass" href="https://www.youtube.com/@thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>YouTube</strong><small>@thisisbmn<br>Video projects & creator content</small></span><span class="social-icon">↗</span></a><a class="social-card glass" href="https://commons.wikimedia.org/wiki/User:Thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>Wikimedia Commons</strong><small>Thisisbmn<br>Public creator profile</small></span><span class="social-icon">↗</span></a></div></section>
+
+<section id="community" class="reveal">
+  <div class="platform-hero glass glass-lens">
+    <span class="kicker">07 / BMN CREATOR COMMUNITY</span>
+    <h2>Create. Edit. Share.</h2>
+    <p>BMN is growing from a personal creative home into a place where creators can showcase edits, discover new work and build their own presence — while keeping the same Crystal Clear Liquid Glass experience.</p>
+    <div class="platform-toolbar">
+      <input class="platform-search" id="communitySearch" type="search" placeholder="Search creators or edits…" aria-label="Search creators or edits">
+      <div class="platform-filters" id="communityFilters" aria-label="Community filters">
+        <button class="platform-filter active" data-community-filter="all">For You</button>
+        <button class="platform-filter" data-community-filter="latest">Latest</button>
+        <button class="platform-filter" data-community-filter="trending">Trending</button>
+        <button class="platform-filter" data-community-filter="editors">Editors</button>
+      </div>
+    </div>
+  </div>
+  <div class="community-grid" id="communityFeed">
+    <article class="community-post glass glass-lens" data-community="trending editors" data-search="cinematic football edit bmn creator">
+      <div class="post-preview"><span>▶</span></div>
+      <div class="post-meta"><div><strong>Cinematic Match Edit</strong><small>@creator_one · Editor</small></div><small>Trending</small></div>
+      <div class="post-actions"><button class="post-action like-btn" type="button">♡ Like</button><button class="post-action" type="button">💬 Comment</button><button class="post-action" type="button">↗ Share</button></div>
+    </article>
+    <article class="community-post glass glass-lens" data-community="latest editors" data-search="anime amv transition edit creator">
+      <div class="post-preview"><span>✦</span></div>
+      <div class="post-meta"><div><strong>After Dark AMV</strong><small>@creator_two · Editor</small></div><small>Latest</small></div>
+      <div class="post-actions"><button class="post-action like-btn" type="button">♡ Like</button><button class="post-action" type="button">💬 Comment</button><button class="post-action" type="button">↗ Share</button></div>
+    </article>
+  </div>
+</section>
+<section id="creators" class="reveal">
+  <div class="section-head"><div><span class="kicker">08 / DISCOVER CREATORS</span><h2>People behind the edits.</h2></div><p class="section-sub">A preview of the creator directory. Real accounts and uploads will connect when the backend is added.</p></div>
+  <div class="creator-grid">
+    <article class="creator-card glass"><div class="creator-avatar">C1</div><div><strong>@creator_one</strong><small>Video editor · Cinematic</small></div></article>
+    <article class="creator-card glass"><div class="creator-avatar">C2</div><div><strong>@creator_two</strong><small>AMV editor · Anime</small></div></article>
+    <article class="creator-card glass"><div class="creator-avatar">BMN</div><div><strong>@thisisbmn</strong><small>Creator · Editor · Storyteller</small></div></article>
+  </div>
+</section>
+<section id="create" class="reveal">
+  <div class="create-panel glass glass-lens"><div><span class="kicker">09 / CREATE</span><h3>Have an edit worth sharing?</h3><p>The Create flow is ready as the platform shell. The next backend stage will turn it into real account creation, uploads, storage and publishing.</p></div><button class="create-button" id="createEditBtn" type="button">＋ Create an edit</button></div>
+</section>
+
 <section id="contact" class="reveal"><div class="contact-box glass glass-lens"><span class="kicker">06 / Contact & collaboration</span><h2>Have an idea?<br><span class="gradient">Let’s connect.</span></h2><p>For conversations about my edits, creative ideas or potential collaborations, message me through my public social profiles.</p><div class="actions"><a class="pill primary" href="https://www.tiktok.com/@thisisbmn" target="_blank" rel="noopener noreferrer">Message on TikTok ↗</a><a class="pill" href="https://www.youtube.com/@thisisbmn" target="_blank" rel="noopener noreferrer">YouTube ↗</a></div></div></section>
 <footer class="footer"><span>BMN® · Creator · Editor · Storyteller</span><div class="footer-links"><a href="https://www.tiktok.com/@thisisbmn" target="_blank" rel="noopener noreferrer">TikTok</a><a href="https://www.youtube.com/@thisisbmn" target="_blank" rel="noopener noreferrer">YouTube</a><a href="#home">Back to top ↑</a></div><span>© <span id="year"></span> BMN</span></footer>
 </main>
-<nav class="dock glass glass-lens" aria-label="Quick navigation"><a href="#home">Home</a><a href="#work">Edits</a><a href="#live">Activity</a><a href="#socials">Socials</a><button id="dockSettings" type="button">Settings</button></nav>
+<nav class="dock glass glass-lens" aria-label="Quick navigation"><a href="#home">Home</a><a href="#work">Edits</a><a href="#live">Activity</a><a href="#community">Community</a><button id="dockSettings" type="button">Settings</button></nav>
 <div class="scrim" id="settingsScrim" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="sheet glass glass-lens"><div class="sheet-top"><div><span class="kicker">BMN / PERSONALISE</span><h2 id="settingsTitle">Your experience.</h2></div><button class="close-btn" id="settingsClose" aria-label="Close settings">×</button></div><div class="setting-row"><div><strong>Low Power Mode</strong><small>Pause decorative motion and use a lighter visual experience.</small></div><button class="switch" id="powerToggle" role="switch" aria-checked="false" aria-label="Toggle low power mode"></button></div><div class="setting-row"><div><strong>Appearance</strong><small>Switch between dark and light themes.</small></div><button class="pill" id="themeSetting">Toggle theme ◐</button></div><div class="setting-row"><div><strong>Background mood</strong><small>Choose a calm colour atmosphere.</small></div><div class="swatches"><button class="swatch" data-mood="blue" aria-label="Aurora blue background" aria-pressed="true" style="background:linear-gradient(135deg,#007aff,#b18cff)"></button><button class="swatch" data-mood="violet" aria-label="Violet rose background" aria-pressed="false" style="background:linear-gradient(135deg,#8b5cff,#ff5c8a)"></button><button class="swatch" data-mood="mint" aria-label="Cyan mint background" aria-pressed="false" style="background:linear-gradient(135deg,#59f1e6,#35a7ff)"></button><button class="swatch" data-mood="pearl" aria-label="Pearl gold background" aria-pressed="false" style="background:linear-gradient(135deg,#fff1bd,#c8d8ff)"></button></div></div><div class="setting-row"><div><strong>Sleep screen</strong><small>Dim the page until you tap wake. This does not put your device to sleep.</small></div><button class="pill" id="sleepButton">Sleep page ◐</button></div><div class="setting-row"><div><strong>Add to Home Screen</strong><small>Keep BMN one tap away from your iPhone or Android home screen.</small></div><button class="pill" id="installHelp">How to add +</button></div><p class="sheet-copy">Settings are local to this page. Low Power Mode reduces animation; it does not change your phone’s system power settings. Add to Home Screen availability depends on the browser and hosting setup.</p></div></div>
 <div class="wake-screen" id="wakeScreen"><div><span class="kicker">BMN® · REST MODE</span><h2 style="font-size:clamp(34px,8vw,60px)">Taking a quiet moment.</h2><p style="color:#b5bdcb;max-width:320px;line-height:1.6">The page is dimmed. Your device is not asleep.</p><button id="wakeButton">Wake BMN</button></div></div>
 <div class="scrim" id="installScrim" role="dialog" aria-modal="true" aria-labelledby="installTitle"><div class="sheet glass"><div class="sheet-top"><div><span class="kicker">QUICK ACCESS</span><h2 id="installTitle">Add BMN to Home Screen.</h2></div><button class="close-btn" id="installClose" aria-label="Close instructions">×</button></div><p class="sheet-copy"><strong style="color:var(--fg)">On iPhone (Safari)</strong><br>1. Open this website in Safari.<br>2. Tap the Share button.<br>3. Choose “Add to Home Screen”.<br>4. Tap Add.</p><p class="sheet-copy"><strong style="color:var(--fg)">On Android (Chrome)</strong><br>1. Open this website in Chrome.<br>2. Tap the three-dot menu.<br>3. Choose “Add to Home screen” or “Install app”, if offered.</p><p class="sheet-copy modal-note">This is a standalone HTML page. For a full installable web app with offline support, the hosted project needs a web app manifest and service worker too.</p></div></div>
@@ -543,6 +606,16 @@ if(tiltQuery.matches){
   },{passive:true});
  });
 }
+
+// BMN Creator Platform interactions — frontend preview only; no fake cross-device persistence.
+const communitySearch=$('#communitySearch');
+const communityPosts=$$('#communityFeed .community-post');
+const communityFilters=$$('#communityFilters .platform-filter');
+function filterCommunity(){const q=(communitySearch?.value||'').toLowerCase().trim();const active=$('#communityFilters .platform-filter.active')?.dataset.communityFilter||'all';communityPosts.forEach(card=>{const text=(card.dataset.search||'').toLowerCase();const cats=(card.dataset.community||'').split(' ');const okText=!q||text.includes(q);const okCat=active==='all'||cats.includes(active);card.hidden=!(okText&&okCat);});}
+communitySearch?.addEventListener('input',filterCommunity);
+communityFilters.forEach(btn=>btn.addEventListener('click',()=>{communityFilters.forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterCommunity();}));
+$$('.like-btn').forEach(btn=>btn.addEventListener('click',()=>{const liked=btn.classList.toggle('liked');btn.textContent=liked?'♥ Liked':'♡ Like';}));
+$('#createEditBtn')?.addEventListener('click',()=>alert('BMN Create is ready for the next backend stage: account sign-in, upload, storage, publishing and creator profiles.'));
 
 })();
 </script>
