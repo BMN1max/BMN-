@@ -54,6 +54,140 @@ button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   .dock.glass:hover,.dock.apple-clear-glass:hover,.dock.apple-liquid-glass:hover{transform:translateX(-50%);}
   .glass:hover,.apple-clear-glass:hover,.apple-liquid-glass:hover{background:var(--clear-glass-bg);}
 }
+
+/* BMN® visual refresh: soft blue-white glass controls, restrained rose accents,
+   and warm specular details inspired by the supplied UI references. */
+:root{
+  --button-glass:rgba(222,239,255,.075);
+  --button-glass-hover:rgba(232,244,255,.14);
+  --button-edge:rgba(218,237,255,.38);
+  --rose-edge:rgba(255,92,138,.34);
+  --warm-glint:rgba(255,221,155,.16);
+}
+.pill,.icon-btn,.dock a,.dock button,.close-btn,.switch,.swatch{
+  -webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.pill,.icon-btn,.dock a,.dock button,.close-btn{
+  background-color:var(--button-glass);
+  border-color:var(--button-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(108,157,220,.05),0 5px 18px rgba(0,0,0,.07);
+  backdrop-filter:blur(7px) saturate(135%);
+  -webkit-backdrop-filter:blur(7px) saturate(135%);
+  transition:background-color .22s ease,border-color .22s ease,box-shadow .22s ease,color .22s ease,transform .22s cubic-bezier(.16,1,.3,1);
+}
+.pill:hover,.icon-btn:hover,.dock a:hover,.dock button:hover,.close-btn:hover{
+  background-color:var(--button-glass-hover);
+  border-color:rgba(235,246,255,.62);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 8px 22px rgba(58,135,225,.13);
+}
+.pill:active,.icon-btn:active,.dock a:active,.dock button:active,.close-btn:active,.swatch:active{
+  transform:scale(.97);
+}
+.pill.primary{
+  background:linear-gradient(118deg,rgba(130,193,255,.20),rgba(193,186,255,.13) 58%,rgba(255,117,153,.075));
+  border-color:rgba(219,237,255,.53);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.43),inset 0 -1px 0 rgba(113,164,236,.08),0 8px 28px rgba(66,139,232,.13);
+}
+.pill.primary:hover{background:linear-gradient(118deg,rgba(145,202,255,.28),rgba(203,196,255,.20) 58%,rgba(255,117,153,.12));}
+.icon-btn{border-color:rgba(219,237,255,.35);}
+.dock{border-color:rgba(221,237,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.36),inset 0 -1px 0 rgba(255,255,255,.035),0 12px 34px rgba(0,0,0,.16);}
+.dock a.active{background:linear-gradient(135deg,rgba(110,179,255,.18),rgba(190,175,255,.13));color:var(--fg);box-shadow:inset 0 1px 0 rgba(255,255,255,.24);}
+.social-card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 12px 28px rgba(65,130,220,.10);}
+.swatch{cursor:pointer;transition:transform .22s ease,outline-color .22s ease;}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 1px var(--line),0 0 18px rgba(111,177,255,.24);}
+.setting-row{border-color:rgba(194,220,255,.15);}
+.sheet{border-color:rgba(220,237,255,.36);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 24px 80px rgba(0,0,0,.28);}
+body.light .pill,body.light .icon-btn,body.light .dock a,body.light .dock button,body.light .close-btn{
+  background-color:rgba(255,255,255,.40);
+  border-color:rgba(115,146,190,.30);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 5px 18px rgba(48,73,116,.07);
+}
+body.light .pill:hover,body.light .icon-btn:hover,body.light .dock a:hover,body.light .dock button:hover,body.light .close-btn:hover{background-color:rgba(255,255,255,.68);border-color:rgba(89,139,207,.45);}
+body.light .pill.primary{background:linear-gradient(118deg,rgba(93,169,255,.20),rgba(175,151,255,.14) 58%,rgba(255,120,153,.08));}
+/* Fixed bars and sheets never scale or jump when a touch device keeps :hover active. */
+@media(hover:none){
+  .pill:hover,.icon-btn:hover,.dock a:hover,.dock button:hover,.close-btn:hover,.social-card:hover{transform:none;}
+  .pill:active,.icon-btn:active,.dock a:active,.dock button:active,.close-btn:active{transform:scale(.97);}
+  .topbar:hover,.dock:hover,.sheet:hover{transform:none;}
+  .topbar.glass:hover,.topbar.apple-clear-glass:hover,.topbar.apple-liquid-glass:hover{transform:translateX(-50%);}
+  .dock.glass:hover,.dock.apple-clear-glass:hover,.dock.apple-liquid-glass:hover{transform:translateX(-50%);}
+}
+@media(prefers-reduced-motion:reduce){.pill,.icon-btn,.dock a,.dock button,.close-btn,.swatch{transition:none!important;}}
+
+
+/* BMN® integrated showcase refinements — inspired by the supplied four-panel study,
+   adapted to the existing creator portfolio (not a separate demo page). */
+:root{
+ --bmn-ice:rgba(224,242,255,.22);
+ --bmn-red:rgba(255,45,85,.22);
+ --bmn-warm:rgba(255,149,0,.13);
+ --bmn-highlight:rgba(255,255,255,.68);
+}
+/* Keep the page crystal-clear: warm/red light is ambient only, never a milky overlay. */
+.scene{
+ background:
+  radial-gradient(ellipse at 78% 22%,var(--bmn-red),transparent 28%),
+  radial-gradient(ellipse at 18% 76%,var(--bmn-warm),transparent 25%),
+  radial-gradient(ellipse at var(--mx) var(--my),var(--tint-c),transparent 32%),
+  radial-gradient(ellipse at 15% 20%,var(--tint-a),transparent 38%),
+  radial-gradient(ellipse at 86% 64%,var(--tint-b),transparent 37%),var(--bg);
+}
+.glass,.apple-clear-glass,.apple-liquid-glass{
+ background-color:rgba(255,255,255,.025);
+ border-color:rgba(222,239,255,.28);
+ box-shadow:inset 1px 1px 0 rgba(255,255,255,.24),
+            inset -1px -1px 0 rgba(255,255,255,.035),
+            0 12px 34px -10px rgba(0,0,0,.22);
+ backdrop-filter:blur(4px) saturate(145%);
+ -webkit-backdrop-filter:blur(4px) saturate(145%);
+}
+.glass:before,.apple-clear-glass:before,.apple-liquid-glass:before{
+ background:linear-gradient(135deg,rgba(239,248,255,.14),transparent 25%,transparent 70%,rgba(255,255,255,.035));
+ opacity:.8;
+}
+.pill,.icon-btn,.close-btn,.switch,.dock button,.dock a,.swatch{
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+}
+.pill{
+ position:relative;isolation:isolate;overflow:hidden;
+ background:linear-gradient(135deg,rgba(226,242,255,.105),rgba(255,255,255,.025) 56%,rgba(123,163,255,.045));
+ border-color:rgba(226,240,255,.32);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.23),0 6px 18px rgba(0,0,0,.10);
+}
+.pill.primary{
+ background:linear-gradient(120deg,rgba(114,184,255,.24),rgba(174,155,255,.16) 58%,rgba(255,83,126,.10));
+ border-color:rgba(210,232,255,.53);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.05),0 9px 28px rgba(51,117,205,.12);
+}
+.pill:active,.icon-btn:active,.close-btn:active,.dock button:active,.dock a:active,.swatch:active{
+ transform:scale(.975);filter:brightness(1.08);
+}
+.icon-btn{background:linear-gradient(145deg,rgba(224,241,255,.10),rgba(255,255,255,.025));border-color:rgba(224,239,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.dock{border-color:rgba(222,239,255,.32);background:rgba(255,255,255,.035);backdrop-filter:blur(5px) saturate(150%);-webkit-backdrop-filter:blur(5px) saturate(150%)}
+.dock a.active,.dock button:focus-visible{background:linear-gradient(135deg,rgba(0,122,255,.16),rgba(177,140,255,.13));box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+.sheet{border-color:rgba(222,239,255,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 24px 70px rgba(0,0,0,.34)}
+.swatch{box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 3px 10px rgba(0,0,0,.16)}
+.social-card{border-color:rgba(222,239,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.10)}
+.social-card:hover{border-color:rgba(255,255,255,.52);background:linear-gradient(120deg,rgba(0,122,255,.09),rgba(177,140,255,.08),rgba(255,45,85,.045))}
+body.light .scene{background:radial-gradient(ellipse at 78% 22%,rgba(255,45,85,.07),transparent 28%),radial-gradient(ellipse at 18% 76%,rgba(255,170,55,.09),transparent 25%),radial-gradient(ellipse at var(--mx) var(--my),var(--tint-c),transparent 32%),radial-gradient(ellipse at 15% 20%,var(--tint-a),transparent 38%),radial-gradient(ellipse at 86% 64%,var(--tint-b),transparent 37%),var(--bg)}
+body.light .glass,body.light .apple-clear-glass,body.light .apple-liquid-glass{background-color:rgba(255,255,255,.035);border-color:rgba(255,255,255,.65);box-shadow:inset 1px 1px 0 rgba(255,255,255,.85),inset -1px -1px 0 rgba(45,65,100,.035),0 12px 32px rgba(45,65,100,.10)}
+@media(hover:none){
+ .glass:hover,.apple-clear-glass:hover,.apple-liquid-glass:hover{transform:none}
+ .pill:hover,.icon-btn:hover{transform:none}
+ .dock a:hover,.dock button:hover{transform:none}
+}
+@media(max-width:600px){
+ .pill{min-height:44px;padding:11px 15px}
+ .topbar{backdrop-filter:blur(5px) saturate(145%);-webkit-backdrop-filter:blur(5px) saturate(145%)}
+ .glass,.apple-clear-glass,.apple-liquid-glass{backdrop-filter:blur(3px) saturate(140%);-webkit-backdrop-filter:blur(3px) saturate(140%)}
+}
+@media(prefers-reduced-motion:reduce){
+ .scene,.fluid,.ribbon,.hero-art{animation:none!important}
+ *,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+
 </style>
 </head>
 <body>
