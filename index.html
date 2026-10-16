@@ -511,6 +511,47 @@ body.community-mode .topbar{width:min(1180px,calc(100% - 24px))}
 .community-post{padding:20px;border-radius:27px}.post-preview{height:190px;border-radius:20px;margin-bottom:16px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.35),transparent 9%),linear-gradient(135deg,rgba(0,122,255,.28),rgba(177,90,255,.22) 55%,rgba(255,92,138,.12))}.post-preview span{font-size:36px}.post-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}.post-meta strong{font-size:14px}.post-meta small{color:var(--muted);font-size:11px}.post-actions{display:flex;gap:7px;margin-top:13px}.post-action{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:999px;padding:8px 11px;color:var(--muted);font-size:11px}.post-action.liked{color:#ff7b9d;border-color:rgba(255,92,138,.35)}
 .create-panel{padding:22px;border-radius:27px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}.create-panel h3{margin:0 0 7px;font-size:24px}.create-panel p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.create-button{border:1px solid rgba(222,239,255,.42);background:linear-gradient(120deg,rgba(88,170,255,.18),rgba(177,140,255,.14));border-radius:999px;padding:13px 18px;color:var(--fg);white-space:nowrap}
 @media(max-width:700px){.creator-grid,.community-grid{grid-template-columns:1fr}.create-panel{grid-template-columns:1fr}.create-button{width:100%}}
+<style id="bmn-community-redesign">
+/* BMN Community — deliberately different product-style composition. Glass recipe remains untouched. */
+body.community-mode{--community-ink:rgba(255,255,255,.96);background:#05070d;}
+body.community-mode .scene{opacity:.82;filter:saturate(1.28)}
+body.community-mode .topbar{border-radius:0 0 24px 24px;padding:9px 14px;}
+body.community-mode .topbar .brand{letter-spacing:-.05em}
+body.community-mode .navlinks{display:none}
+body.community-mode .view-switch{order:2;margin-left:auto}
+body.community-mode .top-actions{order:3}
+body.community-mode .view-switch button[data-view="community"]{background:linear-gradient(135deg,rgba(0,194,255,.17),rgba(168,88,255,.17));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 8px 24px rgba(73,125,255,.08)}
+body.community-mode .wrap{width:min(1240px,calc(100% - 28px));}
+body.community-mode .platform-page{padding-top:28px}
+body.community-mode #communityPage{display:block!important}
+body.community-mode #communityPage:before{content:"COMMUNITY / 01";display:block;font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.45);margin:4px 2px 12px}
+.community-redesign{display:grid;grid-template-columns:220px minmax(0,1fr) 270px;gap:14px;align-items:start}
+.community-rail,.community-rightbar{position:sticky;top:82px;display:grid;gap:12px}
+.community-rail-card{padding:14px;border-radius:24px}
+.community-brand-lockup{padding:8px 8px 16px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.community-brand-lockup strong{font-size:19px;letter-spacing:-.06em}.community-brand-lockup small{display:block;color:var(--muted);margin-top:4px;font-size:10px}
+.community-nav{display:grid;gap:5px}.community-nav button{width:100%;border:0;background:transparent;color:var(--muted);text-align:left;border-radius:15px;padding:11px 12px;font-size:12px}.community-nav button.active,.community-nav button:hover{color:var(--fg);background:rgba(255,255,255,.08)}
+.community-mini-profile{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.025)}
+.community-mini-avatar{width:39px;height:39px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(0,196,255,.28),rgba(177,90,255,.25));border:1px solid rgba(255,255,255,.25);font-weight:800;font-size:11px}.community-mini-profile strong{font-size:11px}.community-mini-profile small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.community-center{min-width:0}.community-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.community-topline h1{font-size:clamp(30px,5vw,52px);letter-spacing:-.07em;margin:0}.community-topline p{margin:4px 0 0;color:var(--muted);font-size:11px}.community-create{border:1px solid rgba(255,255,255,.28);background:linear-gradient(135deg,rgba(0,194,255,.18),rgba(177,90,255,.18));border-radius:999px;padding:11px 15px;color:var(--fg);white-space:nowrap}
+.community-feature{display:grid;grid-template-columns:1.35fr .65fr;gap:10px;margin-bottom:12px}.community-feature-main{min-height:270px;border-radius:28px;padding:22px;position:relative;overflow:hidden;background:radial-gradient(circle at 76% 22%,rgba(0,215,255,.22),transparent 23%),radial-gradient(circle at 58% 78%,rgba(174,80,255,.20),transparent 28%),rgba(255,255,255,.025)}.community-feature-main:after{content:"";position:absolute;inset:42% -15% -35% 30%;background:linear-gradient(125deg,transparent,rgba(255,255,255,.10),transparent);transform:rotate(-10deg);pointer-events:none}.feature-label{font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.58)}.community-feature-main h2{font-size:clamp(34px,6vw,66px);line-height:.95;letter-spacing:-.075em;max-width:650px;margin:55px 0 10px}.community-feature-main p{color:var(--muted);font-size:12px;max-width:540px;line-height:1.55}.feature-chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}.feature-chip{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.045);font-size:9px;color:rgba(255,255,255,.7)}
+.community-feature-side{padding:16px;border-radius:28px;display:grid;align-content:space-between;min-height:270px}.community-signal{padding:13px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.025)}.community-signal strong{font-size:13px}.community-signal small{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:4px}.signal-line{height:5px;border-radius:99px;background:linear-gradient(90deg,rgba(0,204,255,.8),rgba(180,85,255,.65),rgba(255,214,110,.55));margin-top:12px;box-shadow:0 0 18px rgba(0,194,255,.15)}
+.community-feedbar{display:flex;align-items:center;gap:8px;overflow:auto;margin:10px 0 12px;padding-bottom:2px;scrollbar-width:none}.community-feedbar::-webkit-scrollbar{display:none}.community-feedbar button{flex:0 0 auto;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);border-radius:999px;padding:9px 13px;font-size:10px}.community-feedbar button.active{background:rgba(255,255,255,.10);color:var(--fg);border-color:var(--edge)}
+body.community-mode #communityMount{display:block}.community-rightbar .side-card{border-radius:23px}.community-rightbar .side-card h3{font-size:16px}.community-rightbar .side-item{background:rgba(255,255,255,.018)}
+body.community-mode #communityPage>.page-tabs,body.community-mode #communityPage>.community-main-grid{display:none}
+body.community-mode #communityPage #communityMount{margin-top:0}
+body.community-mode #community{display:block!important;padding:0;margin:0}
+body.community-mode #community .platform-hero{display:none}
+body.community-mode #community .community-grid{grid-template-columns:1fr;gap:10px}
+body.community-mode #community .community-post{display:grid;grid-template-columns:170px minmax(0,1fr);gap:14px;align-items:center;padding:12px;border-radius:23px}
+body.community-mode #community .post-preview{height:150px;margin:0;border-radius:18px}
+body.community-mode #community .post-actions{margin-top:9px}
+body.community-mode #creators,body.community-mode #create{margin-top:18px}
+body.community-mode #creators .section-head,body.community-mode #create .section-head{display:none}
+body.community-mode .community-page.reveal{opacity:1;transform:none}
+@media(max-width:980px){.community-redesign{grid-template-columns:180px minmax(0,1fr)}.community-rightbar{display:none}.community-feature{grid-template-columns:1fr}}
+@media(max-width:700px){body.community-mode .wrap{width:min(100% - 18px,680px)}.community-redesign{grid-template-columns:1fr}.community-rail{position:static}.community-rail-card{padding:11px}.community-brand-lockup{display:flex;align-items:center;justify-content:space-between;padding:5px 7px 11px}.community-nav{display:flex;overflow:auto}.community-nav button{width:auto;white-space:nowrap}.community-mini-profile{display:none}.community-topline{align-items:flex-end}.community-topline h1{font-size:34px}.community-create{padding:9px 12px}.community-feature-main{min-height:245px}.community-feature-main h2{margin-top:48px;font-size:48px}.community-feature-side{min-height:auto;gap:10px}.body.community-mode .dock{display:flex!important}.body.community-mode .dock a:nth-child(1),body.community-mode .dock a:nth-child(2){display:none!important}body.community-mode #community .community-post{grid-template-columns:110px minmax(0,1fr)}body.community-mode #community .post-preview{height:105px}body.community-mode #community .post-actions{flex-wrap:wrap}}
+</style>
 </style>
 </head>
 <body>
@@ -527,6 +568,33 @@ body.community-mode .topbar{width:min(1180px,calc(100% - 24px))}
 <section id="socials" class="personal-section reveal"><div class="section-head"><div><span class="kicker">05 / My social platforms</span><h2>Follow the work.</h2></div><p class="section-sub">These are my public profiles. Follow, watch my work or reach out through the platforms.</p></div><div class="social-grid"><a class="social-card glass" href="https://www.tiktok.com/@thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>TikTok</strong><small>@thisisbmn<br>Short-form edits & internet culture</small></span><span class="social-icon">↗</span></a><a class="social-card glass" href="https://www.youtube.com/@thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>YouTube</strong><small>@thisisbmn<br>Video projects & creator content</small></span><span class="social-icon">↗</span></a><a class="social-card glass" href="https://commons.wikimedia.org/wiki/User:Thisisbmn" target="_blank" rel="noopener noreferrer"><span><strong>Wikimedia Commons</strong><small>Thisisbmn<br>Public creator profile</small></span><span class="social-icon">↗</span></a></div></section>
 
 <section class="community-page platform-page" id="communityPage">
+  <div class="community-redesign">
+    <aside class="community-rail">
+      <div class="community-rail-card glass">
+        <div class="community-brand-lockup"><strong>BMN / COMMUNITY</strong><small>A creator space for edits, ideas and discovery.</small></div>
+        <nav class="community-nav" aria-label="Community navigation">
+          <button class="active" type="button" data-community-jump="community">⌂ Feed</button>
+          <button type="button" data-community-jump="creators">◎ Creators</button>
+          <button type="button" data-community-jump="create">＋ Create</button>
+        </nav>
+      </div>
+      <div class="community-mini-profile glass"><div class="community-mini-avatar">BM</div><div><strong>BMN</strong><small>Creator space</small></div></div>
+    </aside>
+    <div class="community-center">
+      <div class="community-topline"><div><span class="feature-label">CREATOR NETWORK</span><h1>Community.</h1><p>Discover edits. Find creators. Share your own.</p></div><button class="community-create" type="button" id="openCreateTop">＋ Create</button></div>
+      <div class="community-feature">
+        <div class="community-feature-main glass glass-lens"><span class="feature-label">FEATURED / BMN DISCOVERY</span><h2>Ideas look better when they move.</h2><p>A separate social-style space for the next stage of BMN — built around creator work rather than a personal portfolio.</p><div class="feature-chip-row"><span class="feature-chip">Video edits</span><span class="feature-chip">Creators</span><span class="feature-chip">Discovery</span></div></div>
+        <div class="community-feature-side glass"><div><span class="feature-label">COMMUNITY SIGNAL</span><div class="community-signal" style="margin-top:12px"><strong>Explore the feed</strong><small>Browse the current preview and see how the creator platform can grow.</small><div class="signal-line"></div></div></div><div class="community-signal"><strong>Built for everyone</strong><small>BMN remains your identity. Community becomes the shared space.</small></div></div>
+      </div>
+      <div class="community-feedbar" aria-label="Feed filters"><button class="active" type="button">For You</button><button type="button">Latest</button><button type="button">Trending</button><button type="button">Editors</button><button type="button">Anime</button><button type="button">Sports</button><button type="button">Movies</button></div>
+      <div id="communityMount"></div>
+    </div>
+    <aside class="community-rightbar">
+      <div class="side-card glass"><span class="kicker">DISCOVER</span><h3>Find your corner.</h3><div class="side-list"><div class="side-item"><span class="side-avatar">AM</span><div><strong>Anime edits</strong><small>AMVs · motion · transitions</small></div></div><div class="side-item"><span class="side-avatar">SP</span><div><strong>Sports edits</strong><small>Football · basketball · hype</small></div></div><div class="side-item"><span class="side-avatar">MV</span><div><strong>Movie edits</strong><small>Cinematic · storytelling</small></div></div></div></div>
+      <div class="side-card glass"><span class="kicker">CREATOR NOTE</span><h3>Bring your edit.</h3><p class="body-copy">Publishing will connect to accounts, storage and creator profiles when the backend stage is added.</p><button class="pill primary" type="button" id="openCreateSide">＋ Create an edit</button></div>
+    </aside>
+  </div>
+  <div style="display:none" aria-hidden="true">
   <div class="community-hero">
     <div class="community-hero-main glass glass-lens">
       <span class="kicker">BMN / CREATOR NETWORK</span>
@@ -549,6 +617,7 @@ body.community-mode .topbar{width:min(1180px,calc(100% - 24px))}
       <div class="side-card glass"><span class="kicker">QUICK DISCOVER</span><h3>Find your corner.</h3><div class="side-list"><div class="side-item"><span class="side-avatar">AM</span><div><strong>Anime edits</strong><small>Transitions · AMVs · motion</small></div></div><div class="side-item"><span class="side-avatar">SP</span><div><strong>Sports edits</strong><small>Football · basketball · hype</small></div></div><div class="side-item"><span class="side-avatar">MV</span><div><strong>Movie edits</strong><small>Cinematic · storytelling</small></div></div></div></div>
       <div class="side-card glass"><span class="kicker">YOUR NEXT STEP</span><h3>Bring your edit.</h3><p class="body-copy">When accounts and storage are connected, this becomes a real publishing flow — not a fake upload button.</p><button class="pill primary" type="button" id="openCreateSide">＋ Create an edit</button></div>
     </aside>
+  </div>
   </div>
 </section>
 <section id="community" class="community-page reveal">
