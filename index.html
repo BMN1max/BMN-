@@ -950,7 +950,280 @@ body.community-mode .app-dock button{color:#a9a9ad!important;background:transpar
 body.community-mode .bmn-profile-top{color:#111}.bmn-profile-menu{background:#fff!important;color:#111!important;border:1px solid #ddd!important;box-shadow:0 15px 50px rgba(0,0,0,.18)!important}.bmn-profile-menu button{color:#111!important}
 @media(max-width:700px){.bmn-ref-top{height:84px}.bmn-ref-tabs{gap:17px}.bmn-ref-tab{font-size:14px}.bmn-ref-search{flex-basis:38px;width:38px;height:38px}.bmn-own-post-grid .bmn-profile-post-tile{height:150px}.bmn-own-profile-head{grid-template-columns:76px 1fr 38px}.bmn-own-avatar{width:76px;height:76px}.bmn-own-stats{grid-template-columns:repeat(4,1fr)}body.community-mode #community .community-post .post-meta{bottom:164px}}
 @media(prefers-reduced-motion:reduce){.bmn-ref-tabs,.bmn-story-row{scroll-behavior:auto!important}}
+
+/* BMN Community — final mobile calibration: contained, balanced, no off-screen elements */
+@media (max-width: 700px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+  body.community-mode main.wrap{padding:0 0 calc(78px + env(safe-area-inset-bottom))!important}
+  body.community-mode .bmn-ref-top{
+    height:76px!important;
+    padding:calc(env(safe-area-inset-top) + 7px) 12px 6px!important;
+    gap:10px!important;
+    align-items:flex-end!important;
+    overflow:hidden!important;
+  }
+  body.community-mode .bmn-ref-tabs{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    gap:14px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    padding:0 2px!important;
+  }
+  body.community-mode .bmn-ref-tab{
+    font-size:13px!important;
+    font-weight:750!important;
+    padding:5px 0 8px!important;
+    flex:0 0 auto!important;
+  }
+  body.community-mode .bmn-ref-tab.active:after{height:2px!important;width:32px!important}
+  body.community-mode .bmn-ref-search{
+    flex:0 0 38px!important;width:38px!important;height:38px!important;
+    font-size:22px!important;
+  }
+  body.community-mode #communityFeed{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    scroll-padding-top:76px!important;
+  }
+  body.community-mode #community .community-post{
+    width:100%!important;
+    height:calc(100svh - 76px - 74px - env(safe-area-inset-bottom))!important;
+    min-height:520px!important;
+    margin:76px 0 0!important;
+    border-radius:0!important;
+    box-sizing:border-box!important;
+    scroll-snap-align:start!important;
+  }
+  body.community-mode #community .community-post + .community-post{margin-top:0!important}
+  body.community-mode #community .post-preview.is-text span{
+    max-width:78%!important;
+    font-size:clamp(22px,6vw,34px)!important;
+    line-height:1.18!important;
+  }
+  body.community-mode #community .community-post .post-meta{
+    left:14px!important;right:72px!important;bottom:96px!important;
+  }
+  body.community-mode #community .community-post .post-meta strong{font-size:14px!important}
+  body.community-mode #community .community-post .post-meta small{font-size:10px!important}
+  body.community-mode #community .community-post .post-content{
+    left:14px!important;right:72px!important;bottom:46px!important;
+    font-size:13px!important;line-height:1.35!important;max-height:66px!important;
+  }
+  body.community-mode #community .community-post .post-actions{
+    right:8px!important;bottom:42px!important;gap:8px!important;
+  }
+  body.community-mode #community .community-post .post-action{
+    width:42px!important;min-height:42px!important;height:42px!important;
+  }
+  body.community-mode #community .community-post .post-action:before{font-size:22px!important}
+  body.community-mode .app-dock{
+    height:74px!important;
+    padding:4px 6px calc(4px + env(safe-area-inset-bottom))!important;
+  }
+  body.community-mode .app-dock button{min-height:56px!important;font-size:9px!important}
+  body.community-mode .dock-symbol{font-size:23px!important}
+  body.community-mode .dock-create-symbol{width:46px!important;height:38px!important;font-size:25px!important}
+}
+@media (max-width: 380px){
+  body.community-mode .bmn-ref-tabs{gap:11px!important}
+  body.community-mode .bmn-ref-tab{font-size:12px!important}
+  body.community-mode .bmn-ref-search{flex-basis:34px!important;width:34px!important;height:34px!important}
+}
+
 </style>
+
+<style id="bmn-community-liquid-profile-final">
+/* BMN Community profiles + dock: liquid glass, theme-aware, contained on iPhone. */
+body.community-mode #appProfileScreen{
+  background:transparent!important;
+  color:var(--fg)!important;
+  overflow-x:hidden!important;
+}
+body.community-mode .bmn-own-profile{
+  width:min(100% - 20px,680px)!important;
+  margin:10px auto 0!important;
+  padding:18px 16px 28px!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(255,255,255,.20)!important;
+  border-radius:30px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 22px 70px rgba(0,0,0,.18)!important;
+  backdrop-filter:blur(24px) saturate(170%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(170%)!important;
+}
+body.community-mode .bmn-own-profile-head{grid-template-columns:76px minmax(0,1fr) 42px!important;gap:13px!important}
+body.community-mode .bmn-own-avatar{
+  width:76px!important;height:76px!important;border-radius:50%!important;
+  background:linear-gradient(135deg,rgba(65,195,255,.34),rgba(174,103,255,.32))!important;
+  border:2px solid rgba(255,255,255,.55)!important;
+  box-shadow:0 8px 28px rgba(55,150,255,.18),inset 0 1px 0 rgba(255,255,255,.45)!important;
+}
+body.community-mode .bmn-own-profile-head h2,
+body.community-mode .bmn-own-profile-head p,
+body.community-mode .bmn-own-bio{color:var(--fg)!important}
+body.community-mode .bmn-own-profile-head p{opacity:.62!important}
+body.community-mode .bmn-profile-menu-trigger{
+  width:40px!important;height:40px!important;border-radius:50%!important;
+  color:var(--fg)!important;background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  display:grid!important;place-items:center!important;
+  font-size:21px!important;
+  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+}
+body.community-mode .bmn-own-stats{
+  gap:6px!important;margin:20px 0 16px!important;
+  padding:10px 4px!important;border-radius:20px!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.035)!important;
+}
+body.community-mode .bmn-own-stats>div{border-right:1px solid rgba(255,255,255,.10)!important}
+body.community-mode .bmn-own-stats>div:last-child{border-right:0!important}
+body.community-mode .bmn-own-stats strong{color:var(--fg)!important;font-size:18px!important}
+body.community-mode .bmn-own-stats span{color:var(--muted)!important}
+body.community-mode .bmn-own-actions button{
+  border:1px solid rgba(255,255,255,.20)!important;
+  background:rgba(255,255,255,.065)!important;
+  color:var(--fg)!important;
+  border-radius:999px!important;
+  min-height:40px!important;
+  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+}
+body.community-mode .bmn-own-actions button:first-child{
+  background:linear-gradient(120deg,rgba(50,175,255,.18),rgba(178,102,255,.16))!important;
+  border-color:rgba(170,215,255,.32)!important;
+}
+body.community-mode .bmn-own-tabs{
+  border-bottom:1px solid rgba(255,255,255,.12)!important;
+  margin-top:18px!important;
+}
+body.community-mode .bmn-own-tab{color:var(--muted)!important}
+body.community-mode .bmn-own-tab.active{color:var(--fg)!important;border-bottom-color:var(--fg)!important}
+body.community-mode .bmn-own-post-grid{
+  background:transparent!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:20px!important;
+  overflow:hidden!important;
+  margin-top:12px!important;
+  gap:2px!important;
+}
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile{
+  background:rgba(255,255,255,.05)!important;
+}
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile img,
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile video{object-fit:cover!important}
+
+/* Public profile modal gets the same liquid treatment. */
+body.community-mode .bmn-profile-modal{
+  background:rgba(3,6,14,.58)!important;
+  backdrop-filter:blur(24px) saturate(155%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(155%)!important;
+}
+body.community-mode .bmn-profile-card{
+  width:min(92vw,560px)!important;
+  max-height:88dvh!important;
+  border-radius:30px!important;
+  border:1px solid rgba(255,255,255,.22)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.035))!important;
+  color:var(--fg)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 30px 90px rgba(0,0,0,.35)!important;
+  backdrop-filter:blur(26px) saturate(170%)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(170%)!important;
+}
+body.community-mode .bmn-profile-stat,
+body.community-mode .bmn-profile-edit{
+  background:rgba(255,255,255,.055)!important;
+  border-color:rgba(255,255,255,.15)!important;
+}
+body.community-mode .bmn-profile-post-tile{border-color:rgba(255,255,255,.12)!important}
+body.community-mode .bmn-profile-menu{
+  background:rgba(18,23,36,.82)!important;color:var(--fg)!important;
+  border-color:rgba(255,255,255,.18)!important;
+  backdrop-filter:blur(22px) saturate(170%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(170%)!important;
+}
+body.community-mode .bmn-profile-menu button{color:var(--fg)!important}
+
+/* Light mode: same structure, brighter crystal liquid glass. */
+body.light.community-mode .bmn-own-profile,
+body.light.community-mode .bmn-profile-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(255,255,255,.34))!important;
+  border-color:rgba(25,45,70,.16)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 24px 70px rgba(40,70,100,.12)!important;
+}
+body.light.community-mode .bmn-own-stats,
+body.light.community-mode .bmn-own-actions button,
+body.light.community-mode .bmn-profile-stat,
+body.light.community-mode .bmn-profile-edit{background:rgba(255,255,255,.42)!important;border-color:rgba(35,55,80,.13)!important}
+body.light.community-mode .bmn-profile-menu{background:rgba(255,255,255,.82)!important;color:#172033!important}
+body.light.community-mode .bmn-profile-menu button{color:#172033!important}
+
+/* Curved Apple-like floating dock. Every control remains inside the capsule. */
+body.community-mode .app-dock{
+  position:fixed!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px)!important;
+  width:min(94vw,520px)!important;
+  height:66px!important;
+  padding:6px 8px!important;
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  align-items:center!important;
+  gap:3px!important;
+  border-radius:34px!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.045))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 18px 55px rgba(0,0,0,.30)!important;
+  backdrop-filter:blur(28px) saturate(180%)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(180%)!important;
+  z-index:100!important;
+  box-sizing:border-box!important;
+}
+body.community-mode .app-dock button{
+  min-width:0!important;width:100%!important;height:52px!important;min-height:52px!important;
+  border:0!important;border-radius:26px!important;background:transparent!important;
+  color:var(--muted)!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  flex-direction:column!important;gap:2px!important;padding:4px 2px!important;
+  font-size:9px!important;line-height:1!important;box-shadow:none!important;
+}
+body.community-mode .app-dock button.active{
+  color:var(--fg)!important;
+  background:rgba(255,255,255,.095)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)!important;
+}
+body.community-mode .app-dock .dock-create{
+  margin-top:-7px!important;
+  height:58px!important;min-height:58px!important;
+}
+body.community-mode .dock-create-symbol{
+  width:48px!important;height:48px!important;border-radius:50%!important;
+  display:grid!important;place-items:center!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(220,239,255,.78))!important;
+  color:#111!important;border:2px solid rgba(30,215,255,.85)!important;
+  box-shadow:3px 0 0 rgba(255,45,111,.82),inset 0 1px 0 #fff,0 8px 24px rgba(60,150,255,.22)!important;
+}
+body.light.community-mode .app-dock{
+  background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.42))!important;
+  border-color:rgba(25,45,70,.15)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 18px 50px rgba(40,70,100,.14)!important;
+}
+body.light.community-mode .app-dock button.active{background:rgba(255,255,255,.42)!important;color:#182033!important}
+
+@media(max-width:430px){
+  body.community-mode .bmn-own-profile{width:calc(100% - 14px)!important;padding:15px 12px 22px!important;border-radius:26px!important}
+  body.community-mode .bmn-own-profile-head{grid-template-columns:66px minmax(0,1fr) 38px!important;gap:10px!important}
+  body.community-mode .bmn-own-avatar{width:66px!important;height:66px!important}
+  body.community-mode .bmn-own-profile-head h2{font-size:20px!important}
+  body.community-mode .bmn-own-stats strong{font-size:16px!important}
+  body.community-mode .bmn-own-stats span{font-size:9px!important}
+  body.community-mode .app-dock{width:calc(100vw - 18px)!important;height:62px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 6px)!important;border-radius:31px!important;padding:5px 6px!important}
+  body.community-mode .app-dock button{height:50px!important;min-height:50px!important;font-size:8.5px!important;border-radius:25px!important}
+  body.community-mode .dock-create-symbol{width:44px!important;height:44px!important}
+}
+</style>
+
 </head>
 <body>
 
