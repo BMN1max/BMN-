@@ -1,1 +1,30 @@
-const CACHE='bmn-liquid-10-v1';const ASSETS=['./','./index.html','./assets/css/liquid-glass-10.css','./assets/js/bmn-app.js','./manifest.webmanifest','./bmn-icon.svg'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(x=>x.put(e.request,copy));return r}).catch(()=>caches.match('./index.html'))))});
+
+const CACHE_NAME = 'bmn-app-v1';
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.add('/index.html')
+    )
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', event => {
+  if (
+    event.request.method !== 'GET' ||
+    new URL(event.request.url).origin !== self.location.origin
+  ) return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(async () => {
+        return (await caches.match('/index.html')) || Response.error();
+      })
+    );
+  }
+});
