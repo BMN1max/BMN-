@@ -874,6 +874,66 @@ body.community-mode #bmnCopyFollowSQL,body.community-mode #creators details{disp
 body.community-mode #community .bmn-comments{display:none}
 body.community-mode #community .bmn-comments:not(.comments-collapsed){display:block}
 </style>
+
+<style id="bmn-platform-master-pass">
+/* BMN Community master UX pass — full-screen media feed, adaptive glass, auth methods */
+body.community-mode{overflow-x:hidden}
+body.community-mode #communityPage{padding-top:0!important}
+body.community-mode .community-redesign{max-width:none!important;width:100%;margin:0!important}
+body.community-mode .community-center{width:100%;max-width:none!important;margin:0!important}
+body.community-mode #bmnAppScreens{width:100%;max-width:none;margin:0 auto}
+body.community-mode .app-screen-heading{display:none!important}
+body.community-mode #bmnFeedTabs{top:calc(10px + env(safe-area-inset-top));background:rgba(10,13,22,.32)!important;border-color:rgba(255,255,255,.23)!important;backdrop-filter:blur(22px) saturate(175%);-webkit-backdrop-filter:blur(22px) saturate(175%)}
+body.light.community-mode #bmnFeedTabs{background:rgba(245,248,255,.32)!important;border-color:rgba(255,255,255,.45)!important}
+body.community-mode #community{padding:0!important;margin:0!important;min-height:0!important}
+body.community-mode #community .community-grid{display:block!important;width:100%;margin:0!important;gap:0!important}
+body.community-mode #community .community-post{position:relative!important;isolation:isolate;display:block!important;width:100%!important;height:calc(100svh - 76px)!important;min-height:540px!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:#080b12!important;box-shadow:none!important;scroll-snap-align:start;scroll-snap-stop:always}
+body.community-mode #community .community-grid{scroll-snap-type:y mandatory}
+body.community-mode #community .community-post .post-preview{position:absolute!important;inset:0!important;z-index:-2!important;display:grid!important;width:100%!important;height:100%!important;margin:0!important;border-radius:0!important;background:radial-gradient(ellipse at 18% 20%,rgba(38,111,181,.44),transparent 45%),radial-gradient(ellipse at 80% 70%,rgba(116,63,183,.38),transparent 42%),linear-gradient(145deg,#0a1220,#090910 60%,#141022)!important}
+body.community-mode #community .community-post .post-preview.has-media>a,body.community-mode #community .community-post .post-preview video,body.community-mode #community .community-post .post-preview img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;border-radius:0!important;display:block!important}
+body.community-mode #community .community-post .post-preview.is-text{z-index:-1!important}
+body.community-mode #community .community-post .post-preview.is-text>span{display:none!important}
+body.community-mode #community .community-post:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.18),transparent 24%,transparent 47%,rgba(0,0,0,.72) 100%)}
+body.community-mode #community .community-post .post-meta{position:absolute!important;left:14px!important;right:82px!important;bottom:calc(100px + env(safe-area-inset-bottom))!important;z-index:3!important;display:flex!important;align-items:center!important;gap:8px!important;color:#fff!important}
+body.community-mode #community .community-post .post-meta>small{color:rgba(255,255,255,.78)!important;font-size:10px!important}
+body.community-mode #community .community-post .bmn-profile-open{display:flex;align-items:center;gap:9px;min-width:0;border:0;background:transparent;color:#fff;text-align:left;padding:0}
+body.community-mode #community .community-post .bmn-profile-open strong{display:block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+body.community-mode #community .community-post .bmn-profile-open small{color:rgba(255,255,255,.76);font-size:11px}
+body.community-mode #community .community-post .post-content{position:absolute!important;left:14px!important;right:82px!important;bottom:calc(52px + env(safe-area-inset-bottom))!important;z-index:3!important;margin:0!important;max-height:24vh;overflow:auto;color:#fff!important;font-size:14px!important;line-height:1.45!important;text-shadow:0 1px 6px rgba(0,0,0,.45);white-space:pre-wrap;overflow-wrap:anywhere}
+body.community-mode #community .community-post>.body-copy{display:none!important}
+body.community-mode #community .community-post .post-actions{position:absolute!important;right:10px!important;bottom:calc(112px + env(safe-area-inset-bottom))!important;z-index:4!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:16px!important;margin:0!important;max-width:66px!important;flex-wrap:nowrap!important}
+body.community-mode #community .community-post .post-action{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;min-width:48px!important;min-height:48px!important;padding:3px!important;border:0!important;border-radius:50%!important;background:rgba(12,15,24,.34)!important;color:#fff!important;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);font-size:10px!important;text-shadow:0 1px 5px #000}
+body.community-mode #community .community-post .post-action span:last-child{font-size:10px!important;font-weight:700}
+body.community-mode #community .community-post .bmn-comments{position:absolute!important;z-index:7!important;left:10px!important;right:10px!important;bottom:calc(74px + env(safe-area-inset-bottom))!important;max-height:42svh!important;overflow:auto!important;background:rgba(12,16,25,.88)!important;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);color:#fff!important}
+body.community-mode #community .community-post .bmn-comment-input{color:#fff!important}
+body.community-mode .app-dock{bottom:calc(6px + env(safe-area-inset-bottom))!important;background:rgba(12,17,29,.5)!important;border-color:rgba(255,255,255,.25)!important;backdrop-filter:blur(28px) saturate(180%)!important;-webkit-backdrop-filter:blur(28px) saturate(180%)!important}
+body.light.community-mode .app-dock{background:rgba(248,250,255,.45)!important;border-color:rgba(255,255,255,.6)!important}
+body.community-mode .app-dock button{color:var(--fg)!important}
+body.community-mode #appDiscoverScreen{padding:calc(60px + env(safe-area-inset-top)) 14px 100px!important;min-height:calc(100svh - 100px)}
+body.community-mode #bmnDiscoverSearch{width:100%;height:48px;margin:0 0 14px;border-radius:17px;border:1px solid var(--clear-glass-border);background:var(--clear-glass-bg);color:var(--fg);padding:0 15px;font:inherit;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+body.community-mode #appDiscoverScreen .creator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body.community-mode #appCreateScreen{padding:calc(58px + env(safe-area-inset-top)) 12px 105px!important;min-height:100svh}
+body.community-mode #bmnComposer{background:var(--clear-glass-bg)!important;border-color:var(--clear-glass-border)!important;backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%)}
+body.community-mode #appInboxScreen{padding:calc(56px + env(safe-area-inset-top)) 14px 110px!important;min-height:100svh}
+body.community-mode #appProfileScreen{padding:calc(55px + env(safe-area-inset-top)) 14px 110px!important;min-height:100svh}
+body.community-mode #bmnProfileV2{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+body.community-mode .bmn-profile-summary{grid-template-columns:84px 1fr!important;align-items:center}
+body.community-mode .bmn-profile-counts{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+body.community-mode .bmn-profile-count{padding:8px 3px!important}
+body.community-mode .bmn-profile-posts{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important}
+body.community-mode .bmn-profile-post-tile{border-radius:7px!important;aspect-ratio:3/4!important}
+body.community-mode .bmn-profile-menu-panel{backdrop-filter:blur(30px)!important;-webkit-backdrop-filter:blur(30px)!important}
+.bmn-oauth-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.bmn-oauth-button{min-height:44px;border:1px solid var(--clear-glass-border);border-radius:14px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;font-size:12px;font-weight:600;line-height:1.2;display:flex,align-items:center;justify-content:center;gap:8px;padding:10px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.bmn-oauth-button:active{transform:scale(.98)}.bmn-oauth-button:disabled{opacity:.5;cursor:wait}
+.bmn-auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:10px}.bmn-auth-divider:before,.bmn-auth-divider:after{content:"";height:1px;background:var(--line);flex:1}
+.bmn-forgot-password{margin-top:8px;background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:11px;cursor:pointer}
+.bmn-discover-categories{display:flex;gap:8px;overflow:auto;padding:5px 0 12px;scrollbar-width:none}.bmn-discover-categories button{white-space:nowrap;border:1px solid var(--clear-glass-border);border-radius:999px;padding:9px 13px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;font-size:11px;font-weight:600}
+.bmn-feed-state{padding:14px;border:1px solid var(--clear-glass-border);border-radius:18px;background:var(--clear-glass-bg);font-size:12px;color:var(--muted)}
+@media(max-width:560px){body.community-mode #community .community-post{height:calc(100svh - 72px)!important;min-height:500px!important}body.community-mode #community .community-post .post-actions{right:7px!important;bottom:calc(110px + env(safe-area-inset-bottom))!important;gap:13px!important}body.community-mode #community .community-post .post-meta{bottom:calc(100px + env(safe-area-inset-bottom))!important}body.community-mode #community .community-post .post-content{bottom:calc(50px + env(safe-area-inset-bottom))!important;font-size:13px!important}body.community-mode .bmn-oauth-wrap{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){body.community-mode #community .community-post{scroll-snap-stop:normal!important;animation:none!important;transition:none!important}}
+</style>
+
 </head>
 <body>
 
@@ -1372,6 +1432,35 @@ loadSocialHub=async function(){await bmnOldLoadSocialHub();window.bmnRenderInbox
 // Ensure current feed selection is reflected when returning to Home.
 const bmnOldSetAppView=setAppView;
 setAppView=function(view,updateHash=true){bmnOldSetAppView(view,updateHash);if(view==='home'){const tabs=$('#bmnFeedTabs');tabs?.querySelectorAll('[data-feed-mode]').forEach(b=>b.classList.toggle('active',b.dataset.feedMode===(bmnFeedMode==='following'?'following':'fyp')));renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes)}if(view==='profile')window.bmnRefreshProfileV2?.();if(view==='inbox')window.bmnRenderInboxV2?.()};
+
+
+// BMN Platform Expansion: OAuth providers, password recovery, enhanced Discover and FYP controls.
+// OAuth buttons call Supabase Auth directly; a provider must first be enabled in Supabase Auth settings.
+function bmnAddOAuthControls(){
+ const controls=$('#bmnAuthControls');if(!controls||$('#bmnOAuthControls'))return;
+ const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google"><span aria-hidden="true">G</span> Google</button><button type="button" class="bmn-oauth-button" data-oauth-provider="apple"><span aria-hidden="true">●</span> Apple</button><button type="button" class="bmn-oauth-button" data-oauth-provider="github"><span aria-hidden="true">⌘</span> GitHub</button><button type="button" class="bmn-oauth-button" data-oauth-provider="discord"><span aria-hidden="true">◈</span> Discord</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google, Apple, GitHub and Discord sign-in work after their providers and redirect URLs are enabled in Supabase.</p>';
+ controls.appendChild(wrap);
+ wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=location.origin+location.pathname+'#community-page';const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
+ $('#bmnForgotPassword')?.addEventListener('click',async()=>{const email=$('#bmnEmail')?.value.trim();if(!email){setBackendStatus('Enter your email address first, then tap Forgot password.',true);$('#bmnEmail')?.focus();return}try{const {error}=await bmnSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;setBackendStatus('If this email belongs to an account, a password reset link has been sent.')}catch(err){setBackendStatus(err.message||'Could not send password reset email.',true)}})
+}
+bmnAddOAuthControls();
+const bmnAuthObserver=new MutationObserver(()=>bmnAddOAuthControls());
+if($('#bmnAuthControls'))bmnAuthObserver.observe($('#bmnAuthControls'),{childList:true});
+
+// Replace vague Discover header with useful categories and searchable creators/posts.
+function bmnUpgradeDiscover(){
+ const screen=$('#appDiscoverScreen');if(!screen||$('#bmnDiscoverCategories'))return;
+ const cats=document.createElement('nav');cats.id='bmnDiscoverCategories';cats.className='bmn-discover-categories';cats.innerHTML='<button type="button" data-dcat="all">For you</button><button type="button" data-dcat="creators">Creators</button><button type="button" data-dcat="videos">Videos & edits</button><button type="button" data-dcat="hashtags">Hashtags</button><button type="button" data-dcat="trending">Trending</button>';
+ const search=$('#bmnDiscoverSearch');if(search)search.insertAdjacentElement('afterend',cats);else screen.prepend(cats);
+ const result=document.createElement('div');result.id='bmnDiscoverResults';result.className='bmn-feed-state';result.textContent='Search for creators, captions and edits. Trending lists use currently available BMN posts.';cats.insertAdjacentElement('afterend',result);
+ cats.addEventListener('click',e=>{const b=e.target.closest('[data-dcat]');if(!b)return;cats.querySelectorAll('button').forEach(x=>x.style.background=x===b?'linear-gradient(120deg,rgba(0,122,255,.22),rgba(177,140,255,.16))':'var(--clear-glass-bg)');const mode=b.dataset.dcat;const q=$('#bmnDiscoverSearch')?.value.trim().toLowerCase()||'';let posts=cachedPosts||[];if(mode==='trending')posts=posts.filter(p=>Number(cachedLikes[p.id]||0)>0);if(mode==='hashtags')posts=posts.filter(p=>/#\w+/.test(p.content||''));if(mode==='videos')posts=posts.filter(p=>p.media_type==='video'||/\.(mp4|mov|webm)(\?|$)/i.test(p.media_url||''));if(q)posts=posts.filter(p=>String(p.content||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.username||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.display_name||'').toLowerCase().includes(q));result.textContent=posts.length?posts.length+' matching post'+(posts.length===1?'':'s')+' found. Open Home to watch the full-screen feed.':(mode==='hashtags'?'No hashtags found in current posts.':'No matching posts yet.');if(mode==='creators'){const grid=$('#bmnCreatorGrid');if(grid)grid.querySelectorAll('.creator-card').forEach(card=>card.style.display=!q||card.textContent.toLowerCase().includes(q)?'':'none')}});
+ if(search){search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();const posts=(cachedPosts||[]).filter(p=>!q||String(p.content||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.username||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.display_name||'').toLowerCase().includes(q));result.textContent=posts.length?posts.length+' matching posts found. Open Home to watch them in the full-screen feed.':'No matching posts found. Try another creator, caption or hashtag.';const grid=$('#bmnCreatorGrid');if(grid)grid.querySelectorAll('.creator-card').forEach(card=>card.style.display=!q||card.textContent.toLowerCase().includes(q)?'':'none')})}
+}
+bmnUpgradeDiscover();
+
+// Add resilient browser-native share and keyboard accessibility to the existing controls.
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.bmn-profile-menu-panel.open,.bmn-modal.open').forEach(el=>el.classList.remove('open'))}});
+window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')setBackendStatus('Connection restored. Refresh the Community feed if needed.')});
 
 })();
 </script>
