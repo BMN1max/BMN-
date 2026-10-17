@@ -1708,5 +1708,109 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
 
 })();
 </script>
+
+<!-- BMN COMMUNITY CREATOR UPDATE V3: mobile stability, accessibility, and theme consistency -->
+<style id="bmn-community-v3-polish">
+  :root { --bmn-v3-safe-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+  html { scroll-padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+  body.community-mode { min-height: 100svh; }
+  body.community-mode main.wrap { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+  body.community-mode .app-dock {
+    bottom: var(--bmn-v3-safe-bottom);
+    max-width: calc(100vw - 20px);
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    touch-action: manipulation;
+  }
+  body.community-mode .app-dock button,
+  body.community-mode .post-action,
+  body.community-mode .bmn-feed-tabs button,
+  body.community-mode .bmn-comments-panel button,
+  body.community-mode .bmn-conversation-compose button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body.community-mode .bmn-comments-sheet {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  body.community-mode .bmn-comments-panel {
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+  }
+  body.community-mode #bmnConversationPage {
+    min-height: 100svh;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  body.community-mode .bmn-conversation-messages,
+  body.community-mode .bmn-comments-sheet-list,
+  body.community-mode #bmnInbox,
+  body.community-mode #bmnNotifications {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.community-mode button:focus-visible,
+  body.community-mode input:focus-visible,
+  body.community-mode textarea:focus-visible,
+  body.community-mode a:focus-visible {
+    outline: 2px solid var(--cyan, #63e9ef);
+    outline-offset: 3px;
+  }
+  body.community-mode .post-action:disabled,
+  body.community-mode button:disabled {
+    opacity: .55;
+    cursor: wait;
+  }
+  body.community-mode .bmn-comments-compose,
+  body.community-mode .bmn-conversation-compose {
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  }
+  body.community-mode.light .app-dock {
+    color: var(--fg, #1b2232);
+    background: rgba(238, 244, 253, .66) !important;
+    border-color: rgba(45, 62, 91, .2) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.86), 0 12px 32px rgba(32,48,77,.12) !important;
+  }
+  body.community-mode.light .app-dock button { color: var(--fg, #1b2232) !important; }
+  @media (max-width: 767px) {
+    body.community-mode main.wrap { width: calc(100% - 20px); }
+    body.community-mode .app-dock { left: 50%; right: auto; transform: translateX(-50%); }
+    body.community-mode .bmn-comments-panel { width: 100%; border-radius: 24px 24px 0 0; }
+    body.community-mode .bmn-comments-sheet.open { align-items: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body.community-mode *, body.community-mode *::before, body.community-mode *::after {
+      scroll-behavior: auto !important;
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+<script id="bmn-community-v3-accessibility">
+(function(){
+  'use strict';
+  // Keep comment and profile overlays dismissible with Escape without changing backend behavior.
+  document.addEventListener('keydown', function(event){
+    if (event.key !== 'Escape') return;
+    var commentSheet = document.getElementById('bmnCommentsSheet');
+    if (commentSheet && commentSheet.classList.contains('open')) {
+      commentSheet.classList.remove('open');
+      document.body.classList.remove('bmn-sheet-open');
+    }
+    var profileModal = document.querySelector('.bmn-profile-modal.open');
+    if (profileModal) profileModal.classList.remove('open');
+  });
+  // Avoid accidental form resubmission when a user taps a submit control repeatedly.
+  document.addEventListener('submit', function(event){
+    var form = event.target;
+    if (!(form instanceof HTMLFormElement) || form.dataset.bmnSubmitting === '1') return;
+    if (!form.matches('#bmnConversationForm, #bmnCommentsSheetForm')) return;
+    form.dataset.bmnSubmitting = '1';
+    window.setTimeout(function(){ delete form.dataset.bmnSubmitting; }, 1800);
+  }, true);
+})();
+</script>
+
 </body>
 </html>
