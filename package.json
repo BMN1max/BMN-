@@ -1,0 +1,26 @@
+{
+  "name": "bmn-community-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional BMN Community API for secure uploads, Socket.IO messages, creator tips, HLS transcoding and Redis feed caching.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "redis": "^5.8.0",
+    "socket.io": "^4.8.1",
+    "stripe": "^18.5.0"
+  }
+}

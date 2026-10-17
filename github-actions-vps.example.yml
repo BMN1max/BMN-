@@ -1,0 +1,39 @@
+# OPTIONAL EXAMPLE ONLY: do not move into .github/workflows until a VPS is configured.
+name: Optional BMN API VPS Deployment
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'deploy/**'
+      - '.github/workflows/**'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install backend dependencies and test
+        working-directory: backend
+        run: |
+          npm install
+          npm test
+      - name: Deploy backend over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd /var/www/bmn/backend
+            git pull origin main
+            npm install --omit=dev
+            pm2 reload bmn-api --update-env
+            sudo nginx -t
+            sudo systemctl reload nginx
