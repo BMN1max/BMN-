@@ -1168,7 +1168,7 @@ function renderCommunityPosts(posts,likesByPost={},myLikes=new Set()){
   const followingOk=bmnFeedMode!=='following'||(bmnFollowing.has(post.user_id));
   return followingOk&&(!q||haystack.includes(q))&&catOk;
  });
- if(!filtered.length){communityFeed.innerHTML='<div class="backend-empty">'+(posts.length?'No posts match this search or filter yet.':'No community posts yet. Sign in and publish the first one.')+'</div>';return;}
+ if(!filtered.length){const emptyMessage=bmnFeedMode==='following'?(!bmnSession?'Sign in to see posts from creators you follow.':'Your Following feed is empty. Follow creators from Discover to see their posts here.'):(posts.length?'No posts match this search or filter yet.':'No community posts yet. Sign in and publish the first one.');communityFeed.innerHTML='<div class="backend-empty bmn-feed-empty"><span class="bmn-feed-empty-icon">'+(bmnFeedMode==='following'?'◎':'✦')+'</span><p>'+escapeHTML(emptyMessage)+'</p>'+(bmnFeedMode==='following'&&!bmnSession?'<button type="button" class="backend-btn primary" data-feed-signin>Go to sign in</button>':bmnFeedMode==='following'?'<button type="button" class="backend-btn primary" data-feed-discover>Discover creators</button>':'')+'</div>';return;}
  communityFeed.innerHTML=filtered.map(post=>{
   const profile=bmnProfiles[post.user_id]||{},name=profile.display_name||profile.username||'BMN creator',username=profile.username?'@'+profile.username:'Community member';
   const liked=myLikes.has(post.id),count=likesByPost[post.id]||0,isMine=bmnSession?.user?.id===post.user_id,comments=cachedComments[post.id]||[];
@@ -1176,18 +1176,32 @@ function renderCommunityPosts(posts,likesByPost={},myLikes=new Set()){
   if(post.media_display_url){
    media=post.media_type==='video'
     ?'<video autoplay muted loop playsinline preload="metadata" src="'+escapeHTML(post.media_display_url)+'" aria-label="Community video — tap to pause or play"></video>'
-    :'<a href="'+escapeHTML(post.media_display_url)+'" target="_blank" rel="noopener noreferrer"><img loading="lazy" src="'+escapeHTML(post.media_display_url)+'" alt="Community post media" onerror="this.style.display=\'none\'"></a>';
+    :'<img loading=\"lazy\" decoding=\"async\" src=\"'+escapeHTML(post.media_display_url)+'\" alt=\"Community post media\" onerror=\"this.style.display=\'none\'\">';
   }
   const preview='<div class="post-preview '+(media?'has-media':'is-text')+'">'+(media||'<span>'+(post.media_url?'▧ Media attached':'✦ BMN Community')+'</span>')+'</div>';
   return '<article class="community-post glass glass-lens" data-post-id="'+escapeHTML(post.id)+'">'+preview+'<div class="post-meta"><button class="bmn-profile-open" type="button" data-profile-id="'+escapeHTML(post.user_id)+'">'+bmnAvatarMarkup(profile)+'<span><strong>'+escapeHTML(name)+'</strong><small>'+escapeHTML(username)+'</small></span></button><small>'+escapeHTML(shortDate(post.created_at))+' · ◉ '+Number(post.views||0).toLocaleString()+'</small></div>'+(profile.bio?'<p class="body-copy">'+escapeHTML(profile.bio)+'</p>':'')+'<div class="post-content">'+escapeHTML(post.content||'')+'</div><div class="post-actions"><button class="post-action bmn-like '+(liked?'liked':'')+'" type="button" data-id="'+escapeHTML(post.id)+'" aria-label="Like post" title="Like"><span style="font-size:25px;line-height:1">'+(liked?'♥':'♡')+'</span><span>'+count+'</span></button><button class="post-action bmn-toggle-comments" type="button" data-id="'+escapeHTML(post.id)+'" aria-label="Open comments" title="Comments"><span style="font-size:22px;line-height:1">▢</span><span>'+comments.length+'</span></button><button class="post-action bmn-share" type="button" data-id="'+escapeHTML(post.id)+'" aria-label="Share post" title="Share"><span style="font-size:23px;line-height:1">↗</span><span>Share</span></button>'+(isMine?'<button class="post-action bmn-delete" type="button" data-id="'+escapeHTML(post.id)+'">Delete</button>':'')+'</div><div class="bmn-comments comments-collapsed" id="bmnComments-'+escapeHTML(post.id)+'"><div class="bmn-comment-list">'+comments.map(c=>'<p><strong>'+escapeHTML((bmnProfiles[c.user_id]||{}).display_name||(bmnProfiles[c.user_id]||{}).username||'Creator')+'</strong> '+escapeHTML(c.content)+' <small>'+escapeHTML(shortDate(c.created_at))+'</small></p>').join('')+'</div><div class="backend-row" style="margin-top:8px"><input class="bmn-comment-input" data-id="'+escapeHTML(post.id)+'" maxlength="1000" placeholder="Write a comment…" aria-label="Write a comment"><button class="backend-btn bmn-submit-comment" type="button" data-id="'+escapeHTML(post.id)+'">Reply</button></div></div></article>';
  }).join('');
 }
+// Performance pass: only play the post nearest the viewport; pause off-screen videos.
+const bmnBaseRenderCommunityPosts=renderCommunityPosts;
+let bmnFeedPlaybackObserver=null;
+function bmnApplyFeedMediaPlayback(){
+ if(!communityFeed)return;
+ if(bmnFeedPlaybackObserver){bmnFeedPlaybackObserver.disconnect();bmnFeedPlaybackObserver=null;}
+ const videos=Array.from(communityFeed.querySelectorAll('video'));
+ videos.forEach(video=>{video.muted=true;video.playsInline=true;video.preload='metadata';video.setAttribute('playsinline','');video.setAttribute('muted','');});
+ if(!('IntersectionObserver' in window)){videos.forEach(video=>{if(video.closest('.community-post')?.getBoundingClientRect().top < innerHeight)video.play().catch(()=>{});else video.pause();});return;}
+ bmnFeedPlaybackObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{const video=entry.target.querySelector('video');if(!video)return;if(entry.isIntersecting&&entry.intersectionRatio>=0.55){video.play().catch(()=>{});}else{video.pause();}});},{threshold:[0,0.55,1]});
+ communityFeed.querySelectorAll('.community-post').forEach(post=>bmnFeedPlaybackObserver.observe(post));
+}
+renderCommunityPosts=function(...args){bmnBaseRenderCommunityPosts(...args);bmnApplyFeedMediaPlayback();};
+
 function bmnMediaKind(fileOrPost){const type=fileOrPost?.type||'';const name=fileOrPost?.name||fileOrPost?.media_url||'';return type.startsWith('video/')||/\.(mp4|mov|m4v|webm)(\?|$)/i.test(name)?'video':'image'}
 function bmnAvatarMarkup(profile={},large=false){const name=profile.display_name||profile.username||'BMN';const letter=escapeHTML((name.trim()[0]||'B').toUpperCase());const url=profile.avatar_display_url||profile.avatar_url||'';return '<span class="bmn-avatar '+(large?'large':'')+'">'+(url?'<img class="bmn-avatar-image" src="'+escapeHTML(url)+'" alt="" loading="lazy" onerror="this.remove()">':letter)+'</span>'}
 function updateAvatarEditor(profile={}){const el=$('#bmnAvatarCurrent');if(!el)return;const url=profile.avatar_display_url||profile.avatar_url;if(url){el.innerHTML='<img class="bmn-avatar-image" src="'+escapeHTML(url)+'" alt="Your profile picture">'}else el.textContent=(profile.display_name||profile.username||'BMN').trim()[0]?.toUpperCase()||'B'}
 async function uploadCommunityFile(file,folder='posts'){if(!bmnSupabase||!bmnSession)throw new Error('Sign in before uploading media.');if(!file) return null;if(file.size>(folder==='avatars'?5:50)*1024*1024)throw new Error(folder==='avatars'?'Profile pictures must be 5 MB or smaller.':'Choose a file smaller than 50 MB.');const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');const path=bmnSession.user.id+'/'+folder+'/'+Date.now()+'-'+safeName;const {error}=await bmnSupabase.storage.from('community-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||undefined});if(error)throw error;return 'storage:'+path}
 async function resolveStorageUrl(value){if(!value)return '';if(!String(value).startsWith('storage:'))return value;const path=String(value).slice(8);const {data,error}=await bmnSupabase.storage.from('community-media').createSignedUrl(path,3600);if(error)throw error;return data?.signedUrl||''}
-const bmnViewedPosts=new Set();let bmnViewObserver=null;function trackCommunityPostViews(){if(!communityFeed||!bmnSupabase)return;if(!('IntersectionObserver'in window))return;if(bmnViewObserver)bmnViewObserver.disconnect();bmnViewObserver=new IntersectionObserver(entries=>{entries.forEach(async entry=>{if(!entry.isIntersecting)return;const card=entry.target,id=card.dataset.postId;if(!id||bmnViewedPosts.has(id))return;bmnViewedPosts.add(id);bmnViewObserver.unobserve(card);if(bmnSession?.user?.id&&cachedPosts.find(p=>p.id===id)?.user_id===bmnSession.user.id)return;try{const {error}=await bmnSupabase.rpc('increment_post_view',{p_post_id:id});if(error)return;const post=cachedPosts.find(p=>p.id===id);if(post)post.views=Number(post.views||0)+1;const label=card.querySelector('.post-meta>small');if(label)label.textContent=shortDate(post?.created_at)+' · ◉ '+Number(post?.views||0).toLocaleString();}catch(_){}})},{threshold:.55});communityFeed.querySelectorAll('[data-post-id]').forEach(card=>{if(!bmnViewedPosts.has(card.dataset.postId))bmnViewObserver.observe(card)})}
+const bmnViewedPosts=new Set();let bmnViewObserver=null;function trackCommunityPostViews(){if(!communityFeed||!bmnSupabase)return;if(!('IntersectionObserver'in window))return;if(bmnViewObserver)bmnViewObserver.disconnect();bmnViewObserver=new IntersectionObserver(entries=>{entries.forEach(async entry=>{if(!entry.isIntersecting)return;const card=entry.target,id=card.dataset.postId;if(!id||bmnViewedPosts.has(id))return;bmnViewedPosts.add(id);bmnViewObserver.unobserve(card);const post=cachedPosts.find(p=>p.id===id);if(!bmnSession?.user?.id||post?.user_id===bmnSession.user.id)return;try{const {data,error}=await bmnSupabase.rpc('increment_post_view_once',{p_post_id:id});if(error)return;const total=Number(data);if(!Number.isFinite(total)||total<0)return;if(post)post.views=total;const label=card.querySelector('.post-meta>small');if(label)label.textContent=shortDate(post?.created_at)+' · ◉ '+total.toLocaleString();}catch(_){}})},{threshold:.55});communityFeed.querySelectorAll('[data-post-id]').forEach(card=>{if(!bmnViewedPosts.has(card.dataset.postId))bmnViewObserver.observe(card)})}
 async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connecting to community service…',true);return}if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Loading BMN Community…</div>';try{const {data:posts,error}=await bmnSupabase.from('posts').select('*').order('created_at',{ascending:false}).limit(100);if(error)throw error;cachedPosts=posts||[];bmnFollowing.clear();if(bmnSession?.user?.id){try{const followResult=await bmnSupabase.from('follows').select('following_id').eq('follower_id',bmnSession.user.id);if(!followResult.error)(followResult.data||[]).forEach(row=>bmnFollowing.add(row.following_id))}catch(_){}}const userIds=[...new Set(cachedPosts.map(p=>p.user_id).filter(Boolean))];if(bmnSession?.user?.id&&!userIds.includes(bmnSession.user.id))userIds.push(bmnSession.user.id);bmnProfiles={};if(userIds.length){const pr=await bmnSupabase.from('profiles').select('*').in('id',userIds);if(!pr.error)(pr.data||[]).forEach(p=>bmnProfiles[p.id]=p)}
 // Resolve private-bucket URLs for posts and avatars without making the bucket public.
 await Promise.all(cachedPosts.map(async p=>{p.media_type=p.media_type||bmnMediaKind({media_url:p.media_url});try{p.media_display_url=await resolveStorageUrl(p.media_url)}catch(_){p.media_display_url=''}}));await Promise.all(Object.values(bmnProfiles).map(async p=>{try{p.avatar_display_url=await resolveStorageUrl(p.avatar_url)}catch(_){p.avatar_display_url=''}}));
@@ -1457,6 +1471,31 @@ function bmnUpgradeDiscover(){
  if(search){search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();const posts=(cachedPosts||[]).filter(p=>!q||String(p.content||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.username||'').toLowerCase().includes(q)||(bmnProfiles[p.user_id]?.display_name||'').toLowerCase().includes(q));result.textContent=posts.length?posts.length+' matching posts found. Open Home to watch them in the full-screen feed.':'No matching posts found. Try another creator, caption or hashtag.';const grid=$('#bmnCreatorGrid');if(grid)grid.querySelectorAll('.creator-card').forEach(card=>card.style.display=!q||card.textContent.toLowerCase().includes(q)?'':'none')})}
 }
 bmnUpgradeDiscover();
+
+// Feed empty-state actions and final responsive polish.
+communityFeed?.addEventListener('click',event=>{
+ const signin=event.target.closest('[data-feed-signin]');
+ if(signin){setAppView('profile');setTimeout(()=>$('#bmnEmail')?.focus({preventScroll:true}),120);return;}
+ const discover=event.target.closest('[data-feed-discover]');
+ if(discover){setAppView('discover');return;}
+});
+const bmnFinalPolish=document.createElement('style');
+bmnFinalPolish.id='bmn-final-polish-pass';
+bmnFinalPolish.textContent=`
+ body.community-mode[data-app-screen]:not([data-app-screen="home"]) #bmnFeedTabs{display:none!important}
+ body.community-mode[data-app-screen="home"] #bmnFeedTabs{display:flex!important}
+ body.community-mode .bmn-feed-empty{min-height:55svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px 22px;text-align:center;background:transparent!important;border:0!important;color:var(--fg)}
+ body.community-mode .bmn-feed-empty p{max-width:300px;margin:0;color:var(--muted);line-height:1.6}
+ body.community-mode .bmn-feed-empty-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:20px;border:1px solid var(--clear-glass-border);background:var(--clear-glass-bg);font-size:28px;backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%)}
+ body.community-mode #bmnFeedTabs{max-width:calc(100vw - 24px);box-sizing:border-box}
+ body.community-mode #bmnFeedTabs button{min-height:38px;touch-action:manipulation}
+ body.community-mode #community .post-preview img{pointer-events:none}
+ body.community-mode #community .post-preview video{pointer-events:auto}
+ body.light.community-mode #bmnFeedTabs{color:#171b25}
+ @media(max-width:380px){body.community-mode #bmnFeedTabs button{padding-inline:10px;font-size:11px}}
+ @media(prefers-reduced-motion:reduce){body.community-mode #community .community-post,body.community-mode #bmnFeedTabs,body.community-mode .app-dock{scroll-behavior:auto;transition:none!important;animation:none!important}}
+`;
+document.head.appendChild(bmnFinalPolish);
 
 // Add resilient browser-native share and keyboard accessibility to the existing controls.
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.bmn-profile-menu-panel.open,.bmn-modal.open').forEach(el=>el.classList.remove('open'))}});
