@@ -996,6 +996,102 @@ body.community-mode .bmn-profile-menu-inner { padding-bottom:max(20px, var(--bmn
 }
 </style>
 
+
+/* BMN Liquid Glass navigation enhancement — adapted from the supplied Apple-style prototype */
+<style id="bmn-liquid-nav-enhancement">
+  .app-dock {
+    position: fixed !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    bottom: max(14px, env(safe-area-inset-bottom)) !important;
+    min-height: 72px !important;
+    height: 76px !important;
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    gap: 2px !important;
+    border-radius: 38px !important;
+    background: rgba(25,25,28,.68) !important;
+    border: .5px solid rgba(255,255,255,.18) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10) !important;
+    backdrop-filter: blur(30px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+    transform: translateZ(0);
+  }
+  .app-dock button {
+    position: relative !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    height: 62px !important;
+    padding: 5px 4px !important;
+    border: 0 !important;
+    border-radius: 30px !important;
+    background: transparent !important;
+    color: rgba(255,255,255,.52) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    font: 500 10px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif !important;
+    transition: transform .25s cubic-bezier(.32,.72,0,1), color .25s ease, background .25s ease !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app-dock button:active { transform: scale(.94) !important; }
+  .app-dock button.active {
+    color: var(--fg, #fff) !important;
+    background: rgba(255,255,255,.095) !important;
+  }
+  .app-dock .dock-symbol,
+  .app-dock .dock-create-symbol {
+    width: 30px !important;
+    height: 30px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 15px !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    transition: transform .25s cubic-bezier(.32,.72,0,1), background .25s ease, color .25s ease !important;
+  }
+  .app-dock button.active .dock-symbol {
+    background: rgba(255,255,255,.94) !important;
+    color: #050507 !important;
+    transform: scale(1.08) !important;
+  }
+  .app-dock .dock-create {
+    background: rgba(255,255,255,.06) !important;
+  }
+  .app-dock .dock-create-symbol {
+    background: rgba(255,255,255,.16) !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+  }
+  .app-dock .dock-dot {
+    position: absolute !important;
+    top: 9px !important;
+    right: calc(50% - 20px) !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #ff375f !important;
+    box-shadow: 0 0 0 3px rgba(255,55,95,.14) !important;
+  }
+  body.light .app-dock {
+    background: rgba(245,247,250,.68) !important;
+    border-color: rgba(0,0,0,.10) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.72) !important;
+  }
+  body.light .app-dock button { color: rgba(0,0,0,.48) !important; }
+  body.light .app-dock button.active { color: #000 !important; background: rgba(0,0,0,.055) !important; }
+  body.light .app-dock button.active .dock-symbol { background: #000 !important; color: #fff !important; }
+  @media (max-width: 600px) {
+    .app-dock { left: 10px !important; right: 10px !important; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-dock button, .app-dock .dock-symbol, .app-dock .dock-create-symbol { transition: none !important; }
+  }
+</style>
+
 </head>
 <body>
 
@@ -1895,6 +1991,44 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',updateInsights,{once:true});else updateInsights();
   // Refresh when the existing application finishes loading posts or returns to the profile.
   var attempts=0;var refreshTimer=window.setInterval(function(){attempts++;updateInsights();if(byId('bmnCreatorInsights')||attempts>40)window.clearInterval(refreshTimer);},250);
+})();
+</script>
+
+
+<script id="bmn-liquid-nav-enhancement-js">
+(()=>{
+  'use strict';
+  // Compatibility with the supplied prototype's nav('home', button) pattern.
+  window.nav=function(view, button){
+    if(typeof window.setAppView==='function') window.setAppView(view);
+    if(button){
+      document.querySelectorAll('.app-dock [data-app-view]').forEach(b=>b.classList.toggle('active', b===button));
+    }
+  };
+  // Add the smooth Apple-style motion to the existing BMN community screens.
+  function enhance(){
+    const screens=document.querySelectorAll('.bmn-app-screen');
+    if(!screens.length) return;
+    screens.forEach(screen=>screen.style.transition='opacity .28s ease, transform .38s cubic-bezier(.32,.72,0,1)');
+    const observer=new MutationObserver(()=>{
+      const current=document.body.dataset.appScreen || 'home';
+      screens.forEach(screen=>{
+        const active=screen.dataset.screen===current;
+        screen.style.opacity=active?'1':'0';
+        screen.style.transform=active?'translateX(0)':'translateX(18px)';
+      });
+    });
+    observer.observe(document.body,{attributes:true,attributeFilter:['data-app-screen']});
+    observer.takeRecords();
+    const current=document.body.dataset.appScreen || 'home';
+    screens.forEach(screen=>{
+      const active=screen.dataset.screen===current;
+      screen.style.opacity=active?'1':'0';
+      screen.style.transform=active?'translateX(0)':'translateX(18px)';
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',enhance,{once:true});
+  else enhance();
 })();
 </script>
 
