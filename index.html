@@ -574,6 +574,43 @@ body.community-mode #community .community-post .bmn-comments.comments-collapsed{
 .bmn-profile-follow-row{display:flex;gap:9px;flex-wrap:wrap;margin:13px 0}.bmn-profile-follow-row button{flex:1;min-width:120px}.bmn-profile-stat small{white-space:nowrap}
 @media(max-width:700px){body.community-mode #communityFeed{gap:10px}body.community-mode #community .community-post{height:calc(100svh - 108px);min-height:540px;border-radius:24px!important}body.community-mode #community .community-post .post-meta{left:14px;right:76px;bottom:116px}body.community-mode #community .community-post .post-content{left:15px;right:76px;bottom:20px;font-size:13px}body.community-mode #community .community-post .post-actions{right:9px;bottom:20px;gap:10px}body.community-mode #community .community-post .post-action{width:45px;min-height:45px;border-radius:16px}body.community-mode #communityPage .community-feedbar{top:4px}body.community-mode #communityPage .community-feedbar button{padding:9px 11px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){body.community-mode #community .community-post,body.community-mode #community .post-action{transition:none!important;scroll-behavior:auto!important}}
+
+/* BMN Community profile layout correction — compact, centered, mobile-safe */
+body.community-mode{overflow-x:hidden}
+body.community-mode #bmnAppScreens{width:100%;max-width:760px;margin:0 auto;overflow-x:hidden}
+body.community-mode #appProfileScreen{box-sizing:border-box;width:100%;max-width:680px;margin:0 auto;padding:92px 0 96px!important;min-height:calc(100svh - 74px);overflow-x:hidden}
+body.community-mode #appProfileScreen .app-screen-heading{display:none!important}
+body.community-mode .bmn-own-profile{width:100%;max-width:680px;margin:0 auto;padding:0 16px 28px;box-sizing:border-box}
+body.community-mode .bmn-own-profile-head{width:100%;display:grid;grid-template-columns:78px minmax(0,1fr) 42px;gap:14px;align-items:center;box-sizing:border-box}
+body.community-mode .bmn-own-avatar{width:78px;height:78px;max-width:78px;border-radius:50%;overflow:hidden;box-sizing:border-box}
+body.community-mode .bmn-own-profile-head>div:nth-child(2){min-width:0}
+body.community-mode .bmn-own-profile-head h2{font-size:23px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.community-mode .bmn-own-profile-head p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.community-mode .bmn-own-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:20px 0 14px;padding:0;box-sizing:border-box}
+body.community-mode .bmn-own-stats>div{min-width:0;padding:4px 2px}
+body.community-mode .bmn-own-stats strong{font-size:18px;line-height:1.1;white-space:nowrap}
+body.community-mode .bmn-own-stats span{font-size:10px;white-space:nowrap}
+body.community-mode .bmn-own-bio{max-width:620px;margin:0 0 14px;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+body.community-mode .bmn-own-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+body.community-mode .bmn-own-actions button{min-width:0;padding:10px 8px;font-size:12px}
+body.community-mode .bmn-own-tabs{width:100%;margin-top:16px;grid-template-columns:repeat(4,1fr);box-sizing:border-box}
+body.community-mode .bmn-own-tab{min-width:0;height:44px;font-size:19px}
+body.community-mode .bmn-own-post-grid{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;margin-left:0;margin-right:0;box-sizing:border-box}
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile{width:100%;height:auto;aspect-ratio:1/1;border-radius:0;min-width:0}
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile img,body.community-mode .bmn-own-post-grid .bmn-profile-post-tile video{width:100%;height:100%;display:block;object-fit:cover}
+body.community-mode .bmn-own-post-grid .bmn-profile-post-tile>span{max-width:calc(100% - 12px);font-size:9px}
+@media(max-width:430px){
+ body.community-mode #appProfileScreen{padding-top:78px!important;padding-bottom:90px!important}
+ body.community-mode .bmn-own-profile{padding-left:12px;padding-right:12px}
+ body.community-mode .bmn-own-profile-head{grid-template-columns:68px minmax(0,1fr) 38px;gap:11px}
+ body.community-mode .bmn-own-avatar{width:68px;height:68px;max-width:68px}
+ body.community-mode .bmn-own-profile-head h2{font-size:21px}
+ body.community-mode .bmn-own-stats{margin-top:16px}
+ body.community-mode .bmn-own-stats strong{font-size:16px}
+ body.community-mode .bmn-own-stats span{font-size:9px}
+}
+@media(min-width:701px){body.community-mode #appProfileScreen{padding-top:100px!important}body.community-mode .bmn-own-profile{padding-left:20px;padding-right:20px}}
+
 </style>
 
 <style id="bmn-platform-features">
