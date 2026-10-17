@@ -1,1 +1,17 @@
-{"name":"BMN Liquid Glass 10.0","short_name":"BMN","start_url":"./index.html#home","display":"standalone","background_color":"#050711","theme_color":"#070a14","description":"BMN premium Liquid Glass experience","icons":[{"src":"bmn-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "id": "/",
+  "name": "BMN Community",
+  "short_name": "BMN",
+  "description": "BMN — creator, editor, storyteller and community for sharing edits.",
+  "start_url": "/#community-page",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d1117",
+  "theme_color": "#05070c",
+  "icons": [
+    { "src": "/bmn-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/bmn-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/bmn-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
