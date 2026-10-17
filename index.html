@@ -1151,10 +1151,151 @@ body.community-mode .app-screen-heading {
 #bmn-action-sheet.open .bmn-action-item{animation:bmnSheetWobble .72s cubic-bezier(.16,1.18,.3,1) both}
 #bmn-action-sheet.open .bmn-action-item:nth-child(2){animation-delay:.025s}#bmn-action-sheet.open .bmn-action-item:nth-child(3){animation-delay:.05s}#bmn-action-sheet.open .bmn-action-item:nth-child(4){animation-delay:.075s}#bmn-action-sheet.open .bmn-action-item:nth-child(5){animation-delay:.1s}#bmn-action-sheet.open .bmn-action-item:nth-child(6){animation-delay:.125s}#bmn-action-sheet.open .bmn-action-item:nth-child(7){animation-delay:.15s}#bmn-action-sheet.open .bmn-action-item:nth-child(8){animation-delay:.175s}
 @media (prefers-reduced-motion:reduce){#bmn-action-sheet,#bmn-action-backdrop{transition-duration:.01ms}#bmn-action-sheet.open .bmn-action-item{animation:none}}
+
+/* BMN Crystal Clear system pass: unified edge light, theme tokens and safer touch states. */
+:root{
+ --bmn-obsidian:#03050b;--bmn-ink:#080d18;--bmn-silver:#dce6f0;
+ --bmn-crystal-blue:#69b7ff;--bmn-crystal-cyan:#48e3ef;--bmn-crystal-violet:#9276ff;
+ --bmn-glass-surface:rgba(255,255,255,.035);
+ --bmn-glass-edge:rgba(255,255,255,.24);
+ --bmn-glass-edge-hot:rgba(255,255,255,.42);
+ --bmn-glass-inner:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(0,0,0,.18);
+ --bmn-glass-depth:0 18px 54px rgba(0,0,0,.22);
+ --bmn-glass-blur:14px;
+ --bmn-motion:cubic-bezier(.22,1,.36,1);
+}
+body.light{
+ --bmn-glass-surface:rgba(255,255,255,.40);
+ --bmn-glass-edge:rgba(255,255,255,.72);
+ --bmn-glass-edge-hot:rgba(255,255,255,.96);
+ --bmn-glass-inner:inset 0 1px 0 rgba(255,255,255,.82),inset 0 -1px 0 rgba(45,65,90,.07);
+ --bmn-glass-depth:0 18px 48px rgba(45,65,90,.13);
+}
+.glass,.apple-clear-glass,.apple-liquid-glass,.glass-lens{
+ border-color:var(--bmn-glass-edge);
+ box-shadow:var(--bmn-glass-inner),var(--bmn-glass-depth);
+}
+.glass:focus-within,.apple-clear-glass:focus-within,.apple-liquid-glass:focus-within{
+ border-color:var(--bmn-glass-edge-hot);
+}
+.pill,.icon-btn,.view-switch button,.app-dock button,.app-dock a,#bmn-action-sheet .bmn-action-item{
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.pill:focus-visible,.icon-btn:focus-visible,.view-switch button:focus-visible,.app-dock button:focus-visible,.app-dock a:focus-visible,#bmn-action-sheet button:focus-visible{
+ outline:2px solid var(--bmn-crystal-blue);outline-offset:3px;
+}
+#bmn-liquid-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block;opacity:.88}
+body.light #bmn-liquid-canvas{opacity:.48}
+body.low-power #bmn-liquid-canvas{opacity:.56}
+body.light.low-power #bmn-liquid-canvas{opacity:.32}
+body[data-mood="slate"]{--tint-a:rgba(65,145,170,.22);--tint-b:rgba(85,112,145,.18);--tint-c:rgba(87,205,190,.16)}
+body[data-mood="amethyst"]{--tint-a:rgba(112,89,255,.27);--tint-b:rgba(214,87,174,.20);--tint-c:rgba(113,158,255,.17)}
+body[data-mood="edit"]{--tint-a:rgba(0,165,255,.30);--tint-b:rgba(119,70,255,.25);--tint-c:rgba(0,230,240,.20)}
+@media(max-width:600px){.glass,.apple-clear-glass,.apple-liquid-glass{backdrop-filter:blur(10px) saturate(135%);-webkit-backdrop-filter:blur(10px) saturate(135%)}}
+@media(prefers-reduced-motion:reduce){#bmn-liquid-canvas{opacity:.38}}
+
 </style>
+
+<style id="bmn-crystal-clear-unified-pass">
+:root{
+ --bmn-cc-bg:#03050b;--bmn-cc-text:#f8fbff;--bmn-cc-muted:#c4cedb;
+ --bmn-cc-surface:rgba(255,255,255,.035);--bmn-cc-surface-hover:rgba(255,255,255,.075);
+ --bmn-cc-edge:rgba(255,255,255,.22);--bmn-cc-edge-hot:rgba(255,255,255,.43);
+ --bmn-cc-reflection:inset 0 1px 0 rgba(255,255,255,.20),inset 0 -1px 0 rgba(0,0,0,.22);
+ --bmn-cc-shadow:0 18px 54px rgba(0,0,0,.22);--bmn-cc-blur:16px;
+ --bmn-cc-ease:cubic-bezier(.22,1,.36,1);--bmn-cc-spring:cubic-bezier(.16,1.12,.3,1);
+}
+body{color:var(--fg,var(--bmn-cc-text));overflow-x:clip;}
+body.light{--bmn-cc-text:#101827;--bmn-cc-muted:#39485d;--bmn-cc-surface:rgba(255,255,255,.43);--bmn-cc-surface-hover:rgba(255,255,255,.63);--bmn-cc-edge:rgba(255,255,255,.76);--bmn-cc-edge-hot:rgba(255,255,255,.98);--bmn-cc-reflection:inset 0 1px 0 rgba(255,255,255,.88),inset 0 -1px 0 rgba(35,57,85,.08);--bmn-cc-shadow:0 18px 48px rgba(35,57,85,.13)}
+/* One coherent surface language across cards, profile panels, navigation and sheets. */
+.glass,.glass-lens,.apple-clear-glass,.apple-liquid-glass,.card,.step,.social-card,.about-panel,.live-panel,.hero-art,.app-dock,.bmn-creator-insights,.bmn-comments-panel,.bmn-comments-sheet,.bmn-conversation-compose,.bmn-comments-compose{
+ border-color:var(--bmn-cc-edge);box-shadow:var(--bmn-cc-reflection),var(--bmn-cc-shadow);}
+.card,.step,.social-card,.about-panel,.live-panel,.hero-art,.bmn-creator-insights,.bmn-comments-panel,.bmn-comments-sheet{
+ background-color:var(--bmn-cc-surface);backdrop-filter:blur(var(--bmn-cc-blur)) saturate(145%);-webkit-backdrop-filter:blur(var(--bmn-cc-blur)) saturate(145%);}
+.glass::after,.glass-lens::after,.apple-clear-glass::after,.apple-liquid-glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(132deg,rgba(255,255,255,.13),transparent 25%,transparent 72%,rgba(255,255,255,.035));opacity:.62}
+button,.pill,.icon-btn,.app-dock a,.app-dock button,.view-switch button,.post-action,.bmn-feed-tabs button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background-color .22s var(--bmn-cc-ease),border-color .22s var(--bmn-cc-ease),box-shadow .22s var(--bmn-cc-ease),transform .28s var(--bmn-cc-spring)}
+button:active,.pill:active,.icon-btn:active,.app-dock a:active,.app-dock button:active,.view-switch button:active,.post-action:active{transform:scale(.965)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,[role="button"]:focus-visible{outline:2px solid #69b7ff;outline-offset:3px}
+/* Make selected navigation clearly distinct without turning every control white. */
+.app-dock [aria-current="page"],.app-dock .active,.view-switch button.active,.bmn-feed-tabs button.active,[data-app-view].active{background:linear-gradient(145deg,rgba(105,183,255,.23),rgba(72,227,239,.09));border-color:rgba(105,183,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 0 0 1px rgba(105,183,255,.10),0 7px 22px rgba(30,115,230,.12);color:var(--fg,#fff)}
+body.light .app-dock [aria-current="page"],body.light .app-dock .active,body.light .view-switch button.active,body.light .bmn-feed-tabs button.active,body.light [data-app-view].active{background:linear-gradient(145deg,rgba(58,133,225,.18),rgba(72,190,205,.12));border-color:rgba(57,126,210,.38);color:#10213b}
+/* Stable, viewport-safe floating dock on iPhone and narrow Android devices. */
+body.community-mode .app-dock{left:50%!important;right:auto!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%)!important;width:min(520px,calc(100vw - 20px))!important;max-width:calc(100vw - 20px)!important;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;padding:7px;box-sizing:border-box;max-height:calc(100dvh - 24px);}
+body.community-mode .app-dock button,body.community-mode .app-dock a{min-width:0;min-height:44px;padding:7px 4px;overflow:hidden;text-overflow:ellipsis;}
+/* The action sheet shares the same edge, reflection and active-state system. */
+#bmn-action-sheet{color:var(--bmn-cc-text);border-color:var(--bmn-cc-edge);box-shadow:var(--bmn-cc-reflection),0 28px 80px rgba(0,0,0,.36);max-width:680px;left:50%;right:auto;width:calc(100% - 20px);transform:translate(-50%,calc(100% + 40px)) scale(.965);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+#bmn-action-sheet.open{transform:translate(-50%,0) scale(1);animation:bmn-sheet-settle .46s cubic-bezier(.2,.9,.25,1) both}
+@keyframes bmn-sheet-settle{0%{transform:translate(-50%,calc(100% + 40px)) scale(.965);opacity:.7}68%{transform:translate(-50%,-3px) scale(1.006);opacity:1}84%{transform:translate(-50%,1.5px) scale(.998)}100%{transform:translate(-50%,0) scale(1);opacity:1}}
+#bmn-action-sheet .bmn-action-item{transition:transform .22s cubic-bezier(.2,.8,.2,1),background-color .22s var(--bmn-cc-ease),border-color .22s var(--bmn-cc-ease)}
+#bmn-action-sheet .bmn-action-item:active{transform:scale(.985)}
+.personal-section,.community-post,.bmn-app-screen{will-change:opacity,transform}
+@media(prefers-reduced-motion:no-preference){.personal-section.reveal.visible{animation:bmn-page-arrive .34s var(--bmn-cc-ease) both}}
+@keyframes bmn-page-arrive{from{opacity:.82;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+body.light #bmn-action-sheet{color:#101827;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(238,246,252,.55));border-color:rgba(255,255,255,.88)}
+#bmn-action-sheet .bmn-action-item{color:inherit;background:var(--bmn-cc-surface);border-color:var(--bmn-cc-edge);min-height:56px}
+#bmn-action-sheet .bmn-action-item:hover,#bmn-action-sheet .bmn-action-item:focus-visible{background:var(--bmn-cc-surface-hover);border-color:var(--bmn-cc-edge-hot)}
+#bmn-action-sheet .bmn-action-sub{color:var(--bmn-cc-muted);opacity:1}
+#bmn-action-sheet .bmn-sheet-cancel{color:inherit;background:var(--bmn-cc-surface);border-color:var(--bmn-cc-edge);min-height:48px}
+body.bmn-sheet-open{overflow:hidden;touch-action:none}
+#bmn-action-backdrop.open{background:rgba(1,4,12,.28)}
+/* Smooth existing page/screen changes, without animating layout-heavy properties. */
+.personal-section,.community-post,.bmn-app-screen{transition:opacity .28s var(--bmn-cc-ease),transform .38s var(--bmn-cc-spring)}
+html{scroll-behavior:smooth;scroll-padding-top:calc(84px + env(safe-area-inset-top,0px))}
+.topbar{padding-top:max(8px,env(safe-area-inset-top,0px))}
+main.wrap{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+@media(max-width:600px){.card,.step,.social-card,.about-panel,.live-panel,.hero-art,.bmn-creator-insights,.bmn-comments-panel,.bmn-comments-sheet{backdrop-filter:blur(10px) saturate(135%);-webkit-backdrop-filter:blur(10px) saturate(135%)}#bmn-action-sheet{max-height:min(78dvh,720px);bottom:calc(6px + env(safe-area-inset-bottom,0px));border-radius:28px}body.community-mode .app-dock{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;bottom:calc(6px + env(safe-area-inset-bottom,0px))!important}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+
+<style id="bmn-apple-spring-motion-pass">
+:root{--bmn-spring:cubic-bezier(.22,1,.36,1);--bmn-press:cubic-bezier(.2,.8,.2,1);--bmn-motion-fast:160ms;--bmn-motion-page:240ms;}
+/* Short, restrained motion: no perpetual bounce or animated glow. */
+@media(prefers-reduced-motion:no-preference){
+  .pill,button,[role="button"],.app-dock a,.app-dock button,.view-switch button,.bmn-feed-tabs button,
+  .glass,.glass-lens,.apple-clear-glass,.apple-liquid-glass,.card,.social-card,.about-panel,.live-panel{
+    transition:transform var(--bmn-motion-fast) var(--bmn-press),opacity var(--bmn-motion-page) var(--bmn-spring),
+      background-color 180ms ease,border-color 180ms ease,box-shadow 180ms ease,color 180ms ease;
+  }
+  button:active,.pill:active,[role="button"]:active,.app-dock a:active,.app-dock button:active{
+    transform:translateY(1px) scale(.975);transition-duration:85ms;
+  }
+  #bmn-action-backdrop{transition:opacity 210ms ease;}
+  #bmn-action-sheet{transform-origin:50% 100%;will-change:transform,opacity;}
+  #bmn-action-sheet.open{animation:bmnSheetSpring 390ms var(--bmn-spring) both;}
+  #bmn-action-sheet.open .bmn-action-item{animation:bmnItemSettle 260ms var(--bmn-spring) both;}
+  #bmn-action-sheet.open .bmn-action-item:nth-child(2){animation-delay:18ms}
+  #bmn-action-sheet.open .bmn-action-item:nth-child(3){animation-delay:28ms}
+  #bmn-action-sheet.open .bmn-action-item:nth-child(4){animation-delay:38ms}
+  #bmn-action-sheet.open .bmn-action-item:nth-child(n+5){animation-delay:44ms}
+  [data-screen]{transition:opacity var(--bmn-motion-page) var(--bmn-spring),transform var(--bmn-motion-page) var(--bmn-spring);}
+  @keyframes bmnSheetSpring{
+    0%{transform:translate3d(0,28px,0) scale(.985);opacity:.72}
+    64%{transform:translate3d(0,-2px,0) scale(1.002);opacity:1}
+    82%{transform:translate3d(0,1px,0) scale(.999)}
+    100%{transform:translate3d(0,0,0) scale(1);opacity:1}
+  }
+  @keyframes bmnItemSettle{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes bmnSheetLiquidWobble{
+    0%{transform:translate3d(0,0,0) scaleX(1)}
+    38%{transform:translate3d(0,-1px,0) scaleX(1.003)}
+    70%{transform:translate3d(0,1px,0) scaleX(.999)}
+    100%{transform:translate3d(0,0,0) scaleX(1)}
+  }
+  #bmn-action-sheet.bmn-settled{animation:bmnSheetLiquidWobble 220ms var(--bmn-spring) both;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+  #bmn-action-sheet,#bmn-action-backdrop,[data-screen]{animation:none!important;transition:none!important;}
+}
+@media(max-width:600px){
+  #bmn-action-sheet{padding-bottom:max(14px,env(safe-area-inset-bottom));max-height:calc(88dvh - env(safe-area-inset-top));overflow-y:auto;overscroll-behavior:contain;}
+  .bmn-action-item{min-height:54px;touch-action:manipulation;}
+}
+</style>
+
 </head>
 <body>
-
+<canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
 <div class="scene" aria-hidden="true"><div class="fluid f1"></div><div class="fluid f2"></div><div class="fluid f3"></div><div class="fluid f4"></div><div class="ribbon r1"></div><div class="ribbon r2"></div></div>
 <div class="scroll-progress" id="scrollProgress"></div>
 <header class="topbar glass glass-lens"><a class="brand" href="#home" aria-label="BMN home">BMN<sup>®</sup></a><nav class="navlinks" aria-label="Main navigation"><a href="#work">Edits</a><a href="#live">Activity</a><a href="#about">About</a><a href="#socials">Socials</a><a href="#community">Community</a><a href="#contact">Contact</a></nav><div class="view-switch" aria-label="BMN site views"><button type="button" class="active" data-view="personal">BMN</button><button type="button" data-view="community">Community</button></div><div class="top-actions"><button class="icon-btn" id="themeToggle" aria-label="Toggle light and dark appearance" title="Appearance">◐</button><button class="icon-btn" id="settingsOpen" aria-label="Open website settings" title="Website settings">☷</button></div></header>
@@ -1244,7 +1385,7 @@ function setTheme(mode){body.classList.toggle('light',mode==='light');$('#themeT
 try{if(localStorage.getItem('bmn-theme')==='light')setTheme('light')}catch(e){}
 $('#themeToggle').addEventListener('click',()=>setTheme(body.classList.contains('light')?'dark':'light'));
 $('#themeSetting').addEventListener('click',()=>setTheme(body.classList.contains('light')?'dark':'light'));
-function setPower(on){body.classList.toggle('low-power',on);$('#powerToggle').setAttribute('aria-checked',String(on));try{localStorage.setItem('bmn-low-power',String(on))}catch(e){}}
+function setPower(on){body.classList.toggle('low-power',on);$('#powerToggle').setAttribute('aria-checked',String(on));try{localStorage.setItem('bmn-low-power',String(on))}catch(e){}if(window.BMNBackground&&typeof window.BMNBackground.setLowPower==='function')window.BMNBackground.setLowPower(on)}
 try{setPower(localStorage.getItem('bmn-low-power')==='true')}catch(e){}
 $('#powerToggle').addEventListener('click',()=>setPower($('#powerToggle').getAttribute('aria-checked')!=='true'));
 const moods={blue:['rgba(0,122,255,.25)','rgba(177,90,255,.19)','rgba(45,231,218,.17)'],violet:['rgba(126,76,255,.22)','rgba(255,45,125,.16)','rgba(54,166,255,.18)'],mint:['rgba(25,205,185,.21)','rgba(53,145,255,.17)','rgba(255,209,102,.12)'],pearl:['rgba(255,255,255,.13)','rgba(101,154,255,.17)','rgba(255,209,102,.13)']};
@@ -2087,16 +2228,69 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
     wrap.innerHTML=`<div id="bmn-action-backdrop" aria-hidden="true"></div><section id="bmn-action-sheet" role="dialog" aria-modal="true" aria-label="BMN actions" aria-hidden="true"><div class="bmn-sheet-handle"></div><div class="bmn-sheet-title">BMN</div><div class="bmn-action-list"><button class="bmn-action-item" data-action="photo"><span class="bmn-action-icon">📷</span><span class="bmn-action-copy"><span class="bmn-action-name">Photo</span><span class="bmn-action-sub">Choose a photo to create with</span></span></button><button class="bmn-action-item" data-action="video"><span class="bmn-action-icon">🎥</span><span class="bmn-action-copy"><span class="bmn-action-name">Video</span><span class="bmn-action-sub">Share an edit or community video</span></span></button><button class="bmn-action-item" data-action="sound"><span class="bmn-action-icon">🎵</span><span class="bmn-action-copy"><span class="bmn-action-name">Sound</span><span class="bmn-action-sub">Pick a sound for your next post</span></span></button><button class="bmn-action-item" data-action="create"><span class="bmn-action-icon">✦</span><span class="bmn-action-copy"><span class="bmn-action-name">Create Post</span><span class="bmn-action-sub">Start a new BMN post</span></span></button><button class="bmn-action-item" data-action="friends"><span class="bmn-action-icon">👥</span><span class="bmn-action-copy"><span class="bmn-action-name">Find Friends</span><span class="bmn-action-sub">Discover people on BMN</span></span></button><button class="bmn-action-item" data-action="live"><span class="bmn-action-icon">🔴</span><span class="bmn-action-copy"><span class="bmn-action-name">Go LIVE</span><span class="bmn-action-sub">Open your live creator tools</span></span></button><button class="bmn-action-item" data-action="tools"><span class="bmn-action-icon">◫</span><span class="bmn-action-copy"><span class="bmn-action-name">Creator Tools</span><span class="bmn-action-sub">Analytics and creator controls</span></span></button><button class="bmn-action-item" data-action="saved"><span class="bmn-action-icon">🔖</span><span class="bmn-action-copy"><span class="bmn-action-name">Saved</span><span class="bmn-action-sub">Open your saved posts</span></span></button></div><button class="bmn-sheet-cancel" data-action="cancel">Cancel</button></section>`;
     document.body.appendChild(wrap);
     const sheet=document.getElementById('bmn-action-sheet'),back=document.getElementById('bmn-action-backdrop');
-    function open(){sheet.classList.add('open');back.classList.add('open');sheet.setAttribute('aria-hidden','false');back.setAttribute('aria-hidden','false');}
-    function close(){sheet.classList.remove('open');back.classList.remove('open');sheet.setAttribute('aria-hidden','true');back.setAttribute('aria-hidden','true');}
+    let lastTrigger=null;let startY=0,dragging=false;
+    function open(trigger){lastTrigger=trigger||document.activeElement;sheet.style.transform='';sheet.classList.remove('bmn-settled');sheet.classList.add('open');back.classList.add('open');sheet.setAttribute('aria-hidden','false');back.setAttribute('aria-hidden','false');document.body.classList.add('bmn-sheet-open');sheet.addEventListener('animationend',function settled(e){if(e.animationName==='bmnSheetSpring'){sheet.removeEventListener('animationend',settled);sheet.classList.add('bmn-settled');}}, {once:false});const first=sheet.querySelector('button');if(first)requestAnimationFrame(()=>first.focus({preventScroll:true}));}
     function findPlus(){return [...document.querySelectorAll('button,[role="button"],a')].find(el=>{const t=(el.getAttribute('aria-label')||el.textContent||'').trim().toLowerCase();return t==='+'||t.includes('open actions')||t.includes('create')&&t.includes('plus')||t.includes('add');});}
-    function bindPlus(){const p=findPlus();if(p&&!p.dataset.bmnSheetBound){p.dataset.bmnSheetBound='1';p.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open();},true);}}
-    back.addEventListener('click',close);sheet.addEventListener('click',e=>{const item=e.target.closest('[data-action]');if(!item)return;const action=item.dataset.action;if(action==='cancel'){close();return;}close();setTimeout(()=>{if(action==='create'){const create=[...document.querySelectorAll('button,[role="button"],a')].find(x=>(x.textContent||'').trim().toLowerCase().includes('create'));if(create)create.click();}else if(action==='friends'){location.hash='#friends';}else if(action==='saved'){location.hash='#saved';}else if(action==='photo'||action==='video'){const input=document.createElement('input');input.type='file';input.accept=action==='photo'?'image/*':'video/*';input.click();}},180);});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+    function bindPlus(){const p=findPlus();if(p&&!p.dataset.bmnSheetBound){p.dataset.bmnSheetBound='1';p.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();open(p);},true);}}
+    function close(){sheet.classList.remove('open');back.classList.remove('open');sheet.setAttribute('aria-hidden','true');back.setAttribute('aria-hidden','true');document.body.classList.remove('bmn-sheet-open');sheet.style.transform='';if(lastTrigger&&typeof lastTrigger.focus==='function')lastTrigger.focus({preventScroll:true});}
+    back.addEventListener('click',close);
+    sheet.addEventListener('touchstart',e=>{if(e.touches.length===1){startY=e.touches[0].clientY;dragging=sheet.scrollTop===0;}},{passive:true});
+    sheet.addEventListener('touchmove',e=>{if(!dragging||e.touches.length!==1)return;const dy=e.touches[0].clientY-startY;if(dy>0&&sheet.scrollTop===0){sheet.style.transition='none';sheet.style.transform='translateY('+Math.min(dy,260)+'px) scale('+(1-Math.min(dy/500,.08))+')';}},{passive:true});
+    sheet.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;const dy=e.changedTouches[0].clientY-startY;sheet.style.transition='';if(dy>110)close();else sheet.style.transform='';},{passive:true});
+    sheet.addEventListener('click',e=>{const item=e.target.closest('[data-action]');if(!item)return;const action=item.dataset.action;if(action==='cancel'){close();return;}close();setTimeout(()=>{
+      const clickFirst=(selectors)=>{for(const selector of selectors){const el=document.querySelector(selector);if(el){el.click();return true;}}return false;};
+      if(action==='create'){if(!clickFirst(['#createPostButton','#createPostBtn','#communityCreateButton','[data-action="create-post"]'])){const create=[...document.querySelectorAll('button,[role="button"],a')].find(x=>x!==lastTrigger&&/create post|create an edit|\+ create/i.test((x.textContent||'').trim()));if(create)create.click();}}
+      else if(action==='friends'){if(!clickFirst(['[data-app-view="discover"]','[data-app-view="friends"]','#bmnDockDiscover','#discoverCreators']))location.hash='#friends';}
+      else if(action==='saved'){if(!clickFirst(['[data-app-view="saved"]','#bmnDockSaved']))location.hash='#saved';}
+      else if(action==='tools'){if(!clickFirst(['[data-app-view="profile"]','#bmnDockProfile','#bmnCreatorInsights']))location.hash='#community';}
+      else if(action==='live'){if(!clickFirst(['[data-app-view="live"]','#bmnLiveButton','#live']))location.hash='#live';}
+      else if(action==='photo'||action==='video'||action==='sound'){const input=document.createElement('input');input.type='file';input.accept=action==='photo'?'image/*':action==='video'?'video/*':'audio/*';input.setAttribute('aria-label','Choose '+action);input.addEventListener('change',()=>{const file=input.files&&input.files[0];if(file)window.dispatchEvent(new CustomEvent('bmn:action-file-selected',{detail:{action,file}}));});input.click();}
+    },180);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'&&sheet.classList.contains('open')){const controls=[...sheet.querySelectorAll('button:not(:disabled),[href],input')].filter(el=>el.offsetParent!==null);if(!controls.length)return;const first=controls[0],last=controls[controls.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
     bindPlus();new MutationObserver(bindPlus).observe(document.body,{childList:true,subtree:true});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initBMNActionSheet);else initBMNActionSheet();
 })();
 </script>
+
+<script id="bmn-crystal-live-background">
+(()=>{
+ 'use strict';
+ const canvas=document.getElementById('bmn-liquid-canvas');
+ if(!canvas)return;
+ const ctx=canvas.getContext('2d',{alpha:true,desynchronized:true});
+ if(!ctx)return;
+ const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ let w=0,h=0,dpr=1,raf=0,last=0,paused=false,visible=true;
+ const pointer={x:.5,y:.5,tx:.5,ty:.5};
+ const blobs=[
+  {x:.16,y:.20,r:.46,v:.00015,p:.2,c:'blue'},
+  {x:.82,y:.25,r:.39,v:.00012,p:2.1,c:'violet'},
+  {x:.55,y:.84,r:.43,v:.00011,p:4.1,c:'cyan'},
+  {x:.12,y:.78,r:.30,v:.00009,p:1.2,c:'silver'}
+ ];
+ const colors={blue:[42,117,255],cyan:[48,214,235],violet:[125,93,255],silver:[210,225,240],ice:[188,222,246],pink:[209,139,239]};
+ function resize(){w=window.innerWidth||1;h=window.innerHeight||1;dpr=Math.min(window.devicePixelRatio||1,1.35);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.setTransform(dpr,0,0,dpr,0,0);drawStill();}
+ function rgba(key,a){let c=colors[key]||colors.blue;if(document.body.classList.contains('light')){if(key==='blue')c=[102,164,224];if(key==='cyan')c=[120,199,214];if(key==='violet')c=[163,151,222];if(key==='silver')c=[220,235,247]}return `rgba(${c[0]},${c[1]},${c[2]},${a})`}
+ function paint(time,animate){ctx.clearRect(0,0,w,h);const light=document.body.classList.contains('light');const base=ctx.createLinearGradient(0,0,w,h);if(light){base.addColorStop(0,'rgba(237,246,252,1)');base.addColorStop(.52,'rgba(225,237,247,1)');base.addColorStop(1,'rgba(246,249,253,1)')}else{base.addColorStop(0,'rgba(2,4,10,1)');base.addColorStop(.48,'rgba(7,12,23,1)');base.addColorStop(1,'rgba(2,5,12,1)')}ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
+  ctx.globalCompositeOperation=light?'multiply':'screen';
+  for(const b of blobs){const t=animate?time:0;const x=b.x*w+Math.sin(t*b.v+b.p)*w*.055+(pointer.x-.5)*w*.018;const y=b.y*h+Math.cos(t*b.v*.8+b.p)*h*.05+(pointer.y-.5)*h*.018;const radius=Math.max(w,h)*b.r;const g=ctx.createRadialGradient(x,y,radius*.015,x,y,radius);g.addColorStop(0,rgba(b.c,light?.14:.19));g.addColorStop(.28,rgba(b.c,light?.09:.10));g.addColorStop(.66,rgba(b.c,light?.035:.035));g.addColorStop(1,rgba(b.c,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill()}
+  const shine=ctx.createLinearGradient(0,0,w,h);shine.addColorStop(0,light?'rgba(255,255,255,.10)':'rgba(255,255,255,.035)');shine.addColorStop(.45,'rgba(255,255,255,0)');shine.addColorStop(1,light?'rgba(120,170,205,.025)':'rgba(255,255,255,.018)');ctx.globalCompositeOperation='source-over';ctx.fillStyle=shine;ctx.fillRect(0,0,w,h);
+ }
+ function drawStill(){paint(0,false)}
+ function frame(t){raf=0;if(paused||!visible||document.hidden)return;if(t-last<32){raf=requestAnimationFrame(frame);return}last=t;pointer.x+=(pointer.tx-pointer.x)*.025;pointer.y+=(pointer.ty-pointer.y)*.025;paint(t,true);raf=requestAnimationFrame(frame)}
+ function start(){if(!paused&&visible&&!document.hidden&&!raf)raf=requestAnimationFrame(frame)}
+ function stop(){if(raf)cancelAnimationFrame(raf);raf=0;drawStill()}
+ function setLowPower(on){paused=!!on;document.body.classList.toggle('low-power',paused);if(paused)stop();else start()}
+ window.BMNBackground={setLowPower,pause:()=>setLowPower(true),resume:()=>setLowPower(false),setMood:mood=>{if(['slate','amethyst','edit'].includes(mood))document.body.dataset.mood=mood;else delete document.body.dataset.mood;drawStill()}};
+ window.addEventListener('resize',resize,{passive:true});
+ window.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.pointerType==='pen'){pointer.tx=e.clientX/w;pointer.ty=e.clientY/h}},{passive:true});
+ document.addEventListener('visibilitychange',()=>{visible=!document.hidden;if(visible)start();else stop()});
+ document.addEventListener('click',e=>{if(e.target.closest('#themeToggle'))requestAnimationFrame(drawStill)},true);
+ const moodObserver=new MutationObserver(()=>{drawStill()});moodObserver.observe(document.body,{attributes:true,attributeFilter:['class','data-mood']});
+ resize();paused=reduced||document.body.classList.contains('low-power');if(!paused)start();
+})();
+</script>
+
 </body>
 </html>
