@@ -3617,6 +3617,109 @@ body.community-mode[data-app-screen="home"] #community .post-actions .audio-whee
 })();
 </script>
 
+
+<!-- BMN FYP fullscreen video refinement: normal TikTok-style media surface, no glass shell/name pod -->
+<style id="bmn-fyp-fullscreen-video-refinement">
+@media (max-width: 700px){
+  body.community-mode[data-app-screen="home"]{
+    overflow:hidden!important;
+  }
+  body.community-mode[data-app-screen="home"] #bmnAppScreens,
+  body.community-mode[data-app-screen="home"] #community,
+  body.community-mode[data-app-screen="home"] #community .community-grid{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  body.community-mode[data-app-screen="home"] #community .community-grid{
+    gap:0!important;
+    height:100svh!important;
+    min-height:100svh!important;
+    scroll-snap-type:y mandatory!important;
+  }
+  body.community-mode[data-app-screen="home"] #community .community-post{
+    width:100%!important;
+    height:100svh!important;
+    min-height:100svh!important;
+    max-height:none!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    background:#000!important;
+    scroll-snap-align:start!important;
+    scroll-snap-stop:always!important;
+  }
+  body.community-mode[data-app-screen="home"] #community .post-preview,
+  body.community-mode[data-app-screen="home"] #community .post-preview.has-media,
+  body.community-mode[data-app-screen="home"] #community .post-preview.has-media img,
+  body.community-mode[data-app-screen="home"] #community .post-preview.has-media video{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:100%!important;
+    max-height:none!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    object-fit:cover!important;
+    background:#000!important;
+  }
+  /* Keep only a normal TikTok-style readability gradient; no glass over the video. */
+  body.community-mode[data-app-screen="home"] #community .post-preview::after{
+    background:linear-gradient(180deg,rgba(0,0,0,.10) 0%,transparent 42%,rgba(0,0,0,.48) 100%)!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+  /* Remove the creator-name Liquid Glass pod completely. */
+  body.community-mode[data-app-screen="home"] #community .post-meta{
+    left:12px!important;
+    right:70px!important;
+    bottom:calc(82px + env(safe-area-inset-bottom))!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    text-shadow:0 2px 8px rgba(0,0,0,.65)!important;
+  }
+  body.community-mode[data-app-screen="home"] #community .post-meta::before{
+    display:none!important;
+    content:none!important;
+  }
+  /* Hide the poster's name/handle on the FYP video. */
+  body.community-mode[data-app-screen="home"] #community .post-meta strong{
+    display:none!important;
+  }
+  body.community-mode[data-app-screen="home"] #community .post-meta small{
+    display:none!important;
+  }
+  /* Caption stays as plain TikTok-style text, not a glass card. */
+  body.community-mode[data-app-screen="home"] #community .post-content{
+    left:12px!important;
+    right:70px!important;
+    bottom:calc(18px + env(safe-area-inset-bottom))!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    border:0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    color:#fff!important;
+    text-shadow:0 2px 8px rgba(0,0,0,.7)!important;
+  }
+}
+</style>
+
 </body>
 </html>
 
