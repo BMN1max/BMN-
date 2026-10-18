@@ -3062,5 +3062,56 @@ body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile span{displ
 })();
 </script>
 
+
+<style id="bmn-tiktok-inbox-layout-final">
+/* Inbox follows the supplied TikTok-style hierarchy: header actions, stories, activity, then messages. */
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading{display:flex!important;align-items:center!important;gap:10px!important;min-height:48px!important;padding:6px 0 12px!important;margin:0!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading h2{order:0!important;flex:1!important;font-size:27px!important;font-weight:800!important;letter-spacing:-.04em!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading p{display:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action{order:2!important;width:38px!important;height:38px!important;display:grid!important;place-items:center!important;padding:0!important;border:1px solid var(--clear-glass-border,rgba(255,255,255,.14))!important;border-radius:50%!important;background:rgba(255,255,255,.055)!important;color:var(--fg)!important;font-size:22px!important;line-height:1!important;box-shadow:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnFindPeople{display:none;width:100%;margin:0 0 10px!important}
+body.community-mode[data-app-screen="inbox"] #bmnFindPeople.bmn-search-open{display:block!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick{display:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories{margin-top:0!important;padding-top:4px!important;padding-bottom:15px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-section-title{padding:13px 0 8px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-messages-title{display:flex;align-items:center;justify-content:space-between;margin:14px 0 3px;padding:13px 0 7px;border-top:1px solid var(--bmn-app-line,rgba(255,255,255,.09));font-size:16px;font-weight:750;letter-spacing:-.02em}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome{padding:22px 8px!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome h3{font-size:15px!important;margin:8px 0 5px!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome p{font-size:12px!important;line-height:1.5!important;max-width:280px;margin:0 auto!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action{background:rgba(20,24,34,.04)!important;border-color:rgba(20,24,34,.12)!important;color:#171923!important}
+@media(max-width:430px){body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading h2{font-size:26px!important}.bmn-story-item{flex-basis:58px!important}.bmn-story-avatar{width:54px!important;height:54px!important}}
+</style>
+<script id="bmn-tiktok-inbox-layout-final-js">
+(function(){
+ function applyInboxLayout(){
+  const ui=document.querySelector('#bmnInboxV2');
+  if(!ui)return;
+  const heading=ui.querySelector(':scope > .app-screen-heading');
+  const search=ui.querySelector('#bmnFindPeople');
+  if(heading){
+   let actions=heading.querySelectorAll('.bmn-inbox-heading-action');
+   actions.forEach((button)=>{
+    if(button.dataset.bmnTiktokBound)return;
+    button.dataset.bmnTiktokBound='1';
+    if(button.getAttribute('aria-label')==='Search people')button.addEventListener('click',()=>{
+      if(!search)return;
+      const open=search.classList.toggle('bmn-search-open');
+      if(open){search.focus({preventScroll:true});search.scrollIntoView({behavior:'smooth',block:'nearest'});}
+      else{search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));}
+    });
+   });
+  }
+  const list=ui.querySelector('#bmnInboxConversationList');
+  if(list&&!ui.querySelector('.bmn-inbox-messages-title')){
+   const title=document.createElement('div');title.className='bmn-inbox-messages-title';title.textContent='Messages';
+   const welcome=ui.querySelector('#bmnInboxWelcome');
+   if(welcome)welcome.insertAdjacentElement('beforebegin',title);else list.insertAdjacentElement('beforebegin',title);
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyInboxLayout,{once:true});else applyInboxLayout();
+ const observer=new MutationObserver(applyInboxLayout);observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
