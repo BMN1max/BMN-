@@ -2858,5 +2858,120 @@ body.community-mode[data-app-screen="home"] #community .post-preview a{pointer-e
 })();
 </script>
 
+
+<!-- BMN OBSIDIAN NEON — FINAL TIKTOK-STYLE INBOX REDESIGN -->
+<style id="bmn-inbox-final">
+body.community-mode[data-app-screen="inbox"] #appInboxScreen{padding:0!important;overflow:hidden!important;background:var(--bmn-app-bg,#07090f)!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2{position:relative!important;width:100%!important;max-width:none!important;height:100dvh!important;min-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(110px + env(safe-area-inset-bottom))!important;margin:0!important;background:transparent!important}
+/* Remove every legacy inbox card/control that made this feel like a dashboard. */
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.bmn-inbox-search,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.bmn-inbox-quick,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.bmn-inbox-activity,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>#bmnInboxWelcome,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>#bmnInboxComposerV2,
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>#bmnInboxRefreshV2{display:none!important}
+.bmn-tiktok-inbox{display:block!important;width:100%;max-width:720px;margin:0 auto}
+.bmn-ti-head{height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:linear-gradient(to bottom,var(--bmn-app-bg,#07090f) 68%,transparent);margin:0 -2px;padding:0 2px}
+.bmn-ti-title{font-size:25px;font-weight:800;letter-spacing:-.055em;margin:0}
+.bmn-ti-head-actions{display:flex;align-items:center;gap:8px}
+.bmn-ti-icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.055);color:inherit;font:inherit;font-size:18px;backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.bmn-ti-icon:active{transform:scale(.94)}
+.bmn-ti-stories{display:flex;gap:15px;overflow-x:auto;scrollbar-width:none;padding:12px 1px 18px;margin-bottom:2px}
+.bmn-ti-stories::-webkit-scrollbar{display:none}
+.bmn-ti-story{width:66px;flex:0 0 66px;text-align:center;border:0;background:none;color:inherit;padding:0;font:inherit}
+.bmn-ti-story-avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;margin:0 auto 6px;position:relative;background:linear-gradient(145deg,rgba(0,229,255,.26),rgba(128,83,255,.25));border:1.5px solid rgba(255,255,255,.34);box-shadow:0 0 0 2px rgba(0,229,255,.08),inset 0 1px 0 rgba(255,255,255,.25)}
+.bmn-ti-story-avatar span{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:rgba(8,11,20,.82);font-size:19px;font-weight:750}
+.bmn-ti-story:first-child .bmn-ti-story-avatar{background:linear-gradient(145deg,rgba(0,229,255,.75),rgba(142,75,255,.75));}
+.bmn-ti-story:first-child .bmn-ti-story-avatar span{background:#0a0d15}
+.bmn-ti-story-name{display:block;font-size:10px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--bmn-app-muted,#9ba5b8)}
+.bmn-ti-divider{height:1px;background:var(--bmn-app-line,rgba(255,255,255,.10));margin:0 0 2px}
+.bmn-ti-section{display:flex;align-items:center;justify-content:space-between;padding:16px 2px 7px}
+.bmn-ti-section strong{font-size:15px;letter-spacing:-.02em}
+.bmn-ti-section button{border:0;background:none;color:var(--bmn-app-muted,#9ba5b8);font:600 12px inherit;padding:4px}
+.bmn-ti-actions{display:flex;gap:8px;padding:5px 0 12px;overflow-x:auto;scrollbar-width:none}
+.bmn-ti-actions::-webkit-scrollbar{display:none}
+.bmn-ti-pill{height:34px;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045);color:inherit;font:600 11px inherit;backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
+.bmn-ti-pill:active{transform:scale(.97)}
+.bmn-ti-messages{display:grid;gap:0}
+.bmn-ti-empty{padding:55px 24px;text-align:center;color:var(--bmn-app-muted,#9ba5b8)}
+.bmn-ti-empty .icon{font-size:32px;margin-bottom:10px}
+.bmn-ti-empty strong{display:block;color:var(--bmn-app-text,#fff);font-size:16px;margin-bottom:5px}
+.bmn-ti-empty p{font-size:12px;line-height:1.5;margin:0}
+body.community-mode[data-app-screen="inbox"] .bmn-ti-row{min-height:72px;display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--bmn-app-line,rgba(255,255,255,.08));background:transparent!important;border-radius:0!important;border:0!important}
+.bmn-ti-row:active{background:rgba(255,255,255,.035)!important}
+.bmn-ti-avatar{width:52px;height:52px;flex:0 0 52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,rgba(0,229,255,.18),rgba(133,82,255,.20));border:1px solid rgba(255,255,255,.20);font-weight:800;overflow:hidden}
+.bmn-ti-avatar img{width:100%;height:100%;object-fit:cover}
+.bmn-ti-row-main{min-width:0;flex:1;display:grid;gap:4px}
+.bmn-ti-row-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmn-ti-row-preview{font-size:12px;color:var(--bmn-app-muted,#9ba5b8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmn-ti-row-time{font-size:10px;color:var(--bmn-app-muted,#7f899c);align-self:flex-start;padding-top:3px}
+.bmn-ti-search{display:none;position:fixed;inset:0;z-index:120;background:var(--bmn-app-bg,#07090f);padding:calc(env(safe-area-inset-top) + 12px) 16px 20px}
+.bmn-ti-search-head{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.bmn-ti-search input{height:44px;flex:1;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:inherit;padding:0 14px;font:inherit;outline:none}
+.bmn-ti-search-close{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.06);color:inherit;font-size:20px}
+.bmn-ti-search-results{overflow:auto;height:calc(100dvh - 80px)}
+body.light.community-mode[data-app-screen="inbox"] #appInboxScreen{background:#f7f8fb!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-ti-head{background:linear-gradient(to bottom,#f7f8fb 68%,transparent)}
+body.light.community-mode[data-app-screen="inbox"] .bmn-ti-icon,body.light.community-mode[data-app-screen="inbox"] .bmn-ti-pill{background:rgba(20,24,32,.045);border-color:rgba(20,24,32,.10)}
+body.light.community-mode[data-app-screen="inbox"] .bmn-ti-story-avatar span{background:#f7f8fb}
+body.light.community-mode[data-app-screen="inbox"] .bmn-ti-avatar{background:rgba(20,24,32,.055);border-color:rgba(20,24,32,.10)}
+</style>
+<script>
+(function bmnFinalTikTokInbox(){
+ const q=s=>document.querySelector(s);
+ function build(){
+  const ui=q('#bmnInboxV2'); if(!ui||q('#bmnTikTokInbox'))return;
+  const oldPeople=q('#bmnInboxPeople'), oldList=q('#bmnInboxConversationList');
+  const app=document.createElement('div'); app.id='bmnTikTokInbox'; app.className='bmn-tiktok-inbox';
+  app.innerHTML=`
+   <header class="bmn-ti-head"><h1 class="bmn-ti-title">Inbox</h1><div class="bmn-ti-head-actions"><button class="bmn-ti-icon" id="bmnTiSearch" aria-label="Find people">⌕</button><button class="bmn-ti-icon" id="bmnTiCompose" aria-label="New message">✎</button></div></header>
+   <div class="bmn-ti-stories" id="bmnTiStories">
+    <button class="bmn-ti-story" id="bmnTiYourStory"><span class="bmn-ti-story-avatar"><span>＋</span></span><span class="bmn-ti-story-name">Your story</span></button>
+    <button class="bmn-ti-story"><span class="bmn-ti-story-avatar"><span>F</span></span><span class="bmn-ti-story-name">Following</span></button>
+    <button class="bmn-ti-story"><span class="bmn-ti-story-avatar"><span>★</span></span><span class="bmn-ti-story-name">Creators</span></button>
+    <button class="bmn-ti-story"><span class="bmn-ti-story-avatar"><span>♡</span></span><span class="bmn-ti-story-name">Friends</span></button>
+    <button class="bmn-ti-story"><span class="bmn-ti-story-avatar"><span>♥</span></span><span class="bmn-ti-story-name">Activity</span></button>
+   </div>
+   <div class="bmn-ti-divider"></div>
+   <section class="bmn-ti-section"><strong>Messages</strong><button id="bmnTiFindText">Find people</button></section>
+   <div class="bmn-ti-actions"><button class="bmn-ti-pill" id="bmnTiSelf">✎ Message yourself</button><button class="bmn-ti-pill" id="bmnTiNew">＋ New message</button></div>
+   <div class="bmn-ti-messages" id="bmnTiMessages"></div>
+   <div class="bmn-ti-search" id="bmnTiSearchPanel"><div class="bmn-ti-search-head"><button class="bmn-ti-search-close" id="bmnTiSearchClose">‹</button><input id="bmnTiSearchInput" type="search" placeholder="Find people" autocomplete="off"></div><div class="bmn-ti-search-results" id="bmnTiSearchResults"></div></div>`;
+  ui.appendChild(app);
+  if(oldPeople)oldPeople.style.display='none'; if(oldList)oldList.style.display='none';
+  const hiddenSearch=q('#bmnFindPeople'); if(hiddenSearch)hiddenSearch.style.display='none';
+  wire(); renderMessages();
+ }
+ function openSearch(){const p=q('#bmnTiSearchPanel');if(!p)return;p.style.display='block';const i=q('#bmnTiSearchInput');i.value='';i.focus();renderPeopleSearch('')}
+ function closeSearch(){const p=q('#bmnTiSearchPanel');if(p)p.style.display='none'}
+ function wire(){
+  q('#bmnTiSearch')?.addEventListener('click',openSearch); q('#bmnTiFindText')?.addEventListener('click',openSearch); q('#bmnTiSearchClose')?.addEventListener('click',closeSearch);
+  q('#bmnTiCompose')?.addEventListener('click',openSearch); q('#bmnTiNew')?.addEventListener('click',openSearch);
+  q('#bmnTiSelf')?.addEventListener('click',()=>{if(window.bmnSession&&window.bmnOpenConversation)window.bmnOpenConversation(window.bmnSession.user.id);else setBackendStatus('Sign in to message yourself.',true)});
+  q('#bmnTiSearchInput')?.addEventListener('input',e=>renderPeopleSearch(e.target.value||''));
+  q('#bmnTiYourStory')?.addEventListener('click',()=>{let input=q('#bmnStoryFileInput');if(!input){input=document.createElement('input');input.id='bmnStoryFileInput';input.type='file';input.accept='image/*,video/*';input.hidden=true;document.body.appendChild(input);input.addEventListener('change',()=>{if(input.files?.[0])setBackendStatus('Story selected. Publishing Stories requires the Stories backend.');});}input.click()});
+ }
+ function renderPeopleSearch(term){
+  const box=q('#bmnTiSearchResults');if(!box)return;
+  const profiles=Object.values(window.bmnProfiles||{}); const t=String(term).toLowerCase().trim();
+  const rows=profiles.filter(p=>!t||String(p.display_name||p.username||'').toLowerCase().includes(t)).slice(0,40);
+  if(!rows.length){box.innerHTML='<div class="bmn-ti-empty"><div class="icon">⌕</div><strong>Find people</strong><p>Search creators and people to start a conversation.</p></div>';return}
+  box.innerHTML=rows.map(p=>{const name=p.display_name||p.username||'User';const initial=(name[0]||'U').toUpperCase();return `<button type="button" class="bmn-ti-row" data-ti-person="${p.id}"><span class="bmn-ti-avatar">${initial}</span><span class="bmn-ti-row-main"><span class="bmn-ti-row-name">${escapeHTML(name)}</span><span class="bmn-ti-row-preview">@${escapeHTML(p.username||'user')}</span></span><span class="bmn-ti-row-time">Message</span></button>`}).join('');
+  box.querySelectorAll('[data-ti-person]').forEach(b=>b.addEventListener('click',()=>{closeSearch();window.bmnOpenConversation?.(b.dataset.tiPerson)}));
+ }
+ function renderMessages(){
+  const box=q('#bmnTiMessages');if(!box)return;
+  const source=q('#bmnInboxConversationList');
+  if(source&&source.children.length){
+    box.innerHTML=''; [...source.children].forEach(old=>{const clone=old.cloneNode(true);clone.classList.add('bmn-ti-row');clone.style.display='flex';const text=clone.textContent.trim();clone.querySelectorAll('.backend-btn,.bmn-settings-action').forEach(x=>x.style.display='none');box.appendChild(clone)});
+    box.querySelectorAll('.bmn-ti-row').forEach(row=>row.addEventListener('click',()=>{const text=row.textContent||'';const ps=Object.values(window.bmnProfiles||{});const p=ps.find(x=>text.includes(x.display_name||'\u0000')||text.includes(x.username||'\u0001'));if(p)window.bmnOpenConversation?.(p.id)}));
+  }else box.innerHTML='<div class="bmn-ti-empty"><div class="icon">◌</div><strong>Your messages</strong><p>Messages with people you chat with will appear here.</p></div>';
+ }
+ build();
+ setTimeout(renderMessages,700);setTimeout(renderMessages,1600);
+ const mo=new MutationObserver(()=>{if(!q('#bmnTikTokInbox'))build();else renderMessages()});mo.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
