@@ -2973,5 +2973,79 @@ body.light.community-mode[data-app-screen="inbox"] .bmn-ti-avatar{background:rgb
  const mo=new MutationObserver(()=>{if(!q('#bmnTikTokInbox'))build();else renderMessages()});mo.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="bmn-inbox-modern-preserve">
+/* BMN Inbox — modern mobile-social treatment; inherits the existing BMN visual system. */
+#appInboxScreen{position:relative;min-height:100dvh;overflow:hidden;background:inherit;color:inherit;}
+#appInboxScreen .bmn-inbox-shell{height:100%;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(92px + env(safe-area-inset-bottom));}
+.bmn-inbox-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px;}
+.bmn-inbox-top h2{margin:0;font-size:26px;letter-spacing:-.03em;font-weight:800;}
+.bmn-inbox-top-actions{display:flex;gap:8px;}
+.bmn-inbox-icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:inherit;font-size:17px;}
+.bmn-inbox-stories{display:flex;gap:15px;overflow-x:auto;padding:2px 1px 14px;scrollbar-width:none;}
+.bmn-inbox-stories::-webkit-scrollbar{display:none;}
+.bmn-inbox-story{flex:0 0 62px;text-align:center;font-size:11px;opacity:.92;}
+.bmn-inbox-story .story-avatar{width:58px;height:58px;border-radius:50%;padding:2px;margin:auto auto 6px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);}
+.bmn-inbox-story .story-avatar>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:inherit;border:2px solid rgba(0,0,0,.28);overflow:hidden;}
+.bmn-inbox-story img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.bmn-inbox-section-label{font-size:13px;font-weight:750;opacity:.62;margin:6px 2px 8px;text-transform:uppercase;letter-spacing:.08em;}
+.bmn-inbox-list{display:flex;flex-direction:column;}
+.bmn-inbox-row{display:flex;align-items:center;gap:12px;min-height:72px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.075);cursor:pointer;}
+.bmn-inbox-row .avatar{width:52px;height:52px;flex:0 0 52px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.08);}
+.bmn-inbox-row .avatar img{width:100%;height:100%;object-fit:cover;}
+.bmn-inbox-row .meta{min-width:0;flex:1;}
+.bmn-inbox-row .name{font-weight:750;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bmn-inbox-row .preview{font-size:13px;opacity:.58;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;}
+.bmn-inbox-row .time{font-size:11px;opacity:.45;align-self:flex-start;margin-top:8px;}
+.bmn-inbox-actions{display:flex;gap:8px;margin:4px 0 18px;overflow-x:auto;scrollbar-width:none;}
+.bmn-inbox-actions::-webkit-scrollbar{display:none;}
+.bmn-inbox-action{flex:0 0 auto;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.055);color:inherit;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:700;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+.bmn-inbox-empty{padding:56px 20px;text-align:center;opacity:.6;font-size:14px;}
+body.bmn-light .bmn-inbox-icon,body.bmn-light .bmn-inbox-action{background:rgba(0,0,0,.045);border-color:rgba(0,0,0,.11);}
+body.bmn-light .bmn-inbox-row{border-bottom-color:rgba(0,0,0,.08);}
+</style>
+<script>
+(function(){
+  function wireInbox(){
+    const screen=document.getElementById('appInboxScreen'); if(!screen) return;
+    if(screen.querySelector('.bmn-inbox-top')) return;
+    const old=screen.innerHTML;
+    screen.innerHTML=`<div class="bmn-inbox-shell">
+      <div class="bmn-inbox-top"><h2>Inbox</h2><div class="bmn-inbox-top-actions"><button class="bmn-inbox-icon" id="bmnInboxSearchBtn" aria-label="Find people">⌕</button><button class="bmn-inbox-icon" id="bmnInboxNewBtn" aria-label="New message">＋</button></div></div>
+      <div class="bmn-inbox-stories" id="bmnModernStories"></div>
+      <div class="bmn-inbox-actions"><button class="bmn-inbox-action" id="bmnModernSelf">Message yourself</button><button class="bmn-inbox-action" id="bmnModernFind">Find people</button></div>
+      <div class="bmn-inbox-section-label">Messages</div><div class="bmn-inbox-list" id="bmnModernMessageList"></div>
+      <div class="bmn-inbox-empty" id="bmnModernEmpty" hidden>No messages yet</div>
+      <div id="bmnModernLegacy" hidden>${old}</div>
+    </div>`;
+    const goSelf=()=>{ if(window.bmnSession?.user?.id && window.bmnOpenConversation) window.bmnOpenConversation(window.bmnSession.user.id); };
+    const goFind=()=>{ const el=document.getElementById('bmnFindPeople'); if(el){el.scrollIntoView({behavior:'smooth'});} else if(window.bmnOpenPeopleSearch) window.bmnOpenPeopleSearch(); };
+    document.getElementById('bmnModernSelf')?.addEventListener('click',goSelf);
+    document.getElementById('bmnModernFind')?.addEventListener('click',goFind);
+    document.getElementById('bmnInboxSearchBtn')?.addEventListener('click',goFind);
+    document.getElementById('bmnInboxNewBtn')?.addEventListener('click',goFind);
+    // Keep the existing message data/functions alive in the hidden legacy container.
+    window.bmnRenderModernInbox=function(){
+      const legacy=document.getElementById('bmnModernLegacy');
+      const target=document.getElementById('bmnModernMessageList');
+      if(!legacy||!target) return;
+      const rows=legacy.querySelectorAll('.bmn-hub-item,.bmn-inbox-conversation,[data-recipient-id]');
+      target.innerHTML='';
+      rows.forEach((r)=>{
+        if(!r.textContent.trim()) return;
+        const row=document.createElement('div'); row.className='bmn-inbox-row';
+        const img=r.querySelector('img');
+        row.innerHTML='<div class="avatar">'+(img?'<img src="'+img.src.replace(/"/g,'&quot;')+'">':'')+'</div><div class="meta"><div class="name">'+(r.querySelector('.name')?.textContent||r.querySelector('strong')?.textContent||'Conversation')+'</div><div class="preview">'+r.textContent.trim().slice(0,90)+'</div></div><div class="time">›</div>';
+        row.addEventListener('click',()=>r.click()); target.appendChild(row);
+      });
+      document.getElementById('bmnModernEmpty').hidden=target.children.length>0;
+    };
+    setTimeout(()=>window.bmnRenderModernInbox(),400);
+  }
+  const obs=new MutationObserver(()=>{ if(document.getElementById('appInboxScreen')) wireInbox(); });
+  obs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(wireInbox,1200);
+})();
+</script>
 </body>
 </html>
