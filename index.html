@@ -2617,5 +2617,118 @@ body.community-mode #community .post-preview{touch-action:pan-y}
   setTimeout(bind,900);
 })();
 </script>
+
+
+<style id="bmn-native-app-v2">
+/* BMN native-app pass: full-screen surfaces, not card-based web layouts. */
+html,body{overscroll-behavior-y:none}
+body.community-mode{--bmn-app-bg:#050609;--bmn-app-text:#f7f8fb;--bmn-app-muted:#9aa2b2;--bmn-app-line:rgba(255,255,255,.09);background:var(--bmn-app-bg)!important}
+body.light.community-mode{--bmn-app-bg:#f7f8fb;--bmn-app-text:#14161c;--bmn-app-muted:#687080;--bmn-app-line:rgba(20,24,32,.10);background:var(--bmn-app-bg)!important}
+body.community-mode main.wrap,body.community-mode .community-page,body.community-mode #communityPage,body.community-mode #appHomeScreen,body.community-mode #appInboxScreen,body.community-mode #appProfileScreen,body.community-mode #appDiscoverScreen{background:var(--bmn-app-bg)!important;color:var(--bmn-app-text)!important}
+body.community-mode[data-app-screen] main.wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+body.community-mode[data-app-screen] #communityPage{min-height:100dvh!important;padding:0!important}
+body.community-mode[data-app-screen="home"] #appHomeScreen{min-height:100dvh!important;padding:0!important}
+/* Home: one post = one viewport. */
+body.community-mode[data-app-screen="home"] #community{height:100dvh!important;min-height:100dvh!important;margin:0!important;padding:0!important;background:var(--bmn-app-bg)!important}
+body.community-mode[data-app-screen="home"] #community .community-grid{height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;display:block!important;padding:0!important;margin:0!important;scroll-snap-type:y mandatory!important;scroll-snap-stop:always!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important}
+body.community-mode[data-app-screen="home"] #community .community-post{position:relative!important;width:100%!important;height:100dvh!important;min-height:100dvh!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:var(--bmn-app-bg)!important;box-shadow:none!important;display:block!important;overflow:hidden!important;scroll-snap-align:start!important;scroll-snap-stop:always!important}
+body.community-mode[data-app-screen="home"] #community .post-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;border-radius:0!important;background:#000!important;z-index:0!important}
+body.community-mode[data-app-screen="home"] #community .post-preview img,body.community-mode[data-app-screen="home"] #community .post-preview video{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:0!important}
+body.community-mode[data-app-screen="home"] #community .post-meta,body.community-mode[data-app-screen="home"] #community .post-content,body.community-mode[data-app-screen="home"] #community .post-actions{position:absolute!important;z-index:3!important}
+body.community-mode[data-app-screen="home"] #community .post-meta{left:14px!important;right:82px!important;bottom:calc(118px + env(safe-area-inset-bottom))!important;margin:0!important;padding:0!important}
+body.community-mode[data-app-screen="home"] #community .post-content{left:14px!important;right:82px!important;bottom:calc(78px + env(safe-area-inset-bottom))!important;margin:0!important;color:#fff!important;text-shadow:0 1px 8px rgba(0,0,0,.65)!important}
+body.community-mode[data-app-screen="home"] #community .post-actions{right:10px!important;bottom:calc(112px + env(safe-area-inset-bottom))!important;width:58px!important;display:flex!important;flex-direction:column!important;gap:10px!important;align-items:center!important;margin:0!important}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action{width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:rgba(8,10,16,.46)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important;backdrop-filter:blur(18px) saturate(165%)!important;-webkit-backdrop-filter:blur(18px) saturate(165%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 24px rgba(0,0,0,.22)!important;font-size:10px!important}
+body.light.community-mode[data-app-screen="home"] #community .post-actions .post-action{background:rgba(255,255,255,.56)!important;color:#14161c!important;border-color:rgba(255,255,255,.76)!important}
+body.community-mode[data-app-screen="home"] #community .post-preview video::-webkit-media-controls,body.community-mode[data-app-screen="home"] #community .post-preview video::-webkit-media-controls-enclosure{display:none!important}
+/* Feed tabs remain controls, never a container/card. */
+body.community-mode[data-app-screen="home"] #bmnFeedTabs{position:absolute!important;z-index:8!important;top:calc(10px + env(safe-area-inset-top))!important;left:50%!important;transform:translateX(-50%)!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* Inbox: true full-screen app surface. */
+body.community-mode[data-app-screen="inbox"] #appInboxScreen{min-height:100dvh!important;height:100dvh!important;overflow-y:auto!important;padding:calc(10px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))!important;background:var(--bmn-app-bg)!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2{width:100%!important;max-width:760px!important;margin:0 auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:5px 0 14px!important;margin:0!important;background:transparent!important;border:0!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading h2{font-size:34px!important;margin:0!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading p{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnFindPeople{width:100%!important;height:42px!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--bmn-app-line)!important;border-radius:0!important;padding:0 2px!important;color:var(--bmn-app-text)!important;box-shadow:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxPeople{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxComposerV2{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxRefreshV2{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxConversationList h3{display:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxConversationList>.bmn-inbox-conversation{display:flex!important;align-items:center!important;gap:12px!important;width:100%!important;min-height:72px!important;padding:11px 0!important;margin:0!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--bmn-app-line)!important;border-radius:0!important;box-shadow:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories{display:flex!important;gap:15px!important;overflow-x:auto!important;padding:2px 0 14px!important;margin:0!important;border-bottom:1px solid var(--bmn-app-line)!important;scrollbar-width:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories::-webkit-scrollbar{display:none}
+body.community-mode[data-app-screen="inbox"] .bmn-story-item{flex:0 0 62px!important;text-align:center!important;color:var(--bmn-app-text)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar{width:58px!important;height:58px!important;border-radius:50%!important;padding:2px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar>span{width:100%!important;height:100%!important;border-radius:50%!important;background:var(--bmn-app-bg)!important;border:2px solid var(--bmn-app-bg)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity{margin-top:0!important;border-bottom:1px solid var(--bmn-app-line)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-section-title{padding:15px 0 8px!important;font-size:15px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row{min-height:50px!important;padding:7px 0!important;border-bottom:0!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row small{display:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-icon{width:38px!important;height:38px!important;flex-basis:38px!important;background:transparent!important;border:0!important}
+body.community-mode[data-app-screen="inbox"] .bmn-create-chat-app{border:0!important;background:rgba(255,255,255,.08)!important;color:var(--bmn-app-text)!important;border-radius:50%!important;width:40px!important;height:40px!important;display:grid!important;place-items:center!important;font-size:20px!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-create-chat-app{background:rgba(20,24,32,.07)!important}
+/* Full-screen conversation. */
+body.community-mode .bmn-conversation-page{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;background:var(--bmn-app-bg)!important;color:var(--bmn-app-text)!important;border:0!important;border-radius:0!important;z-index:10080!important}
+body.community-mode .bmn-conversation-header{height:62px!important;min-height:62px!important;background:var(--bmn-app-bg)!important;border-bottom:1px solid var(--bmn-app-line)!important}
+body.community-mode .bmn-conversation-messages{background:var(--bmn-app-bg)!important}
+body.community-mode .bmn-conversation-compose{background:var(--bmn-app-bg)!important;border-top:1px solid var(--bmn-app-line)!important}
+/* Profile: TikTok-style full-screen profile, no outer card. */
+body.community-mode[data-app-screen="profile"] #appProfileScreen{min-height:100dvh!important;height:100dvh!important;overflow-y:auto!important;padding:calc(10px + env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom))!important;background:var(--bmn-app-bg)!important}
+body.community-mode[data-app-screen="profile"] #bmnProfileV2{width:100%!important;max-width:760px!important;margin:0 auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-header{height:48px!important;padding:0!important;border:0!important;background:transparent!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-summary{display:grid!important;grid-template-columns:92px 1fr!important;gap:18px!important;align-items:center!important;padding:18px 0 10px!important}
+body.community-mode[data-app-screen="profile"] #bmnProfileV2Avatar{width:88px!important;height:88px!important;border-radius:50%!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-counts{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin:12px 0 0!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-count{padding:0!important;background:transparent!important;border:0!important;text-align:center!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-count strong{font-size:17px!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-count small{font-size:10px!important;color:var(--bmn-app-muted)!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-bio{margin:8px 0 12px!important;color:var(--bmn-app-muted)!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-tabs{display:grid!important;grid-template-columns:repeat(3,1fr)!important;border-bottom:1px solid var(--bmn-app-line)!important;background:transparent!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-tabs button{border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;color:var(--bmn-app-muted)!important;padding:12px 4px!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-tabs button.active{color:var(--bmn-app-text)!important;border-bottom-color:var(--bmn-app-text)!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-posts{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:2px!important;margin-top:2px!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile{border:0!important;border-radius:0!important;aspect-ratio:3/4!important;background:#111!important}
+body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile span{display:none!important}
+@media(max-width:560px){body.community-mode[data-app-screen="profile"] .bmn-profile-summary{grid-template-columns:78px 1fr!important;gap:14px!important}body.community-mode[data-app-screen="profile"] #bmnProfileV2Avatar{width:76px!important;height:76px!important}}
+</style>
+<script>
+(function installBMNNativeAppV2(){
+  const q=s=>document.querySelector(s);
+  function makeCreateChat(){
+    const head=q('#bmnInboxV2>.app-screen-heading');
+    if(!head||head.querySelector('.bmn-create-chat-app'))return;
+    const b=document.createElement('button');b.type='button';b.className='bmn-create-chat-app';b.textContent='＋';b.setAttribute('aria-label','Create new chat');
+    b.addEventListener('click',()=>{const search=q('#bmnFindPeople');if(search){search.value='';search.style.display='block';search.focus();}window.bmnRenderInboxV2?.();});
+    head.appendChild(b);
+  }
+  function makeStoryPicker(){
+    const stories=q('.bmn-inbox-stories');if(!stories||stories.querySelector('[data-story-picker]'))return;
+    const first=stories.querySelector('[data-inbox-story="0"]');if(!first)return;
+    first.dataset.storyPicker='1';
+    first.addEventListener('click',e=>{
+      e.preventDefault();
+      let input=q('#bmnStoryFileInput');
+      if(!input){input=document.createElement('input');input.id='bmnStoryFileInput';input.type='file';input.accept='image/*,video/*';input.hidden=true;document.body.appendChild(input);input.addEventListener('change',()=>{const file=input.files?.[0];if(!file)return;const old=first.querySelector('span:last-child');if(old)old.textContent='Story selected';setBackendStatus('Story selected. Story publishing is ready for the next Stories backend table.');});}
+      input.click();
+    });
+  }
+  function wireInbox(){
+    const ui=q('#bmnInboxV2');if(!ui)return;
+    makeCreateChat();makeStoryPicker();
+    const find=q('#bmnFindContacts');if(find&&!find.dataset.bmnAppBound){find.dataset.bmnAppBound='1';find.addEventListener('click',()=>setAppView('discover'));}
+    const see=q('#bmnInboxSeeAllActivity');if(see&&!see.dataset.bmnAppBound){see.dataset.bmnAppBound='1';see.addEventListener('click',()=>q('.bmn-inbox-activity')?.scrollIntoView({behavior:'smooth',block:'start'}));}
+  }
+  function setupFeed(){
+    const feed=q('#community .community-grid');if(!feed)return;
+    feed.style.scrollSnapType='y mandatory';feed.style.overflowY='auto';
+    [...feed.querySelectorAll('.community-post')].forEach(card=>{card.style.scrollSnapAlign='start';card.style.scrollSnapStop='always';card.style.height='100dvh';card.style.minHeight='100dvh'});
+  }
+  wireInbox();setupFeed();
+  new MutationObserver(()=>{wireInbox();setupFeed()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 </html>
