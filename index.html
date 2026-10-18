@@ -1504,6 +1504,100 @@ body.light.community-mode[data-app-screen="inbox"] .app-dock,body.light.communit
  body.community-mode[data-app-screen="profile"] .profile-avatar-large{width:68px;height:68px;flex-basis:68px}
 }
 </style>
+<style id="bmn-finishing-adjustments">
+
+/* BMN finishing pass — inbox clarity + personal-section polish */
+:root{
+  --bmn-glass-control:rgba(255,255,255,.055);
+  --bmn-glass-control-edge:rgba(221,237,255,.24);
+  --bmn-glass-active:rgba(89,241,230,.12);
+}
+body.light{
+  --bmn-glass-control:rgba(255,255,255,.72);
+  --bmn-glass-control-edge:rgba(40,55,80,.14);
+  --bmn-glass-active:rgba(0,145,160,.09);
+}
+/* BMN personal home: stronger hierarchy, same identity and content. */
+body:not(.community-mode) .topbar{
+  border-color:var(--bmn-glass-control-edge);
+  background:color-mix(in srgb,var(--bg) 48%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 12px 34px rgba(0,0,0,.10);
+}
+body:not(.community-mode) .view-switch{
+  padding:3px;border:1px solid var(--bmn-glass-control-edge);border-radius:999px;
+  background:var(--bmn-glass-control);gap:3px;
+}
+body:not(.community-mode) .view-switch button{border-radius:999px;min-height:32px;padding:7px 13px;}
+body:not(.community-mode) .view-switch button.active{
+  background:linear-gradient(135deg,rgba(88,170,255,.20),rgba(177,140,255,.16));
+  border-color:rgba(137,195,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.23);
+}
+body:not(.community-mode) .hero{align-items:center;gap:clamp(22px,4vw,54px);padding-top:clamp(36px,7vw,82px);padding-bottom:clamp(40px,7vw,84px)}
+body:not(.community-mode) .hero h1{max-width:760px;text-wrap:balance;line-height:.98;letter-spacing:-.075em}
+body:not(.community-mode) .hero-copy{max-width:590px;line-height:1.75}
+body:not(.community-mode) .hero-art{min-height:clamp(280px,36vw,440px);overflow:hidden;isolation:isolate}
+body:not(.community-mode) .hero-art:after{content:"";position:absolute;inset:12px;border:1px solid rgba(255,255,255,.14);border-radius:inherit;pointer-events:none}
+body:not(.community-mode) .actions .pill{min-height:44px}
+body:not(.community-mode) .section-head{align-items:end;gap:20px}
+body:not(.community-mode) .card{transition:transform .25s ease,border-color .25s ease,background .25s ease}
+body:not(.community-mode) .card:hover{transform:translateY(-3px);border-color:rgba(150,205,255,.30)}
+/* Inbox is an app screen, not a stack of large glass cards. */
+body.community-mode[data-app-screen="inbox"] #appInboxScreen{min-height:calc(100svh - 80px);padding-top:0!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2{max-width:700px!important;padding:0 0 calc(34px + env(safe-area-inset-bottom))!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading{display:grid!important;grid-template-columns:42px 1fr 42px;align-items:center;gap:8px;padding:8px 0 14px!important;text-align:center}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading h2{font-size:25px!important;font-weight:780;letter-spacing:-.045em!important;line-height:1.1}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading p{font-size:10px!important;letter-spacing:.01em;margin-top:5px!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading:before{content:none!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading:after{content:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-search{min-height:42px;padding:0 14px!important;border-radius:13px!important;font-size:13px!important;background:var(--bmn-glass-control)!important;border-color:var(--bmn-glass-control-edge)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick{display:flex!important;flex-wrap:wrap;gap:7px!important;margin:10px 0 15px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:35px;padding:7px 11px!important;border-radius:999px!important;background:var(--bmn-glass-control)!important;border:1px solid var(--bmn-glass-control-edge)!important;color:var(--fg);font-size:11px;line-height:1.2;box-shadow:none!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button br{display:none}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button strong{font-size:11px;font-weight:650}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button small{display:none}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button:first-child:before{content:"✎";font-size:14px}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button:nth-child(2):before{content:"＋";font-size:15px}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button:nth-child(3):before{content:"♙";font-size:14px}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories{gap:16px!important;padding:3px 1px 13px!important;margin-bottom:3px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-item{flex-basis:58px!important;font-size:10px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar{width:54px!important;height:54px!important;background:linear-gradient(135deg,#24e6a5,#29d5dc,#7d70ff)!important;padding:2px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-section-title{padding:13px 0 7px!important;font-size:15px!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-icon{background:linear-gradient(135deg,rgba(255,65,125,.17),rgba(255,95,155,.07))!important;border-color:rgba(255,95,155,.16)!important;color:#ff6c9a}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row{min-height:60px!important;padding:8px 0!important}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome{padding:32px 12px!important;margin:10px 0!important;text-align:center}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome .empty-symbol{margin:0 auto 12px;width:58px;height:58px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--bmn-glass-control-edge);background:var(--bmn-glass-control);font-size:23px}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome h3{font-size:17px;margin:0 0 6px}
+body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome p{max-width:280px;margin:0 auto;font-size:12px;line-height:1.6;color:var(--muted)}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-conversation{display:flex;align-items:center;gap:12px;min-height:70px}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-activity{border-color:rgba(17,20,28,.09)!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row{border-color:rgba(17,20,28,.08)!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-icon{background:rgba(255,75,130,.08)!important;border-color:rgba(255,75,130,.12)!important}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{color:#171b26!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action{display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--bmn-glass-control-edge);border-radius:50%;background:var(--bmn-glass-control);color:var(--fg);font-size:19px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action:active{transform:scale(.96)}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action:first-child{grid-column:1;grid-row:1/3}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-heading-action:last-child{grid-column:3;grid-row:1/3}
+/* Keep the whole community screen edge-to-edge, with only controls using glass. */
+body.community-mode #communityPage{padding-left:0!important;padding-right:0!important}
+body.community-mode .app-dock{padding-bottom:calc(7px + env(safe-area-inset-bottom))!important}
+body.community-mode .app-dock button{min-height:50px!important}
+@media(max-width:620px){
+ body:not(.community-mode) .topbar{width:calc(100% - 18px);gap:7px;padding:8px 10px}
+ body:not(.community-mode) .navlinks{display:none}
+ body:not(.community-mode) .brand{font-size:18px}
+ body:not(.community-mode) .view-switch button{padding:7px 10px;font-size:11px}
+ body:not(.community-mode) .top-actions{gap:5px}
+ body:not(.community-mode) .icon-btn{width:34px;height:34px}
+ body:not(.community-mode) .hero{grid-template-columns:1fr!important;padding-top:40px;gap:25px}
+ body:not(.community-mode) .hero-art{min-height:245px;width:100%}
+ body:not(.community-mode) .hero h1{font-size:clamp(42px,12vw,66px)}
+ body:not(.community-mode) .section-head{align-items:flex-start;flex-direction:column}
+ body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading{padding-top:3px!important}
+ body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{padding:7px 10px!important}
+}
+@media(prefers-reduced-motion:reduce){body:not(.community-mode) .card{transition:none}}
+
+</style>
 </head>
 <body>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
@@ -2948,6 +3042,23 @@ body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile span{displ
  @media(max-width:420px){body.community-mode.community-mode[data-app-screen="home"] #bmnFeedTabs{gap:7px!important;padding-inline:7px!important}body.community-mode.community-mode[data-app-screen="home"] #bmnFeedTabs button{font-size:10.5px!important}body.community-mode.community-mode[data-app-screen="home"] #bmnFeedTabs button.bmn-app-mark{font-size:17px!important;flex-basis:16px!important;width:16px!important}}
  `;
  document.head.appendChild(finalStyle);
+})();
+</script>
+
+
+<script id="bmn-inbox-header-actions">
+(function(){
+ function install(){
+  const heading=document.querySelector('#bmnInboxV2>.app-screen-heading');
+  if(!heading||heading.querySelector('.bmn-inbox-heading-action'))return;
+  const friends=document.createElement('button');friends.type='button';friends.className='bmn-inbox-heading-action';friends.setAttribute('aria-label','Find contacts');friends.title='Find contacts';friends.textContent='♙';
+  friends.addEventListener('click',()=>document.querySelector('#bmnFindContacts')?.click());
+  const search=document.createElement('button');search.type='button';search.className='bmn-inbox-heading-action';search.setAttribute('aria-label','Search people');search.title='Search people';search.textContent='⌕';
+  search.addEventListener('click',()=>{const field=document.querySelector('#bmnFindPeople');field?.focus();field?.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  heading.prepend(friends);heading.append(search);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+ const observer=new MutationObserver(install);observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 
