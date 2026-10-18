@@ -3270,5 +3270,67 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-profile-ac
 })();
 </script>
 
+
+<!-- BMN Liquid Glass Core Kit integration: adapted from the user's supplied tokens -->
+<style id="bmn-liquid-glass-kit-core">
+:root{
+ --bmn-lg-dock-bg:rgba(255,255,255,.12);
+ --bmn-lg-dock-border:rgba(255,255,255,.18);
+ --bmn-lg-shadow:0 4px 30px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.04),inset 0 1px 0 rgba(255,255,255,.20);
+ --bmn-lg-blue:rgba(0,122,255,.18);--bmn-lg-violet:rgba(177,140,255,.14);--bmn-lg-cyan:rgba(105,201,208,.13);
+ --bmn-lg-search-bg:rgba(255,255,255,.08);--bmn-lg-search-border:rgba(255,255,255,.12);
+}
+html{scroll-behavior:smooth;scroll-padding-top:calc(18px + env(safe-area-inset-top))}
+body,body input,body button,body textarea,body select{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body.bmn-android-font,body.bmn-android-font input,body.bmn-android-font button,body.bmn-android-font textarea,body.bmn-android-font select{font-family:Roboto,Inter,"Noto Sans",system-ui,sans-serif}
+body.community-mode .app-dock{
+ background:linear-gradient(125deg,rgba(0,122,255,.13),rgba(177,140,255,.105) 48%,rgba(105,201,208,.10)),rgba(255,255,255,.075)!important;
+ background-color:rgba(255,255,255,.075)!important;background-image:linear-gradient(125deg,rgba(0,122,255,.13),rgba(177,140,255,.105) 48%,rgba(105,201,208,.10)),linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.025))!important;
+ border:1px solid rgba(255,255,255,.22)!important;border-radius:32px!important;
+ backdrop-filter:blur(20px) saturate(180%)!important;-webkit-backdrop-filter:blur(20px) saturate(180%)!important;
+ box-shadow:0 4px 30px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.04),inset 0 1px 0 rgba(255,255,255,.20)!important;
+ overflow:visible!important;transition:background .3s ease,transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease!important;
+}
+body.light.community-mode .app-dock{
+ background-image:linear-gradient(125deg,rgba(0,122,255,.105),rgba(177,140,255,.095) 48%,rgba(105,201,208,.09)),linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,.10))!important;
+ background-color:rgba(255,255,255,.10)!important;border-color:rgba(255,255,255,.36)!important;
+ box-shadow:0 8px 32px rgba(36,60,100,.13),inset 0 1px 0 rgba(255,255,255,.48)!important;color:#172033!important;
+}
+body.community-mode .app-dock button{border-radius:20px!important;transition:background .22s ease,transform .22s cubic-bezier(.34,1.56,.64,1),color .22s ease!important}
+body.community-mode .app-dock button:active{transform:scale(.94)!important}
+body.community-mode .app-dock button.active{background:linear-gradient(135deg,rgba(0,122,255,.20),rgba(177,140,255,.17),rgba(105,201,208,.10))!important;border:1px solid rgba(255,255,255,.13)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 3px 12px rgba(0,0,0,.06)!important}
+body.community-mode .app-dock .dock-create-symbol{border:1px solid rgba(255,255,255,.34)!important;border-radius:15px!important;background:linear-gradient(135deg,rgba(0,122,255,.76),rgba(177,140,255,.68),rgba(105,201,208,.58))!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.40),0 4px 12px rgba(0,70,150,.16)!important}
+body.community-mode[data-app-screen="inbox"] #bmnFindPeople,
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-search{
+ width:100%!important;min-height:46px!important;padding:12px 17px!important;border-radius:9999px!important;
+ background:linear-gradient(110deg,rgba(0,122,255,.055),rgba(177,140,255,.045),rgba(105,201,208,.04)),rgba(255,255,255,.055)!important;
+ border:1px solid rgba(255,255,255,.14)!important;backdrop-filter:blur(10px) saturate(150%)!important;-webkit-backdrop-filter:blur(10px) saturate(150%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 5px 18px rgba(0,0,0,.04)!important;outline:none!important;color:var(--fg)!important;
+}
+body.light.community-mode[data-app-screen="inbox"] #bmnFindPeople,body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-search{background:linear-gradient(110deg,rgba(0,122,255,.075),rgba(177,140,255,.065),rgba(105,201,208,.06)),rgba(255,255,255,.17)!important;border-color:rgba(255,255,255,.42)!important}
+body.community-mode[data-app-screen="inbox"] #bmnFindPeople:focus,body.community-mode[data-app-screen="inbox"] .bmn-inbox-search:focus{border-color:rgba(105,201,255,.48)!important;box-shadow:0 0 0 3px rgba(0,122,255,.10),inset 0 1px 0 rgba(255,255,255,.16)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar,body.community-mode[data-app-screen="inbox"] .bmn-inbox-story-ring{border:2px solid transparent!important;border-radius:50%!important;background:linear-gradient(var(--bmn-app-bg,#101522),var(--bmn-app-bg,#101522)) padding-box,linear-gradient(115deg,#EE1D52,#69C9D0,#7b61ff) border-box!important;padding:2px!important;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 4px 14px rgba(0,0,0,.10)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick>button,body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{
+ border:1px solid rgba(255,255,255,.14)!important;border-radius:20px!important;
+ background:linear-gradient(135deg,rgba(0,122,255,.10),rgba(177,140,255,.085),rgba(105,201,208,.07)),rgba(255,255,255,.045)!important;
+ backdrop-filter:blur(16px) saturate(155%)!important;-webkit-backdrop-filter:blur(16px) saturate(155%)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 24px rgba(0,0,0,.06)!important;
+}
+body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-quick>button,body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{background:linear-gradient(135deg,rgba(0,122,255,.09),rgba(177,140,255,.075),rgba(105,201,208,.07)),rgba(255,255,255,.18)!important;border-color:rgba(255,255,255,.42)!important}
+body.community-mode #settingsScrim .sheet,body.community-mode #bmnProfileMenuSheet .bmn-profile-menu-inner{background:linear-gradient(130deg,rgba(0,122,255,.08),rgba(177,140,255,.07),rgba(105,201,208,.055)),rgba(20,24,38,.78)!important;border:1px solid rgba(255,255,255,.18)!important;backdrop-filter:blur(24px) saturate(180%)!important;-webkit-backdrop-filter:blur(24px) saturate(180%)!important;box-shadow:0 18px 54px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.16)!important}
+body.light.community-mode #settingsScrim .sheet,body.light.community-mode #bmnProfileMenuSheet .bmn-profile-menu-inner{background:linear-gradient(130deg,rgba(0,122,255,.08),rgba(177,140,255,.07),rgba(105,201,208,.06)),rgba(246,249,255,.78)!important;color:#172033!important;border-color:rgba(255,255,255,.52)!important;box-shadow:0 18px 54px rgba(30,48,82,.15),inset 0 1px 0 rgba(255,255,255,.58)!important}
+body.community-mode #bmnThemeMode{max-width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:inherit;font:inherit}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}body.community-mode .app-dock,body.community-mode .app-dock button{transition:none!important}}
+</style>
+<script id="bmn-liquid-glass-kit-platform">
+(()=>{'use strict';
+ try{const ua=navigator.userAgent||'';document.body.classList.toggle('bmn-android-font',/Android/i.test(ua));document.body.classList.toggle('bmn-ios-font',/iPad|iPhone|iPod/i.test(ua)&&!window.MSStream)}catch(_){}
+ // Keep system theme live when the user chooses System in profile settings.
+ try{const mq=window.matchMedia('(prefers-color-scheme: light)');const sync=()=>{let mode='system';try{mode=localStorage.getItem('bmn-theme-mode')||'system'}catch(_){}if(mode==='system'){document.body.classList.toggle('light',mq.matches);const sel=document.getElementById('bmnThemeMode');if(sel&&sel.value!=='system')sel.value='system'}};if(mq.addEventListener)mq.addEventListener('change',sync);else if(mq.addListener)mq.addListener(sync)}catch(_){}
+ // Apply the exact kit search-field token shape without replacing existing functionality.
+ document.querySelectorAll('#bmnFindPeople,.bmn-inbox-search').forEach(el=>{el.style.borderRadius='9999px';el.style.padding='10px 16px'});
+})();
+</script>
+
 </body>
 </html>
