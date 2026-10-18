@@ -2001,6 +2001,65 @@ async function bmnInsertCommentCompatible(postId, userId, commentText) {
   throw lastError || new Error('Could not save this comment.');
 }
 
+// BMN App Inbox v3: full-screen native app surface, stories + activity, no card-in-card shell.
+const bmnInboxAppStyle=document.createElement('style');
+bmnInboxAppStyle.id='bmn-inbox-app-v3-style';
+bmnInboxAppStyle.textContent=`
+  body.community-mode[data-app-screen="inbox"],
+  body.community-mode[data-app-screen="profile"]{background:#050609!important;color:var(--fg)!important}
+  body.community-mode[data-app-screen="inbox"] main.wrap,
+  body.community-mode[data-app-screen="profile"] main.wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+  body.community-mode[data-app-screen="inbox"] #communityPage,
+  body.community-mode[data-app-screen="profile"] #communityPage{background:#050609!important;min-height:100dvh!important}
+  body.community-mode[data-app-screen="inbox"] #appInboxScreen,
+  body.community-mode[data-app-screen="profile"] #appProfileScreen{width:100%!important;min-height:100dvh!important;box-sizing:border-box!important;background:#050609!important;padding:calc(10px + env(safe-area-inset-top)) 16px calc(104px + env(safe-area-inset-bottom))!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+  body.light.community-mode[data-app-screen="inbox"],body.light.community-mode[data-app-screen="profile"],
+  body.light.community-mode[data-app-screen="inbox"] #communityPage,body.light.community-mode[data-app-screen="profile"] #communityPage,
+  body.light.community-mode[data-app-screen="inbox"] #appInboxScreen,body.light.community-mode[data-app-screen="profile"] #appProfileScreen{background:#f7f8fb!important;color:#12141a!important}
+  body.community-mode[data-app-screen="inbox"] #bmnInboxV2{width:100%!important;max-width:760px!important;margin:0 auto!important;padding:0 0 calc(24px + env(safe-area-inset-bottom))!important}
+  body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading{position:static!important;background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:0!important;padding:7px 2px 12px!important}
+  body.community-mode[data-app-screen="inbox"] #bmnInboxV2>.app-screen-heading h2{font-size:34px!important;letter-spacing:-.03em!important}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-search{width:100%!important;box-sizing:border-box!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:14px!important;color:var(--fg)!important;box-shadow:none!important}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick{grid-template-columns:repeat(3,1fr)!important;gap:7px!important;margin:12px 0 18px!important}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:16px!important;box-shadow:none!important}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories{display:flex;gap:15px;overflow-x:auto;padding:3px 2px 14px;margin:0 0 8px;scrollbar-width:none}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-stories::-webkit-scrollbar{display:none}
+  .bmn-story-item{flex:0 0 62px;text-align:center;color:var(--fg);font-size:9px}
+  .bmn-story-avatar{width:58px;height:58px;margin:0 auto 6px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#00d8ff,#7d5cff,#ff3d81);box-sizing:border-box}
+  .bmn-story-avatar>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#08090d;border:2px solid #08090d;overflow:hidden;font-weight:800;font-size:15px}
+  .bmn-story-avatar img{width:100%;height:100%;object-fit:cover}
+  body.light.community-mode[data-app-screen="inbox"] .bmn-story-avatar>span{background:#fff;border-color:#fff}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-section-title{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 7px;font-size:16px;font-weight:750}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity{border-bottom:1px solid rgba(255,255,255,.07)}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row{display:flex;align-items:center;gap:11px;min-height:62px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.055)}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-icon{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09)}
+  body.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row strong{font-size:12px}.bmn-inbox-activity-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+  body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:28px 8px!important}
+  body.community-mode[data-app-screen="inbox"] #bmnInboxConversationList>.bmn-inbox-conversation{background:transparent!important;border-radius:0!important;margin:0!important;border-bottom:1px solid rgba(255,255,255,.07)!important;padding:10px 2px!important}
+  body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-row{border-color:rgba(17,20,28,.08)}
+  body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-activity-icon,body.light.community-mode[data-app-screen="inbox"] .bmn-inbox-quick button{background:rgba(17,20,28,.045)!important;border-color:rgba(17,20,28,.09)!important}
+  .bmn-conversation-page{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;transform:none!important;margin:0!important;border:0!important;border-radius:0!important;background:#050609!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;z-index:10080!important;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important}
+  .bmn-conversation-header{padding:10px 15px!important;min-height:62px!important;background:#050609!important;border-bottom:1px solid rgba(255,255,255,.08)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .bmn-conversation-messages{background:#050609!important;padding:18px 15px 24px!important}
+  .bmn-conversation-compose{background:#050609!important;border-top:1px solid rgba(255,255,255,.08)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding-bottom:calc(10px + env(safe-area-inset-bottom))!important}
+  body.light .bmn-conversation-page,body.light .bmn-conversation-header,body.light .bmn-conversation-messages,body.light .bmn-conversation-compose{background:#f7f8fb!important;color:#12141a!important}
+  body.light .bmn-conversation-header,body.light .bmn-conversation-compose{border-color:rgba(17,20,28,.09)!important}
+  body.light .bmn-message-bubble{background:rgba(17,20,28,.06)!important;border-color:rgba(17,20,28,.08)!important}
+`;
+document.head.appendChild(bmnInboxAppStyle);
+function bmnInstallInboxSections(){
+ const ui=document.querySelector('#bmnInboxV2'); if(!ui||ui.querySelector('.bmn-inbox-stories')) return;
+ const search=ui.querySelector('#bmnFindPeople');
+ const stories=document.createElement('div'); stories.className='bmn-inbox-stories'; stories.setAttribute('aria-label','Stories');
+ const names=[['Your story','＋'],['Following','F'],['Creators','C'],['Friends','♡'],['Activity','♥']];
+ stories.innerHTML=names.map((x,i)=>`<button type="button" class="bmn-story-item" data-inbox-story="${i}" style="border:0;background:none;color:inherit;padding:0;font:inherit"><span class="bmn-story-avatar"><span>${x[1]}</span></span><span>${x[0]}</span></button>`).join('');
+ search?.insertAdjacentElement('afterend',stories);
+ const activity=document.createElement('section'); activity.className='bmn-inbox-activity'; activity.innerHTML='<div class="bmn-inbox-section-title"><span>Activities</span><button type="button" class="bmn-settings-action" id="bmnInboxSeeAllActivity">See all</button></div><div class="bmn-inbox-activity-row"><span class="bmn-inbox-activity-icon">♥</span><div><strong>Likes & interactions</strong><small>See likes, comments and repost activity here.</small></div></div><div class="bmn-inbox-activity-row"><span class="bmn-inbox-activity-icon">＋</span><div><strong>New followers</strong><small>People who follow you will appear here.</small></div></div><div class="bmn-inbox-activity-row"><span class="bmn-inbox-activity-icon">@</span><div><strong>Mentions</strong><small>Mentions and replies will appear here.</small></div></div>';
+ const people=ui.querySelector('#bmnInboxPeople'); people?.insertAdjacentElement('beforebegin',activity);
+ stories.addEventListener('click',e=>{const b=e.target.closest('[data-inbox-story]');if(!b)return;const i=Number(b.dataset.inboxStory);if(i===4){activity.scrollIntoView({behavior:'smooth',block:'start'});return} if(i===0)setBackendStatus('Your Story is ready for the next Stories feature.'); else setBackendStatus('Stories and creator activity are ready in this Inbox layout.');});
+}
+setTimeout(bmnInstallInboxSections,0);
+
 // New TikTok-like inbox: find people first, quick actions, self-message, and existing conversation backend.
 const inboxScreen=$('#appInboxScreen');
 if(inboxScreen&&!$('#bmnInboxV2')){
