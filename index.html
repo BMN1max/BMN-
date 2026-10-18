@@ -1598,6 +1598,40 @@ body.community-mode .app-dock button{min-height:50px!important}
 @media(prefers-reduced-motion:reduce){body:not(.community-mode) .card{transition:none}}
 
 </style>
+
+<style id="bmn-quality-correction-v3">
+:root{--bmn-glass-blue:rgba(46,130,255,.16);--bmn-glass-violet:rgba(151,91,255,.15);--bmn-glass-cyan:rgba(42,226,230,.11);--bmn-glass-edge:rgba(222,238,255,.25);--bmn-glass-shadow:0 18px 52px rgba(0,0,0,.24)}
+html{scroll-behavior:smooth;scroll-padding-top:calc(76px + env(safe-area-inset-top,0px))}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+body.bmn-android-font{font-family:Roboto,"Noto Sans","Helvetica Neue",Arial,sans-serif}
+body.community-mode{--clear-glass-bg:linear-gradient(135deg,rgba(40,113,210,.15),rgba(115,65,183,.13) 48%,rgba(19,178,190,.10));--clear-glass-border:rgba(223,238,255,.24);--line:rgba(220,235,255,.20)}
+body.community-mode .app-dock{background:linear-gradient(125deg,rgba(31,88,150,.34),rgba(93,54,148,.29) 52%,rgba(13,150,161,.24))!important;border:1px solid rgba(220,239,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(15,22,48,.22),0 18px 48px rgba(0,0,0,.30),0 0 24px rgba(69,131,255,.09)!important;backdrop-filter:blur(30px) saturate(190%) contrast(104%)!important;-webkit-backdrop-filter:blur(30px) saturate(190%) contrast(104%)!important;color:var(--fg,#f7f9ff)!important}
+body.community-mode .app-dock button{background:linear-gradient(135deg,rgba(255,255,255,.045),rgba(72,140,255,.045))!important;border:1px solid rgba(230,240,255,.09)!important;color:inherit!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important}
+body.community-mode .app-dock button.active{background:linear-gradient(135deg,rgba(66,145,255,.28),rgba(147,90,255,.23),rgba(42,218,222,.14))!important;border-color:rgba(170,214,255,.33)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 5px 20px rgba(38,104,226,.14)!important}
+body.community-mode .app-dock .dock-create-symbol{background:linear-gradient(135deg,rgba(39,143,255,.78),rgba(133,84,237,.78),rgba(34,198,205,.68))!important;border-color:rgba(255,255,255,.4)!important}
+body.light.community-mode .app-dock{background:linear-gradient(125deg,rgba(213,231,255,.72),rgba(234,220,255,.67) 52%,rgba(208,249,248,.62))!important;border-color:rgba(255,255,255,.76)!important;color:#18233a!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 18px 44px rgba(55,78,120,.18)!important}
+body.light.community-mode .app-dock button{color:#18233a!important;border-color:rgba(56,80,125,.10)!important}
+body.community-mode #bmnInboxV2 .bmn-inbox-search{width:100%!important;border-radius:999px!important;min-height:48px!important;padding:0 19px!important;border:1px solid rgba(224,239,255,.27)!important;background:linear-gradient(115deg,rgba(53,123,213,.15),rgba(143,91,213,.12),rgba(45,190,196,.10))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.09)!important;backdrop-filter:blur(20px) saturate(175%)!important;-webkit-backdrop-filter:blur(20px) saturate(175%)!important}
+body.community-mode #bmnInboxV2 .bmn-inbox-quick button,body.community-mode #bmnInboxV2 #bmnInboxComposerV2{border-radius:20px!important;background:linear-gradient(135deg,rgba(58,127,218,.14),rgba(130,80,190,.12),rgba(33,174,183,.08))!important;border-color:rgba(224,239,255,.22)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 9px 25px rgba(0,0,0,.09)!important;backdrop-filter:blur(18px) saturate(175%)!important;-webkit-backdrop-filter:blur(18px) saturate(175%)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar{background:linear-gradient(135deg,#28d9e7,#6b75ff,#dc67ff)!important;box-shadow:0 0 0 2px rgba(20,26,46,.85),0 0 0 4px rgba(67,196,240,.65),0 0 15px rgba(85,128,255,.22)!important}
+body.community-mode[data-app-screen="inbox"] .bmn-story-avatar>span{border:2px solid rgba(7,12,25,.86)!important}
+body.community-mode .bmn-profile-menu-sheet .bmn-profile-menu-inner,body.community-mode #settingsScrim .sheet{background:linear-gradient(135deg,rgba(26,51,91,.76),rgba(54,36,88,.72),rgba(17,75,87,.66))!important;border:1px solid rgba(222,239,255,.26)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 28px 80px rgba(0,0,0,.35)!important;backdrop-filter:blur(32px) saturate(185%)!important;-webkit-backdrop-filter:blur(32px) saturate(185%)!important}
+body.light.community-mode .bmn-profile-menu-sheet .bmn-profile-menu-inner,body.light.community-mode #settingsScrim .sheet{background:linear-gradient(135deg,rgba(228,239,255,.91),rgba(242,231,255,.89),rgba(221,249,248,.87))!important;color:#17233a!important}
+#bmnThemeMode{width:100%;min-height:44px;padding:0 13px;border-radius:14px;border:1px solid var(--clear-glass-border);background:var(--clear-glass-bg);color:var(--fg);font:inherit}
+body.community-mode #bmnFeedTabs{background:linear-gradient(110deg,rgba(35,94,157,.29),rgba(94,55,147,.25),rgba(15,143,155,.20))!important;border:1px solid rgba(223,239,255,.25)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 12px 35px rgba(0,0,0,.12)!important;backdrop-filter:blur(26px) saturate(185%)!important;-webkit-backdrop-filter:blur(26px) saturate(185%)!important}
+body.community-mode #bmnFeedTabs button{border-radius:999px!important}
+body.community-mode .bmn-profile-action,body.community-mode .bmn-profile-menu{background:linear-gradient(135deg,rgba(51,118,202,.17),rgba(137,80,191,.15),rgba(33,170,181,.11))!important;border:1px solid rgba(225,239,255,.22)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14)!important;backdrop-filter:blur(18px) saturate(170%)!important;-webkit-backdrop-filter:blur(18px) saturate(170%)!important}
+.bmn-video-toggle{position:absolute;z-index:8;left:12px;bottom:14px;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:linear-gradient(135deg,rgba(37,104,183,.46),rgba(115,64,171,.42),rgba(19,147,159,.34));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 8px 24px rgba(0,0,0,.28);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%);font-size:17px;cursor:pointer}
+.bmn-video-toggle svg{width:19px;height:19px;fill:currentColor;stroke:currentColor}
+#community .community-post .post-preview{position:relative!important}
+#community .community-post video{display:block;width:100%;height:100%;object-fit:cover}
+body.community-mode .bmn-profile-v2{padding-bottom:calc(32px + env(safe-area-inset-bottom))!important}
+body.community-mode #appProfileScreen{padding-bottom:calc(105px + env(safe-area-inset-bottom))!important;overscroll-behavior-y:contain}
+body.community-mode .bmn-app-screen{scroll-margin-top:calc(70px + env(safe-area-inset-top));-webkit-overflow-scrolling:touch}
+body.community-mode #bmnInboxV2 .bmn-inbox-quick button{font-size:12px!important}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+
 </head>
 <body>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
@@ -1824,9 +1858,10 @@ function renderCommunityPosts(posts,likesByPost={},myLikes=new Set()){
   const profile=bmnProfiles[post.user_id]||{};
   const haystack=[post.content,profile.username,profile.display_name,post.hashtags,post.tags].map(value=>Array.isArray(value)?value.join(' '):(value||'')).join(' ').toLowerCase();
   const role=String(profile.role||profile.account_type||'').toLowerCase();const catOk=filter==='all'||filter==='latest'||(filter==='editors'&&(role==='editor'||role==='creator'||profile.is_editor===true))||(filter==='trending'&&((likesByPost[post.id]||0)>0||Number(post.views||0)>0));
+  const friendsOk=!document.body.classList.contains('bmn-friends-mode')||!!post.user_id&&post.user_id!==bmnSession?.user?.id;
   const followingOk=bmnFeedMode!=='following'||(bmnFollowing.has(post.user_id));
   const savedOk=bmnFeedMode!=='saved'||bmnSavedPostIds.has(post.id);
-  return followingOk&&savedOk&&(!q||haystack.includes(q))&&catOk;
+  return friendsOk&&followingOk&&savedOk&&(!q||haystack.includes(q))&&catOk;
  });
  if(!filtered.length){const emptyMessage=bmnFeedMode==='saved'?'No saved posts yet. Tap Save on a post to keep it here on this device.':bmnFeedMode==='following'?(!bmnSession?'Sign in to see posts from creators you follow.':'Your Following feed is empty. Follow creators from Discover to see their posts here.'):(posts.length?'No posts match this search or filter yet.':'No community posts yet. Sign in and publish the first one.');communityFeed.innerHTML='<div class="backend-empty bmn-feed-empty"><span class="bmn-feed-empty-icon">'+(bmnFeedMode==='following'?'◎':'✦')+'</span><p>'+escapeHTML(emptyMessage)+'</p>'+(bmnFeedMode==='following'&&!bmnSession?'<button type="button" class="backend-btn primary" data-feed-signin>Go to sign in</button>':bmnFeedMode==='following'?'<button type="button" class="backend-btn primary" data-feed-discover>Discover creators</button>':'')+'</div>';return;}
  const displayPosts=[...filtered];
@@ -3152,6 +3187,86 @@ body.community-mode #community .community-grid{padding-bottom:calc(88px + env(sa
  function run(){installTopControls();applyActionIcons();}
  run();const obs=new MutationObserver(()=>run());obs.observe(document.body,{subtree:true,childList:true});
  document.addEventListener('click',e=>{const b=e.target.closest('#themeToggle,#themeSetting');if(b){/* Existing theme handler remains responsible for the actual theme change. */}});
+})();
+</script>
+
+
+<script id="bmn-quality-correction-v3-js">
+(()=>{'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+// Platform-native system font stack.
+try{if(/Android/i.test(navigator.userAgent))document.body.classList.add('bmn-android-font')}catch(_){}
+// Theme: explicit Light/Dark or follow the operating system.
+const media=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;
+function setMode(mode){
+ const resolved=mode==='system'?(media&&media.matches?'light':'dark'):mode;
+ document.body.classList.toggle('light',resolved==='light');
+ try{localStorage.setItem('bmn-theme-mode',mode);localStorage.setItem('bmn-theme',resolved)}catch(_){}
+ const toggle=$('#themeToggle');if(toggle)toggle.textContent=resolved==='light'?'☼':'◐';
+ const select=$('#bmnThemeMode');if(select&&select.value!==mode)select.value=mode;
+ const label=$('#bmnThemeModeLabel');if(label)label.textContent=mode==='system'?'System':mode==='light'?'Light':'Dark';
+}
+let stored='system';try{stored=localStorage.getItem('bmn-theme-mode')||localStorage.getItem('bmn-theme')||'system'}catch(_){}
+if(!['system','light','dark'].includes(stored))stored='system';setMode(stored);
+document.addEventListener('click',e=>{const b=e.target.closest('#themeToggle,#themeSetting');if(!b)return;e.preventDefault();e.stopImmediatePropagation();setMode(document.body.classList.contains('light')?'dark':'light')},true);
+if(media){const onChange=()=>{let mode='system';try{mode=localStorage.getItem('bmn-theme-mode')||'system'}catch(_){}if(mode==='system')setMode('system')};if(media.addEventListener)media.addEventListener('change',onChange);else if(media.addListener)media.addListener(onChange)}
+// Insert theme selector into the existing global settings panel.
+function installThemeSettings(){const sheet=$('#settingsScrim .sheet');if(sheet&&!$('#bmnThemeMode')){const row=document.createElement('div');row.className='setting-row';row.innerHTML='<div><strong>Appearance</strong><small>Choose Light, Dark, or follow your device setting.</small></div><div style="min-width:120px;max-width:48%"><select id="bmnThemeMode" aria-label="Theme preference"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>';const existing=$('#themeSetting')?.closest('.setting-row');if(existing)existing.insertAdjacentElement('afterend',row);else sheet.appendChild(row);$('#bmnThemeMode').addEventListener('change',e=>setMode(e.target.value));}
+ const inner=$('#bmnProfileMenuSheet .bmn-profile-menu-inner');if(inner&&!inner.querySelector('[data-bmn-open-settings]')){const b=document.createElement('button');b.type='button';b.dataset.bmnOpenSettings='1';b.textContent='Theme, display & settings';b.addEventListener('click',()=>{const close=inner.querySelector('[data-profile-action="close"]');close?.click();const opener=$('#settingsOpen');if(opener)opener.click();else $('#settingsScrim')?.classList.add('open');setTimeout(()=>{const sel=$('#bmnThemeMode');if(sel){try{sel.value=localStorage.getItem('bmn-theme-mode')||'system'}catch(_){sel.value='system'}}},30)});const theme=inner.querySelector('[data-profile-action="theme"]');if(theme)theme.insertAdjacentElement('afterend',b);else inner.appendChild(b);}
+}
+installThemeSettings();new MutationObserver(installThemeSettings).observe(document.body,{childList:true,subtree:true});
+// Robust dock routing: clear stale profile/friends state before changing screens.
+function routeDock(view){
+ const body=document.body;
+ if(view==='home'){
+  body.classList.remove('bmn-friends-mode','bmn-conversation-open');
+  body.classList.add('community-mode');
+  const communityButton=$('[data-view="community"]');
+  if(communityButton)communityButton.click();else if(typeof window.setAppView==='function')window.setAppView('home');
+  body.dataset.appScreen='home';try{history.replaceState(null,'','#community-page')}catch(_){}
+  if(typeof window.bmnSetFeedMode==='function')window.bmnSetFeedMode('fyp');
+  $$('[data-app-view]').forEach(b=>{const active=b.dataset.appView==='home';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false')});
+  const profile=$('#appProfileScreen');if(profile)profile.style.display='none';const home=$('#appHomeScreen');if(home)home.style.display='block';
+  window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  setTimeout(()=>{if(body.dataset.appScreen!=='home')body.dataset.appScreen='home';const feed=$('#community');if(feed)feed.scrollIntoView({block:'start',behavior:'smooth'})},80);
+ }else if(view==='discover'){
+  body.classList.add('community-mode','bmn-friends-mode');body.classList.remove('bmn-conversation-open');
+  if(typeof window.setAppView==='function')window.setAppView('home');body.dataset.appScreen='home';
+  if(typeof window.bmnSetFeedMode==='function')window.bmnSetFeedMode('following');
+  $$('[data-app-view]').forEach(b=>{const active=b.dataset.appView==='discover';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false')});
+  if(typeof window.bmnRefreshFriendsFeed==='function')window.bmnRefreshFriendsFeed();
+ }else{
+  body.classList.remove('bmn-friends-mode');body.classList.add('community-mode');
+  if(typeof window.setAppView==='function')window.setAppView(view);
+ }
+}
+const dock=$('.app-dock');if(dock){dock.addEventListener('click',e=>{const b=e.target.closest('[data-app-view]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();routeDock(b.dataset.appView)},true)}
+// Friends is the Following feed, but never show the signed-in user's own posts.
+if(typeof window.renderCommunityPosts==='function'&&!window.renderCommunityPosts.__bmnFriendFix){const old=window.renderCommunityPosts;const wrapped=function(posts,likes={},myLikes=new Set()){
+ let list=Array.isArray(posts)?posts:[];
+ if(document.body.classList.contains('bmn-friends-mode')){const uid=window.bmnSession?.user?.id;list=list.filter(p=>p&&p.user_id&&p.user_id!==uid)}
+ return old.call(this,list,likes,myLikes)
+ };wrapped.__bmnFriendFix=true;window.renderCommunityPosts=wrapped;}
+window.bmnRefreshFriendsFeed=function(){try{const list=window.cachedPosts||[];if(typeof window.renderCommunityPosts==='function')window.renderCommunityPosts(list,window.cachedLikes||{},window.cachedMyLikes||new Set())}catch(_){}};
+// If a visitor is not signed in, Message yourself becomes a private on-device notes thread instead of dead-ending at Profile.
+function loadLocalSelfNotes(){try{return JSON.parse(localStorage.getItem('bmn-self-notes-v1')||'[]')}catch(_){return []}}
+function renderLocalSelfNotes(){const holder=$('#bmnConversationMessages');if(!holder)return;const notes=loadLocalSelfNotes();holder.innerHTML='';if(!notes.length){const empty=document.createElement('div');empty.className='bmn-comments-empty';empty.innerHTML='<strong>Your private notes</strong><p>Write a note below. It stays in this browser on this device.</p>';holder.appendChild(empty)}else notes.forEach(n=>{const row=document.createElement('div');row.className='bmn-message-row mine';const bubble=document.createElement('div');bubble.className='bmn-message-bubble mine';bubble.textContent=n.text;const time=document.createElement('time');time.className='bmn-message-time';time.textContent=new Date(n.at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});row.append(bubble,time);holder.appendChild(row)});holder.scrollTop=holder.scrollHeight}
+document.addEventListener('click',e=>{const b=e.target.closest('#bmnMessageSelf');if(!b)return;const signOut=$('#bmnSignOut');if(signOut&&!signOut.hidden)return;e.preventDefault();e.stopImmediatePropagation();const ui=$('#bmnInboxV2'),page=$('#bmnConversationPage');if(!ui||!page)return;document.body.dataset.bmnLocalSelfNotes='true';document.body.classList.add('community-mode','bmn-conversation-open');document.body.dataset.appScreen='inbox';ui.hidden=true;page.hidden=false;$('#bmnConversationName').textContent='My notes';$('#bmnConversationStatus').textContent='Saved on this device';$('#bmnConversationAvatar').textContent='✎';$('#bmnConversationInput').placeholder='Write a private note…';renderLocalSelfNotes();$('#bmnConversationInput').focus({preventScroll:true})},true);
+document.addEventListener('submit',e=>{if(!document.body.dataset.bmnLocalSelfNotes||e.target.id!=='bmnConversationForm')return;e.preventDefault();e.stopImmediatePropagation();const input=$('#bmnConversationInput'),text=input?.value.trim();if(!text)return;const notes=loadLocalSelfNotes();notes.push({text,at:new Date().toISOString()});try{localStorage.setItem('bmn-self-notes-v1',JSON.stringify(notes));input.value='';renderLocalSelfNotes()}catch(_){if(typeof window.setBackendStatus==='function')window.setBackendStatus('Could not save notes in this browser. Check device storage.',true)}},true);
+document.addEventListener('click',e=>{if(e.target.closest('#bmnConversationBack')){document.body.dataset.bmnLocalSelfNotes='';if($('#bmnConversationInput'))$('#bmnConversationInput').placeholder='Message…'}},true);
+// Video play/pause controls and visibility-aware playback for feed videos.
+const playSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',pauseSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM15 5h4v14h-4z"/></svg>';
+function enhanceVideos(root=document){root.querySelectorAll('#community .community-post video').forEach(v=>{
+ v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.muted=true;v.loop=true;v.preload='metadata';
+ const box=v.closest('.post-preview')||v.parentElement;if(!box)return;if(getComputedStyle(box).position==='static')box.style.position='relative';
+ let btn=box.querySelector(':scope > .bmn-video-toggle');if(!btn){btn=document.createElement('button');btn.type='button';btn.className='bmn-video-toggle';btn.setAttribute('aria-label','Play video');btn.innerHTML=playSvg;box.appendChild(btn);btn.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();if(v.paused){try{await v.play();}catch(_){v.controls=true;}}else v.pause();btn.innerHTML=v.paused?playSvg:pauseSvg;btn.setAttribute('aria-label',v.paused?'Play video':'Pause video')});v.addEventListener('play',()=>{btn.innerHTML=pauseSvg;btn.setAttribute('aria-label','Pause video')});v.addEventListener('pause',()=>{btn.innerHTML=playSvg;btn.setAttribute('aria-label','Play video')});v.addEventListener('ended',()=>{btn.innerHTML=playSvg;btn.setAttribute('aria-label','Play video')});}
+ });}
+enhanceVideos();new MutationObserver(()=>enhanceVideos()).observe(document.body,{childList:true,subtree:true});
+if('IntersectionObserver'in window){const io=new IntersectionObserver(entries=>entries.forEach(entry=>{const v=entry.target;if(entry.isIntersecting&&entry.intersectionRatio>.58){const p=v.play();if(p&&p.catch)p.catch(()=>{v.controls=true})}else if(!v.paused)v.pause()}),{threshold:[0,.58,.85]});function watch(){document.querySelectorAll('#community .community-post video').forEach(v=>{if(!v.dataset.bmnObserved){v.dataset.bmnObserved='1';io.observe(v)}})}watch();new MutationObserver(watch).observe(document.body,{childList:true,subtree:true})}
+// Keep post action SVG shapes consistent; do not alter their existing click handlers.
+function shapes(){document.querySelectorAll('#community .post-actions .post-action').forEach(b=>{const span=b.querySelector('.bmn-action-icon')||b.querySelector('span');if(!span)return;let kind=b.classList.contains('bmn-like')?'like':b.classList.contains('bmn-toggle-comments')?'comment':b.classList.contains('bmn-share')?'share':b.classList.contains('bmn-repost')||b.dataset.action==='repost'?'repost':'';if(!kind)return;const paths={like:'<path d="M20.8 8.7c0 5.1-8.8 10.2-8.8 10.2S3.2 13.8 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/>',comment:'<path d="M20 11.4a7.7 7.7 0 0 1-8 7.4 8.9 8.9 0 0 1-3.5-.7L4 20l1.2-4A7.1 7.1 0 0 1 4 11.4 7.7 7.7 0 0 1 12 4a7.7 7.7 0 0 1 8 7.4Z"/>',share:'<path d="M14 5h5v5M19 5l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',repost:'<path d="m16 3 4 4-4 4"/><path d="M4 11V9a2 2 0 0 1 2-2h14M8 21l-4-4 4-4"/><path d="M20 13v2a2 2 0 0 1-2 2H4"/>'};span.classList.add('bmn-action-icon');if(!span.dataset.bmnFinalIcon){span.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+paths[kind]+'</svg>';span.dataset.bmnFinalIcon='1'}})}shapes();new MutationObserver(shapes).observe(document.body,{childList:true,subtree:true});
+// Round out profile settings entry and ensure smooth, non-janky screen transitions.
+document.addEventListener('click',e=>{const b=e.target.closest('[data-profile-action="system-theme"]');if(b){e.preventDefault();setMode('system')}},true);
 })();
 </script>
 
