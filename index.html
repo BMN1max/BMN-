@@ -1668,7 +1668,7 @@ function renderCommunityPosts(posts,likesByPost={},myLikes=new Set()){
   let media='';
   if(post.media_display_url){
    media=post.media_type==='video'
-    ?'<video muted loop playsinline controls preload="metadata" src="'+escapeHTML(post.media_display_url)+'" aria-label="Community video" controlslist="nodownload noplaybackrate"></video>'
+    ?'<video muted loop playsinline webkit-playsinline preload="metadata" src="'+escapeHTML(post.media_display_url)+'" aria-label="Community video"></video>'
     :'<img loading=\"lazy\" decoding=\"async\" src=\"'+escapeHTML(post.media_display_url)+'\" alt=\"Community post media\" onerror=\"this.style.display=\'none\'\">';
   }
   const preview='<div class="post-preview '+(media?'has-media':'is-text')+'">'+(media||'<span>'+(post.media_url?'▧ Media attached':'✦ BMN Community')+'</span>')+'</div>';
@@ -2425,5 +2425,60 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
 })();
 </script>
 
+<style id="bmn-tiktok-video-style">
+body.community-mode #community .community-grid{scroll-snap-type:y mandatory!important;scroll-behavior:smooth;overscroll-behavior-y:contain}
+body.community-mode #community .community-post{scroll-snap-align:start;scroll-snap-stop:always}
+body.community-mode #community .post-preview video{object-fit:cover!important;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body.community-mode #community .post-preview video::-webkit-media-controls{display:none!important}
+body.community-mode #community .post-preview video::-webkit-media-controls-enclosure{display:none!important}
+body.community-mode #community .post-preview video::-webkit-media-controls-panel{display:none!important}
+body.community-mode #community .post-preview{touch-action:pan-y}
+</style>
+<script>
+(function installBMNTikTokVideoFeed(){
+  const feed=()=>document.querySelector('#community .community-grid');
+  let observer=null;
+  function videos(){return [...document.querySelectorAll('#communityFeed .community-post video')];}
+  function stopOthers(active){videos().forEach(v=>{if(v!==active){v.pause();v.removeAttribute('autoplay');v.preload='metadata';}})}
+  function activate(v){
+    if(!v)return;
+    stopOthers(v);
+    v.muted=true;v.defaultMuted=true;v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
+    v.preload='auto';
+    const playNow=()=>v.play().catch(()=>{});
+    if(v.readyState>=2)playNow();else v.addEventListener('canplay',playNow,{once:true});
+  }
+  function bind(){
+    const root=feed(); if(!root)return;
+    if(observer)observer.disconnect();
+    observer=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        const v=entry.target.querySelector('video'); if(!v)return;
+        if(entry.isIntersecting && entry.intersectionRatio>=0.72) activate(v);
+        else if(!entry.isIntersecting){v.pause();v.preload='metadata';}
+      });
+    },{root:null,threshold:[0,.25,.55,.72,1]});
+    document.querySelectorAll('#communityFeed .community-post').forEach(card=>observer.observe(card));
+    videos().forEach(v=>{
+      v.controls=false;
+      v.addEventListener('loadedmetadata',()=>{v.controls=false;},{once:true});
+      v.addEventListener('error',()=>{v.controls=false;});
+      v.addEventListener('click',e=>{
+        e.preventDefault();
+        if(v.paused)activate(v);else v.pause();
+      });
+    });
+  }
+  const oldRender=window.renderCommunityPosts;
+  if(typeof oldRender==='function' && !window.__bmnTikTokRenderWrapped){
+    window.__bmnTikTokRenderWrapped=true;
+    window.renderCommunityPosts=function(){const result=oldRender.apply(this,arguments);requestAnimationFrame(bind);return result;};
+  }
+  new MutationObserver(()=>requestAnimationFrame(bind)).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)videos().forEach(v=>v.pause());else requestAnimationFrame(bind);});
+  window.addEventListener('load',bind,{once:true});
+  setTimeout(bind,900);
+})();
+</script>
 </body>
 </html>
