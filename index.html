@@ -4393,6 +4393,149 @@ if('serviceWorker'in navigator){
 })();
 </script>
 
+<style id="bmn-glass-wobble-style">
+/* BMN Glass Wobble — one liquid-glass lens that springs between dock tabs (stretch, lean, overshoot, settle) */
+.app-dock.has-lens{touch-action:none;-webkit-user-select:none;user-select:none}
+.app-dock.has-lens>button{position:relative!important;z-index:1!important;touch-action:none!important}
+.bmn-dock-lens{position:absolute;left:0;top:0;z-index:0;pointer-events:none;border-radius:999px;transform-origin:50% 50%;will-change:transform;opacity:0;
+ transition:opacity .2s ease;
+ background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.45),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(72,160,255,.96),rgba(10,110,255,.88));
+ border:1px solid rgba(170,212,255,.6);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -8px 14px rgba(0,60,200,.30),0 4px 18px rgba(10,132,255,.42)}
+.bmn-dock-lens::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:screen;
+ background:linear-gradient(115deg,rgba(255,255,255,0) 28%,rgba(255,255,255,.55) 48%,rgba(255,255,255,0) 68%);opacity:calc(var(--lens-speed,0)*.9)}
+.app-dock.has-lens .bmn-dock-lens{opacity:1}
+/* the lens replaces the per-button active fill */
+.app-dock.has-lens>button.active,.app-dock.has-lens>button[aria-current="page"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+html:root body.community-mode.community-mode .app-dock.app-dock.has-lens>button.active,
+html:root body.community-mode.community-mode .app-dock.app-dock.has-lens>button[aria-current="page"]{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+@keyframes bmnDockPop{0%{transform:scale(1)}30%{transform:scale(1.24,.86)}55%{transform:scale(.92,1.1)}78%{transform:scale(1.06,.97)}100%{transform:scale(1)}}
+.app-dock .bmn-dock-pop svg{animation:bmnDockPop .6s cubic-bezier(.3,.7,.3,1) both}
+@media(prefers-reduced-motion:reduce){.app-dock .bmn-dock-pop svg{animation:none}.bmn-dock-lens::after{display:none}}
+</style>
+<script id="bmn-glass-wobble-js">
+(()=>{
+'use strict';
+const dock=document.querySelector('.app-dock');
+if(!dock||dock.dataset.bmnWobble)return;
+dock.dataset.bmnWobble='1';
+const lens=document.createElement('span');
+lens.className='bmn-dock-lens';lens.setAttribute('aria-hidden','true');
+dock.insertBefore(lens,dock.firstChild);
+const reduceMq=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+const tabs=()=>Array.prototype.filter.call(dock.children,el=>el.matches&&el.matches('button[data-app-view]')&&!el.classList.contains('dock-create'));
+const activeTab=()=>tabs().find(b=>b.classList.contains('active')||b.getAttribute('aria-current')==='page')||null;
+const calm=()=>reduceMq.matches||document.body.classList.contains('low-power');
+
+// spring state: centre x, width, press (finger-down inflation)
+let cx=0,w=0,vx=0,vw=0,tcx=0,tw=0,pr=0,pv=0,pt=0,baseW=0;
+let raf=0,lastT=0,placed=false,pressing=false,dragging=false,startX=0,pid=null,resyncTimer=0,lastActive=null;
+const K=380,C=25,PK=420,PC=19; // underdamped (zeta~0.64): a clear wobble that stays inside the dock
+
+function mark(){if(!dock.classList.contains('has-lens'))dock.classList.add('has-lens');} // classList.add on an existing token still queues a mutation, which would loop the observer
+function aim(tab,snap){
+  if(!tab||!tab.offsetWidth)return;
+  baseW=tabs()[0]?tabs()[0].offsetWidth:tab.offsetWidth;
+  lens.style.width=baseW+'px';lens.style.height=tab.offsetHeight+'px';lens.style.top=tab.offsetTop+'px';
+  tcx=tab.offsetLeft+tab.offsetWidth/2;tw=tab.offsetWidth;
+  if(snap||!placed||calm()){cx=tcx;w=tw;vx=0;vw=0;placed=true;render();mark();}
+  else{mark();kick();}
+}
+function render(){
+  if(!baseW)return;
+  const speed=Math.min(1,Math.abs(vx)/1800);
+  const stretch=Math.min(.36,Math.abs(vx)/2600);
+  const lean=Math.max(-6,Math.min(6,-vx/170));
+  const sx=(w/baseW)*(1+stretch)*(1+.14*pr);
+  const sy=(1-stretch*.35)*(1+.10*pr);
+  lens.style.transform='translate3d('+(cx-baseW/2).toFixed(2)+'px,0,0) skewX('+lean.toFixed(2)+'deg) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
+  lens.style.setProperty('--lens-speed',speed.toFixed(3));
+}
+function kick(){if(!raf){lastT=0;raf=requestAnimationFrame(frame);}}
+function frame(t){
+  raf=0;
+  if(!lastT)lastT=t;
+  let dt=Math.min(.033,(t-lastT)/1000);lastT=t;
+  const n=Math.max(1,Math.ceil(dt/(1/120))),h=dt/n;
+  for(let i=0;i<n;i++){
+    vx+=(-K*(cx-tcx)-C*vx)*h;cx+=vx*h;
+    vw+=(-K*(w-tw)-C*vw)*h;w+=vw*h;
+    pv+=(-PK*(pr-pt)-PC*pv)*h;pr+=pv*h;
+  }
+  render();
+  const rest=Math.abs(cx-tcx)<.05&&Math.abs(vx)<.5&&Math.abs(w-tw)<.05&&Math.abs(vw)<.5&&Math.abs(pr-pt)<.002&&Math.abs(pv)<.05;
+  if(rest){cx=tcx;w=tw;vx=vw=0;pr=pt;pv=0;render();return;}
+  raf=requestAnimationFrame(frame);
+}
+function sync(snap){
+  const a=activeTab();
+  if(!a)return;
+  const changed=a!==lastActive;
+  aim(a,snap);
+  if(changed&&lastActive&&!calm()){
+    const s=a.querySelector('.dock-symbol');
+    if(s){s.classList.remove('bmn-dock-pop');void s.offsetWidth;s.classList.add('bmn-dock-pop');setTimeout(()=>s.classList.remove('bmn-dock-pop'),700);}
+  }
+  lastActive=a;
+}
+function scheduleResync(){clearTimeout(resyncTimer);resyncTimer=setTimeout(()=>sync(false),160);}
+function localX(e){const r=dock.getBoundingClientRect();return r.width?(e.clientX-r.left)/r.width*dock.offsetWidth:0;}
+function nearest(x){
+  const list=tabs();let best=null,d=1e9;
+  list.forEach(b=>{const c=Math.abs(b.offsetLeft+b.offsetWidth/2-x);if(c<d){d=c;best=b;}});
+  return best;
+}
+
+dock.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  const b=e.target.closest&&e.target.closest('button[data-app-view]');
+  if(!b||b.classList.contains('dock-create')||b.parentNode!==dock)return;
+  pressing=true;dragging=false;startX=e.clientX;pid=e.pointerId;pt=1;
+  aim(b,false); // lens leaps to the pressed tab and inflates like a lens under a finger
+  kick();
+});
+dock.addEventListener('pointermove',e=>{
+  if(!pressing||e.pointerId!==pid)return;
+  if(!dragging&&Math.abs(e.clientX-startX)>8){
+    dragging=true;
+    try{dock.setPointerCapture(pid);}catch(_){/* capture is a nicety */}
+  }
+  if(dragging){
+    const list=tabs();if(!list.length)return;
+    const first=list[0],last=list[list.length-1];
+    const lo=first.offsetLeft+first.offsetWidth/2,hi=last.offsetLeft+last.offsetWidth/2;
+    tcx=Math.max(lo,Math.min(hi,localX(e)));tw=baseW;
+    kick();
+  }
+});
+function release(e,cancelled){
+  if(!pressing||(e&&e.pointerId!==pid))return;
+  const wasDrag=dragging;
+  pressing=false;dragging=false;pt=0;
+  try{if(dock.hasPointerCapture&&dock.hasPointerCapture(pid))dock.releasePointerCapture(pid);}catch(_){/* already released */}
+  if(wasDrag&&!cancelled){
+    const target=nearest(tcx);
+    if(target&&target!==activeTab()){target.click();}
+  }
+  kick();
+  scheduleResync(); // if routing refused the tab, the lens springs back to the real active tab
+}
+dock.addEventListener('pointerup',e=>release(e,false));
+dock.addEventListener('pointercancel',e=>release(e,true));
+
+// follow whatever the existing router marks active
+new MutationObserver(()=>sync(false)).observe(dock,{attributes:true,subtree:true,attributeFilter:['class','aria-current']});
+if(window.ResizeObserver)new ResizeObserver(()=>sync(true)).observe(dock);
+window.addEventListener('resize',()=>sync(true),{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(()=>sync(true),250));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>sync(true)).catch(()=>{});
+if(reduceMq.addEventListener)reduceMq.addEventListener('change',()=>sync(true));
+sync(true);
+// the dock icons are swapped to SVG by an earlier script; re-measure once everything has settled
+window.addEventListener('load',()=>setTimeout(()=>sync(true),120),{once:true});
+})();
+</script>
+
 </body>
 </html>
 
