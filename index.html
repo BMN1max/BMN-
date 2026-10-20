@@ -3794,6 +3794,72 @@ body.community-mode[data-app-screen="home"] #community .post-actions .audio-whee
 }
 </style>
 
+
+<style id="bmn-master-update-v10-css">
+/* BMN MASTER UPDATE — TikTok interaction layer + Liquid Glass 10 */
+body.community-mode{--bmn-safe-bottom:env(safe-area-inset-bottom,0px)}
+body.community-mode #community .community-grid{scroll-behavior:smooth}
+.bmn-video-progress{position:absolute;left:12px;right:12px;bottom:10px;height:3px;border-radius:99px;background:rgba(255,255,255,.25);z-index:7;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.3)}
+.bmn-video-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fff,#69dfff,#a987ff);border-radius:inherit;pointer-events:none}
+.bmn-video-scrub{position:absolute;left:10px;right:10px;bottom:2px;height:22px;opacity:0;z-index:8;cursor:pointer}
+.post-preview:hover .bmn-video-scrub,.post-preview:focus-within .bmn-video-scrub{opacity:1}
+.bmn-video-toggle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.34);background:rgba(10,15,25,.24);backdrop-filter:blur(8px) saturate(140%);-webkit-backdrop-filter:blur(8px) saturate(140%);display:grid;place-items:center;color:#fff;opacity:.82;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 30px rgba(0,0,0,.2)}
+.bmn-video-toggle svg{width:25px;height:25px;fill:currentColor}
+.bmn-speed-hold{position:absolute;z-index:25;left:50%;top:50%;transform:translate(-50%,-50%);display:none;gap:6px;padding:7px;border-radius:999px;background:rgba(7,10,18,.55);border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 35px rgba(0,0,0,.35)}
+.bmn-speed-hold.open{display:flex}
+.bmn-speed-hold button{border:0;background:transparent;color:#fff;padding:9px 12px;border-radius:999px;font-size:11px}.bmn-speed-hold button.active{background:rgba(255,255,255,.16)}
+.bmn-quick-actions{position:absolute;z-index:26;right:14px;bottom:116px;display:none;flex-direction:column;gap:7px;align-items:flex-end}.bmn-quick-actions.open{display:flex}.bmn-quick-actions button{border:1px solid rgba(255,255,255,.28);background:rgba(8,12,20,.48);color:#fff;padding:9px 12px;border-radius:999px;font-size:11px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bmn-double-heart{position:absolute;z-index:30;left:50%;top:46%;transform:translate(-50%,-50%) scale(.45);font-size:88px;opacity:0;color:#fff;text-shadow:0 8px 28px rgba(0,0,0,.4);pointer-events:none}.bmn-double-heart.pop{animation:bmnHeartPop .75s cubic-bezier(.16,1,.3,1) forwards}@keyframes bmnHeartPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.25)}}
+.bmn-stories{display:flex;gap:14px;overflow:auto;padding:4px 2px 12px;scrollbar-width:none}.bmn-stories::-webkit-scrollbar{display:none}.bmn-story{flex:0 0 66px;text-align:center;background:none;border:0;color:inherit;font-size:10px}.bmn-story-ring{width:58px;height:58px;margin:auto;border-radius:50%;padding:2px;background:conic-gradient(#59f1e6,#b18cff,#ff5c8a,#59f1e6)}.bmn-story-inner{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:#0b0e17;border:2px solid #0b0e17;overflow:hidden}.bmn-story-inner img{width:100%;height:100%;object-fit:cover}.bmn-story-name{display:block;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+#bmnInboxV2 .bmn-inbox-search{height:46px;border-radius:999px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.18);color:var(--fg);padding:0 16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bmn-profile-architecture{padding:18px 0 8px}.bmn-profile-architecture .pa-head{display:flex;gap:14px;align-items:center}.bmn-profile-architecture .pa-avatar{width:82px;height:82px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,rgba(0,194,255,.28),rgba(177,90,255,.3));border:2px solid rgba(255,255,255,.3);font-size:25px;font-weight:800}.bmn-profile-architecture .pa-avatar img{width:100%;height:100%;object-fit:cover}.bmn-profile-architecture .pa-name{font-size:22px;font-weight:800}.bmn-profile-architecture .pa-handle{color:var(--muted);font-size:12px}.bmn-profile-architecture .pa-stats{display:flex;gap:20px;margin-top:14px}.bmn-profile-architecture .pa-stat strong{display:block;font-size:17px}.bmn-profile-architecture .pa-stat span{font-size:10px;color:var(--muted)}.bmn-profile-architecture .pa-bio{margin:12px 0;color:var(--muted);font-size:13px;line-height:1.5}.bmn-pins{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:16px}.bmn-pin{aspect-ratio:3/4;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:linear-gradient(145deg,rgba(0,122,255,.22),rgba(177,140,255,.18));position:relative}.bmn-pin span{position:absolute;inset:auto 7px 8px;font-size:9px;font-weight:700;text-shadow:0 2px 7px #000}.bmn-pin:first-child{background:linear-gradient(145deg,#0d1730,#5b83a5)}.bmn-pin:nth-child(2){background:linear-gradient(145deg,#3c1021,#7d3d53)}.bmn-pin:nth-child(3){background:linear-gradient(145deg,#10243c,#6b57a4)}
+.bmn-conversation-page{height:calc(100dvh - 120px);min-height:500px}.bmn-conversation-messages{padding:18px 4px;overflow:auto;display:flex;flex-direction:column;gap:8px}.bmn-message-bubble{max-width:min(78%,430px);padding:10px 13px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}.bmn-message-bubble.mine{background:linear-gradient(135deg,rgba(0,122,255,.28),rgba(177,140,255,.22));border-color:rgba(184,219,255,.28)}
+@media(max-width:700px){.bmn-video-toggle{width:48px;height:48px}.bmn-video-progress{left:10px;right:10px;bottom:7px}.bmn-quick-actions{right:10px;bottom:128px}.bmn-pins{gap:3px}.bmn-profile-architecture .pa-avatar{width:72px;height:72px}.bmn-conversation-page{height:calc(100dvh - 95px)}}
+</style>
+
+
+<script id="bmn-master-update-v10-js">
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const wait=(fn,ms=0)=>setTimeout(fn,ms);
+function enhancePost(post){
+ if(!post||post.dataset.bmnMasterEnhanced)return;
+ post.dataset.bmnMasterEnhanced='1';
+ const preview=post.querySelector('.post-preview'), video=post.querySelector('video');
+ if(!preview||!video)return;
+ video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.muted=true;video.loop=true;video.preload='metadata';
+ let progress=preview.querySelector('.bmn-video-progress');
+ if(!progress){progress=document.createElement('div');progress.className='bmn-video-progress';progress.innerHTML='<i></i>';preview.appendChild(progress)}
+ const fill=progress.querySelector('i');
+ let scrub=preview.querySelector('.bmn-video-scrub');
+ if(!scrub){scrub=document.createElement('input');scrub.type='range';scrub.className='bmn-video-scrub';scrub.min='0';scrub.max='1000';scrub.value='0';scrub.setAttribute('aria-label','Seek video');preview.appendChild(scrub)}
+ video.addEventListener('timeupdate',()=>{if(!video.duration)return;const pct=video.currentTime/video.duration*100;fill.style.width=pct+'%';if(document.activeElement!==scrub)scrub.value=String(Math.round(pct*10))},{passive:true});
+ video.addEventListener('loadedmetadata',()=>{if(video.duration)scrub.value='0'},{once:true});
+ scrub.addEventListener('input',e=>{if(video.duration)video.currentTime=(Number(e.target.value)/1000)*video.duration});
+ let holdTimer=null, holding=false;
+ let speed=preview.querySelector('.bmn-speed-hold');
+ if(!speed){speed=document.createElement('div');speed.className='bmn-speed-hold';speed.innerHTML='<button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button>';preview.appendChild(speed);speed.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();video.playbackRate=Number(b.dataset.speed);speed.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));speed.classList.remove('open')}))}
+ const startHold=()=>{if(holdTimer)return;holding=false;holdTimer=setTimeout(()=>{holding=true;video.playbackRate=2;speed.classList.add('open');speed.querySelector('[data-speed="2"]')?.classList.add('active');video.play().catch(()=>{})},430)};
+ const endHold=()=>{clearTimeout(holdTimer);holdTimer=null;if(holding){video.playbackRate=1;speed.classList.remove('open');speed.querySelectorAll('button').forEach(x=>x.classList.remove('active'));holding=false}};
+ video.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;startHold()});
+ video.addEventListener('pointerup',endHold);video.addEventListener('pointercancel',endHold);video.addEventListener('pointerleave',e=>{if(e.pointerType!=='mouse')endHold()});
+ let lastTap=0;
+ video.addEventListener('click',e=>{if(e.target.closest('button,input'))return;const now=Date.now();if(now-lastTap<320){lastTap=0;const like=post.querySelector('.bmn-like');like?.click();const heart=document.createElement('div');heart.className='bmn-double-heart pop';heart.textContent='♥';preview.appendChild(heart);heart.addEventListener('animationend',()=>heart.remove());return}lastTap=now;if(holding)return;setTimeout(()=>{if(Date.now()-lastTap>=300){if(video.paused)video.play().catch(()=>{});else video.pause()}},320)});
+ let qa=post.querySelector('.bmn-quick-actions');if(!qa){qa=document.createElement('div');qa.className='bmn-quick-actions';qa.innerHTML='<button type="button" data-quick="like">♥ Like</button><button type="button" data-quick="save">▣ Save</button><button type="button" data-quick="repost">↻ Repost</button><button type="button" data-quick="share">↗ Share</button>';preview.appendChild(qa);qa.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const action=b.dataset.quick;qa.classList.remove('open');if(action==='like')post.querySelector('.bmn-like')?.click();if(action==='save')post.querySelector('.bmn-save-post')?.click();if(action==='share')post.querySelector('.bmn-share')?.click();if(action==='repost'){if(typeof window.bmnRepostPost==='function')window.bmnRepostPost(post.dataset.postId);else if(navigator.share)navigator.share({title:'BMN Community post',url:location.href.split('#')[0]+'#post-'+encodeURIComponent(post.dataset.postId)}).catch(()=>{});else if(window.setBackendStatus)window.setBackendStatus('Repost is ready to connect to your repost table.')}})}
+ let quickTimer=null;video.addEventListener('contextmenu',e=>e.preventDefault());video.addEventListener('pointerdown',e=>{clearTimeout(quickTimer);quickTimer=setTimeout(()=>{qa.classList.add('open')},900)});['pointerup','pointercancel','pointerleave'].forEach(ev=>video.addEventListener(ev,()=>clearTimeout(quickTimer)));
+}
+function enhanceAll(){ $$('#community .community-post').forEach(enhancePost); }
+function addStories(){const inbox=$('#bmnInboxV2');if(!inbox||$('#bmnStoriesV10'))return;const box=document.createElement('div');box.id='bmnStoriesV10';box.className='bmn-stories';const profiles=Object.values(window.bmnProfiles||{}).filter(p=>p&&p.id).slice(0,12);const mine=window.bmnSession?.user?.id?(window.bmnProfiles||{})[window.bmnSession.user.id]:null;const list=[mine||{display_name:'Your Story',username:'you'},...profiles.filter(p=>p.id!==mine?.id)];box.innerHTML=list.slice(0,12).map((p,i)=>{const avatar=p.avatar_display_url||p.avatar_url||'';return '<button class="bmn-story" type="button" data-story-user="'+(p.id||'')+'"><span class="bmn-story-ring"><span class="bmn-story-inner">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="">':(i===0?'＋':String((p.display_name||p.username||'B')[0]).toUpperCase()))+'</span></span><span class="bmn-story-name">'+(i===0?'Your Story':(p.display_name||p.username||'Creator'))+'</span></button>'}).join('');inbox.insertBefore(box,inbox.querySelector('.bmn-inbox-search'));box.addEventListener('click',e=>{const b=e.target.closest('.bmn-story');if(!b)return;if(!b.dataset.storyUser&&window.setBackendStatus)window.setBackendStatus('Add a photo or video to create your first story.');else if(window.setBackendStatus)window.setBackendStatus('Stories UI is ready. Story publishing can connect when the Stories table is enabled.');});}
+function addProfileArchitecture(){const screen=$('#appProfileScreen');if(!screen||$('#bmnProfileArchitectureV10'))return;const panel=document.createElement('section');panel.id='bmnProfileArchitectureV10';panel.className='bmn-profile-architecture';const uid=window.bmnSession?.user?.id;const p=(window.bmnProfiles||{})[uid]||{display_name:'BMN',username:'thisisbmn',bio:'Creator • Editor • Storyteller'};const avatar=p.avatar_display_url||p.avatar_url||'';panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="BMN profile">':'BMN')+'</div><div><div class="pa-name">'+(p.display_name||'BMN')+'</div><div class="pa-handle">@'+(p.username||'thisisbmn')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div><div class="pa-stat"><strong>'+((window.cachedLikes||{})?Object.values(window.cachedLikes||{}).reduce((a,b)=>a+b,0):0)+'</strong><span>Likes</span></div></div><p class="pa-bio">'+(p.bio||'Creator • Editor • Storyteller')+'</p><div class="bmn-pins"><div class="bmn-pin"><span>📌 THIS IS BMN</span></div><div class="bmn-pin"><span>📌 THINGS I WILL DO AS PRESIDENT 😂</span></div><div class="bmn-pin"><span>📌 COME BUILD WITH BMN</span></div></div>';screen.prepend(panel);}
+function wireProfileRefresh(){addProfileArchitecture();addStories();}
+const observer=new MutationObserver(()=>{enhanceAll();wireProfileRefresh()});
+observer.observe(document.body,{childList:true,subtree:true});
+window.addEventListener('load',()=>{enhanceAll();wireProfileRefresh()});
+setInterval(()=>{if(document.body.classList.contains('community-mode')){enhanceAll();wireProfileRefresh()}},1500);
+})();
+</script>
+
 </body>
 </html>
 
