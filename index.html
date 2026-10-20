@@ -12,7 +12,18 @@
 <link rel="apple-touch-icon" href="/bmn-icon-192.png">
 <meta name="description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
 <meta name="color-scheme" content="dark light">
-<title>BMN® — Obsidian Neon | Creator · Editor · Storyteller</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://dyjqewjynbsvedqwkegk.supabase.co" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BMN®">
+<meta property="og:title" content="BMN® — Creator · Editor · Storyteller">
+<meta property="og:description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BMN® — Creator · Editor · Storyteller">
+<meta name="twitter:description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
+<!-- TODO once the live domain and final icon are confirmed: add <link rel="canonical">, og:url and an absolute-URL og:image. -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"BMN","description":"Nigerian digital creator, video editor and storyteller.","sameAs":["https://www.tiktok.com/@thisisbmn","https://www.youtube.com/@thisisbmn"]}</script>
+<title>BMN® — Creator · Editor · Storyteller</title>
 <style>
  :root{color-scheme:dark;--bg:#0d1117;--fg:#f7f9ff;--muted:#c0c9dc;--line:rgba(232,239,255,.28);--clear-glass-bg:rgba(255,255,255,.03);--clear-glass-border:rgba(255,255,255,.25);--clear-glass-specular:inset 1px 1px 0 0 rgba(255,255,255,.4),inset -1px -1px 0 0 rgba(255,255,255,.05);--clear-glass-shadow:0 10px 30px -5px rgba(0,0,0,.15);--glass-bg:var(--clear-glass-bg);--glass-border:var(--clear-glass-border);--glass-shine:var(--clear-glass-specular);--glass-shadow:var(--clear-glass-shadow);--glass:var(--glass-bg);--glass-hi:rgba(255,255,255,.06);--blue:#58aaff;--cyan:#59f1e6;--violet:#b18cff;--rose:#ff5c8a;--gold:#ffd166;--mx:50%;--my:35%;--edge:rgba(255,255,255,.42);--motion:1;--tint-a:rgba(0,122,255,.30);--tint-b:rgba(177,90,255,.23);--tint-c:rgba(0,242,254,.22)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;min-height:100vh;overflow-x:hidden;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;letter-spacing:-.012em;transition:background .5s,color .35s}body.light{color-scheme:light;--bg:#eef2f9;--fg:#1b2232;--muted:#596579;--line:rgba(35,48,75,.2);--clear-glass-bg:rgba(255,255,255,.03);--clear-glass-border:rgba(255,255,255,.42);--clear-glass-specular:inset 1px 1px 0 0 rgba(255,255,255,.82),inset -1px -1px 0 0 rgba(40,55,80,.04);--clear-glass-shadow:0 10px 30px -5px rgba(28,40,65,.13);--glass-bg:var(--clear-glass-bg);--glass-border:var(--clear-glass-border);--glass-shine:var(--clear-glass-specular);--glass-shadow:var(--clear-glass-shadow);--glass:var(--glass-bg);--glass-hi:rgba(255,255,255,.06);--edge:rgba(255,255,255,.65);--tint-a:rgba(84,166,255,.15);--tint-b:rgba(181,133,255,.12);--tint-c:rgba(65,214,196,.1)}body.low-power *,body.low-power *:before,body.low-power *:after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}body.sleeping:after{content:"";position:fixed;z-index:1000;inset:0;background:rgba(3,6,12,.94);backdrop-filter:blur(22px);display:grid;place-items:center}body.sleeping .wake-screen{display:grid}a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}::selection{background:rgba(157,232,237,.35)}
@@ -2059,12 +2070,12 @@ function renderCommunityPosts(posts,likesByPost={},myLikes=new Set()){
   const profile=bmnProfiles[post.user_id]||{};
   const haystack=[post.content,profile.username,profile.display_name,post.hashtags,post.tags].map(value=>Array.isArray(value)?value.join(' '):(value||'')).join(' ').toLowerCase();
   const role=String(profile.role||profile.account_type||'').toLowerCase();const catOk=filter==='all'||filter==='latest'||(filter==='editors'&&(role==='editor'||role==='creator'||profile.is_editor===true))||(filter==='trending'&&((likesByPost[post.id]||0)>0||Number(post.views||0)>0));
-  const friendsOk=!document.body.classList.contains('bmn-friends-mode')||!!post.user_id&&post.user_id!==bmnSession?.user?.id;
+  const friendsOk=!document.body.classList.contains('bmn-friends-mode')||(!!post.user_id&&post.user_id!==bmnSession?.user?.id&&bmnFollowers.has(post.user_id));
   const followingOk=bmnFeedMode!=='following'||(bmnFollowing.has(post.user_id));
   const savedOk=bmnFeedMode!=='saved'||bmnSavedPostIds.has(post.id);
   return friendsOk&&followingOk&&savedOk&&(!q||haystack.includes(q))&&catOk;
  });
- if(!filtered.length){const emptyMessage=bmnFeedMode==='saved'?'No saved posts yet. Tap Save on a post to keep it here on this device.':bmnFeedMode==='following'?(!bmnSession?'Sign in to see posts from creators you follow.':'Your Following feed is empty. Follow creators from Discover to see their posts here.'):(posts.length?'No posts match this search or filter yet.':'No community posts yet. Sign in and publish the first one.');communityFeed.innerHTML='<div class="backend-empty bmn-feed-empty"><span class="bmn-feed-empty-icon">'+(bmnFeedMode==='following'?'◎':'✦')+'</span><p>'+escapeHTML(emptyMessage)+'</p>'+(bmnFeedMode==='following'&&!bmnSession?'<button type="button" class="backend-btn primary" data-feed-signin>Go to sign in</button>':bmnFeedMode==='following'?'<button type="button" class="backend-btn primary" data-feed-discover>Discover creators</button>':'')+'</div>';return;}
+ if(!filtered.length){const emptyMessage=document.body.classList.contains('bmn-friends-mode')?(!bmnSession?'Sign in to see your friends.':'No friends yet. Friends are creators you follow who also follow you back.'):bmnFeedMode==='saved'?'No saved posts yet. Tap Save on a post to keep it here on this device.':bmnFeedMode==='following'?(!bmnSession?'Sign in to see posts from creators you follow.':'Your Following feed is empty. Follow creators from Discover to see their posts here.'):(posts.length?'No posts match this search or filter yet.':'No community posts yet. Sign in and publish the first one.');communityFeed.innerHTML='<div class="backend-empty bmn-feed-empty"><span class="bmn-feed-empty-icon">'+(bmnFeedMode==='following'?'◎':'✦')+'</span><p>'+escapeHTML(emptyMessage)+'</p>'+(bmnFeedMode==='following'&&!bmnSession?'<button type="button" class="backend-btn primary" data-feed-signin>Go to sign in</button>':bmnFeedMode==='following'?'<button type="button" class="backend-btn primary" data-feed-discover>Discover creators</button>':'')+'</div>';return;}
  const displayPosts=[...filtered];
  /* Latest and Trending are real sort modes, not just cosmetic filters. */
  if(filter==='latest'){displayPosts.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));}
@@ -2106,7 +2117,7 @@ const bmnViewedPosts=new Set();let bmnViewObserver=null;function trackCommunityP
 function bmnScrollToSharedPost(){const match=location.hash.match(/^#post-(.+)$/);if(!match)return;let id='';try{id=decodeURIComponent(match[1])}catch(_){return}if(!id)return;/* Shared links should bypass the current search and feed filters. */bmnFeedMode='fyp';if(communitySearch)communitySearch.value='';document.querySelectorAll('#communityFilters .platform-filter').forEach(button=>button.classList.toggle('active',button.dataset.communityFilter==='all'));const tabs=$('#bmnFeedTabs');tabs?.querySelectorAll('[data-feed-mode]').forEach(button=>button.classList.toggle('active',button.dataset.feedMode==='fyp'));if(cachedPosts.length)renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);const target=communityFeed?.querySelector('[data-post-id="'+CSS.escape(id)+'"]');if(target){setTimeout(()=>target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'}),180);target.setAttribute('tabindex','-1');setTimeout(()=>target.focus({preventScroll:true}),450)}}
 window.addEventListener('hashchange',()=>{if(/^#post-/.test(location.hash))bmnScrollToSharedPost()});
 const bmnWithTimeout=(promise,ms=10000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("The community service timed out. Please check your connection and try again.")),ms))]);
-async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connecting to community service…',true);return}if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Loading BMN Community…</div>';try{const {data:posts,error}=await bmnWithTimeout(bmnSupabase.from('posts').select('*').order('created_at',{ascending:false}).limit(100));if(error)throw error;cachedPosts=(posts||[]).map(p=>{const mediaUrl=p.media_url||p.video_url||p.mediaUrl||null;const kind=bmnMediaKind({media_url:mediaUrl,media_type:p.media_type||p.type||''});return {...p,media_url:mediaUrl,media_type:kind,content:p.content??p.caption??p.title??''}});bmnFollowing.clear();if(bmnSession?.user?.id){try{const followResult=await bmnSupabase.from('follows').select('following_id').eq('follower_id',bmnSession.user.id);if(!followResult.error)(followResult.data||[]).forEach(row=>bmnFollowing.add(row.following_id))}catch(_){}}const userIds=[...new Set(cachedPosts.map(p=>p.user_id).filter(Boolean))];if(bmnSession?.user?.id&&!userIds.includes(bmnSession.user.id))userIds.push(bmnSession.user.id);bmnProfiles={};if(userIds.length){const pr=await bmnWithTimeout(bmnSupabase.from('profiles').select('*').in('id',userIds));if(!pr.error)(pr.data||[]).forEach(p=>bmnProfiles[p.id]=p)}
+async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connecting to community service…',true);return}if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Loading BMN Community…</div>';try{const {data:posts,error}=await bmnWithTimeout(bmnSupabase.from('posts').select('*').order('created_at',{ascending:false}).limit(100));if(error)throw error;cachedPosts=(posts||[]).map(p=>{const mediaUrl=p.media_url||p.video_url||p.mediaUrl||null;const kind=bmnMediaKind({media_url:mediaUrl,media_type:p.media_type||p.type||''});return {...p,media_url:mediaUrl,media_type:kind,content:p.content??p.caption??p.title??''}});bmnFollowing.clear();if(bmnSession?.user?.id){try{const followResult=await bmnSupabase.from('follows').select('following_id').eq('follower_id',bmnSession.user.id);if(!followResult.error)(followResult.data||[]).forEach(row=>bmnFollowing.add(row.following_id))}catch(_){}}bmnFollowers.clear();if(bmnSession?.user?.id){try{const followerResult=await bmnSupabase.from('follows').select('follower_id').eq('following_id',bmnSession.user.id);if(!followerResult.error)(followerResult.data||[]).forEach(row=>bmnFollowers.add(row.follower_id))}catch(_){}}const userIds=[...new Set(cachedPosts.map(p=>p.user_id).filter(Boolean))];if(bmnSession?.user?.id&&!userIds.includes(bmnSession.user.id))userIds.push(bmnSession.user.id);bmnProfiles={};if(userIds.length){const pr=await bmnWithTimeout(bmnSupabase.from('profiles').select('*').in('id',userIds));if(!pr.error)(pr.data||[]).forEach(p=>bmnProfiles[p.id]=p)}
 // Resolve private-bucket URLs for posts and avatars without making the bucket public.
 await Promise.all(cachedPosts.map(async p=>{p.media_type=bmnMediaKind({media_url:p.media_url,media_type:p.media_type});try{p.media_display_url=await resolveStorageUrl(p.media_url)}catch(error){p.media_display_url='';p.media_resolution_error=error?.message||'Media URL could not be resolved'}}));await Promise.all(Object.values(bmnProfiles).map(async p=>{try{p.avatar_display_url=await resolveStorageUrl(p.avatar_url)}catch(_){p.avatar_display_url=''}}));
 const likesRes=await bmnWithTimeout(bmnSupabase.from('likes').select('post_id,user_id').limit(5000));cachedLikes={};cachedMyLikes=new Set();if(!likesRes.error)(likesRes.data||[]).forEach(l=>{cachedLikes[l.post_id]=(cachedLikes[l.post_id]||0)+1;if(bmnSession?.user?.id===l.user_id)cachedMyLikes.add(l.post_id)});let commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,content,created_at').order('created_at',{ascending:true}).limit(1000));if(commentsRes.error){commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,body,created_at').order('created_at',{ascending:true}).limit(1000));if(!commentsRes.error)commentsRes.data=(commentsRes.data||[]).map(c=>({...c,content:c.body||''}));}cachedComments={};if(!commentsRes.error)(commentsRes.data||[]).forEach(c=>(cachedComments[c.post_id]||(cachedComments[c.post_id]=[])).push(c));if(communityFeed){renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);trackCommunityPostViews();bmnScrollToSharedPost()}if(bmnSession?.user?.id){fillProfileEditor(bmnProfiles[bmnSession.user.id]||{});updateAvatarEditor(bmnProfiles[bmnSession.user.id]||{});const select=$('#bmnMessageRecipient');if(select){const current=select.value;select.innerHTML='<option value="">Choose a creator</option>'+Object.values(bmnProfiles).filter(p=>p.id!==bmnSession.user.id).map(p=>'<option value="'+escapeHTML(p.id)+'">'+escapeHTML(p.display_name||p.username||'Creator')+' (@'+escapeHTML(p.username||'creator')+')</option>').join('');select.value=current}await loadSocialHub()}else{updateAvatarEditor({});loadSocialHub()}setBackendStatus(cachedPosts.length?'Community loaded · '+cachedPosts.length+' posts':'Community is ready. Be the first to post.');}catch(error){if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Could not load posts: '+escapeHTML(error.message||'Please reload and try again.')+'</div>';setBackendStatus('Could not load Community: '+(error.message||'check Supabase tables and permissions'),true)}}
@@ -2149,7 +2160,7 @@ function setView(view, updateHash=true){
   const community=view==='community';
   body.classList.toggle('community-mode',community);
   viewButtons.forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-  document.title=community?'BMN® — Creator Community | Crystal Clear Liquid Glass':'BMN® — Crystal Clear Liquid Glass | Creator · Editor · Storyteller';
+  document.title=community?'BMN® — Creator Community':'BMN® — Creator · Editor · Storyteller';
   if(updateHash){history.replaceState(null,'',community?'#community-page':'#home');window.scrollTo({top:0,behavior:'smooth'});}
 }
 viewButtons.forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view);if(b.dataset.view==='community')setAppView('home')}));
@@ -2590,6 +2601,26 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
   });
 })();
 
+/* ===== Bridge (added) =====
+   Later <script> blocks read these names by bare name or window.X. They were private to this closure, so their
+   Following / Friends / feed logic silently did nothing (typeof x === 'undefined'). Live accessors, not snapshots,
+   because renderCommunityPosts and the state below are reassigned during the session. */
+(()=>{const def=(name,get,set)=>{const d=Object.getOwnPropertyDescriptor(window,name);if(d&&d.configurable===false)return;try{Object.defineProperty(window,name,{configurable:true,enumerable:false,get,set:set||(()=>{})})}catch(_){}};
+  def('bmnSession',()=>bmnSession,v=>{bmnSession=v});
+  def('bmnProfiles',()=>bmnProfiles,v=>{bmnProfiles=v});
+  def('bmnFollowing',()=>bmnFollowing);
+  def('bmnFollowers',()=>bmnFollowers);
+  def('bmnFeedMode',()=>bmnFeedMode,v=>{bmnFeedMode=v});
+  def('cachedPosts',()=>cachedPosts,v=>{cachedPosts=v});
+  def('cachedLikes',()=>cachedLikes,v=>{cachedLikes=v});
+  def('cachedMyLikes',()=>cachedMyLikes,v=>{cachedMyLikes=v});
+  def('renderCommunityPosts',()=>renderCommunityPosts,v=>{if(typeof v==='function')renderCommunityPosts=v});
+  def('loadCommunityPosts',()=>loadCommunityPosts,v=>{if(typeof v==='function')loadCommunityPosts=v});
+  def('setBackendStatus',()=>setBackendStatus,v=>{if(typeof v==='function')setBackendStatus=v});
+})();
+/* Signed URLs for the private bucket expire (1 h). If a feed video fails to load, request a fresh URL once. */
+document.addEventListener('error',async event=>{const v=event.target;if(!(v instanceof HTMLVideoElement)||v.dataset.bmnResigned)return;const card=v.closest('[data-post-id]');const post=card&&cachedPosts.find(p=>String(p.id)===card.dataset.postId);if(!post||!String(post.media_url||'').startsWith('storage:'))return;v.dataset.bmnResigned='1';try{const fresh=await resolveStorageUrl(post.media_url);if(fresh&&fresh!==v.getAttribute('src')){v.src=fresh;v.load()}}catch(_){}},true);
+/* ===== end bridge ===== */
 })();
 </script>
 
@@ -3211,17 +3242,17 @@ body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile span{displ
  // Add a real-data Friends header; no invented accounts or message rows are inserted.
  const home=$('#appHomeScreen');
  if(home&&!$('.bmn-friends-head')){
-   const head=document.createElement('div');head.className='bmn-friends-head';head.innerHTML='<div class="bmn-friends-stories" aria-label="Followed creators"></div><strong>Friends</strong><button type="button" data-friends-search aria-label="Search creators">⌕</button>';
+   const head=document.createElement('div');head.className='bmn-friends-head';head.innerHTML='<div class="bmn-friends-stories" aria-label="Friends"></div><strong>Friends</strong><button type="button" data-friends-search aria-label="Search creators">⌕</button>';
    home.appendChild(head);
    head.querySelector('[data-friends-search]').addEventListener('click',()=>{document.body.classList.remove('bmn-friends-mode');window.setAppView('discover');setTimeout(()=>$('#bmnDiscoverSearch')?.focus({preventScroll:true}),160)});
  }
  function updateFriendBubbles(){
    const host=$('.bmn-friends-stories');if(!host)return;
-   const ids=typeof bmnFollowing!=='undefined'?[...bmnFollowing].slice(0,3):[];
+   const ids=typeof bmnFollowing!=='undefined'&&typeof bmnFollowers!=='undefined'?[...bmnFollowing].filter(id=>bmnFollowers.has(id)).slice(0,3):[];
    const html=[];
    const me=typeof bmnSession!=='undefined'&&bmnSession?.user?bmnProfiles[bmnSession.user.id]||{}:{};
    html.push('<span class="bmn-friend-bubble" title="Your profile">'+(me.avatar_display_url||me.avatar_url?'<img src="'+String(me.avatar_display_url||me.avatar_url).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" alt="">':String((me.display_name||me.username||'B').trim()[0]||'B'))+'</span>');
-   ids.forEach(id=>{const p=typeof bmnProfiles!=='undefined'?bmnProfiles[id]||{}:{};const url=p.avatar_display_url||p.avatar_url;html.push('<span class="bmn-friend-bubble" title="'+String(p.display_name||p.username||'Followed creator').replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+(url?'<img src="'+String(url).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" alt="">':String((p.display_name||p.username||'C').trim()[0]||'C'))+'</span>')});
+   ids.forEach(id=>{const p=typeof bmnProfiles!=='undefined'?bmnProfiles[id]||{}:{};const url=p.avatar_display_url||p.avatar_url;html.push('<span class="bmn-friend-bubble" title="'+String(p.display_name||p.username||'Friend').replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+(url?'<img src="'+String(url).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" alt="">':String((p.display_name||p.username||'C').trim()[0]||'C'))+'</span>')});
    host.innerHTML=html.join('');
  }
  updateFriendBubbles();
