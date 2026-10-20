@@ -2607,6 +2607,8 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
    because renderCommunityPosts and the state below are reassigned during the session. */
 (()=>{const def=(name,get,set)=>{const d=Object.getOwnPropertyDescriptor(window,name);if(d&&d.configurable===false)return;try{Object.defineProperty(window,name,{configurable:true,enumerable:false,get,set:set||(()=>{})})}catch(_){}};
   def('bmnSession',()=>bmnSession,v=>{bmnSession=v});
+  def('bmnSupabase',()=>bmnSupabase);
+  def('openBmnCommentsSheet',()=>openBmnCommentsSheet);
   def('bmnProfiles',()=>bmnProfiles,v=>{bmnProfiles=v});
   def('bmnFollowing',()=>bmnFollowing);
   def('bmnFollowers',()=>bmnFollowers);
@@ -2973,7 +2975,7 @@ body.community-mode #community .post-preview{touch-action:pan-y}
     window.__bmnTikTokRenderWrapped=true;
     window.renderCommunityPosts=function(){const result=oldRender.apply(this,arguments);requestAnimationFrame(bind);return result;};
   }
-  new MutationObserver(()=>requestAnimationFrame(bind)).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(()=>requestAnimationFrame(bind)).observe(document.getElementById('communityFeed')||document.body,{childList:true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)videos().forEach(v=>v.pause());else requestAnimationFrame(bind);});
   window.addEventListener('load',bind,{once:true});
   setTimeout(bind,900);
@@ -3493,8 +3495,8 @@ function enhanceVideos(root=document){root.querySelectorAll('#community .communi
  const box=v.closest('.post-preview')||v.parentElement;if(!box)return;if(getComputedStyle(box).position==='static')box.style.position='relative';
  let btn=box.querySelector(':scope > .bmn-video-toggle');if(!btn){btn=document.createElement('button');btn.type='button';btn.className='bmn-video-toggle';btn.setAttribute('aria-label','Play video');btn.innerHTML=playSvg;box.appendChild(btn);btn.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();if(v.paused){try{await v.play();}catch(_){v.controls=true;}}else v.pause();btn.innerHTML=v.paused?playSvg:pauseSvg;btn.setAttribute('aria-label',v.paused?'Play video':'Pause video')});v.addEventListener('play',()=>{btn.innerHTML=pauseSvg;btn.setAttribute('aria-label','Pause video')});v.addEventListener('pause',()=>{btn.innerHTML=playSvg;btn.setAttribute('aria-label','Play video')});v.addEventListener('ended',()=>{btn.innerHTML=playSvg;btn.setAttribute('aria-label','Play video')});}
  });}
-enhanceVideos();new MutationObserver(()=>enhanceVideos()).observe(document.body,{childList:true,subtree:true});
-if('IntersectionObserver'in window){const io=new IntersectionObserver(entries=>entries.forEach(entry=>{const v=entry.target;if(entry.isIntersecting&&entry.intersectionRatio>.58){const p=v.play();if(p&&p.catch)p.catch(()=>{v.controls=true})}else if(!v.paused)v.pause()}),{threshold:[0,.58,.85]});function watch(){document.querySelectorAll('#community .community-post video').forEach(v=>{if(!v.dataset.bmnObserved){v.dataset.bmnObserved='1';io.observe(v)}})}watch();new MutationObserver(watch).observe(document.body,{childList:true,subtree:true})}
+enhanceVideos();new MutationObserver(()=>enhanceVideos()).observe(document.getElementById('communityFeed')||document.body,{childList:true});
+if('IntersectionObserver'in window){const io=new IntersectionObserver(entries=>entries.forEach(entry=>{const v=entry.target;if(entry.isIntersecting&&entry.intersectionRatio>.58){const p=v.play();if(p&&p.catch)p.catch(()=>{v.controls=true})}else if(!v.paused)v.pause()}),{threshold:[0,.58,.85]});function watch(){document.querySelectorAll('#community .community-post video').forEach(v=>{if(!v.dataset.bmnObserved){v.dataset.bmnObserved='1';io.observe(v)}})}watch();new MutationObserver(watch).observe(document.getElementById('communityFeed')||document.body,{childList:true})}
 // Keep post action SVG shapes consistent; do not alter their existing click handlers.
 function shapes(){document.querySelectorAll('#community .post-actions .post-action').forEach(b=>{const span=b.querySelector('.bmn-action-icon')||b.querySelector('span');if(!span)return;let kind=b.classList.contains('bmn-like')?'like':b.classList.contains('bmn-toggle-comments')?'comment':b.classList.contains('bmn-share')?'share':b.classList.contains('bmn-repost')||b.dataset.action==='repost'?'repost':'';if(!kind)return;const paths={like:'<path d="M20.8 8.7c0 5.1-8.8 10.2-8.8 10.2S3.2 13.8 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z"/>',comment:'<path d="M20 11.4a7.7 7.7 0 0 1-8 7.4 8.9 8.9 0 0 1-3.5-.7L4 20l1.2-4A7.1 7.1 0 0 1 4 11.4 7.7 7.7 0 0 1 12 4a7.7 7.7 0 0 1 8 7.4Z"/>',share:'<path d="M14 5h5v5M19 5l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>',repost:'<path d="m16 3 4 4-4 4"/><path d="M4 11V9a2 2 0 0 1 2-2h14M8 21l-4-4 4-4"/><path d="M20 13v2a2 2 0 0 1-2 2H4"/>'};span.classList.add('bmn-action-icon');if(!span.dataset.bmnFinalIcon){span.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+paths[kind]+'</svg>';span.dataset.bmnFinalIcon='1'}})}shapes();new MutationObserver(shapes).observe(document.body,{childList:true,subtree:true});
 // Round out profile settings entry and ensure smooth, non-janky screen transitions.
@@ -3850,13 +3852,544 @@ function enhancePost(post){
  let quickTimer=null;video.addEventListener('contextmenu',e=>e.preventDefault());video.addEventListener('pointerdown',e=>{clearTimeout(quickTimer);quickTimer=setTimeout(()=>{qa.classList.add('open')},900)});['pointerup','pointercancel','pointerleave'].forEach(ev=>video.addEventListener(ev,()=>clearTimeout(quickTimer)));
 }
 function enhanceAll(){ $$('#community .community-post').forEach(enhancePost); }
-function addStories(){const inbox=$('#bmnInboxV2');if(!inbox||$('#bmnStoriesV10'))return;const box=document.createElement('div');box.id='bmnStoriesV10';box.className='bmn-stories';const profiles=Object.values(window.bmnProfiles||{}).filter(p=>p&&p.id).slice(0,12);const mine=window.bmnSession?.user?.id?(window.bmnProfiles||{})[window.bmnSession.user.id]:null;const list=[mine||{display_name:'Your Story',username:'you'},...profiles.filter(p=>p.id!==mine?.id)];box.innerHTML=list.slice(0,12).map((p,i)=>{const avatar=p.avatar_display_url||p.avatar_url||'';return '<button class="bmn-story" type="button" data-story-user="'+(p.id||'')+'"><span class="bmn-story-ring"><span class="bmn-story-inner">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="">':(i===0?'＋':String((p.display_name||p.username||'B')[0]).toUpperCase()))+'</span></span><span class="bmn-story-name">'+(i===0?'Your Story':(p.display_name||p.username||'Creator'))+'</span></button>'}).join('');inbox.insertBefore(box,inbox.querySelector('.bmn-inbox-search'));box.addEventListener('click',e=>{const b=e.target.closest('.bmn-story');if(!b)return;if(!b.dataset.storyUser&&window.setBackendStatus)window.setBackendStatus('Add a photo or video to create your first story.');else if(window.setBackendStatus)window.setBackendStatus('Stories UI is ready. Story publishing can connect when the Stories table is enabled.');});}
-function addProfileArchitecture(){const screen=$('#appProfileScreen');if(!screen||$('#bmnProfileArchitectureV10'))return;const panel=document.createElement('section');panel.id='bmnProfileArchitectureV10';panel.className='bmn-profile-architecture';const uid=window.bmnSession?.user?.id;const p=(window.bmnProfiles||{})[uid]||{display_name:'BMN',username:'thisisbmn',bio:'Creator • Editor • Storyteller'};const avatar=p.avatar_display_url||p.avatar_url||'';panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="BMN profile">':'BMN')+'</div><div><div class="pa-name">'+(p.display_name||'BMN')+'</div><div class="pa-handle">@'+(p.username||'thisisbmn')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div><div class="pa-stat"><strong>'+((window.cachedLikes||{})?Object.values(window.cachedLikes||{}).reduce((a,b)=>a+b,0):0)+'</strong><span>Likes</span></div></div><p class="pa-bio">'+(p.bio||'Creator • Editor • Storyteller')+'</p><div class="bmn-pins"><div class="bmn-pin"><span>📌 THIS IS BMN</span></div><div class="bmn-pin"><span>📌 THINGS I WILL DO AS PRESIDENT 😂</span></div><div class="bmn-pin"><span>📌 COME BUILD WITH BMN</span></div></div>';screen.prepend(panel);}
+function addStories(){const inbox=$('#bmnInboxV2');if(!inbox||$('#bmnStoriesV10'))return;const box=document.createElement('div');box.id='bmnStoriesV10';box.className='bmn-stories';const profiles=Object.values(window.bmnProfiles||{}).filter(p=>p&&p.id).slice(0,12);const mine=window.bmnSession?.user?.id?(window.bmnProfiles||{})[window.bmnSession.user.id]:null;const list=[mine||{display_name:'Your Story',username:'you'}];/* only the viewer's own Story tile: no story rings for other users until a Stories table exists */box.innerHTML=list.slice(0,12).map((p,i)=>{const avatar=p.avatar_display_url||p.avatar_url||'';return '<button class="bmn-story" type="button" data-story-user="'+(p.id||'')+'"><span class="bmn-story-ring"><span class="bmn-story-inner">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="">':(i===0?'＋':String((p.display_name||p.username||'B')[0]).toUpperCase()))+'</span></span><span class="bmn-story-name">'+(i===0?'Your Story':(p.display_name||p.username||'Creator'))+'</span></button>'}).join('');inbox.insertBefore(box,inbox.querySelector('.bmn-inbox-search'));box.addEventListener('click',e=>{const b=e.target.closest('.bmn-story');if(!b)return;if(!b.dataset.storyUser&&window.setBackendStatus)window.setBackendStatus('Add a photo or video to create your first story.');else if(window.setBackendStatus)window.setBackendStatus('Stories UI is ready. Story publishing can connect when the Stories table is enabled.');});}
+function addProfileArchitecture(){const screen=$('#appProfileScreen');if(!screen||$('#bmnProfileArchitectureV10'))return;const panel=document.createElement('section');panel.id='bmnProfileArchitectureV10';panel.className='bmn-profile-architecture';const uid=window.bmnSession?.user?.id;const p=(window.bmnProfiles||{})[uid]||{display_name:'BMN',username:'thisisbmn',bio:'Creator • Editor • Storyteller'};const avatar=p.avatar_display_url||p.avatar_url||'';panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="BMN profile">':'BMN')+'</div><div><div class="pa-name">'+(p.display_name||'BMN')+'</div><div class="pa-handle">@'+(p.username||'thisisbmn')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div><div class="pa-stat"><strong>'+((window.cachedLikes||{})?Object.values(window.cachedLikes||{}).reduce((a,b)=>a+b,0):0)+'</strong><span>Likes</span></div></div><p class="pa-bio">'+(p.bio||'Creator • Editor • Storyteller')+'</p><div class="bmn-pins" id="bmnPinsV11"></div>';screen.prepend(panel);}
 function wireProfileRefresh(){addProfileArchitecture();addStories();}
 const observer=new MutationObserver(()=>{enhanceAll();wireProfileRefresh()});
 observer.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('load',()=>{enhanceAll();wireProfileRefresh()});
 setInterval(()=>{if(document.body.classList.contains('community-mode')){enhanceAll();wireProfileRefresh()}},1500);
+})();
+</script>
+
+<style id="bmn-liquid-glass-master-v11">
+/* =====================================================================
+   BMN COMMUNITY — LIQUID GLASS MASTER v11 (final layer)
+   Transparent physical-lens controls floating above the video/aurora.
+   Video = content. Glass = control layer. No giant glass over video.
+   No SVG turbulence/displacement. Reduced-motion respected.
+   ===================================================================== */
+:root{
+ --g-tint:rgba(26,30,40,.30);
+ --g-edge:rgba(255,255,255,.24);
+ --g-edge-soft:rgba(255,255,255,.10);
+ --g-blur:22px; --g-sat:150%;
+ --g-spec:inset 0 1px 0 rgba(255,255,255,.36),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 14px rgba(255,255,255,.05);
+ --g-shadow:0 6px 22px rgba(0,0,0,.18);
+ --g-text:#f7f9ff;
+ --bmn-blue:#0a84ff;
+ --bmn-ease:cubic-bezier(.2,.85,.25,1);
+}
+body.light{
+ --g-tint:rgba(255,255,255,.40);
+ --g-edge:rgba(255,255,255,.78);
+ --g-edge-soft:rgba(255,255,255,.5);
+ --g-spec:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(120,140,170,.18),inset 0 0 14px rgba(255,255,255,.25);
+ --g-shadow:0 8px 24px rgba(40,60,100,.16);
+ --g-text:#131a2b;
+}
+/* Aurora ≈ 75% intensity — existing canvas kept, just tuned. */
+#bmn-liquid-canvas{opacity:.75!important}
+body.light #bmn-liquid-canvas{opacity:.6!important}
+
+/* ---------- Lens material (shared) ---------- */
+html:root body.community-mode.community-mode .app-dock.app-dock,
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action,
+html:root body.community-mode.community-mode .bmn-video-toggle,
+html:root body.community-mode.community-mode .bmn-mute-btn,
+html:root body.community-mode.community-mode .bmn-follow-pill,
+html:root body.community-mode.community-mode #bmnFeedTabs .bmn-app-mark,
+html:root body.community-mode.community-mode #bmnFeedTabs [data-feed-search],
+html:root body.community-mode.community-mode .bmn-quick-actions button,
+html:root body.community-mode.community-mode .bmn-speed-hold,
+html:root body.community-mode.community-mode .bmn-video-time{
+ background:
+  radial-gradient(120% 90% at var(--gx,32%) var(--gy,0%),rgba(255,255,255,.20),rgba(255,255,255,0) 58%),
+  linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.012) 48%,rgba(255,255,255,.05)),
+  var(--g-tint)!important;
+ border:1px solid var(--g-edge)!important;
+ -webkit-backdrop-filter:blur(var(--g-blur)) saturate(var(--g-sat))!important;
+ backdrop-filter:blur(var(--g-blur)) saturate(var(--g-sat))!important;
+ box-shadow:var(--g-spec),var(--g-press-glow,0 0 0 transparent),var(--g-shadow)!important;
+ color:var(--g-text)!important;
+ transition:transform .2s var(--bmn-ease),box-shadow .2s,opacity .25s,background-color .2s;
+}
+html:root body.community-mode.community-mode .g-press{transform:scale(.93)!important;--g-tint:rgba(70,80,100,.42);--g-press-glow:inset 0 0 22px rgba(255,255,255,.16)}
+
+/* ---------- Floating bottom navigation ---------- */
+html:root body.community-mode.community-mode .app-dock.app-dock{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:2px!important;
+ left:50%!important;right:auto!important;top:auto!important;
+ width:min(420px,calc(100vw - 28px))!important;max-width:calc(100vw - 28px)!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
+ padding:6px!important;border-radius:999px!important;
+ transform:translateX(-50%) scale(var(--dock-s,1))!important;transform-origin:50% 100%;
+ transition:transform .35s var(--bmn-ease)!important;z-index:10020!important;
+}
+html:root body.community-mode.community-mode .app-dock.is-compact{--dock-s:.93}
+html:root body.community-mode.community-mode .app-dock.app-dock>button{
+ flex:1 1 0!important;min-width:0!important;height:50px!important;padding:0!important;border-radius:999px!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;
+ background:transparent!important;border:1px solid transparent!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ color:var(--g-text)!important;font-size:9.5px!important;font-weight:650!important;letter-spacing:0!important;opacity:.82;
+ touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+html:root body.community-mode.community-mode .app-dock.app-dock>button .dock-symbol{font-size:20px!important;line-height:1!important}
+html:root body.community-mode.community-mode .app-dock.app-dock>button.dock-create{flex:0 0 52px!important;height:52px!important;opacity:1;
+ background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.25),rgba(255,255,255,0) 60%),linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04))!important;
+ border:1px solid var(--g-edge)!important;box-shadow:var(--g-spec)!important}
+html:root body.community-mode.community-mode .app-dock.app-dock>button.dock-create span:not(.dock-create-symbol){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+html:root body.community-mode.community-mode .app-dock.app-dock>button.dock-create .dock-create-symbol{font-size:26px!important;font-weight:300!important;line-height:1!important}
+/* Active = isolated luminous electric blue (like the mic button in the reference) */
+html:root body.community-mode.community-mode .app-dock.app-dock>button.active,
+html:root body.community-mode.community-mode .app-dock.app-dock>button[aria-current="page"]{
+ opacity:1;color:#fff!important;
+ background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.45),rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(72,160,255,.96),rgba(10,110,255,.88))!important;
+ border:1px solid rgba(170,212,255,.6)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -8px 14px rgba(0,60,200,.30),0 4px 18px rgba(10,132,255,.42)!important;
+}
+
+html:root body.community-mode.community-mode .app-dock.app-dock .dock-symbol,
+html:root body.community-mode.community-mode .app-dock.app-dock>button.active .dock-symbol,
+html:root body.community-mode.community-mode .app-dock.app-dock .dock-create-symbol{background:transparent!important;border:0!important;box-shadow:none!important;color:inherit!important;transform:none!important;width:auto!important;height:auto!important;border-radius:0!important}
+html:root body.community-mode.community-mode .app-dock.app-dock .dock-dot{top:8px!important;right:calc(50% - 18px)!important;width:8px!important;height:8px!important}
+
+/* ---------- Top feed tabs: text over video, glass only on small controls ---------- */
+html:root body.community-mode.community-mode #bmnFeedTabs .bmn-app-mark,
+html:root body.community-mode.community-mode #bmnFeedTabs [data-feed-search]{
+ width:36px!important;height:36px!important;min-height:36px!important;flex:0 0 36px!important;padding:0!important;border-radius:50%!important;
+ display:grid!important;place-items:center!important;font-size:18px!important;font-weight:800;margin:0!important;
+}
+html:root body.community-mode.community-mode #bmnFeedTabs{text-shadow:0 1px 8px rgba(0,0,0,.55);gap:14px!important;background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,0))!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:root body.community-mode.community-mode #bmnFeedTabs button[data-feed-mode]{color:rgba(255,255,255,.72)!important;font-size:15px!important;font-weight:650!important}
+html:root body.community-mode.community-mode #bmnFeedTabs button[data-feed-mode].active{color:#fff!important;font-weight:800!important}
+html:root body.community-mode.community-mode #bmnFeedTabs button[data-feed-mode]:focus-visible,
+html:root body.community-mode.community-mode .app-dock.app-dock>button:focus-visible,
+html:root body.community-mode.community-mode .post-action:focus-visible,
+html:root body.community-mode.community-mode .bmn-mute-btn:focus-visible{outline:2px solid var(--bmn-blue);outline-offset:3px}
+
+/* ---------- FYP layout: video fills, tidy caption stack, glass action dock ---------- */
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack{
+ position:absolute!important;z-index:5!important;left:14px!important;right:84px!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 98px)!important;
+ display:flex;flex-direction:column;gap:6px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7);pointer-events:none;
+}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack>*{pointer-events:auto}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-meta,
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-content{
+ position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:auto!important;max-width:none!important;
+ padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:0!important;color:#fff!important;
+}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-meta{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 10px}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-meta strong,
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-meta .bmn-profile-open small{display:block!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-meta>small{display:block!important;flex:1 0 100%;font-size:11px!important;color:rgba(255,255,255,.78)!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-content{
+ font-size:14px!important;line-height:1.4!important;max-height:4.3em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-caption-stack .post-content.is-open{max-height:none;-webkit-line-clamp:unset;overflow:visible}
+.bmn-tag{font-weight:750;color:#bfe3ff}.bmn-mention{font-weight:750;color:#d7c9ff}
+.bmn-cat-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);align-self:flex-start}
+.bmn-follow-pill{height:26px;padding:0 12px;border-radius:999px;font-size:11.5px;font-weight:750;cursor:pointer;margin:0}
+.bmn-follow-pill[aria-pressed="true"]{--g-tint:rgba(10,132,255,.38)}
+
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-actions{
+ right:10px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 98px)!important;gap:10px!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action{
+ width:48px!important;min-width:48px!important;height:56px!important;min-height:56px!important;padding:4px 0!important;border-radius:24px!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action span:last-child{font-size:10px!important;font-weight:700!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action.bmn-edit-post,
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action.bmn-delete{height:30px!important;min-height:30px!important;font-size:10px!important;border-radius:15px!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action.liked{--g-tint:rgba(255,64,110,.34)}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action.liked span:first-child{color:#ff5c8a}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action.saved{--g-tint:rgba(10,132,255,.34)}
+
+/* ---------- Video controls ---------- */
+html:root body.community-mode.community-mode .bmn-video-toggle{width:54px!important;height:54px!important;opacity:0;pointer-events:none}
+html:root body.community-mode.community-mode .community-post.v-paused .bmn-video-toggle{opacity:.95;pointer-events:auto}
+html:root body.community-mode.community-mode .bmn-mute-btn{
+ position:absolute;z-index:6;right:12px;top:calc(env(safe-area-inset-top,0px) + 58px);
+ width:38px;height:38px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;
+}
+.bmn-mute-btn svg,.bmn-buffer svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bmn-buffer{position:absolute;z-index:6;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+ border:2.5px solid rgba(255,255,255,.25);border-top-color:#fff;opacity:0;pointer-events:none;animation:bmnSpin .8s linear infinite;transition:opacity .2s}
+.community-post.v-buffering .bmn-buffer{opacity:1}
+@keyframes bmnSpin{to{transform:rotate(360deg)}}
+.bmn-video-error{position:absolute;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;gap:10px;
+ padding:16px 20px;border-radius:24px;text-align:center;color:#fff;font-size:13px;max-width:min(78%,280px);
+ background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02)),rgba(20,24,34,.45);border:1px solid var(--g-edge);
+ -webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);box-shadow:var(--g-spec)}
+.community-post.v-error .bmn-video-error{display:flex}
+.bmn-video-error button{border:1px solid rgba(170,212,255,.6);border-radius:999px;padding:8px 18px;font-weight:750;color:#fff;
+ background:linear-gradient(180deg,rgba(72,160,255,.96),rgba(10,110,255,.88))}
+html:root body.community-mode.community-mode .bmn-video-time{
+ position:absolute;z-index:14;left:50%;top:42%;transform:translateX(-50%);padding:7px 14px;border-radius:999px;font-size:15px;font-weight:750;
+ font-variant-numeric:tabular-nums;opacity:0;pointer-events:none;
+}
+.community-post.seeking .bmn-video-time{opacity:1}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-video-progress{
+ left:14px!important;right:14px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 86px)!important;height:3px!important;transition:height .15s;background:rgba(255,255,255,.28)!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post.seeking .bmn-video-progress{height:7px!important}
+html:root body.community-mode.community-mode[data-app-screen="home"] #community .community-post .bmn-video-scrub{
+ left:6px!important;right:6px!important;bottom:calc(env(safe-area-inset-bottom,0px) + 74px)!important;height:30px!important;opacity:0!important;touch-action:none}
+.bmn-double-heart{color:#ff4d7a!important;filter:drop-shadow(0 6px 18px rgba(255,60,110,.55))}
+
+/* ---------- Comments sheet: keyboard-safe + drag handle ---------- */
+html:root body.community-mode.community-mode .bmn-comments-sheet{padding-bottom:var(--bmn-kb,0px)!important}
+html:root body.community-mode.community-mode .bmn-comments-panel{max-height:calc(100dvh - var(--bmn-kb,0px) - env(safe-area-inset-top,0px) - 24px)!important;transition:transform .25s var(--bmn-ease);touch-action:pan-y}
+html:root body.community-mode.community-mode .bmn-comments-panel::before{content:"";display:block;width:38px;height:5px;margin:8px auto 2px;border-radius:3px;background:var(--g-edge)}
+html:root body.community-mode.community-mode .bmn-comments-panel.dragging{transition:none}
+
+/* ---------- Empty/loading polish (existing empty states keep their copy) ---------- */
+.bmn-feed-empty{border-radius:26px}
+body.community-mode .backend-empty.bmn-loading-state p{opacity:.8}
+
+/* Comments sheet legibility in light mode */
+html:root body.light.community-mode.community-mode .bmn-comments-panel{color:#131a2b!important}
+html:root body.light.community-mode.community-mode .bmn-comments-panel small,
+html:root body.light.community-mode.community-mode .bmn-comments-panel p,
+html:root body.light.community-mode.community-mode .bmn-comments-panel [data-comment-sort]{color:rgba(19,26,43,.74)!important}
+html:root body.light.community-mode.community-mode .bmn-comments-panel [data-comment-sort].active{color:#0a4fd0!important;font-weight:750}
+
+/* ---------- Light theme: lenses become pearl/silver, never opaque white ---------- */
+body.light.community-mode .bmn-caption-stack,
+body.light.community-mode #bmnFeedTabs{--g-text:#fff}   /* these sit over video, stay light-on-dark */
+body.light.community-mode #bmnFeedTabs .bmn-app-mark,
+body.light.community-mode #bmnFeedTabs [data-feed-search],
+body.light.community-mode[data-app-screen="home"] #community .post-actions .post-action.post-action,
+body.light.community-mode .bmn-mute-btn,
+body.light.community-mode .bmn-video-toggle{--g-tint:rgba(20,24,34,.30);--g-text:#fff}
+body.light.community-mode .app-dock.app-dock>button{color:#131a2b!important}
+body.light.community-mode .app-dock.app-dock>button.active,
+body.light.community-mode .app-dock.app-dock>button[aria-current="page"]{color:#fff!important}
+
+@media(max-width:380px){html:root body.community-mode.community-mode .app-dock.app-dock>button{font-size:9px!important}html:root body.community-mode.community-mode #bmnFeedTabs{gap:10px!important}}
+@media(min-width:900px){html:root body.community-mode.community-mode .app-dock.app-dock{width:420px!important}}
+@media(prefers-reduced-motion:reduce){
+ .bmn-buffer{animation:none;border-top-color:rgba(255,255,255,.6)}
+ .bmn-double-heart.pop{animation-duration:.01ms!important}
+ html:root body.community-mode.community-mode .app-dock,html:root body.community-mode.community-mode .g-press,html:root body.community-mode.community-mode .bmn-comments-panel{transition:none!important}
+ #bmn-liquid-canvas{opacity:.55!important}
+}
+</style>
+
+<script id="bmn-liquid-glass-master-v11-js">
+(()=>{'use strict';
+if(window.__bmnV11)return;window.__bmnV11=true;
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const body=document.body,root=document.documentElement;
+const reduceMQ=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+const safe=fn=>{try{return fn()}catch(_){return undefined}};
+
+/* ============ 0. Media gate: user pauses stick, sound preference sticks ============
+   Older passes re-activate the visible video (and force muted=true) on every DOM mutation, which cancelled
+   manual pause and unmute. play() is the single choke point, so it is gated here. */
+let wantSound=false;safe(()=>{wantSound=localStorage.getItem('bmn-v11-sound')==='on'});
+const _play=HTMLMediaElement.prototype.play;
+HTMLMediaElement.prototype.play=function(){
+ if(this.__bmnHold)return Promise.resolve();
+ if(this.closest&&this.closest('#community'))this.muted=!wantSound;
+ const p=_play.apply(this,arguments);
+ return p&&p.catch?p.catch(err=>{if(!this.muted){this.muted=true;return _play.apply(this)}throw err}):p;
+};
+const userPlay=v=>{v.__bmnHold=false;return v.play()};
+const userPause=v=>{v.__bmnHold=true;v.pause()};
+
+/* ============ 1. Touch feedback on glass controls (delegated, one listener set) ============ */
+const GLASS='.app-dock>button,#bmnFeedTabs .bmn-app-mark,#bmnFeedTabs [data-feed-search],#community .post-action,.bmn-video-toggle,.bmn-mute-btn,.bmn-follow-pill,.bmn-quick-actions button';
+document.addEventListener('pointerdown',e=>{
+ const b=e.target.closest&&e.target.closest(GLASS);if(!b)return;
+ const r=b.getBoundingClientRect();
+ b.style.setProperty('--gx',((e.clientX-r.left)/Math.max(1,r.width)*100).toFixed(0)+'%');
+ b.style.setProperty('--gy',((e.clientY-r.top)/Math.max(1,r.height)*100).toFixed(0)+'%');
+ b.classList.add('g-press');
+},{passive:true});
+const release=()=>$$('.g-press').forEach(b=>{b.classList.remove('g-press');b.style.removeProperty('--gx');b.style.removeProperty('--gy')});
+['pointerup','pointercancel','dragstart','scroll'].forEach(t=>document.addEventListener(t,release,{passive:true,capture:true}));
+
+/* ============ 2. Single authoritative router ============ */
+const MODE_TO_TAB={fyp:'fyp',following:'following'};
+function syncChrome(target){
+ const dockView=target==='friends'?'discover':(target==='fyp'||target==='following'||target==='home')?'home':target==='discover'?'':target;
+ $$('.app-dock [data-app-view]').forEach(b=>{const on=b.dataset.appView===dockView;b.classList.toggle('active',on);b.setAttribute('aria-current',on?'page':'false')});
+ const tab=target==='following'?'following':target==='discover'?'discover':(target==='fyp'||target==='home')?'fyp':null;
+ $$('#bmnFeedTabs [data-feed-mode]').forEach(b=>b.classList.toggle('active',b.dataset.feedMode===tab));
+}
+function renderFeed(){safe(()=>{if(typeof window.renderCommunityPosts==='function')window.renderCommunityPosts(window.cachedPosts||[],window.cachedLikes||{},window.cachedMyLikes||new Set())})}
+function go(target){
+ if(!body.classList.contains('community-mode')){const c=$('[data-view="community"]');if(c)c.click();else body.classList.add('community-mode')}
+ body.classList.remove('bmn-conversation-open');
+ // Clear stale inline display left by older routing passes (this was breaking Home/Profile after visiting each other).
+ $$('.bmn-app-screen').forEach(s=>s.style.removeProperty('display'));
+ body.classList.toggle('bmn-friends-mode',target==='friends');
+ const setApp=window.setAppView;
+ const feedMode=target==='following'||target==='friends'?'following':'fyp';
+ if(target==='home'||target==='fyp'||target==='following'||target==='friends'){
+  safe(()=>window.bmnSetFeedMode&&window.bmnSetFeedMode(feedMode));
+  if(typeof setApp==='function')setApp('home');
+  renderFeed();
+ }else if(typeof setApp==='function'){setApp(target)}
+ syncChrome(target);
+ if(target==='profile'){refreshPA();setTimeout(refreshPA,400)}
+ body.dataset.bmnNav=target;
+}
+/* Profile panel: real numbers, pins only when the real post exists, hidden when signed out */
+function refreshPA(){
+ const panel=$('#bmnProfileArchitectureV10');if(!panel)return;
+ const me=window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id;
+ panel.hidden=!me;if(!me)return;
+ const mine=(window.cachedPosts||[]).filter(p=>p&&p.user_id===me),likesMap=window.cachedLikes||{};
+ const likes=mine.reduce((a,p)=>a+(likesMap[p.id]||0),0);
+ const nums=$$('.pa-stat strong',panel);
+ if(nums[0])nums[0].textContent=String(mine.length);
+ if(nums[1])nums[1].textContent=String(window.bmnFollowing?window.bmnFollowing.size:0);
+ if(nums[2])nums[2].textContent=String(likes);
+ const host=$('#bmnPinsV11',panel);if(!host)return;host.textContent='';
+ [[/this is bmn/i,'THIS IS BMN'],[/(things i.{0,6}ll do when i become president|become president)/i,'THINGS I’LL DO WHEN I BECOME PRESIDENT 😂🇳🇬'],[/come build with bmn/i,'COME BUILD WITH BMN']].forEach(([re,label])=>{
+  const post=mine.find(p=>re.test([p.title,p.content,p.caption].filter(Boolean).join(' ')));if(!post)return;
+  const d=document.createElement('div');d.className='bmn-pin';d.tabIndex=0;d.setAttribute('role','button');d.dataset.pinPost=String(post.id);
+  const s=document.createElement('span');s.textContent='📌 '+label;d.appendChild(s);host.appendChild(d);
+ });
+}
+document.addEventListener('click',e=>{const p=e.target.closest&&e.target.closest('.bmn-pin[data-pin-post]');if(!p)return;const id=p.dataset.pinPost;go('home');setTimeout(()=>{const el=$('#community [data-post-id="'+CSS.escape(id)+'"]');if(el)el.scrollIntoView({block:'start'})},400)});
+window.bmnGo=go;
+document.addEventListener('click',e=>{
+ const t=e.target;if(!t||!t.closest)return;
+ const dockBtn=t.closest('.app-dock [data-app-view]');
+ if(dockBtn){
+  e.preventDefault();e.stopImmediatePropagation();
+  const v=dockBtn.dataset.appView,target=v==='discover'?'friends':v;
+  const again=body.dataset.bmnNav===target&&(target==='home'||target==='friends');
+  go(target);
+  if(again){const grid=$('#community .community-grid');if(grid)grid.scrollTo({top:0,behavior:reduceMQ.matches?'auto':'smooth'});safe(()=>window.loadCommunityPosts&&window.loadCommunityPosts())}
+  return;
+ }
+ // Reading comments on public posts must not require sign-in (writing still does, inside the sheet).
+ const cbtn=t.closest('#community .bmn-toggle-comments');
+ if(cbtn&&!window.bmnSession&&typeof window.openBmnCommentsSheet==='function'){e.preventDefault();e.stopImmediatePropagation();window.openBmnCommentsSheet(cbtn.dataset.id);return}
+ const tabBtn=t.closest('#bmnFeedTabs button');
+ if(tabBtn){
+  e.preventDefault();e.stopImmediatePropagation();
+  if(tabBtn.hasAttribute('data-bmn-return')){body.classList.remove('bmn-friends-mode');const p=$('[data-view="personal"]');if(p)p.click();else location.hash='#home';window.scrollTo({top:0});return}
+  if(tabBtn.hasAttribute('data-feed-search')){go('discover');setTimeout(()=>{const s=$('#bmnDiscoverSearch');if(s)s.focus({preventScroll:true})},200);return}
+  const m=tabBtn.dataset.feedMode;
+  if(m==='discover')go('discover');
+  else if(m==='following'){go('following');if(!window.bmnSession&&typeof window.setBackendStatus==='function')window.setBackendStatus('Sign in to see posts from creators you follow.',true)}
+  else go('fyp');
+ }
+},true);
+
+/* Feed tabs: only destinations that really exist (no placeholder Series/Community tabs). */
+function installTabs(){
+ const tabs=$('#bmnFeedTabs');if(!tabs||tabs.dataset.v11)return;tabs.dataset.v11='1';
+ tabs.innerHTML='<button type="button" class="bmn-app-mark" data-bmn-return aria-label="Back to BMN main page">M</button>'+
+  '<button type="button" data-feed-mode="discover">Discover</button>'+
+  '<button type="button" data-feed-mode="following">Following</button>'+
+  '<button type="button" class="active" data-feed-mode="fyp">For You</button>'+
+  '<button type="button" data-feed-search aria-label="Search creators and posts"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>';
+}
+installTabs();
+// If another pass re-renders the tabs, re-apply (idempotent, cheap, no subtree observation).
+const tabsHost=$('#appHomeScreen')||body;
+new MutationObserver(()=>{const t=$('#bmnFeedTabs');if(t&&!t.dataset.v11)installTabs()}).observe(tabsHost,{childList:true});
+
+/* Dock: a11y labels + subtle compact-on-scroll (never hides) */
+$$('.app-dock [data-app-view]').forEach(b=>{if(!b.getAttribute('aria-label')){const l=b.textContent.replace(/[^A-Za-z ]/g,'').trim();if(l)b.setAttribute('aria-label',l)}});
+/* Consistent SVG dock icons (replaces mixed text glyphs) */
+(()=>{const S=(d)=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+ const I={home:S('<path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/>'),discover:S('<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6"/><circle cx="17" cy="10" r="2.5"/><path d="M16.5 14.6c2.4.1 3.9 1.4 4.5 4"/>'),inbox:S('<path d="M4 6h16v10H9l-4 3.5V16H4z"/>'),profile:S('<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.7-3.8 3.4-5.7 7-5.7s6.3 1.9 7 5.7"/>')};
+ $$('.app-dock [data-app-view]').forEach(b=>{const k=b.dataset.appView,s=$('.dock-symbol',b);if(s&&I[k]&&!s.dataset.v11){s.dataset.v11='1';s.innerHTML=I[k]}});
+ const cs=$('.dock-create-symbol');if(cs&&!cs.dataset.v11){cs.dataset.v11='1';cs.innerHTML=S('<path d="M12 5v14M5 12h14"/>')}
+})();
+const dockEl=$('.app-dock');
+if(dockEl){
+ let lastY=new WeakMap(),tick=false;
+ document.addEventListener('scroll',e=>{
+  const s=e.target;if(!s||s===document||!s.scrollTop&&s.scrollTop!==0)return;
+  if(!(s instanceof Element)||s.closest('.app-dock'))return;
+  const y=s.scrollTop,prev=lastY.get(s)??y;lastY.set(s,y);
+  if(tick)return;tick=true;requestAnimationFrame(()=>{tick=false;
+   if(y-prev>6)dockEl.classList.add('is-compact');else if(prev-y>6||y<10)dockEl.classList.remove('is-compact')});
+ },{passive:true,capture:true});
+}
+
+/* ============ 3. Video engine: one active video, sound, buffering, errors, gestures ============ */
+const SOUND_KEY='bmn-v11-sound';
+const ico={
+ on:'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+ off:'<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6m0-6 6 6"/></svg>'
+};
+const ratios=new Map();let current=null;
+const fmt=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function videoOf(post){return post&&post.querySelector('.post-preview video')}
+function paintSound(post){const v=videoOf(post),b=post.querySelector('.bmn-mute-btn');if(!v||!b)return;b.innerHTML=v.muted?ico.off:ico.on;b.setAttribute('aria-pressed',String(!v.muted));b.setAttribute('aria-label',v.muted?'Unmute video':'Mute video')}
+async function playPost(post){
+ const v=videoOf(post);if(!v||v.__bmnHold)return;
+ v.playsInline=true;v.loop=true;v.preload='auto';
+ try{await v.play()}catch(_){}
+ paintSound(post);
+}
+function pauseAll(except){$$('#community .community-post video').forEach(v=>{if(v!==except&&!v.paused)v.pause()})}
+function pick(){
+ let best=null,br=0;
+ ratios.forEach((r,post)=>{if(!post.isConnected){ratios.delete(post);return}if(r>br){br=r;best=post}});
+ if(!best||br<.55){if(current){const v=videoOf(current);if(v&&!v.paused)v.pause()}current=null;return}
+ if(best===current)return;
+ current=best;pauseAll(videoOf(best));
+ playPost(best);
+ // Limit concurrent media: only the active post and its neighbours keep buffering.
+ const posts=$$('#community .community-post');const i=posts.indexOf(best);
+ posts.forEach((p,j)=>{const v=videoOf(p);if(v)v.preload=Math.abs(j-i)<=1?'metadata':'none'});
+}
+const io='IntersectionObserver'in window?new IntersectionObserver(es=>{es.forEach(en=>{ratios.set(en.target,en.intersectionRatio);if(en.intersectionRatio<.3){const v=videoOf(en.target);if(v)v.__bmnHold=false}});pick()},{threshold:[0,.25,.55,.75,.95]}):null;
+
+function wrapText(el){
+ if(el.dataset.v11t)return;el.dataset.v11t='1';
+ const txt=el.textContent||'';if(!txt)return;
+ el.textContent='';
+ txt.split(/(#[\p{L}\p{N}_]+|@[\w.]+)/u).forEach(part=>{
+  if(!part)return;
+  if(part[0]==='#'||part[0]==='@'){const s=document.createElement('span');s.className=part[0]==='#'?'bmn-tag':'bmn-mention';s.textContent=part;el.appendChild(s)}
+  else el.appendChild(document.createTextNode(part));
+ });
+ if(txt.length>110){el.addEventListener('click',()=>el.classList.toggle('is-open'));el.style.cursor='pointer'}
+}
+function followState(pill,uid){const on=!!(window.bmnFollowing&&window.bmnFollowing.has(uid));pill.textContent=on?'Following':'Follow';pill.setAttribute('aria-pressed',String(on))}
+function setupPost(post){
+ if(post.dataset.v11)return;post.dataset.v11='1';
+ const preview=$('.post-preview',post),v=videoOf(post);
+ // caption stack (creator, username, caption, hashtags, category, follow)
+ const meta=$('.post-meta',post),content=$('.post-content',post);
+ if(meta&&content&&!$('.bmn-caption-stack',post)){
+  const stack=document.createElement('div');stack.className='bmn-caption-stack';
+  post.insertBefore(stack,meta);stack.appendChild(meta);stack.appendChild(content);
+  wrapText(content);
+  const rec=safe(()=>(window.cachedPosts||[]).find(p=>String(p.id)===post.dataset.postId));
+  if(rec&&rec.category){const c=document.createElement('span');c.className='bmn-cat-chip';c.textContent=String(rec.category);stack.appendChild(c)}
+  const uid=rec&&rec.user_id,me=window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id;
+  if(uid&&uid!==me){
+   const pill=document.createElement('button');pill.type='button';pill.className='bmn-follow-pill';pill.dataset.followUid=uid;followState(pill,uid);
+   const open=$('.bmn-profile-open',meta);if(open)open.after(pill);else meta.prepend(pill);
+  }
+ }
+ const send=$('.bmn-send-to-inbox',post);
+ if(send&&!send.dataset.v11){send.dataset.v11='1';send.setAttribute('aria-label','Send to a friend in BMN messages');send.innerHTML='<span style="font-size:21px;line-height:1">✉</span><span>Send</span>'}
+ if(!v)return;
+ post.classList.add('v-paused');
+ // sound toggle
+ if(!$('.bmn-mute-btn',post)){const b=document.createElement('button');b.type='button';b.className='bmn-mute-btn';post.appendChild(b);paintSound(post)}
+ if(!$('.bmn-buffer',post)){const s=document.createElement('div');s.className='bmn-buffer';s.setAttribute('aria-hidden','true');post.appendChild(s)}
+ if(!$('.bmn-video-error',post)){const d=document.createElement('div');d.className='bmn-video-error';d.setAttribute('role','alert');d.innerHTML='<span>This video couldn’t load.</span><button type="button" data-v11-retry>Retry</button>';post.appendChild(d)}
+ if(!$('.bmn-video-time',post)){const t=document.createElement('div');t.className='bmn-video-time';t.setAttribute('aria-hidden','true');t.textContent='0:00 / 0:00';post.appendChild(t)}
+ // poster only when a real, directly loadable thumbnail exists
+ const rec=safe(()=>(window.cachedPosts||[]).find(p=>String(p.id)===post.dataset.postId));
+ if(rec&&/^https?:\/\//i.test(rec.thumbnail_url||'')&&!v.poster)v.poster=rec.thumbnail_url;
+ v.muted=!wantSound;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
+ v.addEventListener('playing',()=>{post.classList.remove('v-buffering','v-error');post.classList.remove('v-paused');paintSound(post)});
+ v.addEventListener('play',()=>post.classList.remove('v-paused'));
+ v.addEventListener('pause',()=>post.classList.add('v-paused'));
+ v.addEventListener('waiting',()=>post.classList.add('v-buffering'));
+ v.addEventListener('stalled',()=>post.classList.add('v-buffering'));
+ v.addEventListener('canplay',()=>post.classList.remove('v-buffering'));
+ v.addEventListener('error',()=>{setTimeout(()=>{if(v.error&&!v.dataset.bmnResigned){post.classList.remove('v-buffering');post.classList.add('v-error')}else if(v.error){setTimeout(()=>{if(v.error){post.classList.remove('v-buffering');post.classList.add('v-error')}},2500)}},900)});
+ v.addEventListener('volumechange',()=>paintSound(post));
+ if(io)io.observe(post);
+}
+function scan(){$$('#community .community-post').forEach(setupPost)}
+scan();
+const feedHost=$('#communityFeed');
+if(feedHost){let t=0;new MutationObserver(()=>{cancelAnimationFrame(t);t=requestAnimationFrame(()=>{ratios.forEach((_,p)=>{if(!p.isConnected)ratios.delete(p)});scan()})}).observe(feedHost,{childList:true})}
+
+// Only one video ever plays.
+document.addEventListener('play',e=>{const v=e.target;if(!(v instanceof HTMLVideoElement)||!v.closest('#community'))return;$$('#community video').forEach(o=>{if(o!==v&&!o.paused)o.pause()})},true);
+
+/* Sound + follow + retry (delegated) */
+document.addEventListener('click',async e=>{
+ const t=e.target;if(!t||!t.closest)return;
+ const mute=t.closest('.bmn-mute-btn');
+ if(mute){e.preventDefault();e.stopPropagation();const post=mute.closest('.community-post'),v=videoOf(post);if(!v)return;
+  v.muted=!v.muted;wantSound=!v.muted;safe(()=>localStorage.setItem(SOUND_KEY,wantSound?'on':'off'));
+  if(!v.muted&&v.paused&&!v.__bmnHold)v.play().catch(()=>{});
+  $$('#community .community-post').forEach(paintSound);return}
+ const retry=t.closest('[data-v11-retry]');
+ if(retry){e.preventDefault();e.stopPropagation();const post=retry.closest('.community-post'),v=videoOf(post);if(!v)return;post.classList.remove('v-error');post.classList.add('v-buffering');v.load();userPlay(v).catch(()=>{});return}
+ const tog=t.closest('.bmn-video-toggle');
+ if(tog){e.preventDefault();e.stopImmediatePropagation();const v=videoOf(tog.closest('.community-post'));if(v){if(v.paused)userPlay(v).catch(()=>{});else userPause(v)}return}
+ const pill=t.closest('.bmn-follow-pill');
+ if(pill){
+  e.preventDefault();e.stopPropagation();
+  const uid=pill.dataset.followUid,sb=window.bmnSupabase,me=window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id;
+  if(!me||!sb){if(typeof window.setBackendStatus==='function')window.setBackendStatus('Sign in to follow creators.',true);return}
+  const following=window.bmnFollowing.has(uid);pill.disabled=true;
+  try{
+   if(following){const {error}=await sb.from('follows').delete().eq('follower_id',me).eq('following_id',uid);if(error)throw error;window.bmnFollowing.delete(uid)}
+   else{const {error}=await sb.from('follows').insert({follower_id:me,following_id:uid});if(error)throw error;window.bmnFollowing.add(uid);
+    safe(()=>sb.from('notifications').insert({user_id:uid,actor_id:me,type:'follow',message:'started following you'}).then(()=>{},()=>{}))}
+   $$('.bmn-follow-pill[data-follow-uid="'+CSS.escape(uid)+'"]').forEach(p=>followState(p,uid));
+  }catch(err){if(typeof window.setBackendStatus==='function')window.setBackendStatus('Could not update follow: '+(err&&err.message||'network error'),true)}
+  finally{pill.disabled=false}
+ }
+},true);
+
+/* Gestures — replaces the two competing tap handlers that cancelled each other out.
+   single tap = play/pause · double tap = like (real like system) · long press = speed (existing handlers) */
+let downAt=0,downX=0,downY=0,tapTimer=0,lastTapAt=0;
+document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#community .post-preview video')){downAt=Date.now();downX=e.clientX;downY=e.clientY}},true);
+document.addEventListener('click',e=>{
+ const video=e.target.closest&&e.target.closest('#community .post-preview video');
+ if(!video||e.target.closest('button,input'))return;
+ e.preventDefault();e.stopImmediatePropagation();
+ const post=video.closest('.community-post'),preview=video.closest('.post-preview'),now=Date.now();
+ if(now-downAt>380||Math.hypot(e.clientX-downX,e.clientY-downY)>12){return} // long press / drag handled elsewhere
+ if(now-lastTapAt<300){
+  clearTimeout(tapTimer);lastTapAt=0;
+  const like=$('.bmn-like',post);if(like&&!like.classList.contains('liked'))like.click();
+  const h=document.createElement('div');h.className='bmn-double-heart pop';h.textContent='♥';
+  const r=preview.getBoundingClientRect();h.style.left=(e.clientX-r.left)+'px';h.style.top=(e.clientY-r.top)+'px';
+  preview.appendChild(h);h.addEventListener('animationend',()=>h.remove());setTimeout(()=>h.remove(),1200);
+  return;
+ }
+ lastTapAt=now;clearTimeout(tapTimer);
+ tapTimer=setTimeout(()=>{
+  if(video.playbackRate!==1&&video.playbackRate!==0.5&&video.playbackRate!==2)video.playbackRate=1;
+  if(video.paused)userPlay(video).catch(()=>{});else userPause(video)
+ },270);
+},true);
+
+/* Seek: time bubble + thick progress while dragging (uses the existing range scrubber) */
+document.addEventListener('pointerdown',e=>{const s=e.target.closest&&e.target.closest('.bmn-video-scrub');if(s)s.closest('.community-post')?.classList.add('seeking')},true);
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>setTimeout(()=>$$('.community-post.seeking').forEach(p=>p.classList.remove('seeking')),500),true));
+document.addEventListener('input',e=>{
+ const s=e.target;if(!s.classList||!s.classList.contains('bmn-video-scrub'))return;
+ const post=s.closest('.community-post'),v=videoOf(post),t=$('.bmn-video-time',post);
+ if(v&&t&&v.duration)t.textContent=fmt(Number(s.value)/1000*v.duration)+' / '+fmt(v.duration);
+},true);
+
+/* ============ 4. Keyboard-safe sheets & drag-to-close comments ============ */
+const vv=window.visualViewport;
+if(vv){const upd=()=>{const kb=Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));root.style.setProperty('--bmn-kb',kb+'px')};vv.addEventListener('resize',upd);vv.addEventListener('scroll',upd);upd()}
+(()=>{let y0=0,dy=0,panel=null;
+ document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.bmn-comments-panel>header,.bmn-comments-panel');if(!h||e.target.closest('button,input,textarea,.bmn-comments-sheet-list'))return;panel=e.target.closest('.bmn-comments-panel');y0=e.clientY;dy=0;panel.classList.add('dragging')},true);
+ document.addEventListener('pointermove',e=>{if(!panel)return;dy=Math.max(0,e.clientY-y0);panel.style.transform='translateY('+dy+'px)'},{passive:true});
+ const end=()=>{if(!panel)return;panel.classList.remove('dragging');const close=dy>110;panel.style.transform='';if(close){const c=panel.querySelector('[data-comment-close]');if(c)c.click()}panel=null;dy=0};
+ document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
+})();
+
+/* ============ 5. Initial sync + PWA freshness ============ */
+syncChrome(body.dataset.appScreen==='home'||!body.dataset.appScreen?(window.bmnFeedMode==='following'?'following':'fyp'):body.dataset.appScreen);
+if('serviceWorker'in navigator){
+ const refresh=()=>navigator.serviceWorker.getRegistration().then(r=>r&&r.update&&r.update()).catch(()=>{});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+}
 })();
 </script>
 
