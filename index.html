@@ -4727,6 +4727,211 @@ body.community-mode .app-dock>button.active{background:rgba(255,255,255,.12)!imp
 body.community-mode .app-dock .dock-dot{background:#ef5350;box-shadow:0 0 0 2px rgba(5,11,20,.9)}
 @media(prefers-reduced-motion:reduce){body.community-mode .app-dock>button{transition:none}}
 </style>
+<style id="bmn-tactile-v14-style">
+/* v14 tactile layer: transform/opacity only. Every rule is switched off by html.bmn-motion-off or reduced motion. */
+:root{--bmn-spring:cubic-bezier(.34,1.56,.64,1);--bmn-settle:cubic-bezier(.22,1,.36,1)}
+html:not(.bmn-motion-off) body.community-mode :is(.post-action,.app-dock>button,.bmn-follow-pill,.bmn-profile-menu,.bmn-profile-tabs button,.bmn-quick-actions button,.bmn-mute-btn,.bmn-video-toggle,.dock-create,#bmnFeedTabs button,.bmn-profile-menu-inner button){transition:transform .38s var(--bmn-spring),background-color .2s,color .2s,border-color .2s;-webkit-tap-highlight-color:transparent}
+html:not(.bmn-motion-off) body.community-mode :is(.post-action,.app-dock>button,.bmn-follow-pill,.bmn-profile-menu,.bmn-profile-tabs button,.bmn-quick-actions button,.bmn-mute-btn,.bmn-video-toggle,.dock-create,#bmnFeedTabs button,.bmn-profile-menu-inner button):active{transform:scale(.92);transition-duration:.08s}
+@keyframes bmnPop{0%{transform:scale(1)}35%{transform:scale(1.32)}65%{transform:scale(.93)}100%{transform:scale(1)}}
+@keyframes bmnWobble{0%{transform:rotate(0)}20%{transform:rotate(-7deg) scale(1.06)}45%{transform:rotate(5deg)}70%{transform:rotate(-2.5deg)}100%{transform:rotate(0)}}
+@keyframes bmnNope{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}60%{transform:translateX(4px)}85%{transform:translateX(-2px)}}
+html:not(.bmn-motion-off) .bmn-fx-pop{animation:bmnPop .48s var(--bmn-settle)}
+html:not(.bmn-motion-off) .bmn-fx-wobble{animation:bmnWobble .55s var(--bmn-settle)}
+html:not(.bmn-motion-off) .bmn-fx-nope{animation:bmnNope .36s ease-out}
+/* comments / sheets: spring open, elastic drag (JS sets --bmn-drag) */
+html:not(.bmn-motion-off) .bmn-comments-panel{transition:transform .46s var(--bmn-settle)}
+.bmn-comments-panel.bmn-dragging{transition:none!important}
+html:not(.bmn-motion-off) .bmn-profile-menu-sheet.open .bmn-profile-menu-inner{animation:bmnSheetIn .5s var(--bmn-spring)}
+@keyframes bmnSheetIn{from{transform:translateY(24px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.bmn-pref-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bmn-pref-row[aria-checked="true"] .bmn-pref-state{color:#3b8bff}
+.bmn-pref-note{display:block;font-size:11px;opacity:.65;margin:-2px 0 8px;line-height:1.4}
+@media(prefers-reduced-motion:reduce){html body.community-mode *{transition-duration:.01ms!important}.bmn-fx-pop,.bmn-fx-wobble,.bmn-fx-nope{animation:none!important}}
+/* presence label */
+.bmn-presence{font-size:11px;font-weight:600;opacity:.8}
+.bmn-presence[data-state="online"]::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#30d158;vertical-align:1px}
+</style>
+<script id="bmn-tactile-v14-js">
+(()=>{'use strict';
+if(window.BMNHaptics&&window.BMNHaptics._v14)return;
+const root=document.documentElement,ua=navigator.userAgent||'';
+const isIOS=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&(navigator.maxTouchPoints||0)>1);
+const get=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
+const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}};
+const reduceMq=matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+const prefs={haptics:get('bmn_pref_haptics')!=='0',motion:get('bmn_pref_motion')!=='0'};
+const applyMotion=()=>root.classList.toggle('bmn-motion-off',!prefs.motion||reduceMq.matches);
+applyMotion();reduceMq.addEventListener&&reduceMq.addEventListener('change',applyMotion);
+
+/* ---- capability detection: nothing here is assumed ---- */
+const native=()=>{const h=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Haptics;return h&&typeof h.impact==='function'?h:null};
+const canVibrate=()=>typeof navigator.vibrate==='function'&&!isIOS;
+let switchEl=null;
+const canIOSSwitch=()=>isIOS&&window.CSS&&CSS.supports&&CSS.supports('-webkit-appearance','switch');
+function iosSwitchTick(){ /* best effort: Safari 17.4+ ticks when a switch-style checkbox label is toggled inside a user gesture. Not an official haptics API. */
+  try{
+    if(!switchEl){const l=document.createElement('label');l.setAttribute('aria-hidden','true');l.style.cssText='position:fixed;left:-99px;top:-99px;width:1px;height:1px;opacity:0;pointer-events:none';
+      const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');l.appendChild(i);document.body.appendChild(l);switchEl=l}
+    switchEl.click();return true;
+  }catch(_){return false}
+}
+const kind=()=>native()?'native':canVibrate()?'vibrate':canIOSSwitch()?'ios-best-effort':'none';
+
+/* ---- single entry point ---- */
+const PATTERNS={light:[8],select:[10],medium:[16],success:[12,40,18],warning:[24,50,24],error:[30,40,30,40,50]};
+const NATIVE={light:['impact','Light'],select:['selection'],medium:['impact','Medium'],success:['notification','Success'],warning:['notification','Warning'],error:['notification','Error']};
+let last=0,scrolling=false,scrollT=0;
+addEventListener('scroll',()=>{scrolling=true;clearTimeout(scrollT);scrollT=setTimeout(()=>scrolling=false,140)},{passive:true,capture:true});
+function fire(type){
+  try{
+    if(!prefs.haptics||document.visibilityState!=='visible')return false;
+    const now=performance.now();
+    if(now-last<45||(scrolling&&type==='light'))return false; // no buzzing while scrolling / spam
+    const k=kind();if(k==='none')return false;
+    last=now;
+    if(k==='native'){const h=native(),[m,a]=NATIVE[type]||NATIVE.light;
+      if(m==='selection')h.selectionStart&&h.selectionStart().then(()=>h.selectionChanged&&h.selectionChanged()).then(()=>h.selectionEnd&&h.selectionEnd()).catch(()=>{});
+      else if(m==='impact')h.impact({style:a}).catch(()=>{});
+      else if(h.notification)h.notification({type:a}).catch(()=>{});return true}
+    if(k==='vibrate')return navigator.vibrate(PATTERNS[type]||PATTERNS.light);
+    return iosSwitchTick();
+  }catch(e){return false} // a haptic must never break the app
+}
+const fx=(el,cls,ms=600)=>{if(!el||root.classList.contains('bmn-motion-off'))return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms)};
+
+window.BMNHaptics={_v14:true,light:()=>fire('light'),select:()=>fire('select'),medium:()=>fire('medium'),success:()=>fire('success'),warning:()=>fire('warning'),error:()=>fire('error'),
+  support:kind,get prefs(){return{...prefs}},
+  setHaptics(v){prefs.haptics=!!v;put('bmn_pref_haptics',v?'1':'0')},
+  setMotion(v){prefs.motion=!!v;put('bmn_pref_motion',v?'1':'0');applyMotion()},
+  fx:{pop:(el)=>fx(el,'bmn-fx-pop'),wobble:(el)=>fx(el,'bmn-fx-wobble'),nope:(el)=>fx(el,'bmn-fx-nope',450)}};
+
+/* ---- confirm-then-celebrate: feedback only after the real state actually changed ---- */
+function confirmChange(read,onDone,onFail,timeout=6000){
+  const before=read();const t0=Date.now();
+  const tick=()=>{let now;try{now=read()}catch(_){now=before}
+    if(now!==before){onDone(now);return}
+    if(Date.now()-t0>timeout){onFail&&onFail();return}
+    setTimeout(tick,150)};
+  setTimeout(tick,150);
+}
+const postOf=el=>el&&el.closest&&el.closest('[data-post-id]');
+const q=(post,sel)=>post&&post.querySelector(sel);
+document.addEventListener('click',e=>{
+  const t=e.target;if(!t||!t.closest)return;
+  const btn=t.closest('button,.post-action,a[data-app-view]');if(!btn)return;
+  const post=postOf(btn),pid=post&&post.dataset.postId;
+  const fresh=sel=>()=>{const p=pid?document.querySelector('[data-post-id="'+CSS.escape(pid)+'"]'):null;const b=p&&p.querySelector(sel);return b?b.classList.contains(sel.includes('save')?'saved':'liked'):null};
+  if(btn.classList.contains('bmn-like')&&pid){
+    const read=fresh('.bmn-like');
+    confirmChange(read,now=>{const b=q(document.querySelector('[data-post-id="'+CSS.escape(pid)+'"]'),'.bmn-like');window.BMNHaptics.fx.pop(b&&(b.querySelector('.bmn-action-icon')||b));now?fire('success'):fire('light')},()=>{fx(btn,'bmn-fx-nope',450);fire('error')});
+  }else if(btn.classList.contains('bmn-save-post')&&pid){
+    const read=fresh('.bmn-save-post');
+    confirmChange(read,()=>{const b=q(document.querySelector('[data-post-id="'+CSS.escape(pid)+'"]'),'.bmn-save-post');window.BMNHaptics.fx.wobble(b);fire('success')},()=>{fx(btn,'bmn-fx-nope',450);fire('error')});
+  }else if(btn.classList.contains('bmn-follow-pill')){
+    const uid=btn.dataset.followUid;
+    const read=()=>{const b=document.querySelector('.bmn-follow-pill[data-follow-uid="'+CSS.escape(uid)+'"]');return b?b.getAttribute('aria-pressed'):null};
+    confirmChange(read,()=>{const b=document.querySelector('.bmn-follow-pill[data-follow-uid="'+CSS.escape(uid)+'"]');window.BMNHaptics.fx.pop(b);fire('medium')},()=>{fx(btn,'bmn-fx-nope',450);fire('error')});
+  }else if(btn.closest('.app-dock')&&btn.matches('button[data-app-view]')){
+    fire('select');
+  }else if(btn.matches('.bmn-toggle-comments,.bmn-profile-menu,[data-profile-tab],[data-feed-tab],.bmn-profile-menu-inner button')){
+    fire('light');
+  }else if(btn.matches('.bmn-share')){fire('light')}
+},true);
+
+/* long-press speed / drawer drag elasticity for comments panel: rubber-band while dragging down */
+(()=>{let panel=null,y0=0,pid=null,dy=0;
+  document.addEventListener('pointerdown',e=>{const p=e.target.closest&&e.target.closest('.bmn-comments-panel');if(!p)return;
+    const top=e.target.closest('.bmn-sheet-grabber,.bmn-comments-head,header,h3,h2');if(!top)return; // only the header drags, so the list still scrolls
+    panel=p;y0=e.clientY;pid=e.pointerId;dy=0},{passive:true});
+  document.addEventListener('pointermove',e=>{if(!panel||e.pointerId!==pid)return;const d=e.clientY-y0;if(d<=0)return;
+    dy=d<0?0:Math.pow(d,.9);panel.classList.add('bmn-dragging');panel.style.transform='translateY('+dy.toFixed(1)+'px)'},{passive:true});
+  const end=()=>{if(!panel)return;const p=panel;panel=null;p.classList.remove('bmn-dragging');p.style.transform='';
+    if(dy>110){fire('light');const x=p.closest('.bmn-comments-sheet')||p.parentElement;const c=x&&x.querySelector('[data-close],.bmn-close-comments,button[aria-label*="lose"]');c&&c.click()}dy=0};
+  document.addEventListener('pointerup',end,{passive:true});document.addEventListener('pointercancel',end,{passive:true});
+})();
+
+/* upload lifecycle: observe real status text elements instead of faking events */
+window.addEventListener('bmn:upload-start',()=>fire('medium'));
+window.addEventListener('bmn:upload-done',()=>fire('success'));
+window.addEventListener('bmn:upload-error',()=>fire('error'));
+
+/* ---- user preferences injected into the existing settings sheet ---- */
+function injectPrefs(inner){
+  if(!inner||inner.querySelector('[data-bmn-pref]'))return;
+  const mk=(key,label,note,get_,set_)=>{const b=document.createElement('button');b.type='button';b.className='bmn-pref-row';b.dataset.bmnPref=key;b.setAttribute('role','switch');
+    const s=document.createElement('span');s.textContent=label;const st=document.createElement('span');st.className='bmn-pref-state';b.append(s,st);
+    const sync=()=>{b.setAttribute('aria-checked',get_()?'true':'false');st.textContent=get_()?'On':'Off'};sync();
+    b.addEventListener('click',e=>{e.stopPropagation();set_(!get_());sync();get_()&&fire('select')});
+    const n=document.createElement('small');n.className='bmn-pref-note';n.textContent=note;return[b,n]};
+  const hNote=kind()==='none'?'This device/browser does not expose haptics, so only visual feedback is used.':kind()==='ios-best-effort'?'Best effort on iOS browsers; not guaranteed outside a native wrapper.':'Vibration feedback for taps and confirmed actions.';
+  const [h,hn]=mk('haptics','Haptic feedback',hNote,()=>prefs.haptics,v=>window.BMNHaptics.setHaptics(v));
+  const [m,mn]=mk('motion','Spring & wobble motion','Turn off optional animations. Always off when your device asks for reduced motion.',()=>prefs.motion&&!reduceMq.matches,v=>window.BMNHaptics.setMotion(v));
+  const anchor=inner.querySelector('[data-profile-action="theme"]');
+  const ref=anchor?anchor.nextSibling:inner.querySelector('[data-profile-action="close"]');
+  [h,hn,m,mn].forEach(n=>inner.insertBefore(n,ref));
+}
+const watch=()=>{const inner=document.querySelector('#bmnProfileMenuSheet .bmn-profile-menu-inner');if(inner)injectPrefs(inner)};
+new MutationObserver(watch).observe(document.body,{childList:true,subtree:true});watch();
+})();
+</script>
+<script id="bmn-presence-v14-js">
+(()=>{'use strict';
+/* Real presence only. Live = Supabase Realtime Presence (ephemeral, tied to the authenticated user id, no device/IP data).
+   Last seen = profiles.last_seen_at written ONLY by the server-side RPC bmn_touch_presence (see bmn-presence.sql).
+   If that migration is not applied the app shows live presence only and never invents a timestamp. */
+if(window.BMNPresence)return;
+const get=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
+const put=(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}};
+let sb=null,ch=null,uid=null,online=new Set(),lastSeen={},rpcOK=null,hb=0,joined=false,tries=0;
+const share=()=>get('bmn_pref_activity')!=='0';
+const ago=iso=>{const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);if(!isFinite(s))return '';if(s<90)return 'Active just now';if(s<3600)return 'Active '+Math.round(s/60)+'m ago';if(s<86400)return 'Active '+Math.round(s/3600)+'h ago';if(s<172800)return 'Active yesterday';return ''};
+function label(id){if(!id)return{state:'unknown',text:''};if(online.has(id))return{state:'online',text:'Online'};const t=lastSeen[id];return t&&ago(t)?{state:'recent',text:ago(t)}:{state:'unknown',text:''}}
+function paint(){document.querySelectorAll('[data-presence-uid]').forEach(el=>{const l=label(el.dataset.presenceUid);el.classList.add('bmn-presence');el.dataset.state=l.state;el.textContent=l.text;el.hidden=!l.text})}
+async function touch(){ /* server stamps now(); the client never supplies the time */
+  if(!sb||!uid||rpcOK===false||!share())return;
+  try{const {error}=await sb.rpc('bmn_touch_presence');if(error){rpcOK=false;console.info('[BMN presence] last-seen RPC unavailable — apply bmn-presence.sql to enable it.')}else rpcOK=true}catch(_){}
+}
+async function loadSeen(ids){
+  if(!sb||!ids.length||rpcOK===false)return;
+  try{const {data,error}=await sb.from('profiles').select('id,last_seen_at').in('id',ids);
+    if(error){if(/last_seen_at/.test(error.message||''))rpcOK=false;return}
+    (data||[]).forEach(r=>{if(r.last_seen_at)lastSeen[r.id]=r.last_seen_at});paint()}catch(_){}
+}
+function sync(){if(!ch)return;const st=ch.presenceState();online=new Set(Object.keys(st));paint()}
+function leave(){clearInterval(hb);hb=0;if(ch&&sb){try{ch.untrack()}catch(_){}try{sb.removeChannel(ch)}catch(_){}}ch=null;joined=false}
+function join(){
+  if(!sb||!uid||ch||!share())return;
+  ch=sb.channel('bmn-presence',{config:{presence:{key:uid}}});
+  ch.on('presence',{event:'sync'},sync).on('presence',{event:'leave'},({key})=>{if(key){online.delete(key);lastSeen[key]=lastSeen[key]||null;loadSeen([key])}sync()});
+  ch.subscribe(async s=>{
+    if(s==='SUBSCRIBED'){joined=true;try{await ch.track({online_at:new Date().toISOString()})}catch(_){}touch()}
+    if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED'){joined=false;if(navigator.onLine&&share())setTimeout(()=>{ch=null;join()},Math.min(30000,2000*(++tries)))}
+  });
+  clearInterval(hb);hb=setInterval(()=>{if(document.visibilityState==='visible')touch()},60000); // heartbeat only while foregrounded
+}
+function bind(){
+  const session=window.bmnSession;const next=session&&session.user?session.user.id:null;
+  if(next===uid&&(ch||!next))return;
+  leave();uid=next;if(uid)join()
+}
+const boot=setInterval(()=>{
+  if(window.bmnSupabase&&window.bmnSupabase.auth){clearInterval(boot);sb=window.bmnSupabase;bind();
+    sb.auth.onAuthStateChange(()=>setTimeout(bind,60))}
+  else if(++tries>80)clearInterval(boot)},250);
+document.addEventListener('visibilitychange',()=>{ /* a hidden tab is not a disconnect proof; touch on both edges, drop live presence only when backgrounded */
+  if(document.visibilityState==='hidden'){touch();if(ch&&joined){try{ch.untrack()}catch(_){}}}
+  else if(uid&&share()){if(ch&&joined){try{ch.track({online_at:new Date().toISOString()})}catch(_){}}else{ch=null;join()}touch()}});
+addEventListener('pagehide',()=>{touch()}); // best effort only; never relied on
+addEventListener('online',()=>{if(uid&&share()){ch=null;join()}});
+addEventListener('offline',()=>{joined=false}); // possibly unreachable, not proof of departure
+new MutationObserver(()=>{const ids=[...new Set([...document.querySelectorAll('[data-presence-uid]')].map(e=>e.dataset.presenceUid))].filter(i=>!(i in lastSeen));if(ids.length)loadSeen(ids);paint()}).observe(document.body,{childList:true,subtree:true});
+window.BMNPresence={label,isOnline:id=>online.has(id),
+  get sharing(){return share()},
+  setSharing(v){put('bmn_pref_activity',v?'1':'0');if(!v)leave();else bind()},
+  get lastSeenPersisted(){return rpcOK}};
+})();
+</script>
+
 </body>
 </html>
 
