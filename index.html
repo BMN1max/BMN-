@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#070711">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050b14">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BMN Community">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/bmn-icon.svg" type="image/svg+xml">
@@ -4648,6 +4648,73 @@ window.addEventListener('offline',()=>say('You’re offline. Changes will sync w
 window.addEventListener('online',()=>{say('Back online');boundUid=undefined;subscribe();refreshFeed();refreshInbox();retry=0});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&navigator.onLine){subscribe();refreshFeed()}});
 window.BMNRealtime={resubscribe:()=>{boundUid=undefined;subscribe()},stop:teardown};
+})();
+</script>
+
+<style id="bmn-native-pass-v13">
+html{background:#050b14}
+body.community-mode[data-app-screen="home"] #community .community-post{height:100lvh!important;min-height:100lvh!important}
+@supports(height:100dvh){body.community-mode[data-app-screen="home"] #community .community-post{height:100dvh!important;min-height:100dvh!important}}
+body.community-mode[data-app-screen="home"] #community .post-preview video{object-fit:cover!important}
+body.community-mode[data-app-screen="home"] #community .post-actions{padding-top:env(safe-area-inset-top);padding-right:max(10px,env(safe-area-inset-right))}
+body.community-mode input,body.community-mode textarea,body.community-mode select{font-size:16px}
+html.bmn-android body.community-mode .dock,html.bmn-android body.community-mode .app-dock{background:#0e1726!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.bmn-android .bmn-ripple-container{position:relative;overflow:hidden}
+.bmn-ripple-effect{position:absolute;border-radius:50%;background:rgba(255,255,255,.28);transform:scale(0);animation:bmnRipple .55s ease-out forwards;pointer-events:none}
+@keyframes bmnRipple{to{transform:scale(1);opacity:0}}
+@media(prefers-reduced-motion:reduce){.bmn-ripple-effect{animation:none;opacity:0}.bmn-double-heart.pop{animation-duration:.01s}}
+</style>
+<script id="bmn-native-pass-v13-js">
+(()=>{'use strict';
+if(window.BMNAppEngine&&window.BMNAppEngine._ready)return;
+const ua=navigator.userAgent||'';
+const ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const android=/Android/i.test(ua);
+const typing=t=>!!t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable);
+const posts=()=>Array.from(document.querySelectorAll('body.community-mode[data-app-screen="home"] #community .community-post'));
+const activeIndex=()=>{const l=posts();let b=0,d=1e9;l.forEach((p,i)=>{const r=Math.abs(p.getBoundingClientRect().top);if(r<d){d=r;b=i}});return b};
+function onKey(e){
+ if(typing(e.target)||e.metaKey||e.ctrlKey||e.altKey)return;
+ const l=posts();if(!l.length)return;
+ const i=activeIndex();
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  const n=l[Math.max(0,Math.min(l.length-1,i+(e.key==='ArrowDown'?1:-1)))];
+  if(n){e.preventDefault();n.scrollIntoView({behavior:'smooth',block:'start'})}
+ }else if(e.key===' '&&e.target.tagName!=='BUTTON'){
+  const v=l[i].querySelector('video');
+  if(v){e.preventDefault();v.paused?v.play().catch(err=>console.warn('[BMN] play blocked',err)):v.pause()}
+ }
+}
+function onRipple(e){
+ const host=e.target.closest&&e.target.closest('.post-action,.dock a,.dock button,.app-dock button');
+ if(!host)return;
+ host.classList.add('bmn-ripple-container');
+ const r=host.getBoundingClientRect(),s=Math.max(r.width,r.height)*2;
+ const n=document.createElement('span');n.className='bmn-ripple-effect';
+ n.style.width=n.style.height=s+'px';
+ n.style.left=(e.clientX-r.left-s/2)+'px';n.style.top=(e.clientY-r.top-s/2)+'px';
+ host.appendChild(n);n.addEventListener('animationend',()=>n.remove(),{once:true});
+ setTimeout(()=>n.remove(),800);
+}
+function diagnostics(){
+ let on=false;try{on=localStorage.getItem('bmn_debug')==='1'||/[?&]bmndebug=1/.test(location.search)}catch(e){console.warn(e)}
+ if(!on)return;
+ const v=document.querySelector('#community .community-post video');
+ const cs=getComputedStyle(document.documentElement);
+ console.table({platform:ios?'ios':android?'android':'desktop',viewport:innerWidth+'x'+innerHeight,dpr:devicePixelRatio,
+  standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,
+  sw:!!navigator.serviceWorker?.controller,reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,
+  touch:'ontouchstart' in window,pointer:matchMedia('(pointer:coarse)').matches?'coarse':'fine',
+  visualViewport:!!window.visualViewport,fypPlaying:!!v&&!v.paused,muted:v?v.muted:null,
+  theme:document.documentElement.dataset.theme||'system',colorScheme:cs.colorScheme});
+}
+window.BMNAppEngine={_ready:true,
+ detectPlatform(){const h=document.documentElement;h.classList.toggle('bmn-ios',ios);h.classList.toggle('bmn-android',android);h.classList.toggle('bmn-desktop',!ios&&!android)},
+ bindHardwareInteractions(){document.addEventListener('keydown',onKey);if(android)document.addEventListener('pointerdown',onRipple,{passive:true})},
+ diagnostics};
+window.BMNAppEngine.detectPlatform();
+window.BMNAppEngine.bindHardwareInteractions();
+window.addEventListener('load',diagnostics,{once:true});
 })();
 </script>
 
