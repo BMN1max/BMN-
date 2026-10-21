@@ -4718,6 +4718,15 @@ window.addEventListener('load',diagnostics,{once:true});
 })();
 </script>
 
+<style id="bmn-pill-nav-v13">
+/* Reference: floating capsule tab bar, selected segment tinted, blue label */
+body.community-mode .app-dock{left:max(10px,env(safe-area-inset-left))!important;right:max(10px,env(safe-area-inset-right))!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;border-radius:999px!important;padding:6px!important;gap:2px!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 24px rgba(0,0,0,.4)!important}
+html.bmn-ios body.community-mode .app-dock{backdrop-filter:blur(28px) saturate(140%)!important;-webkit-backdrop-filter:blur(28px) saturate(140%)!important}
+body.community-mode .app-dock>button{border-radius:999px!important;font-weight:700;transition:background .25s,color .25s}
+body.community-mode .app-dock>button.active{background:rgba(255,255,255,.12)!important;color:#3b8bff!important}
+body.community-mode .app-dock .dock-dot{background:#ef5350;box-shadow:0 0 0 2px rgba(5,11,20,.9)}
+@media(prefers-reduced-motion:reduce){body.community-mode .app-dock>button{transition:none}}
+</style>
 </body>
 </html>
 
