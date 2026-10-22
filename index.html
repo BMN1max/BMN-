@@ -5310,6 +5310,104 @@ window.BMNAppEngine=BMNAppEngine;
 BMNAppEngine.init();
 })();
 </script>
+<style id="bmn-player-v14-style">
+.bmn-pl{position:absolute;inset:0;pointer-events:none;z-index:5}
+.bmn-pl>*{pointer-events:none}.bmn-pl .bmn-pl-bar,.bmn-pl .bmn-pl-err{pointer-events:auto}
+.bmn-pl-bar{position:absolute;left:8px;right:8px;bottom:8px;display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:999px;background:rgba(0,0,0,.38);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:11px;opacity:.0;transition:opacity .2s}
+.bmn-pl:hover .bmn-pl-bar,.bmn-pl:focus-within .bmn-pl-bar,.bmn-pl-bar:active{opacity:1}
+@media(hover:none){.bmn-pl-bar{opacity:.92}}
+.bmn-pl-bar button{all:unset;cursor:pointer;min-width:30px;min-height:30px;display:grid;place-items:center;border-radius:50%;font-size:14px}
+.bmn-pl-bar button:focus-visible,.bmn-pl-seek:focus-visible{outline:2px solid #58aaff;outline-offset:2px}
+.bmn-pl-seek{flex:1;accent-color:#58aaff;height:22px;min-width:0}.bmn-pl-time{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bmn-pl-spin{position:absolute;top:50%;left:50%;width:34px;height:34px;margin:-17px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:bmnpl-spin .8s linear infinite}
+.bmn-pl-err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;gap:8px;align-items:center;padding:14px 18px;border-radius:18px;background:rgba(0,0,0,.55);color:#fff;font-size:13px}
+.bmn-pl-err button{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff}
+.bmn-pl-state{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px;border-radius:50%;display:grid;place-items:center;font-size:26px;color:#fff;background:rgba(0,0,0,.42);opacity:0;transform:scale(.8);transition:opacity .2s,transform .2s}
+.bmn-pl-state.on{opacity:1;transform:scale(1)}
+.bmn-pl-speed{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:4px 12px;border-radius:999px;background:rgba(0,0,0,.5);color:#fff;font-size:12px}
+.bmn-pl-heart{position:absolute;font-size:72px;line-height:1;color:#ff5c8a;transform:translate(-50%,-50%);animation:bmnpl-heart .8s cubic-bezier(.2,1.4,.4,1) forwards;text-shadow:0 4px 24px rgba(255,92,138,.6)}
+@keyframes bmnpl-spin{to{transform:rotate(360deg)}}
+@keyframes bmnpl-heart{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}30%{transform:translate(-50%,-60%) scale(1.15);opacity:1}100%{transform:translate(-50%,-110%) scale(1);opacity:0}}
+@media(prefers-reduced-motion:reduce){.bmn-pl-heart{animation:none;opacity:.9}.bmn-pl-spin{animation-duration:2s}.bmn-pl-state{transition:none}}
+</style>
+<script id="bmn-player-v14-js">
+/* BMN feed player v14: one playback manager for feed videos (video[aria-label="Community video"]).
+   Additive + idempotent. Uses existing .bmn-like button for likes (optimistic + rollback stay in bmnToggleLike). */
+(function(){
+if(window.__bmnPlayerV14)return;window.__bmnPlayerV14=true;
+const SEL='video[aria-label="Community video"]',RM=matchMedia('(prefers-reduced-motion: reduce)');
+const state=new WeakMap();let active=null,muted=true,userPaused=new WeakSet();
+const canVib=typeof navigator.vibrate==='function';
+const vib=p=>{if(canVib&&!RM.matches)try{navigator.vibrate(p)}catch(_){}};
+const fmt=s=>isFinite(s)?Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'):'0:00';
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+function build(v){
+  if(state.has(v))return;const host=v.parentElement;if(!host)return;
+  if(getComputedStyle(host).position==='static')host.style.position='relative';
+  const ac=new AbortController(),sig={signal:ac.signal};
+  const ui=document.createElement('div');ui.className='bmn-pl';
+  ui.innerHTML='<div class="bmn-pl-spin" hidden aria-hidden="true"></div><div class="bmn-pl-err" hidden role="alert"><span>Video failed to load</span><button type="button">Retry</button></div><div class="bmn-pl-state" aria-hidden="true">▶</div><div class="bmn-pl-speed" hidden aria-live="polite"></div><div class="bmn-pl-bar"><button type="button" class="bmn-pl-mute" aria-label="Unmute" aria-pressed="false">🔇</button><input type="range" class="bmn-pl-seek" min="0" max="1000" value="0" aria-label="Seek video"><span class="bmn-pl-time">0:00</span><button type="button" class="bmn-pl-fs" aria-label="Fullscreen">⛶</button></div>';
+  host.appendChild(ui);
+  const $=s=>ui.querySelector(s),spin=$('.bmn-pl-spin'),err=$('.bmn-pl-err'),st=$('.bmn-pl-state'),sp=$('.bmn-pl-speed'),seek=$('.bmn-pl-seek'),tm=$('.bmn-pl-time'),mb=$('.bmn-pl-mute'),fb=$('.bmn-pl-fs');
+  const canFS=!!(host.requestFullscreen||host.webkitRequestFullscreen||v.webkitEnterFullscreen);
+  if(!canFS)fb.hidden=true;
+  v.loop=true;v.playsInline=true;v.muted=muted;v.preload='metadata';v.removeAttribute('controls');
+  const paintMute=()=>{mb.textContent=v.muted?'🔇':'🔊';mb.setAttribute('aria-label',v.muted?'Unmute':'Mute');mb.setAttribute('aria-pressed',String(!v.muted))};paintMute();
+  let seeking=false;
+  const on=(t,e,f)=>t.addEventListener(e,f,sig);
+  on(v,'waiting',()=>spin.hidden=false);on(v,'loadstart',()=>spin.hidden=false);
+  on(v,'playing',()=>{spin.hidden=true;err.hidden=true;st.classList.remove('on')});
+  on(v,'canplay',()=>spin.hidden=true);
+  on(v,'error',()=>{spin.hidden=true;err.hidden=false});
+  on(v,'timeupdate',()=>{if(!seeking&&v.duration)seek.value=Math.round(v.currentTime/v.duration*1000);tm.textContent=fmt(v.currentTime)+' / '+fmt(v.duration)});
+  on(v,'volumechange',paintMute);
+  on(seek,'input',()=>{seeking=true;if(v.duration)v.currentTime=seek.value/1000*v.duration});
+  on(seek,'change',()=>{seeking=false});
+  on(err.querySelector('button'),'click',e=>{e.stopPropagation();err.hidden=true;spin.hidden=false;v.load();v.play().catch(()=>{})});
+  on(mb,'click',e=>{e.stopPropagation();muted=!muted;document.querySelectorAll(SEL).forEach(x=>x.muted=muted);if(!muted&&active)active.play().catch(()=>{})});
+  on(fb,'click',e=>{e.stopPropagation();
+    if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+    if(host.requestFullscreen)host.requestFullscreen().catch(()=>{});else if(host.webkitRequestFullscreen)host.webkitRequestFullscreen();else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen()});
+  /* gestures: single tap = pause/resume, double tap = like, long press = 2x */
+  let tapT=null,lastTap=0,lp=null,lpOn=false,sx=0,sy=0,moved=false;
+  const down=e=>{if(e.target.closest('.bmn-pl-bar,.bmn-pl-err'))return;sx=e.clientX;sy=e.clientY;moved=false;
+    lp=setTimeout(()=>{lpOn=true;v.playbackRate=2;sp.textContent='2× speed';sp.hidden=false;vib(10)},500)};
+  const mv=e=>{if(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10){moved=true;clearTimeout(lp)}};
+  const up=e=>{clearTimeout(lp);if(lpOn){lpOn=false;v.playbackRate=1;sp.hidden=true;lastTap=0;return}
+    if(moved||e.target.closest('.bmn-pl-bar,.bmn-pl-err'))return;
+    const now=Date.now();
+    if(now-lastTap<300){clearTimeout(tapT);lastTap=0;heart(e);const b=host.closest('article,.card,.post-card,[data-post-id]')?.querySelector('.bmn-like')||host.parentElement?.querySelector('.bmn-like');
+      if(b&&!b.classList.contains('liked'))b.click();}
+    else{lastTap=now;tapT=setTimeout(()=>toggle(v,st),300)}};
+  on(v,'pointerdown',down);on(v,'pointermove',mv);on(v,'pointerup',up);on(v,'pointercancel',()=>{clearTimeout(lp);if(lpOn){lpOn=false;v.playbackRate=1;sp.hidden=true}});
+  on(v,'contextmenu',e=>e.preventDefault());
+  function heart(e){const h=document.createElement('div');h.className='bmn-pl-heart';h.textContent='❤';h.setAttribute('aria-hidden','true');const r=host.getBoundingClientRect();h.style.left=(e.clientX-r.left)+'px';h.style.top=(e.clientY-r.top)+'px';ui.appendChild(h);setTimeout(()=>h.remove(),RM.matches?400:800)}
+  state.set(v,{ac,ui});
+}
+function toggle(v,st){if(v.paused){userPaused.delete(v);v.play().catch(()=>{});st.textContent='▶'}else{userPaused.add(v);v.pause();st.textContent='⏸'}st.classList.add('on');setTimeout(()=>st.classList.remove('on'),600)}
+const io=new IntersectionObserver(es=>{es.forEach(en=>{const v=en.target;
+  if(en.isIntersecting&&en.intersectionRatio>=.6){if(active&&active!==v)active.pause();active=v;v.preload='auto';
+    if(!userPaused.has(v)){v.muted=muted;const p=v.play();if(p&&p.catch)p.catch(()=>{if(!v.muted){muted=true;v.muted=true;v.play().catch(()=>{})}})}
+    const nx=nextVideo(v);if(nx)nx.preload='auto'}
+  else{if(!v.paused)v.pause();if(active===v)active=null;if(en.intersectionRatio===0)v.preload='metadata'}})},{threshold:[0,.6]});
+function nextVideo(v){const all=[...document.querySelectorAll(SEL)],i=all.indexOf(v);return all[i+1]}
+function attach(v){if(v.__bmn14)return;v.__bmn14=1;build(v);io.observe(v)}
+function detach(v){const s=state.get(v);if(!s)return;io.unobserve(v);s.ac.abort();s.ui.remove();state.delete(v);if(active===v)active=null}
+function scan(r){(r.matches&&r.matches(SEL)?[r]:[]).concat([...(r.querySelectorAll?r.querySelectorAll(SEL):[])]).forEach(attach)}
+new MutationObserver(ms=>{ms.forEach(m=>{m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)});m.removedNodes.forEach(n=>{if(n.nodeType===1){(n.matches&&n.matches(SEL)?[n]:[]).concat([...n.querySelectorAll(SEL)]).forEach(detach)}})})}).observe(document.body,{childList:true,subtree:true});
+scan(document);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)active.pause();else if(active&&!userPaused.has(active))active.play().catch(()=>{})});
+/* keyboard: J/ArrowDown next, K/ArrowUp previous, Space pause, M mute, F fullscreen, L like */
+document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName)||e.target.isContentEditable||document.querySelector('.scrim.open,.scrim.show'))return;
+  const v=active;if(!v)return;const all=[...document.querySelectorAll(SEL)],i=all.indexOf(v),k=e.key.toLowerCase();
+  const go=t=>{if(t){e.preventDefault();t.closest('article,.card,.post-card')?.scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'center'})}};
+  if(k==='arrowdown'||k==='j')go(all[i+1]);else if(k==='arrowup'||k==='k')go(all[i-1]);
+  else if(k===' '){e.preventDefault();toggle(v,state.get(v).ui.querySelector('.bmn-pl-state'))}
+  else if(k==='m')state.get(v).ui.querySelector('.bmn-pl-mute').click();
+  else if(k==='f')state.get(v).ui.querySelector('.bmn-pl-fs').click();
+  else if(k==='l'){const b=v.parentElement.closest('article,.card,.post-card')?.querySelector('.bmn-like');if(b&&!b.classList.contains('liked'))b.click()}});
+})();
+</script>
 </body>
 </html>
 
