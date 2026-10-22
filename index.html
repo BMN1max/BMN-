@@ -2586,6 +2586,7 @@ body.light.community-mode #bmnFeedTabs{background:rgba(245,248,255,.24);color:#1
 body.community-mode #bmnFeedTabs button{padding:9px 16px;border-radius:999px;border:0;background:transparent;color:var(--fg);font-size:12px;font-weight:750;white-space:nowrap}
 body.community-mode #bmnFeedTabs button.active{background:linear-gradient(120deg,rgba(0,122,255,.3),rgba(177,140,255,.24));box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
 body.community-mode #appHomeScreen .community-feature,body.community-mode #appHomeScreen .community-feedbar{display:none!important}
+body.community-mode #bmnFeedTabs{display:none!important}
 body.community-mode #community{width:100%;margin:0!important;padding:0!important}
 body.community-mode #community .section-head,body.community-mode #community .platform-hero{display:none!important}
 body.community-mode #community .community-grid{display:flex!important;flex-direction:column;gap:0!important;width:100%;margin:0;padding:0;scroll-snap-type:y proximity}
@@ -5605,6 +5606,182 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <!-- END BMN REAL FEED EXPERIENCE V3 -->
+
+
+<!-- BMN TIKTOK-STYLE FULL APP PARITY V4 START -->
+<style id="bmn-tiktok-full-app-v4">
+:root{--bmn-tk-red:#fe2c55;--bmn-tk-cyan:#25f4ee;--bmn-tk-ink:#050505;--bmn-tk-header-h:58px}
+body.community-mode{background:#000!important;color:#fff!important;overflow-x:hidden;overscroll-behavior-y:none}
+body.community-mode #bmn-liquid-canvas,body.community-mode .scene,body.community-mode .scroll-progress{display:none!important}
+/* TikTok-like app chrome: the BMN portfolio header is replaced only in app mode. */
+body.community-mode>.topbar{display:none!important}
+body.community-mode #bmnV3LiveStatus{display:none!important}
+#bmnNativeHeader{position:fixed;z-index:115;left:0;right:0;top:0;height:calc(var(--bmn-tk-header-h) + env(safe-area-inset-top,0px));padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 8px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;background:linear-gradient(180deg,rgba(0,0,0,.52),rgba(0,0,0,0));pointer-events:none}
+#bmnNativeHeader>*{pointer-events:auto}
+#bmnNativeHeader .bmn-tk-live{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:#fff;font-size:12px;font-weight:800;padding:9px 0;text-shadow:0 1px 8px #000}
+#bmnNativeHeader .bmn-tk-live i{width:7px;height:7px;border-radius:50%;background:var(--bmn-tk-red);box-shadow:0 0 10px rgba(254,44,85,.7)}
+#bmnNativeHeader .bmn-tk-tabs{display:flex;align-items:center;justify-content:center;gap:17px;min-width:0;flex:1}
+#bmnNativeHeader .bmn-tk-tab{position:relative;border:0;background:transparent;color:rgba(255,255,255,.68);font-size:15px;font-weight:700;white-space:nowrap;padding:10px 0;text-shadow:0 1px 7px #000}
+#bmnNativeHeader .bmn-tk-tab.active{color:#fff}
+#bmnNativeHeader .bmn-tk-tab.active:after{content:"";position:absolute;height:2px;width:24px;left:50%;bottom:2px;transform:translateX(-50%);border-radius:3px;background:#fff}
+#bmnNativeHeader .bmn-tk-search{width:36px;height:36px;display:grid;place-items:center;border:0;background:transparent;color:#fff;font-size:23px;text-shadow:0 1px 8px #000}
+#bmnNativeHeader .bmn-tk-search svg{width:23px;height:23px}
+body.community-mode #bmnAppScreens{margin:0!important;min-height:100dvh!important}
+body.community-mode #appScreenTitle,body.community-mode .app-screen-heading{display:none!important}
+body.community-mode #appHomeScreen{margin:0!important;padding:0!important;min-height:100dvh}
+body.community-mode #appHomeScreen .community-feature,body.community-mode #appHomeScreen .community-feedbar{display:none!important}
+body.community-mode #bmnFeedTabs{display:none!important}
+body.community-mode #community{position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-height:100dvh}
+body.community-mode #community .platform-hero,body.community-mode #community .section-head{display:none!important}
+/* Actual backend-backed post cards become one viewport each, with snap scrolling. */
+body.community-mode #community .community-grid{position:fixed!important;inset:0!important;z-index:2!important;display:flex!important;flex-direction:column!important;gap:0!important;width:100vw!important;height:100dvh!important;max-height:none!important;min-height:100dvh!important;margin:0!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;scroll-snap-type:y mandatory!important;scroll-snap-stop:always;scrollbar-width:none!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;background:#000}
+body.community-mode #community .community-grid::-webkit-scrollbar{display:none!important}
+body.community-mode #community .community-post{position:relative!important;display:block!important;flex:0 0 100dvh!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;isolation:isolate;border:0!important;border-radius:0!important;background:#070707!important;box-shadow:none!important;scroll-snap-align:start!important;scroll-snap-stop:always!important;touch-action:pan-y pinch-zoom}
+body.community-mode #community .post-preview{position:absolute!important;inset:0!important;z-index:0!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;border-radius:0!important;background:#111!important}
+body.community-mode #community .post-preview:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,.02) 20%,transparent 43%,rgba(0,0,0,.15) 56%,rgba(0,0,0,.78) 100%)!important}
+body.community-mode #community .post-preview img,body.community-mode #community .post-preview video{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;border:0!important;border-radius:0!important;background:#090909}
+body.community-mode #community .post-preview.is-text{display:grid!important;place-items:center!important;background:radial-gradient(ellipse at 76% 18%,rgba(37,244,238,.22),transparent 38%),radial-gradient(ellipse at 12% 82%,rgba(254,44,85,.2),transparent 42%),#101014!important}
+body.community-mode #community .post-preview.is-text:before{content:"BMN";display:block;position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);font-size:clamp(56px,17vw,120px);font-weight:900;letter-spacing:-.1em;color:rgba(255,255,255,.08);pointer-events:none}
+body.community-mode #community .post-preview.is-text span{display:none!important}
+body.community-mode #community .post-meta{position:absolute!important;z-index:4!important;left:15px!important;right:88px!important;bottom:calc(145px + env(safe-area-inset-bottom,0px))!important;display:flex!important;align-items:center!important;gap:8px!important;color:#fff!important;text-shadow:0 1px 8px #000!important}
+body.community-mode #community .post-meta>small{display:none!important}
+body.community-mode #community .post-meta .bmn-profile-open{display:flex!important;align-items:center!important;gap:8px!important;color:#fff!important;text-align:left!important;min-width:0}
+body.community-mode #community .post-meta .bmn-profile-open>span:last-child{min-width:0}
+body.community-mode #community .post-meta .bmn-profile-open strong{font-size:15px!important;font-weight:800!important;color:#fff!important}
+body.community-mode #community .post-meta .bmn-profile-open small{font-size:12px!important;color:rgba(255,255,255,.86)!important;margin-top:2px!important}
+body.community-mode #community .post-meta .bmn-profile-open .bmn-avatar{display:none!important}
+body.community-mode #community .post-content{position:absolute!important;z-index:4!important;left:15px!important;right:83px!important;bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;max-height:20dvh!important;overflow:auto!important;margin:0!important;padding:0!important;color:#fff!important;font-size:14px!important;line-height:1.42!important;text-shadow:0 1px 7px rgba(0,0,0,.9)!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+body.community-mode #community .post-actions{display:none!important}
+body.community-mode #community .bmn-v3-action-rail{position:absolute!important;z-index:6!important;right:7px!important;bottom:calc(100px + env(safe-area-inset-bottom,0px))!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:14px!important;width:54px!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action{order:initial;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;width:50px!important;min-width:50px!important;min-height:45px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#fff!important;font-size:11px!important;font-weight:700!important;text-shadow:0 1px 5px #000!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-like{order:1!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-toggle-comments{order:2!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-save-post{order:3!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-share{order:4!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-repost{order:5!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action .bmn-action-icon,body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action>span:first-child{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;font-size:29px!important;line-height:1!important;color:#fff!important;filter:drop-shadow(0 2px 5px rgba(0,0,0,.45))}
+body.community-mode #community .bmn-v3-action-rail .bmn-like.liked .bmn-action-icon,body.community-mode #community .bmn-v3-action-rail .bmn-like.liked>span:first-child{color:var(--bmn-tk-red)!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action>span:last-child{font-size:11px!important;line-height:1.1!important;color:#fff!important}
+body.community-mode #community .bmn-v3-action-rail .bmn-edit-post,body.community-mode #community .bmn-v3-action-rail .bmn-delete{display:none!important}
+/* Profile avatar + follow badge are derived from the real post author, never sample accounts. */
+.bmn-v4-author-stack{position:relative;order:0;width:51px;height:61px;margin-bottom:2px;display:flex;align-items:center;justify-content:flex-start;flex-direction:column}
+.bmn-v4-author-avatar{position:relative;display:grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid #fff;border-radius:50%;background:#161616;overflow:visible;color:#fff}
+.bmn-v4-author-avatar .bmn-avatar{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border:0!important;border-radius:50%!important;overflow:hidden!important;display:grid!important;place-items:center!important}
+.bmn-v4-follow{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:20px;height:20px;min-height:20px!important;min-width:20px!important;padding:0!important;border:0!important;border-radius:50%!important;background:var(--bmn-tk-red)!important;color:#fff!important;font-size:16px!important;font-weight:900!important;line-height:20px!important;text-align:center!important;box-shadow:0 1px 5px #0008}
+body.community-mode #community .bmn-comments:not(.comments-collapsed){position:absolute!important;z-index:12!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;width:100%!important;max-height:72dvh!important;overflow:auto!important;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))!important;border:1px solid rgba(255,255,255,.2)!important;border-bottom:0!important;border-radius:22px 22px 0 0!important;background:rgba(20,20,20,.97)!important;color:#fff!important;box-shadow:0 -10px 45px #0006!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;animation:bmnV4SheetIn .25s ease both}
+@keyframes bmnV4SheetIn{from{transform:translateY(22px);opacity:.6}to{transform:translateY(0);opacity:1}}
+body.community-mode #community .bmn-comments .bmn-comment-item{border-bottom:1px solid rgba(255,255,255,.12)!important;padding:12px 0!important}
+body.community-mode #community .bmn-comments input{background:#292929!important;color:#fff!important;border:1px solid #444!important;border-radius:999px!important;padding:12px 14px!important}
+body.community-mode .app-dock{position:fixed!important;z-index:120!important;left:50%!important;right:auto!important;bottom:calc(7px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%)!important;width:min(510px,calc(100vw - 18px))!important;max-width:calc(100vw - 18px)!important;border-radius:24px!important;background:rgba(18,18,20,.72)!important;border:1px solid rgba(255,255,255,.18)!important;box-shadow:0 12px 42px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.17)!important;backdrop-filter:blur(26px) saturate(175%)!important;-webkit-backdrop-filter:blur(26px) saturate(175%)!important}
+body.community-mode .app-dock button{color:rgba(255,255,255,.72)!important;font-size:10px!important;min-height:48px!important}
+body.community-mode .app-dock button.active{color:#fff!important;background:rgba(255,255,255,.13)!important}
+body.community-mode .app-dock .dock-create .dock-create-symbol{background:#fff!important;color:#111!important;border-radius:12px!important}
+body.community-mode #bmnLaunchScreen{z-index:20000!important;background:#050505!important;color:#fff!important}
+body.community-mode #bmnLaunchScreen .bmn-launch-mark{border-radius:23px!important;background:linear-gradient(135deg,#fe2c55,#25f4ee)!important;color:#fff!important;box-shadow:0 0 40px rgba(254,44,85,.22)!important}
+body.community-mode #bmnLaunchScreen .bmn-launch-track{background:rgba(255,255,255,.16)!important;border-radius:99px!important;overflow:hidden}
+body.community-mode #bmnLaunchScreen .bmn-launch-track i{background:linear-gradient(90deg,#25f4ee,#fff,#fe2c55)!important}
+/* TikTok-like Discover, Inbox, Create and Profile screen surfaces, backed by BMN's real controls. */
+body.community-mode #appDiscoverScreen,body.community-mode #appInboxScreen,body.community-mode #appProfileScreen,body.community-mode #appCreateScreen{width:min(100%,680px)!important;min-height:100dvh!important;margin:0 auto!important;padding:calc(70px + env(safe-area-inset-top,0px)) 16px calc(100px + env(safe-area-inset-bottom,0px))!important;background:#050505!important;color:#fff!important}
+.bmn-v4-screen-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0 17px;color:#fff}
+.bmn-v4-screen-title h2{margin:0!important;font-size:25px!important;letter-spacing:-.04em!important;color:#fff!important}
+.bmn-v4-screen-title button{border:0;background:transparent;color:#fff;font-size:24px;padding:6px}
+body.community-mode #appDiscoverScreen .bmn-discover-search,body.community-mode #appDiscoverScreen input[type=search]{width:100%!important;border-radius:10px!important;background:#242424!important;color:#fff!important;border:0!important;padding:13px 15px!important;margin:0 0 12px!important}
+body.community-mode #appDiscoverScreen .creator-card{color:#fff!important;border-bottom:1px solid #292929!important}
+body.community-mode #appDiscoverScreen .creator-card .backend-btn{border-radius:5px!important;background:#fe2c55!important;color:#fff!important;border:0!important}
+body.community-mode #appInboxScreen .inbox-intro{display:none!important}
+body.community-mode #appInboxScreen #bmnSocialHub,body.community-mode #appProfileScreen #bmnProfileV2,body.community-mode #appCreateScreen #create{color:#fff!important}
+body.community-mode #appInboxScreen input,body.community-mode #appInboxScreen textarea,body.community-mode #appCreateScreen input,body.community-mode #appCreateScreen textarea{background:#222!important;color:#fff!important;border:1px solid #383838!important;border-radius:10px!important}
+body.community-mode #appCreateScreen .section-head,body.community-mode #appCreateScreen .community-feature{display:none!important}
+body.community-mode #appCreateScreen #create{padding:0!important;margin:0!important}
+body.community-mode #appCreateScreen .backend-panel,body.community-mode #appCreateScreen .glass{border-radius:15px!important;background:#141414!important;border-color:#303030!important}
+body.community-mode #appProfileScreen .bmn-profile-header h2,body.community-mode #appProfileScreen .bmn-profile-name,body.community-mode #appProfileScreen .bmn-profile-count strong{color:#fff!important}
+body.community-mode #appProfileScreen .bmn-profile-count{background:#171717!important;border:1px solid #2b2b2b!important}
+body.community-mode #appProfileScreen .bmn-profile-controls button,body.community-mode #appProfileScreen .bmn-profile-menu{background:#242424!important;color:#fff!important;border-color:#3b3b3b!important}
+body.community-mode #appProfileScreen .bmn-profile-tabs{border-color:#333!important}
+body.community-mode #appProfileScreen .bmn-profile-tabs button{background:transparent!important;color:#fff!important;border:0!important;padding:12px 8px!important}
+body.community-mode #appProfileScreen .bmn-profile-tabs button.active{border-bottom:2px solid #fff!important}
+#bmnParityToast{position:fixed;z-index:25000;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100vw - 30px);padding:11px 15px;border-radius:999px;background:rgba(35,35,35,.94);color:#fff;font-size:12px;text-align:center;box-shadow:0 8px 28px #0006;opacity:0;pointer-events:none;transition:opacity .18s ease}
+#bmnParityToast.show{opacity:1}
+@media(min-width:700px){body.community-mode #community .community-post{background:#000!important}body.community-mode #community .post-preview video,body.community-mode #community .post-preview img{object-fit:contain!important;background:#000!important}body.community-mode #community .post-preview:after{background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 22%,transparent 56%,rgba(0,0,0,.72))!important}body.community-mode #community .community-post{width:100vw!important}}
+@media(max-width:560px){#bmnNativeHeader{padding-left:13px;padding-right:12px}#bmnNativeHeader .bmn-tk-tabs{gap:15px}#bmnNativeHeader .bmn-tk-tab{font-size:14px}body.community-mode #community .post-content{font-size:13px!important;bottom:calc(83px + env(safe-area-inset-bottom,0px))!important}body.community-mode #community .post-meta{bottom:calc(143px + env(safe-area-inset-bottom,0px))!important}body.community-mode #community .bmn-v3-action-rail{right:4px!important;gap:12px!important}body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action{width:47px!important;min-width:47px!important}body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action .bmn-action-icon,body.community-mode #community .bmn-v3-action-rail .bmn-v3-rail-action>span:first-child{width:45px!important;height:45px!important;font-size:27px!important}}
+@media(prefers-reduced-motion:reduce){#bmnParityToast{transition:none!important}body.community-mode #community .community-grid{scroll-behavior:auto!important}body.community-mode #community .bmn-comments:not(.comments-collapsed){animation:none!important}}
+</style>
+<script id="bmn-tiktok-full-app-v4-script">
+(()=>{'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const body=document.body;
+const toast=(message)=>{let el=$('#bmnParityToast');if(!el){el=document.createElement('div');el.id='bmnParityToast';document.body.appendChild(el)}el.textContent=message;el.classList.add('show');clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove('show'),2600)};
+function installNativeHeader(){
+ if($('#bmnNativeHeader'))return;
+ const header=document.createElement('header');header.id='bmnNativeHeader';header.innerHTML='<button type="button" class="bmn-tk-live" id="bmnTikTokLiveButton"><i></i><span>LIVE</span></button><nav class="bmn-tk-tabs" aria-label="Video feed"><button type="button" class="bmn-tk-tab" data-native-feed="following">Following</button><button type="button" class="bmn-tk-tab active" data-native-feed="fyp">For You</button></nav><button type="button" class="bmn-tk-search" id="bmnTikTokSearchButton" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></button>';
+ document.body.appendChild(header);
+ header.querySelectorAll('[data-native-feed]').forEach(btn=>btn.addEventListener('click',()=>{header.querySelectorAll('[data-native-feed]').forEach(x=>x.classList.toggle('active',x===btn));const tab=$('#bmnFeedTabs [data-feed-mode="'+btn.dataset.nativeFeed+'"]');if(tab)tab.click();else toast('Feed mode is not available yet.')}));
+ $('#bmnTikTokSearchButton').addEventListener('click',()=>{const d=$('[data-app-view="discover"]');if(d)d.click();setTimeout(()=>{const input=$('#bmnDiscoverSearch')||$('.bmn-discover-search')||$('#communitySearch');input?.focus({preventScroll:true})},250)});
+ $('#bmnTikTokLiveButton').addEventListener('click',()=>toast('LIVE streaming is not enabled in the current BMN backend yet.'));
+}
+function enhancePostV4(post){
+ if(!post||post.dataset.bmnV4Enhanced==='1')return;
+ const rail=$('.bmn-v3-action-rail',post);if(!rail)return;
+ post.dataset.bmnV4Enhanced='1';
+ const meta=$('.post-meta .bmn-profile-open',post);
+ if(meta){
+   const userId=meta.getAttribute('data-profile-id')||'';
+   const avatar=meta.querySelector('.bmn-avatar');
+   const stack=document.createElement('div');stack.className='bmn-v4-author-stack';
+   const open=document.createElement('button');open.type='button';open.className='bmn-profile-open bmn-v4-author-avatar';open.setAttribute('data-profile-id',userId);open.setAttribute('aria-label','Open creator profile');
+   open.innerHTML=avatar?avatar.outerHTML:'<span class="bmn-avatar">B</span>';
+   stack.appendChild(open);
+   if(userId){const follow=document.createElement('button');follow.type='button';follow.className='bmn-follow-pill bmn-v4-follow';follow.dataset.followUid=userId;follow.setAttribute('aria-label','Follow creator');follow.setAttribute('aria-pressed','false');follow.textContent='+';stack.appendChild(follow)}
+   if(!$('.bmn-v4-author-stack',rail))rail.prepend(stack);
+ }
+ const order=['.bmn-like','.bmn-toggle-comments','.bmn-save-post','.bmn-share','.bmn-repost'];
+ order.forEach((sel,i)=>{const b=$(sel,rail);if(b){b.style.order=String(i+1);b.classList.add('bmn-v4-tiktok-action')}});
+ const video=$('video',post);
+ if(video){video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');video.loop=true;video.addEventListener('click',()=>{if(video.paused)video.play().catch(()=>{});else video.pause()},{passive:true})}
+}
+function syncHeaders(){
+ const screen=body.dataset.appScreen||'home';
+ const header=$('#bmnNativeHeader');if(!header)return;
+ const tabs=$('.bmn-tk-tabs',header),live=$('#bmnTikTokLiveButton'),search=$('#bmnTikTokSearchButton');
+ if(screen==='home'){
+  tabs.style.display='flex';live.style.visibility='visible';search.style.visibility='visible';
+  const activeTab=$('#bmnFeedTabs [data-feed-mode].active');const mode=activeTab?.dataset.feedMode||'fyp';
+  header.querySelectorAll('[data-native-feed]').forEach(b=>b.classList.toggle('active',b.dataset.nativeFeed===mode));
+ } else {
+  tabs.style.display='none';live.style.visibility='hidden';search.style.visibility=screen==='discover'?'visible':'hidden';
+  const screenEl=$('#app'+screen[0].toUpperCase()+screen.slice(1)+'Screen');
+  if(!screenEl)return;
+  let title=$('.bmn-v4-screen-title',screenEl);
+  if(!title){
+   title=document.createElement('div');title.className='bmn-v4-screen-title';title.dataset.screenTitle=screen;
+   const labels={discover:'Discover',create:'Create',inbox:'Inbox',profile:'Profile'};
+   title.innerHTML='<h2>'+ (labels[screen]||'BMN') +'</h2>'+(screen==='profile'?'<button type="button" id="bmnV4SettingsJump" aria-label="Settings">☰</button>':screen==='inbox'?'<button type="button" id="bmnV4InboxRefresh" aria-label="Refresh inbox">↻</button>':'');
+   screenEl.prepend(title);
+   $('#bmnV4SettingsJump',title)?.addEventListener('click',()=>$('#bmnProfileMenuOpen')?.click());
+   $('#bmnV4InboxRefresh',title)?.addEventListener('click',()=>$('#inboxRefreshButton')?.click());
+  }
+ }
+}
+function installDiscoverSearch(){
+ const screen=$('#appDiscoverScreen');if(!screen||$('#bmnDiscoverSearch'))return;
+ const input=document.createElement('input');input.id='bmnDiscoverSearch';input.className='bmn-discover-search';input.type='search';input.placeholder='Search creators';input.setAttribute('aria-label','Search creators');
+ const head=$('.bmn-v4-screen-title',screen);if(head)head.after(input);else screen.prepend(input);
+ input.addEventListener('input',()=>{$$('.creator-card',screen).forEach(card=>{card.hidden=!card.textContent.toLowerCase().includes(input.value.toLowerCase().trim())})});
+}
+function apply(){
+ if(!body.classList.contains('community-mode'))return;
+ installNativeHeader();installDiscoverSearch();
+ $$('#community .community-post').forEach(enhancePostV4);
+ syncHeaders();
+}
+const observer=new MutationObserver(()=>{apply()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-app-screen','class']});
+window.addEventListener('hashchange',()=>setTimeout(apply,80));
+window.addEventListener('resize',()=>setTimeout(apply,80),{passive:true});
+})();
+</script>
+<!-- BMN TIKTOK-STYLE FULL APP PARITY V4 END -->
 
 </body>
 </html>

@@ -1,17 +1,18 @@
-# BMN Real Feed Experience — V3
+# BMN TikTok-style Full App Parity V4
 
-This bundle contains the updated standalone `index.html` and the two supplied TikTok-style HTML references. It is a UI/interaction integration pass, not a claim that a complete production social network or native TikTok service has been recreated.
+This build updates the supplied BMN `index.html` with a much closer TikTok-inspired mobile app layout while retaining BMN branding and the existing Supabase-backed post, profile, like, comment, save, repost, follow, inbox and create controls. The floating BMN dock remains.
 
-## What changed in this pass
-- Added a branded BMN launch/loading screen that dismisses after page load and has a timeout fallback.
-- Changed the community feed to full-screen vertical snap-scrolling, with edge-to-edge image/video media and caption/creator overlays.
-- Repositioned existing BMN like, comments, share, and save controls into a vertical action rail. These are the original BMN controls, not fabricated demo counters.
-- Added viewport-based video play/pause, a user-gesture sound toggle, and double-tap-to-like feedback. Browsers may block unmuted autoplay; sound starts only after user interaction.
-- Added a small connection-state indicator using the existing BMN realtime engine when available and browser online/offline state as fallback.
-- Preserved the existing Supabase client, queries, authentication handlers, comments flow, social actions, PWA hooks, and brand identity. No database schema or RLS policy was changed.
+## Changes in this pass
+- Replaces the portfolio header in Community app mode with an overlaid For You / Following header, LIVE entry point, and search control.
+- Makes real backend-backed post cards full-viewport vertical snap slides with media covering the viewport.
+- Repositions existing action buttons into a right-side rail, with creator avatar/follow action, like, comments, save, and share.
+- Keeps the existing real counts and event handlers; it does not add sample creators or fabricated engagement numbers.
+- Adds creator search in Discover and TikTok-like screen title styling for Discover, Create, Inbox, and Profile.
+- Keeps the floating Home / Discover / Create / Inbox / Profile dock and safe-area support.
+- Provides a clear message that LIVE streaming is not enabled rather than pretending it works.
 
 ## Important limitations
-- Only the standalone HTML and the two supplied reference HTML files were available in the working folder. This is not the full original deployment folder: related files such as `sw.js`, `manifest.webmanifest`, icons, and other assets are not included in this ZIP.
-- Real-time behavior depends on the existing Supabase project being reachable and its tables, policies, and Realtime publication being configured. No backend credentials or database schema were changed.
-- Tested locally for HTML parsing and the new inline JavaScript syntax. This is not a substitute for testing against the live Supabase project on iPhone Safari, Android Chrome, and desktop browsers.
-- This is TikTok-inspired interaction design, not TikTok branding or an exact copy of proprietary source code. BMN branding remains in place.
+- This is a front-end layout/interaction pass. The app still depends on the existing Supabase schema, storage bucket, RLS policies, and configured Realtime. No schema changes are assumed.
+- Persistent Stories cannot be enabled from the current known schema without a real Stories backend table/storage/policies; this build does not fabricate story rings or story posts.
+- Exact pixel-for-pixel duplication of TikTok across every device is not guaranteed. TikTok's interface changes by region, app version, account and device. This is a high-fidelity adaptation using the supplied HTML references, with BMN branding and the requested floating dock.
+- Automated validation covers HTML parsing and JavaScript syntax only; a live iPhone/browser and Supabase regression test is still needed.
