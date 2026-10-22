@@ -1802,6 +1802,60 @@ body.community-mode[data-app-screen="inbox"] #bmnInboxWelcome{
 }
 @media(prefers-reduced-motion:reduce){body.community-mode[data-app-screen="inbox"] #appInboxScreen::before{animation:none!important}body.community-mode[data-app-screen="inbox"] #bmnInboxConversationList>.bmn-inbox-conversation{transition:none!important}}
 </style>
+
+<style id="bmn-tiktok-reference-parity-layer">
+/* Reference parity layer: adapted from the two supplied TikTok HTML blueprints.
+   BMN DOM, branding, Supabase logic, and real post data remain authoritative. */
+:root{--bmn-ref-red:#fe2c55;--bmn-ref-cyan:#25f4ee;--bmn-ref-glass:rgba(255,255,255,.105);--bmn-ref-glass-border:rgba(255,255,255,.22)}
+html,body{overscroll-behavior-y:none}
+body.community-mode[data-app-screen="home"] #community .community-grid{
+  scrollbar-width:none!important;-ms-overflow-style:none!important;
+  scroll-snap-type:y mandatory!important;scroll-behavior:smooth;
+}
+body.community-mode[data-app-screen="home"] #community .community-grid::-webkit-scrollbar{display:none!important;width:0!important}
+body.community-mode[data-app-screen="home"] #community .community-post{
+  scroll-snap-align:start!important;scroll-snap-stop:always!important;touch-action:pan-y pinch-zoom;
+}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action,
+body.community-mode[data-app-screen="home"] #community .bmn-follow-pill,
+body.community-mode[data-app-screen="home"] #community .bmn-video-toggle,
+body.community-mode[data-app-screen="home"] #community .bmn-mute-btn{
+  -webkit-tap-highlight-color:transparent;transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action:active,
+body.community-mode[data-app-screen="home"] #community .bmn-follow-pill:active,
+body.community-mode[data-app-screen="home"] #community .bmn-video-toggle:active,
+body.community-mode[data-app-screen="home"] #community .bmn-mute-btn:active{transform:scale(.88)}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action:focus-visible,
+body.community-mode[data-app-screen="home"] #bmnFeedTabs button:focus-visible,
+body.community-mode .app-dock button:focus-visible{outline:2px solid var(--bmn-ref-cyan)!important;outline-offset:3px!important}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action{
+  background:rgba(10,12,18,.42);border:1px solid rgba(255,255,255,.19);
+  -webkit-backdrop-filter:blur(16px) saturate(145%);backdrop-filter:blur(16px) saturate(145%);
+  box-shadow:0 5px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12);
+}
+body.community-mode[data-app-screen="home"] #community .post-actions .post-action .bmn-action-icon svg{filter:drop-shadow(0 1px 3px rgba(0,0,0,.24))}
+body.community-mode[data-app-screen="home"] #bmnFeedTabs button[data-feed-mode]{transition:color .18s ease,opacity .18s ease,transform .18s ease}
+body.community-mode[data-app-screen="home"] #bmnFeedTabs button[data-feed-mode]:active{transform:scale(.94)}
+body.community-mode[data-app-screen="home"] #bmnFeedTabs button[data-feed-mode].active{ text-shadow:0 0 18px rgba(255,255,255,.18)}
+body.community-mode[data-app-screen="home"] #community .post-preview::after{
+  background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,transparent 33%,rgba(0,0,0,.08) 58%,rgba(0,0,0,.56) 100%);
+}
+body.community-mode .app-dock{padding-bottom:max(0px,env(safe-area-inset-bottom,0px))}
+@media (max-width:700px){
+ body.community-mode[data-app-screen="home"] #community .community-grid{-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+ body.community-mode[data-app-screen="home"] #community .post-actions{padding-bottom:max(0px,env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){
+ body.community-mode[data-app-screen="home"] #community .community-grid{scroll-behavior:auto!important}
+ body.community-mode[data-app-screen="home"] #community .post-actions .post-action,
+ body.community-mode[data-app-screen="home"] #community .bmn-follow-pill,
+ body.community-mode[data-app-screen="home"] #community .bmn-video-toggle,
+ body.community-mode[data-app-screen="home"] #community .bmn-mute-btn,
+ body.community-mode[data-app-screen="home"] #bmnFeedTabs button[data-feed-mode]{transition:none!important;animation:none!important}
+}
+</style>
+
 </head>
 <body>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
@@ -5408,6 +5462,27 @@ document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||/INPU
   else if(k==='l'){const b=v.parentElement.closest('article,.card,.post-card')?.querySelector('.bmn-like');if(b&&!b.classList.contains('liked'))b.click()}});
 })();
 </script>
+
+<script id="bmn-tiktok-reference-parity-interactions">
+(()=>{
+  const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('pointerdown',event=>{
+    if(reduced())return;
+    const button=event.target.closest('#community .post-actions .post-action, #community .bmn-follow-pill, #bmnFeedTabs button, .app-dock button');
+    if(!button||button.disabled)return;
+    button.classList.remove('bmn-ref-pressed');
+    requestAnimationFrame(()=>{button.classList.add('bmn-ref-pressed');setTimeout(()=>button.classList.remove('bmn-ref-pressed'),180)});
+  },{passive:true});
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+    const sheet=document.getElementById('bmnCommentsSheet');
+    if(sheet&&sheet.classList.contains('open')){
+      const close=sheet.querySelector('[data-comment-close]');if(close)close.click();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
 
