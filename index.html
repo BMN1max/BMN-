@@ -1856,6 +1856,33 @@ body.community-mode .app-dock{padding-bottom:max(0px,env(safe-area-inset-bottom,
 }
 </style>
 
+
+<style id="bmn-haptic-liquid-glass-layer">
+:root{--bmn-haptic-glass:rgba(19,24,38,.72);--bmn-haptic-border:rgba(235,244,255,.24)}
+body.light{--bmn-haptic-glass:rgba(246,249,255,.82);--bmn-haptic-border:rgba(72,95,130,.22)}
+#bmn-haptic-menu-backdrop{position:fixed;inset:0;z-index:11020;background:rgba(1,4,12,.38);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:opacity .22s ease}
+#bmn-haptic-menu-backdrop.open{opacity:1;pointer-events:auto}
+#bmn-haptic-menu{position:fixed;z-index:11021;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px) scale(.97);width:min(390px,calc(100vw - 24px));max-height:min(72dvh,620px);overflow:auto;overscroll-behavior:contain;padding:12px;border:1px solid var(--bmn-haptic-border);border-radius:28px;background:var(--bmn-haptic-glass);color:var(--fg,#f7f9ff);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 24px 80px rgba(0,0,0,.42);backdrop-filter:blur(34px) saturate(180%);-webkit-backdrop-filter:blur(34px) saturate(180%);opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.2,.9,.2,1.2),opacity .2s ease}
+#bmn-haptic-menu.open{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto}
+#bmn-haptic-menu .bmn-haptic-head{display:flex;align-items:center;gap:12px;padding:7px 8px 13px;border-bottom:1px solid var(--bmn-haptic-border);margin-bottom:8px}
+#bmn-haptic-menu .bmn-haptic-orb{width:42px;height:42px;display:grid;place-items:center;flex:0 0 42px;border-radius:15px;background:linear-gradient(135deg,rgba(37,244,238,.28),rgba(0,122,255,.3),rgba(254,44,85,.24));border:1px solid rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);font-weight:850;letter-spacing:-1px}
+#bmn-haptic-menu .bmn-haptic-heading{min-width:0;flex:1}#bmn-haptic-menu .bmn-haptic-heading strong{display:block;font-size:14px;letter-spacing:.01em}#bmn-haptic-menu .bmn-haptic-heading small{display:block;margin-top:3px;font-size:10px;color:var(--muted,#aab5ca)}
+#bmn-haptic-menu .bmn-haptic-close{width:34px;height:34px;border-radius:50%;border:1px solid var(--bmn-haptic-border);background:rgba(255,255,255,.07);color:inherit;font-size:22px}
+#bmn-haptic-menu .bmn-haptic-section{padding:7px 3px 4px;color:var(--muted,#aab5ca);font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:800}
+#bmn-haptic-menu .bmn-haptic-item{display:flex;align-items:center;gap:12px;width:100%;min-height:51px;padding:9px 10px;border:1px solid transparent;border-radius:17px;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
+#bmn-haptic-menu .bmn-haptic-item:hover,#bmn-haptic-menu .bmn-haptic-item:focus-visible{outline:none;background:rgba(255,255,255,.09);border-color:var(--bmn-haptic-border)}
+#bmn-haptic-menu .bmn-haptic-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.075);border:1px solid var(--bmn-haptic-border);font-size:16px}
+#bmn-haptic-menu .bmn-haptic-copy{min-width:0;flex:1}#bmn-haptic-menu .bmn-haptic-copy strong{display:block;font-size:12px;font-weight:750}#bmn-haptic-menu .bmn-haptic-copy small{display:block;margin-top:3px;font-size:10px;color:var(--muted,#aab5ca);line-height:1.35}
+#bmn-haptic-menu .bmn-haptic-chevron{font-size:18px;color:var(--muted,#aab5ca)}
+#bmn-haptic-menu .bmn-haptic-status{margin:8px 3px 1px;padding:10px 12px;border-radius:15px;border:1px solid var(--bmn-haptic-border);background:rgba(255,255,255,.045);font-size:10px;color:var(--muted,#aab5ca);display:flex;align-items:center;gap:8px}
+#bmn-haptic-menu .bmn-haptic-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#34d399;box-shadow:0 0 12px rgba(52,211,153,.65)}
+body.bmn-haptic-menu-open{overflow:hidden}
+body.community-mode .app-dock{user-select:none;-webkit-user-select:none;touch-action:pan-x}
+body.community-mode .app-dock button.bmn-haptic-held{background:rgba(255,255,255,.16)!important;box-shadow:0 0 0 2px rgba(120,190,255,.24),inset 0 1px 0 rgba(255,255,255,.35)!important;transform:scale(.94)!important}
+@media(max-width:480px){#bmn-haptic-menu{bottom:calc(76px + env(safe-area-inset-bottom,0px));padding:10px;border-radius:25px}#bmn-haptic-menu .bmn-haptic-item{min-height:48px}}
+@media(prefers-reduced-motion:reduce){#bmn-haptic-menu,#bmn-haptic-menu-backdrop{transition:none!important}#bmn-haptic-menu .bmn-haptic-item{scroll-behavior:auto!important}}
+</style>
+
 </head>
 <body>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
@@ -5480,6 +5507,47 @@ document.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||/INPU
       const close=sheet.querySelector('[data-comment-close]');if(close)close.click();
     }
   });
+})();
+</script>
+
+
+<script id="bmn-haptic-liquid-glass-layer">
+(()=>{
+ 'use strict';
+ const $=(s,r=document)=>r.querySelector(s);
+ let targetPost=null,pressTimer=null,pressStart=null,openedByPress=false;
+ const reduced=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ function currentPost(from){return from?.closest?.('#community .community-post, #community article[data-post-id], .bmn-profile-post-tile')||null;}
+ function ensureMenu(){
+  if($('#bmn-haptic-menu'))return;
+  const back=document.createElement('div');back.id='bmn-haptic-menu-backdrop';back.setAttribute('aria-hidden','true');
+  const menu=document.createElement('section');menu.id='bmn-haptic-menu';menu.setAttribute('role','dialog');menu.setAttribute('aria-modal','true');menu.setAttribute('aria-label','BMN quick actions');menu.setAttribute('aria-hidden','true');
+  menu.innerHTML=`<header class="bmn-haptic-head"><div class="bmn-haptic-orb">BMN</div><div class="bmn-haptic-heading"><strong>Liquid Glass Quick Actions</strong><small>Hold a post or the dock to open this menu</small></div><button type="button" class="bmn-haptic-close" data-haptic-action="close" aria-label="Close menu">×</button></header><div class="bmn-haptic-section">Post actions</div><button class="bmn-haptic-item" type="button" data-haptic-action="comments"><span class="bmn-haptic-icon">▤</span><span class="bmn-haptic-copy"><strong>Comments</strong><small>Open the selected post's real comments</small></span><span class="bmn-haptic-chevron">›</span></button><button class="bmn-haptic-item" type="button" data-haptic-action="repost"><span class="bmn-haptic-icon">↻</span><span class="bmn-haptic-copy"><strong>Repost</strong><small>Use BMN's repost handler if configured</small></span><span class="bmn-haptic-chevron">›</span></button><button class="bmn-haptic-item" type="button" data-haptic-action="save"><span class="bmn-haptic-icon">▣</span><span class="bmn-haptic-copy"><strong>Save video / post</strong><small>Save using the existing BMN save control</small></span><span class="bmn-haptic-chevron">›</span></button><button class="bmn-haptic-item" type="button" data-haptic-action="favorite"><span class="bmn-haptic-icon">☆</span><span class="bmn-haptic-copy"><strong>Add to favorites</strong><small>Uses BMN's existing saved-post state</small></span><span class="bmn-haptic-chevron">›</span></button><div class="bmn-haptic-section">BMN app</div><button class="bmn-haptic-item" type="button" data-haptic-action="settings"><span class="bmn-haptic-icon">⚙</span><span class="bmn-haptic-copy"><strong>Account & settings</strong><small>Manage appearance and page preferences</small></span><span class="bmn-haptic-chevron">›</span></button><button class="bmn-haptic-item" type="button" data-haptic-action="activity"><span class="bmn-haptic-icon">⚡</span><span class="bmn-haptic-copy"><strong>All activity</strong><small>Open the existing inbox and notifications</small></span><span class="bmn-haptic-chevron">›</span></button><div class="bmn-haptic-status"><span class="bmn-haptic-dot" id="bmnHapticOnlineDot"></span><span id="bmnHapticOnlineText">Checking connection…</span></div>`;
+  document.body.append(back,menu);
+  function close(){menu.classList.remove('open');back.classList.remove('open');menu.setAttribute('aria-hidden','true');back.setAttribute('aria-hidden','true');document.body.classList.remove('bmn-haptic-menu-open');openedByPress=false;}
+  function open(from){targetPost=currentPost(from)||currentPost(document.activeElement);menu.classList.add('open');back.classList.add('open');menu.setAttribute('aria-hidden','false');back.setAttribute('aria-hidden','false');document.body.classList.add('bmn-haptic-menu-open');updateConnection();const first=$('[data-haptic-action="comments"]',menu);if(first)requestAnimationFrame(()=>first.focus({preventScroll:true}));}
+  function updateConnection(){const online=navigator.onLine;const dot=$('#bmnHapticOnlineDot',menu),text=$('#bmnHapticOnlineText',menu);if(dot)dot.style.background=online?'#34d399':'#f59e0b';if(text)text.textContent=online?'Online · BMN data uses your connected backend':'Offline · network actions may be unavailable';}
+  back.addEventListener('click',close);
+  menu.addEventListener('click',e=>{const b=e.target.closest('[data-haptic-action]');if(!b)return;const action=b.dataset.hapticAction;if(action==='close'){close();return;}close();setTimeout(()=>runAction(action),100)});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.classList.contains('open'))close();if(e.key==='Tab'&&menu.classList.contains('open')){const controls=[...menu.querySelectorAll('button:not(:disabled)')];if(!controls.length)return;const first=controls[0],last=controls[controls.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+  window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);
+  function status(msg){if(typeof window.setBackendStatus==='function')window.setBackendStatus(msg);else{let toast=$('#bmnHapticToast');if(!toast){toast=document.createElement('div');toast.id='bmnHapticToast';toast.style.cssText='position:fixed;z-index:11030;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:calc(100vw - 32px);padding:12px 16px;border:1px solid var(--bmn-haptic-border);border-radius:16px;background:var(--bmn-haptic-glass);color:var(--fg,#fff);backdrop-filter:blur(24px);font-size:12px;text-align:center;box-shadow:0 12px 40px #0005';document.body.appendChild(toast)}toast.textContent=msg;toast.hidden=false;clearTimeout(toast._timer);toast._timer=setTimeout(()=>toast.hidden=true,3200)}}
+  function clickInPost(selectors){if(!targetPost)return false;for(const sel of selectors){const b=targetPost.querySelector(sel);if(b){b.click();return true}}return false}
+  function runAction(action){
+   if(action==='comments'){if(clickInPost(['.bmn-toggle-comments','[aria-label*="comment" i]']))return status('Opening this post’s comments.');status('Choose a BMN community post first.');return}
+   if(action==='save'||action==='favorite'){if(clickInPost(['.bmn-save-post']))return status(action==='save'?'Using BMN’s save-post control.':'Using BMN’s saved-post list for favorites.');status('Open a BMN community post to save it.');return}
+   if(action==='repost'){const id=targetPost?.dataset?.postId;if(id&&typeof window.bmnRepostPost==='function'){Promise.resolve(window.bmnRepostPost(id)).catch(()=>status('Repost could not be completed.'));return}if(clickInPost(['.bmn-repost','[data-action="repost"]']))return;status('Reposting is not connected for this post yet; no repost was created.');return}
+   if(action==='settings'){const opener=$('#settingsOpen')||$('#dockSettings');if(opener){opener.click();return}status('Settings are not available on this screen.');return}
+   if(action==='activity'){const inbox=$('[data-app-view="inbox"]');if(inbox){inbox.click();return}const destination=$('#appInboxScreen')||$('#bmnNotifications')||$('#bmnSocialHub')||$('#live');if(destination){destination.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'});return}location.hash='#live';return}
+  }
+  window.BMNOpenHapticMenu=open;
+ }
+ function startPress(e){if(e.button!==undefined&&e.button!==0)return;const el=e.target.closest('.app-dock, #community .community-post, #community article[data-post-id], #community .post-preview video, .bmn-profile-post-tile');if(!el)return;if(e.target.closest('input,textarea,select,[contenteditable="true"]'))return;clearTimeout(pressTimer);pressStart={x:e.clientX||0,y:e.clientY||0,el};el.classList.add('bmn-haptic-held');pressTimer=setTimeout(()=>{openedByPress=true;ensureMenu();window.BMNOpenHapticMenu(el);if(navigator.vibrate&&!reduced())try{navigator.vibrate(12)}catch(_){}},520)}
+ function cancelPress(e){if(pressStart){pressStart.el.classList.remove('bmn-haptic-held');if(e&&pressTimer&&((Math.abs((e.clientX||0)-pressStart.x)>12)||(Math.abs((e.clientY||0)-pressStart.y)>12)))clearTimeout(pressTimer)}clearTimeout(pressTimer);pressTimer=null;pressStart=null}
+ document.addEventListener('pointerdown',startPress,{passive:true});document.addEventListener('pointerup',cancelPress,{passive:true});document.addEventListener('pointercancel',cancelPress,{passive:true});document.addEventListener('pointermove',e=>{if(pressStart&&((Math.abs(e.clientX-pressStart.x)>12)||(Math.abs(e.clientY-pressStart.y)>12)))cancelPress(e)},{passive:true});
+ document.addEventListener('contextmenu',e=>{const el=e.target.closest('.app-dock, #community .community-post, #community article[data-post-id], #community .post-preview video, .bmn-profile-post-tile');if(!el)return;e.preventDefault();ensureMenu();window.BMNOpenHapticMenu(el)});
+ document.addEventListener('click',e=>{if(openedByPress&&!e.target.closest('#bmn-haptic-menu')){e.preventDefault();e.stopPropagation();openedByPress=false}},true);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureMenu,{once:true});else ensureMenu();
 })();
 </script>
 
