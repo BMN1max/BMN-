@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Engine Blueprint Clone</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tiktokRed: '#ff0050',
+                        tiktokCyan: '#00f2fe',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth, snappy viewport scrolling container mimicking mobile app */
+        .feed-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100dvh;
+            scrollbar-width: none; /* Hide default scrollbar Firefox */
+        }
+        .feed-container::-webkit-scrollbar {
+            display: none; /* Hide default scrollbar Chrome/Safari */
+        }
+        .video-card {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            height: 100dvh;
+            position: relative;
+        }
+        /* Custom horizontal looping ticker marquee styling for audio track names */
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 12s linear infinite;
+        }
+        /* Continuous vinyl rotation styling */
+        @keyframes vinyl-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spin-vinyl {
+            animation: vinyl-spin 4s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans antialiased overflow-hidden select-none">
+
+    <!-- MAIN APP WRAPPER SYSTEM -->
+    <div class="relative max-w-md mx-auto h-dvh bg-zinc-950 shadow-2xl overflow-hidden">
+        
+        <!-- ========================================================= -->
+        <!-- HEADER COMPONENT LAYER (DYNAMIC STATE FEEDS SWITCHER) -->
+        <!-- ========================================================= -->
+        <header class="absolute top-0 left-0 right-0 z-40 flex items-center justify-between px-4 pt-6 pb-4 bg-gradient-to-b from-black/60 to-transparent">
+            <!-- Left Corner Broadcast Action Portal Link Anchor Token -->
+            <button class="text-white drop-shadow-md transition active:scale-90">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/>
+                </svg>
+            </button>
+
+            <!-- Center View State Feeds Slider Anchors Matrix Links -->
+            <div class="flex items-center space-x-4 text-base font-semibold tracking-wider">
+                <button onclick="switchFeed('following')" id="tab-following" class="text-neutral-400 transition-all duration-200 drop-shadow-md">Following</button>
+                <span class="text-white/20 text-xs">|</span>
+                <button onclick="switchFeed('foryou')" id="tab-foryou" class="text-white border-b-2 border-white pb-0.5 transition-all duration-200 drop-shadow-md">For You</button>
+            </div>
+
+            <!-- Right Search Access Command Key Vector -->
+            <button onclick="toggleModal('search-modal')" class="text-white drop-shadow-md transition active:scale-90">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- CORE MULTI-STREAM VIEWPORT SNAP ENGAGEMENT CONTAINER PANEL -->
+        <!-- ========================================================= -->
+        <div id="feed-viewport" class="feed-container">
+            
+            <!-- VIDEO CARD LOG NODE INDEX: 0 -->
+            <section class="video-card w-full flex flex-col justify-end bg-gradient-to-b from-transparent via-black/10 to-black/80">
+                <!-- Fallback Background Mock Stream Layer Panel Frame -->
+                <div class="absolute inset-0 -z-10 flex items-center justify-center bg-gradient-to-br from-indigo-900 to-purple-950">
+                    <span class="text-6xl animate-pulse">🎬</span>
+                    <p class="absolute bottom-1/2 translate-y-12 text-sm text-white/40 tracking-widest font-mono">STREAM PIPELINE STREAMING [01]</p>
+                </div>
+
+                <!-- RIGHT-HAND EXPLICIT INTERACTION SIDEBAR CANVAS OVERLAYS -->
+                <div class="absolute right-3 bottom-24 z-30 flex flex-col items-center space-y-5">
+                    <!-- Creator Node Circle Avatar -->
+                    <div class="relative pb-2">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Creator Profile" class="w-12 h-12 rounded-full border-2 border-white object-cover">
+                        <!-- Follow Red Action Execution Button Badge Tag -->
+                        <button onclick="handleFollow(this)" class="absolute bottom-1 left-1/2 -translate-x-1/2 bg-tiktokRed text-white rounded-full p-0.5 shadow-md transform transition active:scale-70 duration-150">
+                            <svg class="w-3 h-3 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Heart Like Interaction Token Button -->
+                    <button onclick="handleLike(this)" class="group flex flex-col items-center focus:outline-none">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white transition-colors duration-200 fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200 drop-shadow-md">352.4K</span>
+                    </button>
+
+                    <!-- Conversation Drawer Panel Anchor Trigger -->
+                    <button onclick="toggleModal('comments-drawer')" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200 drop-shadow-md">1,420</span>
+                    </button>
+
+                    <!-- Bookmark Collection Matrix Button -->
+                    <button onclick="handleBookmark(this)" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.154 1.907 1.01 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.175.807-2.031 1.907-2.185a48.507 48.507 0 0111.186 0z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200 drop-shadow-md">89.1K</span>
+                    </button>
+
+                    <!-- Core System Media Export Matrix Pipeline Anchor Link -->
+                    <button onclick="toggleModal('share-matrix')" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186l5.343-2.73m-5.343 2.73l5.343 2.73m1.243-4.204a2.25 2.25 0 114.06 1.413 2.25 2.25 0 01-4.06-1.413zm0 5.607a2.25 2.25 0 114.06 1.413 2.25 2.25 0 01-4.06-1.413z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200 drop-shadow-md">24.5K</span>
+                    </button>
+
+                    <!-- Rotating Vinyl Record Sound Metadata Layer Indicator -->
+                    <div class="pt-2">
+                        <div class="w-10 h-10 rounded-full bg-zinc-900 border-4 border-zinc-700/60 flex items-center justify-center spin-vinyl">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" alt="Audio Disc Thumbnail" class="w-5 h-5 rounded-full object-cover">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LEFT FOOTER METADATA OVERLAY LAYOUT FRAME -->
+                <div class="px-4 pb-28 w-[75%] space-y-2.5 z-30">
+                    <!-- Creator Identity Link -->
+                    <h2 class="text-base font-bold tracking-wide flex items-center space-x-1 drop-shadow-md">
+                        <span class="hover:underline cursor-pointer">@creative_coder</span>
+                        <span class="text-blue-400 text-sm">✓</span>
+                    </h2>
+                    <!-- Rich Text Caption Field Matrix supporting Hash tags -->
+                    <p class="text-sm text-neutral-100 leading-relaxed font-normal drop-shadow-md">
+                        Building the complete TikTok layout structure entirely inside a production architecture model using Tailwind! <span class="text-sky-400 font-medium hover:underline cursor-pointer">#webdev</span> <span class="text-sky-400 font-medium hover:underline cursor-pointer">#architecture</span> <span class="text-sky-400 font-medium hover:underline cursor-pointer">#fyp</span>
+                    </p>
+                    <!-- Audio Track Looping Ticker Marquee Container Link -->
+                    <div class="flex items-center space-x-2 bg-black/20 backdrop-blur-sm py-1 px-2.5 rounded-full w-fit max-w-[200px] overflow-hidden border border-white/5">
+                        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l6-6.364M12 21a9 9 0 110-18 9 9 0 010 18zm0 0v-7.5"/>
+                        </svg>
+                        <div class="overflow-hidden relative w-full h-4">
+                            <div class="animate-marquee text-xs font-medium tracking-wide space-x-4">
+                                <span>Original Sound - @creative_coder - Looping Tracks Portfolio</span>
+                                <span>Original Sound - @creative_coder - Looping Tracks Portfolio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subtle Bottom Audio Wave Timeline Indicator Progress Hook -->
+                <div class="absolute bottom-20 left-0 right-0 h-0.5 bg-neutral-800 z-30">
+                    <div class="h-full w-1/3 bg-white/60 rounded-full"></div>
+                </div>
+            </section>
+
+            <!-- VIDEO CARD LOG NODE INDEX: 1 (SECONDARY MULTI-STREAM DEMO) -->
+            <section class="video-card w-full flex flex-col justify-end bg-gradient-to-b from-transparent via-black/10 to-black/80">
+                <div class="absolute inset-0 -z-10 flex items-center justify-center bg-gradient-to-br from-emerald-950 to-cyan-950">
+                    <span class="text-6xl animate-pulse">🚀</span>
+                    <p class="absolute bottom-1/2 translate-y-12 text-sm text-white/40 tracking-widest font-mono">STREAM PIPELINE STREAMING [02]</p>
+                </div>
+                <!-- Interactive Sidebar Cloned Node -->
+                <div class="absolute right-3 bottom-24 z-30 flex flex-col items-center space-y-5">
+                    <div class="relative pb-2">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Creator Profile" class="w-12 h-12 rounded-full border-2 border-white object-cover">
+                        <button onclick="handleFollow(this)" class="absolute bottom-1 left-1/2 -translate-x-1/2 bg-tiktokRed text-white rounded-full p-0.5 shadow-md transform transition active:scale-70 duration-150">
+                            <svg class="w-3 h-3 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </button>
+                    </div>
+                    <button onclick="handleLike(this)" class="group flex flex-col items-center focus:outline-none">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200">1.2M</span>
+                    </button>
+                    <button onclick="toggleModal('comments-drawer')" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200">8,943</span>
+                    </button>
+                    <button onclick="handleBookmark(this)" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.154 1.907 1.01 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.175.807-2.031 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200">432K</span>
+                    </button>
+                    <button onclick="toggleModal('share-matrix')" class="flex flex-col items-center">
+                        <div class="bg-black/40 backdrop-blur-md p-2.5 rounded-full border border-white/5 transition active:scale-75 duration-200">
+                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186l5.343-2.73m-5.343 2.73l5.343 2.73m1.243-4.204a2.25 2.25 0 114.06 1.413 2.25 2.25 0 01-4.06-1.413zm0 5.607a2.25 2.25 0 114.06 1.413 2.25 2.25 0 01-4.06-1.413z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-1 tracking-wide text-neutral-200">102K</span>
+                    </button>
+                    <div class="pt-2">
+                        <div class="w-10 h-10 rounded-full bg-zinc-900 border-4 border-zinc-700/60 flex items-center justify-center spin-vinyl">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&auto=format&fit=crop&q=80" alt="Audio Disc Thumbnail" class="w-5 h-5 rounded-full object-cover">
+                        </div>
+                    </div>
+                </div>
+                <!-- Left Metadata Panel Footer Block Cloned -->
+                <div class="px-4 pb-28 w-[75%] space-y-2.5 z-30">
+                    <h2 class="text-base font-bold tracking-wide flex items-center space-x-1 drop-shadow-md">
+                        <span>@ui_ux_master</span>
+                    </h2>
+                    <p class="text-sm text-neutral-100 leading-relaxed font-normal drop-shadow-md">
+                        Reviewing the next-gen web platform design structures! Tell me what you think in the feedback tray below. <span class="text-sky-400 font-medium hover:underline cursor-pointer">#design</span> <span class="text-sky-400 font-medium hover:underline cursor-pointer">#architecture</span>
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TRANSPARENT GLASSMORPHIC FLOATING CONTROLLER NAVIGATION DOCK -->
+        <!-- ========================================================= -->
+        <nav class="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-[400px]">
+            <div class="relative w-full py-2.5 px-6 flex items-center justify-between rounded-3xl bg-zinc-900/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]">
+                
+                <!-- Action Link Node 1: Primary Feed Interface -->
+                <button onclick="switchFooterTab(this, 'home')" class="relative flex flex-col items-center justify-center text-white transition active:scale-95 duration-150">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span class="text-[9px] font-semibold mt-0.5 tracking-wide">Home</span>
+                    <div id="active-indicator" class="absolute -bottom-1.5 w-4 h-0.5 rounded-full bg-white transition-transform duration-200"></div>
+                </button>
+
+                <!-- Action Link Node 2: Multi-Category Exploration Module -->
+                <button onclick="switchFooterTab(this, 'explore')" class="flex flex-col items-center justify-center text-neutral-400 transition active:scale-95 duration-150 hover:text-neutral-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z" />
+                    </svg>
+                    <span class="text-[9px] font-semibold mt-0.5 tracking-wide">Discover</span>
+                </button>
+
+                <!-- Action Link Node 3: HIGH-GLOW GLYPH INGEST MEDIA ACCELERATOR ACCESS LINK -->
+                <button onclick="toggleModal('upload-modal')" class="relative group flex items-center justify-center w-12 h-7.5 bg-white rounded-xl transition active:scale-90 duration-150 shadow-[0_0_12px_rgba(255,255,255,0.3)]">
+                    <div class="absolute -left-1 top-0 bottom-0 w-3 -z-10 rounded-xl bg-tiktokCyan mix-blend-screen transition-transform group-hover:-translate-x-0.5 duration-200"></div>
+                    <div class="absolute -right-1 top-0 bottom-0 w-3 -z-10 rounded-xl bg-tiktokRed mix-blend-screen transition-transform group-hover:translate-x-0.5 duration-200"></div>
+                    <svg class="w-5 h-5 text-black stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                </button>
+
+                <!-- Action Link Node 4: Chat Message Notifications Engine Drawer Portal -->
+                <button onclick="switchFooterTab(this, 'inbox')" class="relative flex flex-col items-center justify-center text-neutral-400 transition active:scale-95 duration-150 hover:text-neutral-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641l-.318 1.235c-.149.58.419 1.104.992.939l1.918-.553c.51-.147 1.054-.05 1.5.234A8.96 8.96 0 0012 20.25z" />
+                    </svg>
+                    <span class="text-[9px] font-semibold mt-0.5 tracking-wide">Inbox</span>
+                    <!-- Persistent Dynamic Notification Badge Alerts Count -->
+                    <span class="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-tiktokRed text-[9px] font-black text-white shadow-sm ring-1 ring-black">4</span>
+                </button>
+
+                <!-- Action Link Node 5: Private Management Account Profiler Workspace Console -->
+                <button onclick="switchFooterTab(this, 'profile')" class="flex flex-col items-center justify-center text-neutral-400 transition active:scale-95 duration-150 hover:text-neutral-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span class="text-[9px] font-semibold mt-0.5 tracking-wide">Profile</span>
+                </button>
+
+            </div>
+        </nav>
+
+        <!-- ========================================================= -->
+        <!-- CORE COMMENTS INTERACTIVE DRAWER CONTAINER PANEL -->
+        <!-- ========================================================= -->
+        <div id="comments-drawer" class="absolute inset-x-0 bottom-0 z-50 h-[65dvh] bg-zinc-900 rounded-t-2xl transform translate-y-full transition-transform duration-300 flex flex-col hidden">
+            <!-- Modal Structural Drag Indicator & Heading Title -->
+            <div class="relative py-3.5 border-b border-white/5 flex items-center justify-center">
+                <h3 class="text-xs font-bold tracking-wider text-neutral-300">1,420 comments</h3>
+                <button onclick="toggleModal('comments-drawer')" class="absolute right-4 text-neutral-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Scrollable Comments Tree Section -->
+            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-none">
+                <!-- Parent Row Comment Frame Module -->
+                <div class="flex items-start space-x-3">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&auto=format&fit=crop&q=80" alt="User Avatar" class="w-8 h-8 rounded-full object-cover">
+                    <div class="flex-1 space-y-0.5">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-xs font-bold text-neutral-400">@alpha_tester</span>
+                            <span class="bg-zinc-800 text-[9px] px-1.5 py-0.5 rounded text-neutral-300 font-mono">Creator</span>
+                        </div>
+                        <p class="text-sm text-neutral-200">The scrolling snapping mechanics on this are clean! What tech stack are you running under the loop container?</p>
+                        <div class="flex items-center space-x-3 pt-1 text-xs text-neutral-500 font-medium">
+                            <span>2h ago</span>
+                            <button class="hover:text-neutral-300 transition">Reply</button>
+                        </div>
+                    </div>
+                    <!-- Comment Micro Engagement Liker Flag -->
+                    <button onclick="toggleCommentHeart(this)" class="flex flex-col items-center space-y-0.5 text-neutral-500 hover:text-neutral-300 pt-1">
+                        <svg class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                        <span class="text-[10px]">42</span>
+                    </button>
+                </div>
+
+                <!-- Secondary Indented Nested Response Item -->
+                <div class="flex items-start space-x-3 pl-11">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" alt="User Avatar" class="w-6 h-6 rounded-full object-cover">
+                    <div class="flex-1 space-y-0.5">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-xs font-bold text-neutral-400">@dev_reviewer</span>
+                        </div>
+                        <p class="text-sm text-neutral-200">Pure CSS snapping setup along with configuration scripts tracking indices via threshold logic flags.</p>
+                        <div class="flex items-center space-x-3 pt-1 text-xs text-neutral-500 font-medium">
+                            <span>1h ago</span>
+                            <button class="hover:text-neutral-300 transition">Reply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Text Input Base Field Platform Bar Overlay -->
+            <div class="p-3 border-t border-white/5 bg-zinc-900/90 flex items-center space-x-3">
+                <div class="flex-1 bg-zinc-800 rounded-full px-4 py-2 flex items-center justify-between border border-white/5">
+                    <input type="text" placeholder="Add comment..." class="bg-transparent text-sm text-white placeholder-neutral-500 focus:outline-none w-full pr-2">
+                    <div class="flex items-center space-x-2 text-neutral-400 shrink-0">
+                        <button class="hover:text-white transition">@</button>
+                        <button class="hover:text-white transition">☺</button>
+                    </div>
+                </div>
+                <button class="text-tiktokRed font-semibold text-sm px-2 tracking-wide transition active:scale-95">Post</button>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- CORE MEDIA FILE INGEST UPLOAD MODAL MATRIX BOARD -->
+        <!-- ========================================================= -->
+        <div id="upload-modal" class="absolute inset-0 z-50 bg-zinc-950/95 backdrop-blur-md p-6 flex flex-col justify-between hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                <h2 class="text-lg font-bold tracking-wide">Upload Pipeline Studio</h2>
+                <button onclick="toggleModal('upload-modal')" class="text-neutral-400 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Drag & Drop Container Frame Interface -->
+            <div class="flex-1 my-6 border-2 border-dashed border-zinc-700 hover:border-tiktokCyan transition rounded-2xl flex flex-col items-center justify-center p-6 text-center space-y-3 cursor-pointer group bg-zinc-900/40">
+                <div class="p-4 bg-zinc-800 rounded-full text-neutral-400 group-hover:text-tiktokCyan group-hover:bg-zinc-800/80 transition duration-300">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold tracking-wide">Select raw stream asset file to ingest</p>
+                    <p class="text-xs text-neutral-500 font-medium">MP4 or WebM target · Vertical 9:16 layout favored</p>
+                </div>
+            </div>
+
+            <!-- Permissions Meta Field Input Tray Layout -->
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold uppercase tracking-wider text-neutral-400">Caption Ledger Metadata</label>
+                    <textarea placeholder="Describe your video clip, inject tags #hashtags or @mentions..." class="w-full h-16 bg-zinc-900 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-tiktokCyan transition placeholder-neutral-600 resize-none"></textarea>
+                </div>
+                <!-- Privacy Radio Settings Selection Group -->
+                <div class="flex items-center justify-between text-sm py-2">
+                    <span class="font-medium text-neutral-300">Who can view this item</span>
+                    <select class="bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-tiktokCyan">
+                        <option>Public (Everyone)</option>
+                        <option>Friends Only (Mutuals)</option>
+                        <option>Private (Only Me)</option>
+                    </select>
+                </div>
+                <!-- Interactive Action Dispatch Row Triggers -->
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="toggleModal('upload-modal')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl font-bold transition text-sm">Save Draft</button>
+                    <button onclick="executeMockPost()" class="flex-1 bg-gradient-to-r from-tiktokCyan to-tiktokRed text-black font-black py-3 rounded-xl transition text-sm tracking-wider shadow-lg">POST STREAM</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- CORE SHARE EXPORT MATRIX UTILITIES OVERLAY DRAWER -->
+        <!-- ========================================================= -->
+        <div id="share-matrix" class="absolute inset-x-0 bottom-0 z-50 bg-zinc-900 rounded-t-2xl transform translate-y-full transition-transform duration-300 p-4 space-y-4 hidden">
+            <div class="flex items-center justify-between pb-2 border-b border-white/5">
+                <h3 class="text-xs font-bold tracking-wider text-neutral-400 uppercase">Share Pipeline Matrix</h3>
+                <button onclick="toggleModal('share-matrix')" class="text-neutral-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <!-- Horizontal Send To User DM Pipeline Node Row -->
+            <div class="flex space-x-4 overflow-x-auto py-2 scrollbar-none">
+                <div class="flex flex-col items-center space-y-1 shrink-0 cursor-pointer transition active:scale-90">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&auto=format&fit=crop&q=80" class="w-11 h-11 rounded-full object-cover border border-white/10">
+                    <span class="text-[10px] text-neutral-400 font-medium">@alpha</span>
+                </div>
+                <div class="flex flex-col items-center space-y-1 shrink-0 cursor-pointer transition active:scale-90">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" class="w-11 h-11 rounded-full object-cover border border-white/10">
+                    <span class="text-[10px] text-neutral-400 font-medium">@beta</span>
+                </div>
+            </div>
+            <!-- External Application Action Redirect Row Utilities Links -->
+            <div class="grid grid-cols-4 gap-3 text-center text-[10px] font-bold text-neutral-400 pt-2">
+                <div class="p-3 bg-zinc-800 rounded-xl text-white cursor-pointer hover:bg-zinc-700 transition">Copy Link</div>
+                <div class="p-3 bg-zinc-800 rounded-xl text-white cursor-pointer hover:bg-zinc-700 transition">Embed</div>
+                <div class="p-3 bg-zinc-800 rounded-xl text-white cursor-pointer hover:bg-zinc-700 transition">Duet</div>
+                <div class="p-3 bg-zinc-800 rounded-xl text-white cursor-pointer hover:bg-zinc-700 transition">Report</div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- CORE SEARCH PREDICTIVE ENGINE SEARCH OVERLAY PANEL -->
+        <!-- ========================================================= -->
+        <div id="search-modal" class="absolute inset-0 z-50 bg-zinc-950 p-4 flex flex-col hidden">
+            <div class="flex items-center space-x-3 pb-3 border-b border-white/10">
+                <div class="flex-1 bg-zinc-900 rounded-xl px-3.5 py-2 flex items-center border border-white/10">
+                    <svg class="w-4 h-4 text-neutral-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z"/></svg>
+                    <input type="text" id="search-input" oninput="handleSearchSuggest(this.value)" placeholder="Search trending metrics..." class="bg-transparent text-sm text-white placeholder-neutral-600 focus:outline-none w-full">
+                </div>
+                <button onclick="toggleModal('search-modal')" class="text-sm font-semibold text-neutral-400 hover:text-white transition">Cancel</button>
+            </div>
+            <!-- Dynamic Real-Time Predictive Suggested List Box -->
+            <div id="search-suggestions" class="flex-1 overflow-y-auto py-3 space-y-3">
+                <div class="text-xs font-bold text-neutral-500 uppercase tracking-wider px-1 pb-1">Trending Searches</div>
+                <div onclick="fillSearch('Tailwind fluid layouts')" class="flex items-center justify-between py-2 px-1 hover:bg-zinc-900 rounded-lg cursor-pointer transition text-sm text-neutral-200">
+                    <span>Tailwind fluid layouts</span>
+                    <span class="text-xs text-tiktokRed bg-tiktokRed/10 px-1.5 py-0.5 rounded font-mono font-bold">HOT</span>
+                </div>
+                <div onclick="fillSearch('Snappy scroll viewports')" class="flex items-center justify-between py-2 px-1 hover:bg-zinc-900 rounded-lg cursor-pointer transition text-sm text-neutral-200">
+                    <span>Snappy scroll viewports</span>
+                    <span class="text-xs text-neutral-500 font-mono">Trending</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- BLANK APP VIEWPORT SHELL PAGES (FALLBACK LANDINGS METRICS) -->
+        <!-- ========================================================= -->
+        <div id="fallback-page-overlay" class="absolute inset-0 top-0 bottom-20 z-20 bg-zinc-950 flex flex-col items-center justify-center p-6 text-center space-y-2 hidden">
+            <span id="fallback-icon" class="text-5xl">🌌</span>
+            <h1 id="fallback-title" class="text-lg font-black tracking-wide pt-2">Module Active Panel</h1>
+            <p id="fallback-desc" class="text-xs text-neutral-500 font-medium max-w-[240px] leading-relaxed">Hydrating view matrices data models from centralized telemetry routing registries pipelines.</p>
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- INTERACTION LOGIC & CONTROL CONTROLLER SCRIPTS ENGINE -->
+    <!-- ========================================================= -->
+    <script>
+        // Core Viewport Container State Mapping Trackers
+        let activeTab = 'home';
+        let currentFeed = 'foryou';
+
+        // Modal Visibility Handler Engine Pipeline
+        function toggleModal(modalId) {
+            const modalNode = document.getElementById(modalId);
+            if (!modalNode) return;
+            
+            if (modalNode.classList.contains('hidden')) {
+                modalNode.classList.remove('hidden');
+                setTimeout(() => {
+                    modalNode.classList.remove('translate-y-full');
+                }, 10);
+            } else {
+                modalNode.classList.add('translate-y-full');
+                setTimeout(() => {
+                    modalNode.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Heart Click Fill State Modifiers
+        function handleLike(buttonNode) {
+            const svgIcon = buttonNode.querySelector('svg');
+            const counterSpan = buttonNode.querySelector('span');
+            
+            if (svgIcon.classList.contains('fill-none')) {
+                svgIcon.classList.remove('fill-none', 'text-white');
+                svgIcon.classList.add('fill-tiktokRed', 'text-tiktokRed');
+                // Play programmatic scale jump dynamic ripple sequence
+                buttonNode.classList.add('scale-125');
+                setTimeout(() => buttonNode.classList.remove('scale-125'), 200);
+            } else {
+                svgIcon.classList.remove('fill-tiktokRed', 'text-tiktokRed');
+                svgIcon.classList.add('fill-none', 'text-white');
+            }
+        }
+
+        // Bookmark Selection Vector Toggler
+        function handleBookmark(buttonNode) {
+            const svgIcon = buttonNode.querySelector('svg');
+            if (svgIcon.classList.contains('fill-none')) {
+                svgIcon.classList.remove('fill-none', 'text-white');
+                svgIcon.classList.add('fill-yellow-400', 'text-yellow-400');
+            } else {
+                svgIcon.classList.remove('fill-yellow-400', 'text-yellow-400');
+                svgIcon.classList.add('fill-none', 'text-white');
+            }
+        }
+
+        // Follow Action Execution Fade Engine
+        function handleFollow(buttonNode) {
+            buttonNode.style.transform = 'scale(0)';
+            setTimeout(() => {
+                buttonNode.remove();
+            }, 200);
+        }
+
+        // Comment Heart Action Row Utility Toggle
+        function toggleCommentHeart(buttonNode) {
+            const svgIcon = buttonNode.querySelector('svg');
+            if (svgIcon.classList.contains('fill-none')) {
+                svgIcon.classList.remove('fill-none');
+                svgIcon.classList.add('fill-tiktokRed', 'text-tiktokRed');
+            } else {
+                svgIcon.classList.remove('fill-tiktokRed', 'text-tiktokRed');
+                svgIcon.classList.add('fill-none');
+            }
+        }
+
+        // Top Navigation Switcher Control Link Module
+        function switchFeed(feedType) {
+            currentFeed = feedType;
+            const tabFollowing = document.getElementById('tab-following');
+            const tabForyou = document.getElementById('tab-foryou');
+            
+            if (feedType === 'following') {
+                tabFollowing.className = 'text-white border-b-2 border-white pb-0.5 transition-all duration-200';
+                tabForyou.className = 'text-neutral-400 transition-all duration-200';
+            } else {
+                tabForyou.className = 'text-white border-b-2 border-white pb-0.5 transition-all duration-200';
+                tabFollowing.className = 'text-neutral-400 transition-all duration-200';
+            }
+            // Forces home screen content matrix reload
+            switchFooterTab(document.querySelector('nav button'), 'home');
+        }
+
+        // Lower Navigation Dock Routing State Terminal Engine
+        function switchFooterTab(buttonNode, targetPage) {
+            activeTab = targetPage;
+            
+            // Layout Normalization across standard nodes
+            const allNavButtons = buttonNode.parentNode.querySelectorAll('button');
+            allNavButtons.forEach(btn => {
+                if(!btn.classList.contains('group')) {
+                    btn.classList.remove('text-white');
+                    btn.classList.add('text-neutral-400');
+                }
+            });
+
+            // Set specific targeted active icon color parameters
+            if(!buttonNode.classList.contains('group')) {
+                buttonNode.classList.remove('text-neutral-400');
+                buttonNode.classList.add('text-white');
+            }
+
+            // Dynamically translate indicator slide bar asset marker coordinates
+            const indicator = document.getElementById('active-indicator');
+            if (buttonNode.offsetLeft && indicator) {
+                indicator.style.transform = `translateX(${buttonNode.offsetLeft - 24}px)`;
+            }
+
+            // Hydrate Shell Component Overlays for simulated fallback landings pages
+            const overlay = document.getElementById('fallback-page-overlay');
+            const titleNode = document.getElementById('fallback-title');
+            const descNode = document.getElementById('fallback-desc');
+            const iconNode = document.getElementById('fallback-icon');
+
+            if (targetPage === 'home') {
+                overlay.classList.add('hidden');
+            } else {
+                overlay.classList.remove('hidden');
+                if (targetPage === 'explore') {
+                    iconNode.textContent = '🔍';
+                    titleNode.textContent = 'Discovery Hub Matrix';
+                    descNode.textContent = 'Aggregating real-time trending cluster nodes, sound challenge tags, and public verification feeds accounts configurations.';
+                } else if (targetPage === 'inbox') {
+                    iconNode.textContent = '💬';
+                    titleNode.textContent = 'WebSocket Messaging Inbox';
+                    descNode.textContent = 'Persistent encrypted network socket ledger processing typing status indicators, rich embeds data fragments, and interactions counters notifications.';
+                } else if (targetPage === 'profile') {
+                    iconNode.textContent = '👤';
+                    titleNode.textContent = 'Workspace Profile Console';
+                    descNode.textContent = 'Managing internal user telemetry schema records, personal liked logs array, secure encrypted device session structures, and coin wallet ledger balance tracking.';
+                }
+            }
+        }
+
+        // Real-Time Query Suggestion Simulation Trigger Box
+        function handleSearchSuggest(queryValue) {
+            const suggestContainer = document.getElementById('search-suggestions');
+            if(queryValue.trim().length > 0) {
+                suggestContainer.innerHTML = `
+                    <div class="text-xs font-bold text-neutral-500 uppercase tracking-wider px-1 pb-1">Suggested Matches</div>
+                    <div onclick="fillSearch('${queryValue} framework')" class="flex items-center py-2.5 px-1 hover:bg-zinc-900 rounded-lg cursor-pointer text-sm text-neutral-200">
+                        <svg class="w-4 h-4 text-neutral-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z"/></svg>
+                        <span>${queryValue} <b class="text-white">framework</b></span>
+                    </div>
+                    <div onclick="fillSearch('${queryValue} animation mechanics')" class="flex items-center py-2.5 px-1 hover:bg-zinc-900 rounded-lg cursor-pointer text-sm text-neutral-200">
+                        <svg class="w-4 h-4 text-neutral-500 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z"/></svg>
+                        <span>${queryValue} <b class="text-white">animation mechanics</b></span>
+                    </div>
+                `;
+            }
+        }
+
+        function fillSearch(termText) {
+            document.getElementById('search-input').value = termText;
+        }
+
+        function executeMockPost() {
+            alert('Video chunk binary payload package dispatched down ingestion processing pipelines successfully!');
+            toggleModal('upload-modal');
+        }
+    </script>
+</body>
+</html>
