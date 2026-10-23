@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TikTok WebApp Framework</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --text-secondary: #aaaaaa;
+            --accent-color: #fe2c55;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --apple-glass: rgba(20, 20, 20, 0.65);
+            --apple-glass-border: rgba(255, 255, 255, 0.2);
+            --status-bar-height: env(safe-area-inset-top, 24px);
+        }
+
+        /* Prevent Text Selection and Default Web Popups globally */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            position: fixed;
+        }
+
+        /* App Launch Animation Overlay */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOut 0.6s ease-out 1.5s forwards;
+        }
+
+        .splash-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #25f4ee, #fe2c55);
+            border-radius: 20px;
+            position: relative;
+            transform: scale(0.5);
+            animation: splashPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes splashPop {
+            to { transform: scale(1); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        /* Status bar matching Android/iOS rules */
+        .status-bar-spacer {
+            height: var(--status-bar-height);
+            background-color: var(--bg-color);
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Allow specific element text selection */
+        .selectable {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* Main Container setup for immersive full screen */
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--status-bar-height);
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
+
+        /* Video Feed Viewport */
+        .feed-container {
+            flex: 1;
+            width: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .feed-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .video-card {
+            width: 100%;
+            height: calc(100vh - var(--status-bar-height) - 75px);
+            scroll-snap-align: start;
+            position: relative;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Media Buffer Animation Grid */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.active {
+            opacity: 1;
+        }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Liquid Apple Glass Controls Overlay */
+        .right-controls {
+            position: absolute;
+            right: 12px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+        }
+        .avatar-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .avatar-follow {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: none;
+            border: none;
+            color: #fff;
+            gap: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.15s cubic-bezier(0.15, 0.85, 0.45, 1.4);
+        }
+        .action-btn svg {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.6));
+        }
+        .action-btn span {
+            font-size: 12px;
+            font-weight: 600;
+            text-shadow: 0px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Apple Design Liquid Glass Bottom Floating Dock */
+        .floating-dock-wrapper {
+            position: fixed;
+            bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0 16px;
+            z-index: 900;
+            pointer-events: none;
+        }
+
+        .floating-dock {
+            pointer-events: auto;
+            background: var(--apple-glass);
+            backdrop-filter: blur(25px) saturate(210%);
+            -webkit-backdrop-filter: blur(25px) saturate(210%);
+            border: 1px solid var(--apple-glass-border);
+            width: 100%;
+            max-width: 420px;
+            height: 64px;
+            border-radius: 32px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+            padding: 0 12px;
+        }
+
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 10px;
+            gap: 2px;
+            font-weight: 500;
+            transition: color 0.2s, transform 0.1s ease;
+        }
+        .dock-item.active {
+            color: #ffffff;
+        }
+        .dock-item svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* TikTok Style Plus Icon Layout */
+        .dock-plus {
+            position: relative;
+            width: 46px;
+            height: 28px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dock-plus::before {
+            content: '';
+            position: absolute;
+            left: -3px;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: #25f4ee;
+            border-radius: 8px;
+            z-index: -1;
+        }
+        .dock-plus::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: #fe2c55;
+            border-radius: 8px;
+            z-index: -2;
+        }
+
+        /* Wobble and Active States (Haptic Simulation) */
+        .wobble-active {
+            transform: scale(0.92) translateY(2px) !important;
+            filter: brightness(0.85);
+        }
+
+        /* Apple Style Context Sheet / Modal Layer */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 80vh;
+            background: #121212;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1100;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .sheet-header {
+            width: 100%;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid #222;
+        }
+        .sheet-drag-handle {
+            width: 40px;
+            height: 5px;
+            background: #444;
+            border-radius: 3px;
+            position: absolute;
+            top: 10px;
+        }
+        .sheet-title {
+            margin-top: 12px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .sheet-close-btn {
+            position: absolute;
+            right: 16px;
+            top: 14px;
+            background: #222;
+            border: none;
+            color: #fff;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Comments Grid */
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .comment-node {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #333;
+        }
+        .comment-body {
+            flex: 1;
+        }
+        .comment-user {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .comment-text {
+            font-size: 14px;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        /* Long Press Context Action Menu (Apple 3D Touch simulation) */
+        .context-menu-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .context-menu-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .context-menu {
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 260px;
+            border-radius: 14px;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.15, 0.85, 0.45, 1.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .context-menu-backdrop.open .context-menu {
+            transform: scale(1);
+        }
+        .context-option {
+            width: 100%;
+            padding: 14px 16px;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+        }
+        .context-option:last-child {
+            border-bottom: none;
+        }
+        .context-option.danger {
+            color: #ff3b30;
+        }
+
+        /* UI Video Info Description Layout */
+        .video-meta-info {
+            position: absolute;
+            bottom: 84px;
+            left: 12px;
+            right: 80px;
+            z-index: 10;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+        .video-author {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .video-desc {
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        /* Native Share Alert Banner Toast */
+        .toast-notification {
+            position: fixed;
+            top: calc(30px + var(--status-bar-height));
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(255,255,255,0.95);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 3000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Native App Splash Cover -->
+    <div id="splash-screen">
+        <div class="splash-logo"></div>
+    </div>
+
+    <!-- Match Android Status Bar Theme Blending Profile -->
+    <div class="status-bar-spacer"></div>
+
+    <div class="app-container">
+        <!-- Media Video Viewport Container Grid -->
+        <div class="feed-container" id="feedContainer">
+            <!-- Video Node 1 -->
+            <div class="video-card" data-index="0">
+                <video class="video-element" loop playsinline muted src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-light-frowning-40505-large.mp4"></video>
+                <div class="loading-overlay"><div class="spinner"></div></div>
+                
+                <div class="video-meta-info">
+                    <div class="video-author @selectable">@neon_dreamer</div>
+                    <div class="video-desc @selectable">Testing out the new Apple-style Haptic Liquid Glass Dock update! Hold down anywhere to view options 🚀 #uiedit #iosglass</div>
+                </div>
+
+                <div class="right-controls">
+                    <div class="avatar-wrapper">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" class="avatar-img" alt="avatar">
+                        <div class="avatar-follow">+</div>
+                    </div>
+                    <button class="action-btn" onclick="handleLike(this)">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span>142K</span>
+                    </button>
+                    <button class="action-btn" onclick="openComments()">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                        <span>2.4K</span>
+                    </button>
+                    <button class="action-btn" onclick="triggerShare()">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                        <span>8.9K</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Video Node 2 -->
+            <div class="video-card" data-index="1">
+                <video class="video-element" loop playsinline src="https://assets.mixkit.co/videos/preview/mixkit-cyberpunk-tokyo-street-intersection-with-neon-lights-42242-large.mp4"></video>
+                <div class="loading-overlay"><div class="spinner"></div></div>
+                
+                <div class="video-meta-info">
+                    <div class="video-author @selectable">@cyber_walks</div>
+                    <div class="video-desc @selectable">Tokyo night lines hit differently in 4K. Sound is automatically active for immersion! Drop a repost if you love this look.</div>
+                </div>
+
+                <div class="right-controls">
+                    <div class="avatar-wrapper">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" class="avatar-img" alt="avatar">
+                        <div class="avatar-follow">+</div>
+                    </div>
+                    <button class="action-btn" onclick="handleLike(this)">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span>983K</span>
+                    </button>
+                    <button class="action-btn" onclick="openComments()">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                        <span>12.1K</span>
+                    </button>
+                    <button class="action-btn" onclick="triggerShare()">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                        <span>42.5K</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Apple Glass Liquid Bottom Dock Panel -->
+        <div class="floating-dock-wrapper">
+            <div class="floating-dock" id="mainDock">
+                <a href="#" class="dock-item active">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    Home
+                </a>
+                <a href="#" class="dock-item">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    Discover
+                </a>
+                <div class="dock-item">
+                    <div class="dock-plus">
+                        <svg viewBox="0 0 24 24" fill="#000" style="width:18px;height:18px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </div>
+                </div>
+                <a href="#" class="dock-item" onclick="openInboxSheet(event)">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    Inbox
+                </a>
+                <a href="#" class="dock-item" onclick="openSettingsSheet(event)">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apple 3D/Haptic Long Press Video Action Sheet Window -->
+    <div class="context-menu-backdrop" id="longPressMenu">
+        <div class="context-menu">
+            <button class="context-option" onclick="executeContextAction('Reposted to feed!')">
+                Repost
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>
+            </button>
+            <button class="context-option" onclick="executeContextAction('Video Saved with App Watermark')">
+                Save Video
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+            </button>
+            <button class="context-option" onclick="executeContextAction('Added to Bookmarks')">
+                Add to Favorites
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+            </button>
+            <button class="context-option danger" onclick="closeContextMenu()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Apple TikTok-Style Comments Panel Sheet Overlay -->
+    <div class="bottom-sheet" id="commentsSheet">
+        <div class="sheet-header">
+            <div class="sheet-drag-handle"></div>
+            <div class="sheet-title">Comments (2,482)</div>
+            <button class="sheet-close-btn" onclick="closeSheet('commentsSheet')">✕</button>
+        </div>
+        <div class="comments-list selectable">
+            <div class="comment-node">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=60&q=80" class="comment-avatar" alt="">
+                <div class="comment-body">
+                    <div class="comment-user">@sarah_k</div>
+                    <div class="comment-text">The liquid glass transition logic is completely seamless. Best performance I've seen on a modern deployment layout! 🙌</div>
+                </div>
+            </div>
+            <div class="comment-node">
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=60&q=80" class="comment-avatar" alt="">
+                <div class="comment-body">
+                    <div class="comment-user">@dev_guru</div>
+                    <div class="comment-text">Finally unmuted automatically on feed start. Absolute game changer for native hybrid apps.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile/Settings Sign-In Panel Sheet Overlay -->
+    <div class="bottom-sheet" id="settingsSheet">
+        <div class="sheet-header">
+            <div class="sheet-drag-handle"></div>
+            <div class="sheet-title">Account & Settings</div>
+            <button class="sheet-close-btn" onclick="closeSheet('settingsSheet')">✕</button>
+        </div>
+        <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div style="background:#222; padding:16px; border-radius:12px; text-align:center;">
+                <h3 style="margin-bottom:8px;">Sign in to TikTok</h3>
+                <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">Manage your feed, profile information, and synced data states.</p>
+                <button style="background:var(--accent-color); border:none; color:#fff; width:100%; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="executeContextAction('Logged in successfully!')">Sign In / Sign Up</button>
+            </div>
+            <div style="color:var(--text-secondary); font-size:12px; text-align:center;">Offline State Engine: Active (Latest Online Saved Mode Ready)</div>
+        </div>
+    </div>
+
+    <!-- Inbox UI Sheet Overlay Window -->
+    <div class="bottom-sheet" id="inboxSheet">
+        <div class="sheet-header">
+            <div class="sheet-drag-handle"></div>
+            <div class="sheet-title">All Activity</div>
+            <button class="sheet-close-btn" onclick="closeSheet('inboxSheet')">✕</button>
+        </div>
+        <div class="comments-list selectable">
+            <div class="comment-node" style="align-items: center;">
+                <div class="comment-avatar" style="background: var(--accent-color); display:flex; align-items:center; justify-content:center; font-weight:bold;">⚡</div>
+                <div class="comment-body">
+                    <div class="comment-user">System Notification</div>
+                    <div class="comment-text">Haptic Touch & 3D Touch features successfully linked into container viewport wrappers.</div>
+                </div>
+            </div>
+            <div class="comment-node" style="align-items: center;">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80" class="comment-avatar" alt="">
+                <div class="comment-body">
+                    <div class="comment-user">@neon_dreamer liked your comment</div>
+                    <div class="comment-text" style="color:var(--text-secondary); font-size:12px;">"Finally unmuted automatically on feed..." • 2h</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification System Display -->
+    <div class="toast-notification" id="toast">Action Complete</div>
+
+    <script>
+        // Global variables
+        const feed = document.getElementById('feedContainer');
+        const longPressMenu = document.getElementById('longPressMenu');
+        const toast = document.getElementById('toast');
+        let pressTimer = null;
+        let activeVideo = null;
+
+        // Simulate Haptic Feedback using Vibrate API if active
+        function triggerHaptic() {
+            if (navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+        }
+
+        // Handle Auto Play Logic on View Intersection Scroll
+        const videoObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                const overlay = entry.target.querySelector('.loading-overlay');
+                
+                if (entry.isIntersecting) {
+                    activeVideo = video;
+                    // Auto unmute and trigger high-speed loading play paths
+                    video.muted = false;
+                    overlay.classList.add('active');
+                    
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            overlay.classList.remove('active');
+                        }).catch(error => {
+                            console.log("Auto-play context interrupted:", error);
+                            overlay.classList.remove('active');
+                        });
+                    }
+                } else {
+                    video.pause();
+                    video.currentTime = 0;
+                }
+            });
+        }, { threshold: 0.6 });
+
+        document.querySelectorAll('.video-card').forEach(card => {
+            videoObserver.observe(card);
+            
+            // Link and handle Apple style Wobble and Long Press 3D touch context engines
+            card.addEventListener('touchstart', (e) => {
+                // Ignore touches on right side interactive action elements
+                if (e.target.closest('.right-controls') || e.target.closest('.video-meta-info')) return;
+                
+                card.classList.add('wobble-active');
+                pressTimer = setTimeout(() => {
+                    triggerHaptic();
+                    openLongPressMenu();
+                    card.classList.remove('wobble-active');
+                }, 600); // Hold gesture tracking timing threshold
+            });
+
+            card.addEventListener('touchend', () => {
+                clearTimeout(pressTimer);
+                card.classList.remove('wobble-active');
+            });
+
+            card.addEventListener('touchmove', () => {
+                clearTimeout(pressTimer);
+                card.classList.remove('wobble-active');
+            });
+        });
+
+        // UI Interactions and Action Shell Logic
+        function handleLike(btn) {
+            triggerHaptic();
+            btn.classList.toggle('wobble-active');
+            setTimeout(() => btn.classList.remove('wobble-active'), 150);
+            const path = btn.querySelector('svg');
+            if (path.style.color === 'rgb(254, 44, 85)') {
+                path.style.color = '#fff';
+            } else {
+                path.style.color = '#fe2c55';
+            }
+        }
+
+        function triggerShare() {
+            triggerHaptic();
+            showToast("Shared video directly with friends! 🚀");
+        }
+
+        function openLongPressMenu() {
+            longPressMenu.classList.add('open');
+        }
+
+        function closeContextMenu() {
+            longPressMenu.classList.remove('open');
+        }
+
+        function executeContextAction(message) {
+            closeContextMenu();
+            showToast(message);
+        }
+
+        function openComments() {
+            triggerHaptic();
+            document.getElementById('commentsSheet').classList.add('open');
+        }
+
+        function openSettingsSheet(e) {
+            e.preventDefault();
+            triggerHaptic();
+            document.getElementById('settingsSheet').classList.add('open');
+        }
+
+        function openInboxSheet(e) {
+            e.preventDefault();
+            triggerHaptic();
+            document.getElementById('inboxSheet').classList.add('open');
+        }
+
+        function closeSheet(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        function showToast(text) {
+            toast.innerText = text;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // Visual Interaction Feedback Link for Dock Items
+        document.querySelectorAll('.dock-item').forEach(item => {
+            item.addEventListener('click', function() {
+                triggerHaptic();
+                document.querySelectorAll('.dock-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
