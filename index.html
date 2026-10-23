@@ -2115,7 +2115,7 @@ renderCommunityPosts=function(...args){bmnBaseRenderCommunityPosts(...args);bmnA
 function bmnMediaKind(fileOrPost){const type=String(fileOrPost?.type||fileOrPost?.media_type||'').toLowerCase();const name=String(fileOrPost?.name||fileOrPost?.media_url||fileOrPost?.video_url||fileOrPost?.mediaUrl||'');return type.startsWith('video')||/\.(mp4|mov|m4v|webm|ogv)(?:[?#]|$)/i.test(name)?'video':'image'}
 function bmnAvatarMarkup(profile={},large=false){const name=profile.display_name||profile.username||'BMN';const letter=escapeHTML((name.trim()[0]||'B').toUpperCase());const url=profile.avatar_display_url||profile.avatar_url||'';return '<span class="bmn-avatar '+(large?'large':'')+'">'+(url?'<img class="bmn-avatar-image" src="'+escapeHTML(url)+'" alt="" loading="lazy" onerror="this.remove()">':letter)+'</span>'}
 function updateAvatarEditor(profile={}){const el=$('#bmnAvatarCurrent');if(!el)return;const url=profile.avatar_display_url||profile.avatar_url;if(url){el.innerHTML='<img class="bmn-avatar-image" src="'+escapeHTML(url)+'" alt="Your profile picture">'}else el.textContent=(profile.display_name||profile.username||'BMN').trim()[0]?.toUpperCase()||'B'}
-async function uploadCommunityFile(file,folder='posts',onProgress){if(!bmnSupabase||!bmnSession)throw new Error('Sign in before uploading media.');if(!file)return null;const apiBase=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');const isVideo=String(file.type||'').startsWith('video/');const useS3=!!apiBase&&folder==='posts'&&isVideo;const maxBytes=folder==='avatars'?5*1024*1024:bmnMaxUploadBytes(file,folder);if(file.size>maxBytes)throw new Error(folder==='avatars'?'Profile pictures must be 5 MB or smaller.':'Choose a file smaller than '+bmnMaxUploadMB(file,folder)+' MB.');if(useS3){const {data:sessionData}=await bmnSupabase.auth.getSession();const token=sessionData?.session?.access_token||bmnSession.access_token;if(!token)throw new Error('Your session expired. Sign in again.');const response=await fetch(apiBase+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:file.type,size_bytes:file.size})});const ticket=await response.json().catch(()=>({}));if(!response.ok)throw new Error(ticket.error||'Could not prepare secure video upload.');if(!ticket.upload_url||!ticket.media_url)throw new Error('The upload service did not return a playable CDN URL.');const uploaded=await fetch(ticket.upload_url,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!uploaded.ok)throw new Error('Video upload failed. Check the S3 bucket CORS rules and try again.');return ticket.media_url}const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');const path=bmnSession.user.id+'/'+folder+'/'+Date.now()+'-'+safeName;if(file.size>BMN_STD_UPLOAD_LIMIT_MB*1024*1024&&window.tus){const {data:sd}=await bmnSupabase.auth.getSession();const tok=sd?.session?.access_token||bmnSession.access_token;if(!tok)throw new Error('Your session expired. Sign in again.');await bmnResumableUpload(path,file,tok,onProgress);return 'storage:'+path}const {error}=await bmnSupabase.storage.from('community-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||undefined});if(error)throw error;return 'storage:'+path}
+async function uploadCommunityFile(file,folder='posts',onProgress){if(!bmnSupabase||!bmnSession)throw new Error('Sign in before uploading media.');if(!file)return null;const apiBase=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');const isVideo=String(file.type||'').startsWith('video/');const useS3=!!apiBase&&folder==='posts'&&isVideo;const maxBytes=folder==='avatars'?5*1024*1024:(isVideo&&!useS3?50*1024*1024:bmnMaxUploadBytes(file,folder));if(file.size>maxBytes)throw new Error(folder==='avatars'?'Profile pictures must be 5 MB or smaller.':(isVideo&&!useS3?'Videos uploaded directly to Supabase must be 50 MiB or smaller. Configure the separate video service for larger uploads.':'Choose a file smaller than '+bmnMaxUploadMB(file,folder)+' MB.'));if(useS3){const {data:sessionData}=await bmnSupabase.auth.getSession();const token=sessionData?.session?.access_token||bmnSession.access_token;if(!token)throw new Error('Your session expired. Sign in again.');const response=await fetch(apiBase+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:file.type,size_bytes:file.size})});const ticket=await response.json().catch(()=>({}));if(!response.ok)throw new Error(ticket.error||'Could not prepare secure video upload.');if(!ticket.upload_url||!ticket.media_url)throw new Error('The upload service did not return a playable CDN URL.');const uploaded=await fetch(ticket.upload_url,{method:'PUT',headers:{'Content-Type':file.type},body:file});if(!uploaded.ok)throw new Error('Video upload failed. Check the S3 bucket CORS rules and try again.');return ticket.media_url}const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');const path=bmnSession.user.id+'/'+folder+'/'+Date.now()+'-'+safeName;if(file.size>BMN_STD_UPLOAD_LIMIT_MB*1024*1024&&window.tus){const {data:sd}=await bmnSupabase.auth.getSession();const tok=sd?.session?.access_token||bmnSession.access_token;if(!tok)throw new Error('Your session expired. Sign in again.');await bmnResumableUpload(path,file,tok,onProgress);return 'storage:'+path}const {error}=await bmnSupabase.storage.from('community-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||undefined});if(error)throw error;return 'storage:'+path}
 async function resolveStorageUrl(value){if(!value)return '';const raw=String(value).trim();if(/^https?:\/\//i.test(raw)||raw.startsWith('blob:')||raw.startsWith('data:'))return raw;let path=raw.startsWith('storage:')?raw.slice(8):raw;if(!path||path.startsWith('/'))return raw;const {data,error}=await bmnSupabase.storage.from('community-media').createSignedUrl(path,3600);if(error){if(raw.startsWith('storage:'))throw error;return raw}return data?.signedUrl||raw}
 const bmnViewedPosts=new Set();let bmnViewObserver=null;function trackCommunityPostViews(){if(!communityFeed||!bmnSupabase)return;if(!('IntersectionObserver'in window))return;if(bmnViewObserver)bmnViewObserver.disconnect();bmnViewObserver=new IntersectionObserver(entries=>{entries.forEach(async entry=>{if(!entry.isIntersecting)return;const card=entry.target,id=card.dataset.postId;if(!id||bmnViewedPosts.has(id))return;bmnViewedPosts.add(id);bmnViewObserver.unobserve(card);const post=cachedPosts.find(p=>p.id===id);if(!bmnSession?.user?.id||post?.user_id===bmnSession.user.id)return;try{const {data,error}=await bmnSupabase.rpc('increment_post_view_once',{p_post_id:id});if(error)return;const total=Number(data);if(!Number.isFinite(total)||total<0)return;if(post)post.views=total;const label=card.querySelector('.post-meta>small');if(label)label.textContent=shortDate(post?.created_at)+' · ◉ '+total.toLocaleString();}catch(_){}})},{threshold:.55});communityFeed.querySelectorAll('[data-post-id]').forEach(card=>{if(!bmnViewedPosts.has(card.dataset.postId))bmnViewObserver.observe(card)})}
 function bmnScrollToSharedPost(){const match=location.hash.match(/^#post-(.+)$/);if(!match)return;let id='';try{id=decodeURIComponent(match[1])}catch(_){return}if(!id)return;/* Shared links should bypass the current search and feed filters. */bmnFeedMode='fyp';if(communitySearch)communitySearch.value='';document.querySelectorAll('#communityFilters .platform-filter').forEach(button=>button.classList.toggle('active',button.dataset.communityFilter==='all'));const tabs=$('#bmnFeedTabs');tabs?.querySelectorAll('[data-feed-mode]').forEach(button=>button.classList.toggle('active',button.dataset.feedMode==='fyp'));if(cachedPosts.length)renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);const target=communityFeed?.querySelector('[data-post-id="'+CSS.escape(id)+'"]');if(target){setTimeout(()=>target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'}),180);target.setAttribute('tabindex','-1');setTimeout(()=>target.focus({preventScroll:true}),450)}}
@@ -7988,6 +7988,90 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 
 </script>
 <!-- ===== END BMN LIQUID GLASS REELS MODULE ===== -->
+<script id="bmn-moderation-integration">
+(()=>{
+  'use strict';
+  const REASONS=[['spam','Spam'],['harassment','Harassment or bullying'],['hate','Hate or hateful conduct'],['violence','Violence'],['nudity','Nudity'],['sexual_content','Sexual content'],['scam','Scam or misleading content'],['copyright','Copyright'],['other','Other']];
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const statusText={active:'Account active',suspended:'Account suspended',banned:'Account banned'};
+  let owner=false,accountStatus='active',restrictionReason='',restrictionExpiry=null,working=false,observer=null;
+  const client=()=>window.bmnSupabase;
+  const session=()=>window.bmnSession;
+  const setStatus=(msg,isError=false)=>{if(typeof window.setBackendStatus==='function')window.setBackendStatus(msg,isError);else{const el=document.querySelector('#bmnBackendStatus');if(el){el.textContent=msg;el.classList.toggle('error',!!isError)}}};
+  async function refreshAccountStatus(){
+    const sb=client(),s=session();
+    accountStatus='active';restrictionReason='';restrictionExpiry=null;
+    if(!sb||!s?.user?.id){paintRestriction();return}
+    try{const {data,error}=await sb.rpc('bmn_my_account_status');if(error)throw error;const row=Array.isArray(data)?data[0]:data;if(row){accountStatus=String(row.account_status||'active');restrictionReason=String(row.restriction_reason||'');restrictionExpiry=row.restriction_expires_at||null;}}
+    catch(e){console.warn('[BMN moderation] Account status could not be checked:',e?.message||e)}
+    paintRestriction();
+  }
+  function paintRestriction(){
+    const hero=document.querySelector('.platform-hero');if(!hero)return;
+    let banner=document.querySelector('#bmnRestrictionNotice');
+    if(accountStatus==='active') {if(banner)banner.remove();return;}
+    if(!banner){banner=document.createElement('div');banner.id='bmnRestrictionNotice';banner.className='backend-panel';banner.setAttribute('role','status');hero.insertBefore(banner,hero.querySelector('.platform-toolbar')||null)}
+    const expiry=restrictionExpiry?` · Until ${esc(new Date(restrictionExpiry).toLocaleString())}`:'';
+    banner.innerHTML=`<strong>${esc(statusText[accountStatus]||'Account restricted')}</strong><p style="margin:6px 0 0">${esc(restrictionReason||'Some community actions are unavailable for this account.')}${expiry}</p>`;
+  }
+  function injectReportButtons(){
+    document.querySelectorAll('#communityFeed .community-post').forEach(card=>{
+      const actions=card.querySelector('.post-actions');if(!actions||actions.querySelector('.bmn-report-real'))return;
+      const postId=String(card.dataset.postId||'');const post=(window.cachedPosts||[]).find(p=>String(p.id)===postId);if(!post)return;
+      if(session()?.user?.id===post.user_id)return;
+      const b=document.createElement('button');b.type='button';b.className='post-action bmn-report-real';b.dataset.reportPost=postId;b.textContent='⚑ Report';b.setAttribute('aria-label','Report this community post');actions.appendChild(b);
+    });
+  }
+  async function submitReport(button){
+    const sb=client(),s=session();if(!sb||!s?.user?.id){setStatus('Sign in to report a post.',true);return}
+    const postId=String(button.dataset.reportPost||'');const post=(window.cachedPosts||[]).find(p=>String(p.id)===postId);if(!post){setStatus('This post is no longer available. Refresh the feed and try again.',true);return}
+    const menu=REASONS.map((r,i)=>`${i+1}. ${r[1]}`).join('\n');const choice=prompt('Why are you reporting this post? Enter a number:\n\n'+menu,'1');if(choice===null)return;
+    const reason=REASONS[Number.parseInt(choice,10)-1]?.[0];if(!reason){setStatus('Choose a valid report reason.',true);return}
+    const details=prompt('Add details if useful (optional). Do not include private information:','');if(details===null)return;
+    button.disabled=true;
+    try{const {error}=await sb.from('content_reports').insert({reporter_id:s.user.id,post_id:postId,reported_user_id:post.user_id,reason,details:details.trim().slice(0,2000)||null});if(error)throw error;setStatus('Report submitted to BMN moderation for review.');button.textContent='✓ Reported';button.disabled=true;button.dataset.reported='true';}
+    catch(e){setStatus('Report was not saved: '+(e?.message||'check sign-in and report permissions.'),true);button.disabled=false}
+  }
+  function ensureOwnerPanel(){
+    if(!owner)return;
+    const hero=document.querySelector('.platform-hero');if(!hero||document.querySelector('#bmnOwnerModerationPanel'))return;
+    const panel=document.createElement('section');panel.id='bmnOwnerModerationPanel';panel.className='backend-panel';
+    panel.innerHTML='<div class="backend-row" style="justify-content:space-between"><strong>BMN owner · Moderation</strong><button type="button" class="backend-btn" id="bmnRefreshReports">Refresh reports</button></div><p class="composer-hint">Reports below are real database records. Review each one and update its status.</p><div id="bmnOwnerReportList"><p class="composer-hint">Loading reports…</p></div>';
+    hero.insertBefore(panel,hero.querySelector('.platform-toolbar')||null);
+    panel.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-report-status],[data-remove-reported-post],#bmnRefreshReports');if(!b)return;
+      const sb=client();if(!sb||!session()?.user?.id)return;
+      if(b.id==='bmnRefreshReports'){await loadReports();return}
+      const reportId=b.dataset.reportStatus,action=b.dataset.removeReportedPost;
+      if(reportId){const next=b.dataset.nextStatus;if(!['reviewing','action_taken','dismissed','pending'].includes(next))return;b.disabled=true;try{const {error}=await sb.from('content_reports').update({status:next}).eq('id',reportId);if(error)throw error;setStatus('Report status updated.');await loadReports()}catch(err){setStatus('Could not update report: '+(err.message||'permission error.'),true);b.disabled=false}return}
+      if(action){const reason=prompt('Enter a clear reason for removing this post:','Community guidelines violation');if(reason===null)return;if(!reason.trim()){setStatus('A removal reason is required.',true);return}b.disabled=true;try{const {data,error}=await sb.rpc('bmn_remove_post',{p_post_id:action,p_reason:reason.trim().slice(0,1000)});if(error)throw error;if(data!==true)throw new Error('The database did not confirm post removal.');setStatus('Post removed. Refreshing community feed.');await loadReports();if(typeof window.loadCommunityPosts==='function')await window.loadCommunityPosts()}catch(err){setStatus('Post removal was not completed: '+(err.message||'check owner permission and post-removal trigger.'),true);b.disabled=false}}
+    });
+    loadReports();
+  }
+  async function loadReports(){
+    const host=document.querySelector('#bmnOwnerReportList');if(!host||!owner)return;host.innerHTML='<p class="composer-hint">Loading reports…</p>';
+    try{const {data,error}=await client().from('content_reports').select('id,reporter_id,post_id,reported_user_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(50);if(error)throw error;
+      if(!data?.length){host.innerHTML='<p class="composer-hint">No reports to review.</p>';return}
+      host.innerHTML=data.map(r=>`<article class="backend-panel" style="margin:10px 0;padding:12px"><div class="backend-row" style="justify-content:space-between"><strong>${esc(r.reason||'other').replace(/_/g,' ')}</strong><small>${esc(r.status||'pending')} · ${esc(new Date(r.created_at).toLocaleString())}</small></div><p style="overflow-wrap:anywhere;margin:8px 0">${esc(r.details||'No extra details supplied.')}</p><small style="overflow-wrap:anywhere">Post: ${esc(r.post_id||'not specified')} · Reported account: ${esc(r.reported_user_id||'not specified')}</small><div class="backend-row" style="margin-top:10px"><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="reviewing">Mark reviewing</button><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="dismissed">Dismiss</button><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="action_taken">Action taken</button>${r.post_id?`<button class="backend-btn" type="button" data-remove-reported-post="${esc(r.post_id)}">Remove post…</button>`:''}</div></article>`).join('');
+    }catch(e){host.innerHTML=`<p class="composer-hint" role="alert">Could not load reports: ${esc(e?.message||'permission denied')}</p>`;}
+  }
+  async function checkOwner(){const sb=client(),s=session();owner=false;if(!sb||!s?.user?.id){const p=document.querySelector('#bmnOwnerModerationPanel');p?.remove();return}try{const {data,error}=await sb.rpc('is_bmn_owner');if(!error)owner=data===true||data?.is_bmn_owner===true}catch(e){console.warn('[BMN moderation] Owner check unavailable:',e?.message||e)}if(owner)ensureOwnerPanel();else document.querySelector('#bmnOwnerModerationPanel')?.remove();}
+  // UI convenience only; database triggers/RLS remain the enforcement boundary.
+  document.addEventListener('click',e=>{
+    const report=e.target.closest('[data-report-post]');if(report){e.preventDefault();e.stopPropagation();submitReport(report);return}
+    const publish=e.target.closest('#bmnPublishPost');if(publish){if(accountStatus!=='active'){e.preventDefault();e.stopImmediatePropagation();setStatus('Posting is unavailable while this account is '+accountStatus+'.',true);return}refreshAccountStatus();}
+    const comment=e.target.closest('.bmn-submit-comment');if(comment){if(accountStatus!=='active'){e.preventDefault();e.stopImmediatePropagation();setStatus('Commenting is unavailable while this account is '+accountStatus+'.',true);return}refreshAccountStatus();}
+  },true);
+  function boot(){
+    const sb=client();if(!sb)return;
+    refreshAccountStatus();checkOwner();injectReportButtons();
+    if(observer)observer.disconnect();observer=new MutationObserver(()=>{injectReportButtons();if(owner)ensureOwnerPanel()});const feed=document.querySelector('#communityFeed');if(feed)observer.observe(feed,{childList:true,subtree:true});
+    sb.auth.onAuthStateChange(()=>{setTimeout(()=>{refreshAccountStatus();checkOwner();injectReportButtons()},0)});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshAccountStatus();if(owner)loadReports()}});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,350),{once:true});else setTimeout(boot,350);
+})();
+</script>
 </body>
 </html>
 
