@@ -6505,6 +6505,9 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   } catch (e) { /* storage unavailable (private mode etc.) — run in-memory */ }
   let saveT = 0;
   const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }, 250); };
+  // Migrate away from known reference-only demo accounts left by earlier builds.
+  ['kele','amaka','sade'].forEach(id=>{if(S.follows)delete S.follows[id];});
+  if(Array.isArray(S.blocked))S.blocked=S.blocked.filter(handle=>!['spam.account','bot.bot123'].includes(String(handle)));
   Object.assign(ME, S.profile || {});
 
   /* ---------------------------------------------------------------
@@ -6721,10 +6724,10 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   const capHTML = c => esc(c).replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, '$1<button type="button" class="tag" data-act="tag" data-tag="$2">#$2</button>');
   const countOf = (p, key) => {
     const b = baseId(p.id);
-    if (key === 'likes') return p.likes + (S.liked[b] ? 1 : 0);
-    if (key === 'saves') return p.saves + (S.saved[b] ? 1 : 0);
-    if (key === 'shares') return p.shares + ((S.sharedN || {})[b] || 0) + (S.reposted[b] ? 1 : 0);
-    if (key === 'comments') return p.comments + ((S.extraComments[b] || []).length);
+    if (key === 'likes') return p.likes == null ? (S.liked[b] ? 1 : null) : Number(p.likes) + (S.liked[b] ? 1 : 0);
+    if (key === 'saves') return p.saves == null ? (S.saved[b] ? 1 : null) : Number(p.saves) + (S.saved[b] ? 1 : 0);
+    if (key === 'shares') { const extra=((S.sharedN||{})[b]||0)+(S.reposted[b]?1:0); return p.shares == null ? (extra ? extra : null) : Number(p.shares)+extra; }
+    if (key === 'comments') { const extra=(S.extraComments[b]||[]).length; return p.comments == null ? (extra ? extra : null) : Number(p.comments)+extra; }
     return 0;
   };
 
@@ -7400,6 +7403,9 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      --------------------------------------------------------------- */
   const Dm = (() => {
     const chats = CHATS0.map(c => Object.assign({}, c, { msgs: c.msgs.map(m => Object.assign({}, m)) }));
+    const SELF_CHAT_KEY = 'bmn:self-chat:v1';
+    function persistSelfChat(c){if(!c||c.u!==ME.id)return;try{localStorage.setItem(SELF_CHAT_KEY,JSON.stringify({msgs:c.msgs||[]}));}catch(e){}}
+    try{const savedSelf=JSON.parse(localStorage.getItem(SELF_CHAT_KEY)||'null');if(savedSelf&&Array.isArray(savedSelf.msgs)){let self=chats.find(c=>c.u===ME.id);if(!self){self={id:'bmn-self-chat',u:ME.id,online:false,unread:0,msgs:[]};chats.push(self);}self.msgs=savedSelf.msgs;}}catch(e){}
     let tab = 'msgs', openId = null, typingId = null, filter = '';
     const last = c => c.msgs[c.msgs.length - 1];
     const byRecent = () => chats.slice().sort((a, b) => (last(b) ? last(b).t : 0) - (last(a) ? last(a).t : 0));
@@ -7432,7 +7438,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const msgs = t === 'msgs'; R.Threads.hidden = !msgs; R.ActiveRow.hidden = !msgs; $('.lgtt-search', R.Dm).hidden = !msgs; R.Activity.hidden = msgs; if (!msgs) renderActivity(); haptic('select');
     }
     function open() { renderList(); openLayer(R.Dm, { kind: 'over' }); requestAnimationFrame(() => moveInd($('#lgttDmTabs'))); }
-    function ensure(uid) { let c = chats.find(x => x.u === uid); if (!c) { c = { id: 'c' + Date.now(), u: uid, online: Math.random() > 0.5, unread: 0, msgs: [] }; chats.push(c); } return c; }
+    function ensure(uid) { let c = chats.find(x => x.u === uid); if (!c) { c = { id: uid===ME.id?'bmn-self-chat':'c' + Date.now(), u: uid, online: uid===ME.id?false:false, unread: 0, msgs: [] }; chats.push(c); persistSelfChat(c); } return c; }
 
     /* ---- chat thread ---- */
     const dayLabel = ts => { const d = new Date(ts), t = new Date(); const diff = Math.round((new Date(t.getFullYear(), t.getMonth(), t.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); };
@@ -7469,8 +7475,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     function send(text, big) {
       const c = chats.find(x => x.id === openId); if (!c || !text.trim()) return;
       if (S.settings.whoMessage === 'none') { toast('Messages are turned off in your privacy settings', 'lock'); return; }
-      c.msgs.push({ me: true, t: Date.now(), text: text.trim(), seen: false }); R.ChatInput.value = ''; syncCompose(); haptic('send');
-      renderChat(true); toast('Message is only shown in this open session; connect the real BMN messaging backend to deliver it.', 'info');
+      c.msgs.push({ me: true, t: Date.now(), text: text.trim(), seen: false }); persistSelfChat(c); R.ChatInput.value = ''; syncCompose(); haptic('send');
+      renderChat(true); toast(c.u===ME.id?'Self-chat saved on this device only.':'Message is only shown in this open session; connect the real BMN messaging backend to deliver it.', 'info');
     }
     function pickReply(text) { const t = text.toLowerCase(); if (/^(hi|hey|yo|hello|sup)\b/.test(t)) return pick(REPLIES.greet); if (/thank|thanks|appreciate/.test(t)) return pick(REPLIES.thanks); if (t.includes('?')) return pick(REPLIES.question); return pick(REPLIES.default); }
     async function autoReply(c, text, forced) {
@@ -7502,7 +7508,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       open, openChat, bind, badge, setTab, ensure, simulateIncoming, chats: () => chats, refresh() { if (R.Dm) { renderList(); if (openId) renderChat(true); } },
       current: () => chats.find(c => c.id === openId), heart() { send('❤️', true); },
       openWith(uid) { const c = ensure(uid); open(); setTimeout(() => openChat(c.id), 80); },
-      clear() { const c = chats.find(x => x.id === openId); if (c) { c.msgs = []; renderChat(false); } },
+      clear() { const c = chats.find(x => x.id === openId); if (c) { c.msgs = []; persistSelfChat(c); renderChat(false); } },
       newChat() { const have = new Set(chats.map(c => c.u)); const items = Object.values(U).filter(u => !u.me && !have.has(u.id)).map(u => ({ label: '@' + u.handle, icon: 'user', fn: () => Dm.openWith(u.id) })); if (!items.length) { toast('You already have a chat with everyone here', 'info'); return; } Menu.open(items); }
     };
   })();
@@ -7960,11 +7966,12 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   window.LGTT = {
     __mounted: true, version: '1.0.0',
     open: o => Overlay.open(typeof o === 'string' ? { view: o } : o), close: () => Overlay.close(),
-    openStory: uid => Overlay.open({ story: uid }), openProfile: uid => Overlay.open({ view: 'profile', uid }), openInbox: () => Overlay.open({ view: 'inbox' }),
+    openStory: uid => Overlay.open({ story: uid }), openProfile: uid => Overlay.open({ view: 'profile', uid }), openInbox: () => Overlay.open({ view: 'inbox' }), openSelfChat: () => Dm.openWith(ME.id),
     /** Replace the demo videos: [{id,u:'bmn',cap,music,dur,likes,comments,saves,shares, src:'https://…mp4', scene:{…}}] */
     setPosts(arr) { POSTS = (Array.isArray(arr) ? arr : []).filter(p => p && p.src && p.id).map(p => Object.assign({ likes: 0, comments: 0, saves: 0, shares: 0, dur: 15, scene: SC.s1 }, p)); Feed.build(Feed.mode()); Discover.render(); },
     /** Add / update a creator: LGTT.setUser({id:'abc',name:'Abc',handle:'abc',hue:200,followers:10}) */
     setUser(u) { if (u && u.id) U[u.id] = Object.assign({ hue: 210, followers: null, following: null, likes: null }, U[u.id] || {}, u); },
+    refreshProfile() { if (ST.view === 'profile') Profile.render(Profile.id()); },
     haptic: k => haptic(k), toast
   };
 
@@ -8019,11 +8026,12 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   }
   function ensureOwnerPanel(){
     if(!owner)return;
-    const hero=document.querySelector('.platform-hero');if(!hero||document.querySelector('#bmnOwnerModerationPanel'))return;
-    const panel=document.createElement('section');panel.id='bmnOwnerModerationPanel';panel.className='bmn-owner-console';
+    const profileLayout=document.querySelector('#lgttProfLayout');if(!profileLayout||document.querySelector('#bmnOwnerModerationPanel'))return;
+    const panel=document.createElement('section');panel.id='bmnOwnerModerationPanel';panel.className='bmn-owner-console';panel.hidden=true;
     panel.setAttribute('aria-labelledby','bmnOwnerConsoleTitle');
     panel.innerHTML='<div class="bmn-owner-console-head"><div><span class="bmn-owner-eyebrow">PRIVATE CONTROL AREA</span><h2 id="bmnOwnerConsoleTitle">BMN Owner Console</h2><p>Owner access is verified from your signed-in Supabase session. Moderation records shown here come from the database.</p></div><button type="button" class="backend-btn" id="bmnRefreshReports">Refresh reports</button></div><div class="bmn-owner-status-grid"><article class="bmn-owner-status-card"><span class="bmn-owner-status-dot"></span><div><strong>Owner access verified</strong><small>is_bmn_owner() returned true for this session.</small></div></article><article class="bmn-owner-status-card"><span class="bmn-owner-status-dot bmn-owner-status-dot-blue"></span><div><strong>Account restrictions</strong><small>Your account status is checked separately by the app. This console does not invent or change account status.</small></div></article></div><div class="bmn-owner-reports-head"><div><h3>Content reports</h3><p>Review reports, update their status, or remove a reported post with a recorded reason.</p></div></div><div id="bmnOwnerReportList"><p class="composer-hint">Loading reports…</p></div>';
-    hero.insertAdjacentElement('afterend',panel);
+    const profileHead=document.querySelector('#lgttProfHead');if(profileHead)profileHead.insertAdjacentElement('afterend',panel);else profileLayout.appendChild(panel);
+    ensureOwnerProfileButton();
     panel.addEventListener('click',async e=>{
       const b=e.target.closest('[data-report-status],[data-remove-reported-post],#bmnRefreshReports');if(!b)return;
       const sb=client();if(!sb||!session()?.user?.id)return;
@@ -8034,6 +8042,13 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     });
     loadReports();
   }
+  function ensureOwnerProfileButton(){
+    if(!owner)return;const head=document.querySelector('#lgttProfHead');if(!head)return;
+    const actions=head.querySelector('.lgtt-prof-actions');if(!actions||actions.querySelector('#bmnOwnerModerationButton'))return;
+    const b=document.createElement('button');b.type='button';b.id='bmnOwnerModerationButton';b.className='lgtt-btn lgtt-pill';b.textContent='Owner moderation';b.setAttribute('aria-label','Open owner moderation tools');
+    b.addEventListener('click',()=>{const panel=document.querySelector('#bmnOwnerModerationPanel');if(!panel)return;panel.hidden=!panel.hidden;if(!panel.hidden){loadReports();panel.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}});
+    actions.appendChild(b);
+  }
   async function loadReports(){
     const host=document.querySelector('#bmnOwnerReportList');if(!host||!owner)return;host.innerHTML='<p class="composer-hint">Loading reports…</p>';
     try{const {data,error}=await client().from('content_reports').select('id,reporter_id,post_id,reported_user_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(50);if(error)throw error;
@@ -8041,7 +8056,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       host.innerHTML=data.map(r=>`<article class="backend-panel" style="margin:10px 0;padding:12px"><div class="backend-row" style="justify-content:space-between"><strong>${esc(r.reason||'other').replace(/_/g,' ')}</strong><small>${esc(r.status||'pending')} · ${esc(new Date(r.created_at).toLocaleString())}</small></div><p style="overflow-wrap:anywhere;margin:8px 0">${esc(r.details||'No extra details supplied.')}</p><small style="overflow-wrap:anywhere">Post: ${esc(r.post_id||'not specified')} · Reported account: ${esc(r.reported_user_id||'not specified')}</small><div class="backend-row" style="margin-top:10px"><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="reviewing">Mark reviewing</button><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="dismissed">Dismiss</button><button class="backend-btn" type="button" data-report-status="${esc(r.id)}" data-next-status="action_taken">Action taken</button>${r.post_id?`<button class="backend-btn" type="button" data-remove-reported-post="${esc(r.post_id)}">Remove post…</button>`:''}</div></article>`).join('');
     }catch(e){host.innerHTML=`<p class="composer-hint" role="alert">Could not load reports: ${esc(e?.message||'permission denied')}</p>`;}
   }
-  async function checkOwner(){const sb=client(),s=session();owner=false;if(!sb||!s?.user?.id){const p=document.querySelector('#bmnOwnerModerationPanel');p?.remove();return}try{const {data,error}=await sb.rpc('is_bmn_owner');if(!error)owner=data===true||data?.is_bmn_owner===true}catch(e){console.warn('[BMN moderation] Owner check unavailable:',e?.message||e)}if(owner)ensureOwnerPanel();else document.querySelector('#bmnOwnerModerationPanel')?.remove();}
+  async function checkOwner(){const sb=client(),s=session();owner=false;if(!sb||!s?.user?.id){const p=document.querySelector('#bmnOwnerModerationPanel');p?.remove();return}try{const {data,error}=await sb.rpc('is_bmn_owner');if(!error)owner=data===true||data?.is_bmn_owner===true}catch(e){console.warn('[BMN moderation] Owner check unavailable:',e?.message||e)}if(owner){ensureOwnerPanel();ensureOwnerProfileButton();}else{document.querySelector('#bmnOwnerModerationPanel')?.remove();document.querySelector('#bmnOwnerModerationButton')?.remove();}}
   // UI convenience only; database triggers/RLS remain the enforcement boundary.
   document.addEventListener('click',e=>{
     const report=e.target.closest('[data-report-post]');if(report){e.preventDefault();e.stopPropagation();submitReport(report);return}
@@ -8051,7 +8066,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   function boot(){
     const sb=client();if(!sb)return;
     refreshAccountStatus();checkOwner();injectReportButtons();
-    if(observer)observer.disconnect();observer=new MutationObserver(()=>{injectReportButtons();if(owner)ensureOwnerPanel()});const feed=document.querySelector('#communityFeed');if(feed)observer.observe(feed,{childList:true,subtree:true});
+    if(observer)observer.disconnect();observer=new MutationObserver(()=>{injectReportButtons();if(owner){ensureOwnerPanel();ensureOwnerProfileButton();}});const feed=document.querySelector('#communityFeed');if(feed)observer.observe(feed,{childList:true,subtree:true});
+    const profileHead=document.querySelector('#lgttProfHead');if(profileHead){const profileObserver=new MutationObserver(()=>{if(owner)ensureOwnerProfileButton();});profileObserver.observe(profileHead,{childList:true,subtree:true});}
     sb.auth.onAuthStateChange(()=>{setTimeout(()=>{refreshAccountStatus();checkOwner();injectReportButtons()},0)});
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshAccountStatus();if(owner)loadReports()}});
   }
@@ -8063,7 +8079,20 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 (()=>{
  'use strict';
  const escText=v=>String(v??'');
- let lastSignature='';
+ let lastSignature='',statsSignature='',statsRequest=0;
+ async function refreshRealProfileStats(me,posts){
+   const sb=window.bmnSupabase;if(!sb||!me)return;
+   const owned=posts.filter(p=>String(p.user_id||'')===String(me)&&(!p.status||String(p.status).toLowerCase()==='published'));
+   const sig=String(me)+':'+owned.map(p=>p.id).sort().join(',');if(sig===statsSignature)return;statsSignature=sig;const request=++statsRequest;
+   const [followers,following]=await Promise.all([
+     sb.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',me),
+     sb.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',me)
+   ]);
+   let likes=null;if(!owned.length)likes=0;else{const lr=await sb.from('likes').select('post_id',{count:'exact',head:true}).in('post_id',owned.map(p=>p.id));if(!lr.error)likes=Number(lr.count||0)}
+   if(request!==statsRequest)return;
+   const update={id:'bmn',me:true};if(!followers.error)update.followers=Number(followers.count||0);if(!following.error)update.following=Number(following.count||0);if(likes!==null)update.likes=likes;
+   if(Object.keys(update).length>2){window.LGTT?.setUser(update);window.LGTT?.refreshProfile?.();}
+ }
  function sync(){
    const app=window.LGTT;
    const posts=Array.isArray(window.cachedPosts)?window.cachedPosts:[];
@@ -8084,14 +8113,16 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      const id=String(p.id);
      const likes=Object.prototype.hasOwnProperty.call(window.cachedLikes||{},p.id)?Number(window.cachedLikes[p.id]):null;
      const comments=Array.isArray((window.cachedComments||{})[p.id])?(window.cachedComments[p.id].length):null;
-     return {id,u:String(p.user_id||''),cap,music:'',dur:null,likes,comments,saves:null,shares:null,src:video?raw:'',poster:p.thumbnail_url||p.poster_url||'',scene:{k:'aurora',a:'#111827',b:'#24324a',c:'#5a8dd8',g:'',kin:[]},created_at:p.created_at,realMediaType:mediaType,authorName:author.display_name||author.username||'BMN Community member'};
+     const currentId=String(window.bmnSession?.user?.id||'');
+     return {id,u:(currentId&&String(p.user_id||'')===currentId)?'bmn':String(p.user_id||''),cap,music:'',dur:null,likes,comments,saves:null,shares:null,src:video?raw:'',poster:p.thumbnail_url||p.poster_url||'',scene:{k:'aurora',a:'#111827',b:'#24324a',c:'#5a8dd8',g:'',kin:[]},created_at:p.created_at,realMediaType:mediaType,authorName:author.display_name||author.username||'BMN Community member'};
    }).filter(p=>p.src);
    const sig=JSON.stringify(mapped.map(p=>[p.id,p.src,p.likes,p.comments,p.saves,p.shares,p.cap]));
    if(sig!==lastSignature){lastSignature=sig;app.setPosts(mapped);}
    // Profile counters are explicitly unknown until the real profile stats query is available.
    if(window.bmnSession?.user?.id){
      const me=String(window.bmnSession.user.id),profile=profiles[me]||{};
-     app.setUser({id:'bmn',name:profile.display_name||profile.full_name||'BMN®',handle:profile.username||'thisisbmn',hue:262,me:true,verified:false,followers:null,following:null,likes:null,bio:profile.bio||'Creator · Editor · Storyteller',link:'tiktok.com/@thisisbmn',linkHref:'https://www.tiktok.com/@thisisbmn'});
+     app.setUser({id:'bmn',name:profile.display_name||profile.full_name||'BMN®',handle:profile.username||'thisisbmn',hue:262,me:true,verified:false,bio:profile.bio||'Creator · Editor · Storyteller',link:'tiktok.com/@thisisbmn',linkHref:'https://www.tiktok.com/@thisisbmn'});
+     refreshRealProfileStats(me,usable).catch(e=>console.warn('[BMN profile] Real profile counts unavailable:',e?.message||e));
    }
  }
  window.bmnSyncLGTTRealData=sync;
@@ -8104,17 +8135,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
    body.dataset.bmnImmersiveOpened='yes';
    setTimeout(()=>{if(body.classList.contains('community-mode')&&window.LGTT&&typeof window.LGTT.open==='function')window.LGTT.open();},180);
  }
- function ensureOwnerShortcut(){
-   const panel=document.querySelector('#bmnOwnerModerationPanel');
-   const root=document.querySelector('#lgtt');
-   if(!panel||!root||root.querySelector('#bmnOwnerModerationShortcut'))return;
-   const b=document.createElement('button');b.id='bmnOwnerModerationShortcut';b.type='button';b.textContent='Owner moderation';
-   b.setAttribute('aria-label','Close the video feed and open BMN owner moderation');
-   b.style.cssText='position:absolute;z-index:30;top:calc(env(safe-area-inset-top,0px) + 14px);right:58px;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(18,24,38,.64);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff;font:600 12px system-ui;box-shadow:0 4px 18px #0003';
-   b.addEventListener('click',()=>{if(window.LGTT&&typeof window.LGTT.close==='function')window.LGTT.close();setTimeout(()=>{panel.scrollIntoView({behavior:'smooth',block:'start'});panel.setAttribute('tabindex','-1');panel.focus({preventScroll:true});},220)});
-   root.appendChild(b);
- }
- let realtimeChannel=null;
+ function ensureOwnerShortcut(){ /* Owner moderation is placed inside the signed-in owner's overlay profile. */ }
+
  function connectRealtime(){
    const sb=window.bmnSupabase;
    if(!sb||realtimeChannel||typeof sb.channel!=='function')return;
@@ -8160,6 +8182,52 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',routeCommunityHash,{once:true});else routeCommunityHash();
+})();
+</script>
+<style id="bmn-community-fix-pack">
+/* Keep the existing immersive interface; move Stories away from the FYP reading area. */
+#lgttFeed #lgttStoriesWrap{display:none!important}
+#lgttDmScroll #lgttStoriesWrap{display:block!important;margin:0 0 12px;max-height:none;opacity:1;pointer-events:auto;transform:none}
+#lgttDiscScroll .bmn-friends-stories{display:block;margin:0 0 14px}
+#lgttProfHead .lgtt-prof-actions{flex-wrap:wrap}
+#bmnOwnerModerationPanel[hidden]{display:none!important}
+#bmnOwnerModerationPanel{grid-column:1/-1;margin:12px 0 20px}
+#bmnOwnerModerationButton{border-color:rgba(111,166,255,.42)}
+#lgttDmTabs .bmn-self-chat-button{margin-left:auto;white-space:nowrap;font-size:12px;padding:7px 10px}
+@media(max-width:420px){#lgttDmTabs .bmn-self-chat-button{font-size:11px;padding:6px 8px}}
+</style>
+<script id="bmn-community-fix-pack-js">
+(()=>{'use strict';
+ const $=(s,r=document)=>r.querySelector(s);
+ const esc=s=>String(s??'');
+ function addSelfChatButton(){
+  const tabs=$('#lgttDmTabs');if(!tabs||tabs.querySelector('.bmn-self-chat-button'))return;
+  const b=document.createElement('button');b.type='button';b.className='bmn-self-chat-button';b.textContent='Message yourself';b.setAttribute('aria-label','Open your private self-chat');
+  b.addEventListener('click',()=>{if(window.LGTT&&typeof window.LGTT.openSelfChat==='function')window.LGTT.openSelfChat();});tabs.appendChild(b);
+ }
+ function moveStoriesToInbox(){
+  const stories=$('#lgttStoriesWrap'), inbox=$('#lgttDmScroll');if(stories&&inbox&&stories.parentElement!==inbox){const search=$('.lgtt-search',inbox);inbox.insertBefore(stories,search||inbox.firstChild);}
+ }
+ function addFriendsStories(){
+  const stories=$('#lgttStoriesWrap'),source=stories&&stories.querySelector('.lgtt-stories');if(!stories||!source)return;
+  const friends=$('.bmn-friends-head .bmn-friends-stories');
+  if(friends){friends.innerHTML=source.innerHTML;friends.setAttribute('aria-label','Friends stories');friends.querySelectorAll('.lgtt-story-item').forEach(b=>{b.style.cssText+=';width:38px;height:38px;min-width:38px;padding:0;margin:0;border-radius:50%;overflow:hidden;flex:0 0 38px';const name=b.querySelector('.lgtt-story-name');if(name)name.style.display='none';});return;}
+  const host=$('#lgttDiscScroll');if(!host)return;const existing=host.querySelector('.bmn-friends-stories');if(existing){const oldList=existing.querySelector('.lgtt-stories');if(oldList)oldList.innerHTML=source.innerHTML;return;}
+  const wrap=document.createElement('section');wrap.className='bmn-friends-stories lgtt-glass';wrap.style.cssText='display:block;margin:0 0 14px;padding:10px 12px;border-radius:22px';
+  const title=document.createElement('div');title.textContent='Friends · Stories';title.style.cssText='font:650 13px system-ui;margin:0 0 8px 4px';
+  const clone=stories.cloneNode(true);clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));clone.style.display='block';clone.style.maxHeight='none';clone.style.opacity='1';clone.style.margin='0';clone.style.padding='0';
+  wrap.append(title,clone);host.insertBefore(wrap,host.firstChild);
+ }
+ function fixProfileBio(){
+  // Re-rendering is owned by LGTT; only repair a genuinely empty own bio, without adding fake stats.
+  const head=$('#lgttProfHead');if(!head)return;
+  const bio=$('.lgtt-bio',head);if(bio&&!bio.textContent.trim()&&head.querySelector('.lgtt-prof-actions [data-act="edit-profile"]'))bio.textContent='Creator · Editor · Storyteller';
+ }
+ function run(){addSelfChatButton();moveStoriesToInbox();addFriendsStories();fixProfileBio();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+ document.addEventListener('click',e=>{if(e.target.closest('#lgtt [data-dock="inbox"]'))setTimeout(()=>{moveStoriesToInbox();addSelfChatButton();},120);if(e.target.closest('#lgtt [data-dock="discover"]'))setTimeout(addFriendsStories,120);if(e.target.closest('#lgtt [data-dock="profile"]'))setTimeout(fixProfileBio,120);if(e.target.closest('[data-action="friends"], [data-app-view="friends"]'))setTimeout(addFriendsStories,180);},true);
+ const bodyObserver=new MutationObserver(()=>{if(document.body.classList.contains('bmn-friends-mode'))addFriendsStories();});if(document.body)bodyObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('hashchange',()=>setTimeout(addFriendsStories,120));
 })();
 </script>
 </body>
