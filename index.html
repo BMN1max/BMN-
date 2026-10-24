@@ -2092,7 +2092,7 @@ html[data-bmn-theme="light"] #lgtt #lgttChat:not(.bmn-chat-full-wallpaper) {back
   <button type="button" data-app-view="inbox"><span class="dock-symbol">✉</span><span>Inbox</span><i class="dock-dot" id="inboxDot" hidden></i></button>
   <button type="button" data-app-view="profile"><span class="dock-symbol">◉</span><span>Profile</span></button>
 </nav>
-<div class="scrim" id="settingsScrim" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="sheet glass glass-lens"><div class="sheet-top"><div><span class="kicker">BMN / PERSONALISE</span><h2 id="settingsTitle">Your experience.</h2></div><button class="close-btn" id="settingsClose" aria-label="Close settings">×</button></div><div class="setting-row"><div><strong>Low Power Mode</strong><small>Pause decorative motion and use a lighter visual experience.</small></div><button class="switch" id="powerToggle" role="switch" aria-checked="false" aria-label="Toggle low power mode"></button></div><div class="setting-row"><div><strong>Appearance</strong><small>Switch between dark and light themes.</small></div><button class="pill" id="themeSetting">Toggle theme ◐</button></div><div class="setting-row"><div><strong>Background mood</strong><small>Choose a calm colour atmosphere.</small></div><div class="swatches"><button class="swatch" data-mood="blue" aria-label="Aurora blue background" aria-pressed="true" style="background:linear-gradient(135deg,#007aff,#b18cff)"></button><button class="swatch" data-mood="violet" aria-label="Violet rose background" aria-pressed="false" style="background:linear-gradient(135deg,#8b5cff,#ff5c8a)"></button><button class="swatch" data-mood="mint" aria-label="Cyan mint background" aria-pressed="false" style="background:linear-gradient(135deg,#59f1e6,#35a7ff)"></button><button class="swatch" data-mood="pearl" aria-label="Pearl gold background" aria-pressed="false" style="background:linear-gradient(135deg,#fff1bd,#c8d8ff)"></button></div></div><div class="setting-row"><div><strong>Sleep screen</strong><small>Dim the page until you tap wake. This does not put your device to sleep.</small></div><button class="pill" id="sleepButton">Sleep page ◐</button></div><div class="setting-row"><div><strong>Add to Home Screen</strong><small>Keep BMN one tap away from your iPhone or Android home screen.</small></div><button class="pill" id="installHelp">Add app +</button></div><p class="sheet-copy">Settings are local to this page. Low Power Mode reduces animation; it does not change your phone’s system power settings. Add to Home Screen availability depends on the browser and hosting setup.</p></div></div>
+<div class="scrim" id="settingsScrim" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="sheet glass glass-lens"><div class="sheet-top"><div><span class="kicker">BMN / PERSONALISE</span><h2 id="settingsTitle">Your experience.</h2></div><button class="close-btn" id="settingsClose" aria-label="Close settings">×</button></div><div class="setting-row"><div><strong>Low Power Mode</strong><small>Pause decorative motion and use a lighter visual experience.</small></div><button class="switch" id="powerToggle" role="switch" aria-checked="false" aria-label="Toggle low power mode"></button></div><div class="setting-row"><div><strong>Appearance</strong><small>Switch between dark and light themes.</small></div><button class="pill" id="themeSetting">Toggle theme ◐</button></div><div class="setting-row"><div><strong>Background mood</strong><small>Choose a calm colour atmosphere.</small></div><div class="swatches"><button class="swatch" data-mood="blue" aria-label="Aurora blue background" aria-pressed="true" style="background:linear-gradient(135deg,#007aff,#b18cff)"></button><button class="swatch" data-mood="violet" aria-label="Violet rose background" aria-pressed="false" style="background:linear-gradient(135deg,#8b5cff,#ff5c8a)"></button><button class="swatch" data-mood="mint" aria-label="Cyan mint background" aria-pressed="false" style="background:linear-gradient(135deg,#59f1e6,#35a7ff)"></button><button class="swatch" data-mood="pearl" aria-label="Pearl gold background" aria-pressed="false" style="background:linear-gradient(135deg,#fff1bd,#c8d8ff)"></button></div></div><div class="setting-row"><div><strong>Sleep screen</strong><small>Dim the page until you tap wake. This does not put your device to sleep.</small></div><button class="pill" id="sleepButton">Sleep page ◐</button></div><div class="setting-row"><div><strong>Add to Home Screen</strong><small>Keep BMN one tap away from your iPhone or Android home screen.</small></div><button class="pill" id="installHelp">Add app +</button></div><div class="setting-row"><div><strong>Notifications</strong><small>Allow BMN to alert you when you receive a message, follow, like, comment, or other activity.</small></div><button class="pill" id="notificationSetting" type="button">Allow notifications</button></div><p class="sheet-copy">Settings are local to this page. Low Power Mode reduces animation; it does not change your phone’s system power settings. Add to Home Screen availability depends on the browser and hosting setup.</p></div></div>
 <div class="wake-screen" id="wakeScreen"><div><span class="kicker">BMN® · REST MODE</span><h2 style="font-size:clamp(34px,8vw,60px)">Taking a quiet moment.</h2><p style="color:#b5bdcb;max-width:320px;line-height:1.6">The page is dimmed. Your device is not asleep.</p><button id="wakeButton">Wake BMN</button></div></div>
 <div class="scrim" id="installScrim" role="dialog" aria-modal="true" aria-labelledby="installTitle"><div class="sheet glass"><div class="sheet-top"><div><span class="kicker">QUICK ACCESS</span><h2 id="installTitle">Add BMN to Home Screen.</h2></div><button class="close-btn" id="installClose" aria-label="Close instructions">×</button></div><p class="sheet-copy"><strong style="color:var(--fg)">iPhone (Safari)</strong><br>1. Open BMN in Safari (not inside another app).<br>2. Tap the Share icon.<br>3. Scroll and choose “Add to Home Screen”. If missing, tap Edit Actions.<br>4. Turn on “Open as Web App” if shown, then tap Add.</p><p class="sheet-copy"><strong style="color:var(--fg)">Android (Chrome)</strong><br>Tap the button below to install if Chrome offers it. Otherwise open ⋮ and choose “Install app” or “Add to Home screen”.</p><button class="backend-btn primary" id="installAction" type="button" style="width:100%;margin-top:8px">Try install BMN app ↗</button><p class="sheet-copy modal-note">Browsers control the final installation step. iPhone Safari does not allow a website button to add itself automatically; use Share → Add to Home Screen.</p></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -8783,145 +8783,108 @@ setInterval(reconcile,500);reconcile();
 })();
 </script>
 
-
-<style id="bmn-edge-to-edge-final-fix">
-/* FINAL EDGE-TO-EDGE FYP FIX
-   The media surface owns the complete viewport. The bottom navigation floats above it
-   instead of reserving a black strip underneath it. */
-html,body{width:100%;min-width:100%;}
-html{background:#000!important;}
-body.community-mode[data-app-screen="home"]{
-  position:fixed!important;
-  inset:0!important;
-  width:100%!important;
-  height:100%!important;
-  min-height:100%!important;
+<style id="bmn-edge-to-edge-home-indicator-fix-v23">
+/* iOS edge-to-edge FYP: extend the actual media surface through the bottom safe-area/home-indicator region. */
+html.bmn-community-app,
+html.bmn-community-app body{
+  width:100%;
+  min-width:100%;
+  height:100%;
+  min-height:100%;
   margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-  background:#000!important;
-}
-body.community-mode[data-app-screen="home"] #communityPage,
-body.community-mode[data-app-screen="home"] #bmnAppScreens,
-body.community-mode[data-app-screen="home"] #appHomeScreen,
-body.community-mode[data-app-screen="home"] #community,
-body.community-mode[data-app-screen="home"] #community .community-grid,
-body.community-mode[data-app-screen="home"] #community .community-post,
-body.community-mode[data-app-screen="home"] #community .post-preview,
-body.community-mode[data-app-screen="home"] #community .post-preview img,
-body.community-mode[data-app-screen="home"] #community .post-preview video{
-  width:100%!important;
-  max-width:none!important;
-  margin:0!important;
-  border:0!important;
-  border-radius:0!important;
-}
-body.community-mode[data-app-screen="home"] #bmnAppScreens,
-body.community-mode[data-app-screen="home"] #appHomeScreen,
-body.community-mode[data-app-screen="home"] #community,
-body.community-mode[data-app-screen="home"] #community .community-grid{
-  height:100%!important;
-  min-height:100%!important;
-  max-height:none!important;
-  padding:0!important;
-  background:#000!important;
-}
-body.community-mode[data-app-screen="home"] #community .community-grid{
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
-  -webkit-overflow-scrolling:touch!important;
-}
-body.community-mode[data-app-screen="home"] #community .community-post{
-  height:100%!important;
-  min-height:100%!important;
-  max-height:none!important;
   padding:0!important;
   background:#000!important;
   overflow:hidden!important;
-  scroll-snap-align:start!important;
 }
-body.community-mode[data-app-screen="home"] #community .post-preview,
-body.community-mode[data-app-screen="home"] #community .post-preview.has-media,
-body.community-mode[data-app-screen="home"] #community .post-preview img,
-body.community-mode[data-app-screen="home"] #community .post-preview video{
-  position:absolute!important;
-  inset:0!important;
+html.bmn-community-app body>#lgtt{
+  position:fixed!important;
+  z-index:9999!important;
+  left:0!important;
+  right:0!important;
+  top:0!important;
+  bottom:calc(-1 * env(safe-area-inset-bottom, 0px))!important;
+  width:100vw!important;
+  height:calc(100dvh + env(safe-area-inset-bottom, 0px))!important;
+  min-height:calc(100dvh + env(safe-area-inset-bottom, 0px))!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:#000!important;
+  overflow:hidden!important;
+}
+html.bmn-community-app body>#lgtt .lgtt-stage,
+html.bmn-community-app body>#lgtt .lgtt-v-feed,
+html.bmn-community-app body>#lgtt .lgtt-feed,
+html.bmn-community-app body>#lgtt .lgtt-track,
+html.bmn-community-app body>#lgtt .lgtt-slide,
+html.bmn-community-app body>#lgtt .lgtt-media,
+html.bmn-community-app body>#lgtt video.lgtt-vid{
+  top:0!important;
+  bottom:0!important;
   height:100%!important;
   min-height:100%!important;
   max-height:none!important;
-  padding:0!important;
-  background:#000!important;
-  object-fit:cover!important;
 }
-/* No black reserved area behind the dock. */
-body.community-mode[data-app-screen="home"] .app-dock{
-  position:fixed!important;
-  left:50%!important;
-  right:auto!important;
-  top:auto!important;
-  bottom:max(10px,env(safe-area-inset-bottom,0px))!important;
-  width:min(420px,calc(100vw - 28px))!important;
-  max-width:calc(100vw - 28px)!important;
-  height:auto!important;
-  min-height:0!important;
-  padding:6px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.16)!important;
-  background:rgba(255,255,255,.035)!important;
-  background-image:linear-gradient(180deg,rgba(255,255,255,.105),rgba(255,255,255,.018))!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.07),0 22px 60px rgba(0,0,0,.48)!important;
-  -webkit-backdrop-filter:blur(28px) saturate(210%)!important;
-  backdrop-filter:blur(28px) saturate(210%)!important;
-  transform:translateX(-50%)!important;
-  z-index:2147483001!important;
+html.bmn-community-app body>#lgtt .lgtt-slide,
+html.bmn-community-app body>#lgtt .lgtt-media,
+html.bmn-community-app body>#lgtt video.lgtt-vid{
+  background-color:#000!important;
 }
-body.community-mode[data-app-screen="home"] .app-dock>button{
-  height:50px!important;
-  min-height:50px!important;
-  background:transparent!important;
-  border:1px solid transparent!important;
-  box-shadow:none!important;
-}
-/* Keep the Liquid Glass create/active treatments without turning the whole dock opaque. */
-body.community-mode[data-app-screen="home"] .app-dock>button.active,
-body.community-mode[data-app-screen="home"] .app-dock>button[aria-current="page"]{
-  background:linear-gradient(180deg,rgba(72,160,255,.48),rgba(10,110,255,.25))!important;
-  border-color:rgba(170,212,255,.42)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 4px 18px rgba(10,132,255,.18)!important;
-}
-/* The iOS home-indicator/safe-area is part of the same painted surface. */
-body.community-mode[data-app-screen="home"]::after{
-  content:"";
-  position:fixed;
-  z-index:2147483000;
-  left:0;right:0;bottom:0;
-  height:env(safe-area-inset-bottom,0px);
-  background:transparent!important;
-  pointer-events:none;
-}
-/* The actual video layer must remain underneath every control, including the safe area. */
-#lgtt,
-#lgtt .lgtt-stage,
-#lgtt .lgtt-slide,
-#lgtt .lgtt-media,
-#lgtt video.lgtt-vid{
-  background:#000!important;
+@media(max-width:599px){
+  html.bmn-community-app body>#lgtt .lgtt-stage{
+    width:100vw!important;
+    height:100%!important;
+    min-height:100%!important;
+    max-height:none!important;
+    border-radius:0!important;
+    margin:0!important;
+  }
 }
 </style>
-<script id="bmn-edge-to-edge-viewport-final">
-(()=>{
-  'use strict';
-  const setVH=()=>{
-    const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-    document.documentElement.style.setProperty('--bmn-real-vh',h+'px');
-  };
-  setVH();
-  window.addEventListener('resize',setVH,{passive:true});
-  window.visualViewport?.addEventListener('resize',setVH,{passive:true});
-  window.addEventListener('orientationchange',()=>setTimeout(setVH,250),{passive:true});
+
+<style id="bmn-final-edge-theme-profile-v24">
+/* Final iPhone/PWA viewport pass. The media owns the full available viewport; the safe-area is not painted as a separate black strip. */
+html.bmn-community-app,html.bmn-community-app body{width:100%!important;min-width:100%!important;height:100%!important;min-height:100%!important;margin:0!important;padding:0!important;background:#000!important;overflow:hidden!important;}
+html.bmn-community-app body>#lgtt{position:fixed!important;inset:0!important;width:100vw!important;height:100lvh!important;min-height:100lvh!important;max-height:none!important;margin:0!important;padding:0!important;background:#000!important;overflow:hidden!important;}
+html.bmn-community-app body>#lgtt .lgtt-stage,html.bmn-community-app body>#lgtt #lgttVFeed,html.bmn-community-app body>#lgtt .lgtt-v-feed,html.bmn-community-app body>#lgtt .lgtt-feed,html.bmn-community-app body>#lgtt #lgttTrack,html.bmn-community-app body>#lgtt .lgtt-track,html.bmn-community-app body>#lgtt .lgtt-slide,html.bmn-community-app body>#lgtt .lgtt-media,html.bmn-community-app body>#lgtt video.lgtt-vid{position:absolute!important;inset:0!important;width:100%!important;height:100lvh!important;min-height:100lvh!important;max-height:none!important;margin:0!important;padding:0!important;border-radius:0!important;}
+html.bmn-community-app body>#lgtt .lgtt-slide,html.bmn-community-app body>#lgtt .lgtt-media,html.bmn-community-app body>#lgtt video.lgtt-vid{background:#000!important;}
+html.bmn-community-app body>#lgtt video.lgtt-vid{object-fit:cover!important;}
+/* Profile/inbox top controls are also real liquid glass, not opaque theme bars. */
+html[data-bmn-theme="dark"] #lgtt .lgtt-prof-head,html[data-bmn-theme="dark"] #lgtt .lgtt-prof-tabs,html[data-bmn-theme="dark"] #lgtt .lgtt-prof-bar,
+html[data-bmn-theme="light"] #lgtt .lgtt-prof-head,html[data-bmn-theme="light"] #lgtt .lgtt-prof-tabs,html[data-bmn-theme="light"] #lgtt .lgtt-prof-bar{
+ background:rgba(255,255,255,.075)!important;background-image:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.025))!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:20px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 14px 38px rgba(0,0,0,.20)!important;backdrop-filter:blur(24px) saturate(175%)!important;-webkit-backdrop-filter:blur(24px) saturate(175%)!important;color:inherit!important;}
+html[data-bmn-theme="light"] #lgtt .lgtt-prof-head,html[data-bmn-theme="light"] #lgtt .lgtt-prof-tabs,html[data-bmn-theme="light"] #lgtt .lgtt-prof-bar{background:rgba(255,255,255,.24)!important;background-image:linear-gradient(145deg,rgba(255,255,255,.42),rgba(255,255,255,.10))!important;border-color:rgba(35,48,75,.18)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 14px 38px rgba(30,40,70,.16)!important;color:#000!important;}
+/* Theme text: app UI is black in light mode and white in dark mode. Video artwork/captions keep their own contrast. */
+html[data-bmn-theme="light"] #lgtt .lgtt-v-profile,html[data-bmn-theme="light"] #lgtt #lgttProfScroll,html[data-bmn-theme="light"] #lgtt #lgttProfLayout,html[data-bmn-theme="light"] #lgtt #lgttDm,html[data-bmn-theme="light"] #lgtt #lgttDmScroll,html[data-bmn-theme="light"] #lgtt #lgttChat,html[data-bmn-theme="light"] #lgtt #lgttMsgs{color:#000!important;}
+html[data-bmn-theme="light"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a),html[data-bmn-theme="light"] #lgtt #lgttDm :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a),html[data-bmn-theme="light"] #lgtt #lgttMsgs :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a){color:#000!important;}
+html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile,html[data-bmn-theme="dark"] #lgtt #lgttProfScroll,html[data-bmn-theme="dark"] #lgtt #lgttProfLayout,html[data-bmn-theme="dark"] #lgtt #lgttDm,html[data-bmn-theme="dark"] #lgtt #lgttDmScroll,html[data-bmn-theme="dark"] #lgtt #lgttChat,html[data-bmn-theme="dark"] #lgtt #lgttMsgs{color:#fff!important;}
+html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a),html[data-bmn-theme="dark"] #lgtt #lgttDm :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a),html[data-bmn-theme="dark"] #lgtt #lgttMsgs :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,label,button,a){color:#fff!important;}
+</style>
+<script id="bmn-notifications-and-install-v24">
+(()=>{'use strict';
+ const $=s=>document.querySelector(s);
+ const notifyBtn=$('#notificationSetting');
+ async function requestBMNNotifications(){
+   if(!('Notification' in window)){alert('This browser does not support notifications. Add BMN to your Home Screen and use a supported browser.');return;}
+   try{const permission=await Notification.requestPermission(); updateNotificationButton(permission); if(permission==='granted') showLocalBMNNotification('BMN notifications are on','You will receive supported BMN activity alerts while the app is available.');}
+   catch(_){updateNotificationButton(Notification.permission);}
+ }
+ function updateNotificationButton(permission){if(!notifyBtn)return;notifyBtn.textContent=permission==='granted'?'Notifications on':permission==='denied'?'Notifications blocked':'Allow notifications';notifyBtn.setAttribute('aria-pressed',permission==='granted'?'true':'false');}
+ function showLocalBMNNotification(title,body){if(!('Notification'in window)||Notification.permission!=='granted')return;try{new Notification(title,{body,icon:'/favicon.ico',badge:'/favicon.ico'});}catch(_){} }
+ updateNotificationButton('Notification'in window?Notification.permission:'unsupported');
+ notifyBtn?.addEventListener('click',requestBMNNotifications);
+ let channel=null,lastUser=null;
+ function connect(){const sb=window.bmnSupabase,session=window.bmnSession;if(!sb||!session?.user||typeof sb.channel!=='function')return;if(lastUser===session.user.id&&channel)return;if(channel){try{sb.removeChannel(channel)}catch(_){}channel=null}lastUser=session.user.id;
+   try{channel=sb.channel('bmn-browser-notifications-'+session.user.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'user_id=eq.'+session.user.id},payload=>{const n=payload.new||{};showLocalBMNNotification('BMN Community',n.message||'You have new activity.');})
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+session.user.id},payload=>{const n=payload.new||{};showLocalBMNNotification('New BMN message',n.content||'You received a new message.');})
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},payload=>{const n=payload.new||{};if(n.user_id!==session.user.id)showLocalBMNNotification('New BMN post','A new post was published in BMN Community.');})
+    .subscribe();
+   }catch(_){channel=null;}
+ }
+ setInterval(connect,2000);connect();
 })();
 </script>
-
 </body>
 </html>
 
