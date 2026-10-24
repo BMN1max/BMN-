@@ -4844,7 +4844,7 @@ body.light .bmn-x-light,.bmn-account-visible .bmn-x,.bmn-profile-menu-inner .bmn
 /* ---- 11. Splash / app opening animation (pure CSS so it can never hang) ---- */
 #bmnSplash{position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
  background:radial-gradient(90% 70% at 50% 38%,#16203c 0%,#080a14 62%,#04050a 100%);color:#fff;
- animation:bmnSplashOut .6s cubic-bezier(.4,0,.2,1) 1.45s forwards}
+ animation:none}
 #bmnSplash .sp-logo{position:relative;width:92px;height:92px;border-radius:28px;display:grid;place-items:center;
  background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.3);
  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 20px 60px rgba(60,140,255,.35);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -8282,7 +8282,9 @@ let activeFriendsTab='posts',friendRenderToken=0;
 function meId(){return String(window.bmnSession?.user?.id||window.bmnSupabase?.auth?.getSession?.()?.data?.session?.user?.id||'')}
 function enterCommunityOnly(){
  const root=document.documentElement,body=document.body;
- root.classList.add('bmn-community-app');root.classList.remove('bmn-starting');
+ // Do not release bmn-starting here: several async hooks call this function during page load.
+ // The startup controller alone is allowed to reveal the app after the intro has played.
+ root.classList.add('bmn-community-app');
  body.classList.remove('community-mode','bmn-friends-mode');body.dataset.bmnNav='fyp';body.dataset.appScreen='home';
  const old=$('#communityPage'),oldFeed=$('#community');if(old){old.style.display='none';old.setAttribute('aria-hidden','true')}if(oldFeed){oldFeed.style.display='none';oldFeed.setAttribute('aria-hidden','true')}
 }
@@ -8296,12 +8298,22 @@ async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)r
 async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
 function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
-function boot(){const splash=$('#bmnSplash');const introMs=1350;
- // Keep the splash as the only visible UI while the Community overlay is prepared.
- document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.animation='none';splash.style.opacity='1';}
- // Force the app-only shell before removing the splash; the portfolio never paints.
- const start=()=>{enterCommunityOnly();if(window.LGTT){try{window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}catch(_){}}else setTimeout(start,60);};
- setTimeout(()=>{start();if(splash&&splash.isConnected)splash.remove();document.documentElement.classList.remove('bmn-starting');},introMs);
+function boot(){
+ const root=document.documentElement,splash=$('#bmnSplash');
+ const introMs=1450; // one intentional intro, under the requested two-second limit
+ root.classList.add('bmn-starting');
+ if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';splash.style.animation='none';}
+ // Never reveal the portfolio while waiting for the immersive Community shell.
+ enterCommunityOnly();
+ const startedAt=Date.now();
+ const launch=()=>{
+   if(!window.LGTT && Date.now()-startedAt<1850){setTimeout(launch,40);return;}
+   try{if(window.LGTT){window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}}catch(err){console.warn('[BMN startup] Community launch deferred:',err?.message||err);}
+   // Reveal only after the intro duration and after attempting to open Community.
+   if(splash&&splash.isConnected)splash.remove();
+   root.classList.remove('bmn-starting');
+ };
+ setTimeout(launch,introMs);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 // Audio playback is attempted after the first user gesture because mobile browsers may block audible autoplay.
