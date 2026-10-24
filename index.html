@@ -2351,7 +2351,7 @@ async function bmnCreateVideoThumbnail(file){
   timer=setTimeout(()=>finish(null),5000);try{url=URL.createObjectURL(file);video.src=url;video.load()}catch(_){finish(null)}
  });
 }
-$('#bmnPublishPost')?.addEventListener('click',async()=>{const btn=$('#bmnPublishPost'),status=$('#bmnPostStatus'),caption=$('#bmnPostContent')?.value.trim()||'',file=$('#bmnPostFile')?.files?.[0]||null,external=$('#bmnPostMediaUrl')?.value.trim()||'';if(!bmnSupabase){setBackendStatus('Community is still connecting. Reload and try again.',true);return}if(!bmnSession){setBackendStatus('Sign in first to publish a post.',true);const gate=document.getElementById('bmnAuthGate');gate?.classList.add('is-visible');const gateStatus=document.getElementById('bmnGateStatus');if(gateStatus)gateStatus.textContent='Sign in or continue with Google to upload to BMN Community.';return}if(!file&&!external){setBackendStatus('Add a video (or an https media link) before posting. Every post needs media.',true);return}if(file&&file.size>bmnMaxUploadBytes(file,'posts')){setBackendStatus('This file is larger than '+bmnMaxUploadMB(file,'posts')+' MB. Choose a smaller file.',true);return}if(external&&!/^https:\/\//i.test(external)){setBackendStatus('Media links must begin with https://',true);return}btn.disabled=true;btn.textContent='Publishing…';if(status)status.textContent='Preparing your post…';let media_url=external||null,thumbnail_url=null;try{if(file){if(String(file.type||'').startsWith('video/')){if(status)status.textContent='Preparing video preview…';const previewFile=await bmnCreateVideoThumbnail(file);if(previewFile){try{thumbnail_url=await uploadCommunityFile(previewFile,'thumbnails')}catch(previewError){console.warn('[BMN preview] Thumbnail upload unavailable; the profile grid will use the video frame.',previewError?.message||previewError)}}}if(status)status.textContent='Uploading '+file.name+'…';media_url=await uploadCommunityFile(file,'posts',pct=>{if(status)status.textContent='Uploading '+file.name+'… '+pct+'%'})}if(status)status.textContent='Saving post…';const {error}=await bmnInsertPost(bmnSupabase,bmnSession.user.id,bmnDeriveTitle(caption,file,external),caption,media_url,thumbnail_url);if(error){for(const u of [media_url,thumbnail_url])if(u?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([u.slice(8)])}catch(_){}}throw error}$('#bmnPostContent').value='';if($('#bmnPostMediaUrl'))$('#bmnPostMediaUrl').value='';clearBmnMediaPreview();if(status)status.textContent='Posted successfully.';setBackendStatus('Your post is live in BMN Community.');await loadCommunityPosts();const feed=$('#communityFeed');if(feed)feed.scrollIntoView({behavior:'smooth',block:'start'});}catch(error){if(thumbnail_url?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([thumbnail_url.slice(8)])}catch(_){}}const message=bmnFriendlyPostError(error);if(status)status.textContent='Could not publish: '+message;setBackendStatus('Post failed: '+message,true)}finally{btn.disabled=false;btn.textContent='Post to Community ↗'}});
+$('#bmnPublishPost')?.addEventListener('click',async()=>{const btn=$('#bmnPublishPost'),status=$('#bmnPostStatus'),caption=$('#bmnPostContent')?.value.trim()||'',file=$('#bmnPostFile')?.files?.[0]||null,external=$('#bmnPostMediaUrl')?.value.trim()||'';if(!bmnSupabase){setBackendStatus('Community is still connecting. Reload and try again.',true);return}if(!bmnSession){setBackendStatus('Sign in first to publish a post.',true);return}if(!file&&!external){setBackendStatus('Add a video (or an https media link) before posting. Every post needs media.',true);return}if(file&&file.size>bmnMaxUploadBytes(file,'posts')){setBackendStatus('This file is larger than '+bmnMaxUploadMB(file,'posts')+' MB. Choose a smaller file.',true);return}if(external&&!/^https:\/\//i.test(external)){setBackendStatus('Media links must begin with https://',true);return}btn.disabled=true;btn.textContent='Publishing…';if(status)status.textContent='Preparing your post…';let media_url=external||null,thumbnail_url=null;try{if(file){if(String(file.type||'').startsWith('video/')){if(status)status.textContent='Preparing video preview…';const previewFile=await bmnCreateVideoThumbnail(file);if(previewFile){try{thumbnail_url=await uploadCommunityFile(previewFile,'thumbnails')}catch(previewError){console.warn('[BMN preview] Thumbnail upload unavailable; the profile grid will use the video frame.',previewError?.message||previewError)}}}if(status)status.textContent='Uploading '+file.name+'…';media_url=await uploadCommunityFile(file,'posts',pct=>{if(status)status.textContent='Uploading '+file.name+'… '+pct+'%'})}if(status)status.textContent='Saving post…';const {error}=await bmnInsertPost(bmnSupabase,bmnSession.user.id,bmnDeriveTitle(caption,file,external),caption,media_url,thumbnail_url);if(error){for(const u of [media_url,thumbnail_url])if(u?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([u.slice(8)])}catch(_){}}throw error}$('#bmnPostContent').value='';if($('#bmnPostMediaUrl'))$('#bmnPostMediaUrl').value='';clearBmnMediaPreview();if(status)status.textContent='Posted successfully.';setBackendStatus('Your post is live in BMN Community.');await loadCommunityPosts();const feed=$('#communityFeed');if(feed)feed.scrollIntoView({behavior:'smooth',block:'start'});}catch(error){if(thumbnail_url?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([thumbnail_url.slice(8)])}catch(_){}}const message=bmnFriendlyPostError(error);if(status)status.textContent='Could not publish: '+message;setBackendStatus('Post failed: '+message,true)}finally{btn.disabled=false;btn.textContent='Post to Community ↗'}});
 $('#bmnAvatarInput')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;if(!bmnSession){setBackendStatus('Sign in to add a profile picture.',true);return}if(!file.type.startsWith('image/')){setBackendStatus('Choose an image for your profile picture.',true);return}if(file.size>5*1024*1024){setBackendStatus('Profile pictures must be 5 MB or smaller.',true);return}const input=event.target;try{setBackendStatus('Uploading profile picture…');const avatar_url=await uploadCommunityFile(file,'avatars');const {error}=await bmnSupabase.from('profiles').update({avatar_url,updated_at:new Date().toISOString()}).eq('id',bmnSession.user.id);if(error)throw error;if(!bmnProfiles[bmnSession.user.id])bmnProfiles[bmnSession.user.id]={id:bmnSession.user.id};bmnProfiles[bmnSession.user.id].avatar_url=avatar_url;try{bmnProfiles[bmnSession.user.id].avatar_display_url=await resolveStorageUrl(avatar_url)}catch(_){}updateAvatarEditor(bmnProfiles[bmnSession.user.id]);setBackendStatus('Profile picture saved.');}catch(error){setBackendStatus('Profile picture could not be saved: '+(error.message||'check Storage permissions and avatar_url column'),true)}finally{input.value=''}});
 async function openBMNPublicProfile(userId){const modal=$('#bmnPublicProfileModal'),content=$('#bmnPublicProfileContent');if(!modal||!content)return;modal.classList.add('open');content.innerHTML='<div class="backend-empty">Loading creator profile…</div>';try{let profile=bmnProfiles[userId];if(!profile){const {data,error}=await bmnSupabase.from('profiles').select('*').eq('id',userId).maybeSingle();if(error)throw error;profile=data||{id:userId};bmnProfiles[userId]=profile}try{profile.avatar_display_url=await resolveStorageUrl(profile.avatar_url)}catch(_){}const posts=cachedPosts.filter(p=>p.user_id===userId);let totalViews=0;posts.forEach(p=>{totalViews+=Number(p.views||0)});const isMine=bmnSession?.user?.id===userId;let followersLabel='—';try{const fr=await bmnSupabase.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',userId);if(!fr.error)followersLabel=Number(fr.count||0).toLocaleString()}catch(_){}const avatar=bmnAvatarMarkup(profile,true);const isFollowing=bmnFollowing.has(userId);content.innerHTML='<div class="bmn-profile-top">'+avatar+'<div style="min-width:0"><h2 style="margin:0 0 4px;overflow-wrap:anywhere">'+escapeHTML(profile.display_name||profile.username||'BMN creator')+'</h2><p style="margin:0;opacity:.72">@'+escapeHTML(profile.username||'creator')+'</p>'+(profile.website_url?'<a href="'+escapeHTML(profile.website_url)+'" target="_blank" rel="noopener noreferrer" style="color:inherit;display:inline-block;margin-top:7px">Website ↗</a>':'')+'</div></div><p style="margin:15px 0;line-height:1.5">'+escapeHTML(profile.bio||'No bio added yet.')+'</p><div class="bmn-profile-stats"><div class="bmn-profile-stat"><strong>'+posts.length+'</strong><small>Posts</small></div><div class="bmn-profile-stat"><strong>'+totalViews.toLocaleString()+'</strong><small>Views*</small></div><div class="bmn-profile-stat"><strong>'+followersLabel+'</strong><small>Followers</small></div></div><div class="backend-row" style="justify-content:space-between"><strong>Posts</strong>'+(isMine?'<button class="backend-btn" id="bmnProfileEditShortcut" type="button">Edit profile</button>':'<div style="display:flex;gap:7px;flex-wrap:wrap"><button class="backend-btn primary" id="bmnProfileFollowToggle" type="button" aria-pressed="'+(isFollowing?'true':'false')+'">'+(isFollowing?'Following ✓':'Follow +')+'</button><button class="backend-btn" id="bmnProfileMessageShortcut" type="button">Message</button>'+(window.BMN_TIPS_ENABLED===true&&window.BMN_API_BASE_URL?'<button class="backend-btn" id="bmnProfileTipShortcut" type="button">Tip creator</button>':'')+'</div>')+'</div><div class="bmn-profile-posts">'+(posts.length?posts.map(p=>{const media=p.media_display_url?(p.media_type==='video'?'<video src="'+escapeHTML(p.media_display_url)+'#t=0.1" muted playsinline preload="metadata"></video>':'<img src="'+escapeHTML(p.media_display_url)+'" alt="" loading="lazy">'):'<span>'+escapeHTML((p.content||'Text post').slice(0,100))+'</span>';return '<button class="bmn-profile-post-tile" type="button" data-open-post="'+escapeHTML(p.id)+'">'+media+'<span>'+(p.views?Number(p.views).toLocaleString()+' views · ':'')+escapeHTML((p.content||'').slice(0,70))+'</span></button>'}).join(''):'<div class="bmn-profile-empty">No posts yet.</div>')+'</div><p class="composer-hint" style="margin-top:12px">Views count when a post is viewed. Follower totals are shown when the follows table is available.</p>';content.querySelector('#bmnProfileEditShortcut')?.addEventListener('click',()=>{modal.classList.remove('open');$('#bmnProfileEditor')?.scrollIntoView({behavior:'smooth',block:'center'})});content.querySelector('#bmnProfileFollowToggle')?.addEventListener('click',async(event)=>{const button=event.currentTarget;if(!bmnSession){setBackendStatus('Sign in to follow creators.',true);return}if(!bmnSupabase||userId===bmnSession.user.id)return;button.disabled=true;try{if(bmnFollowing.has(userId)){const {error}=await bmnSupabase.from('follows').delete().eq('follower_id',bmnSession.user.id).eq('following_id',userId);if(error)throw error;bmnFollowing.delete(userId);button.textContent='Follow +';button.setAttribute('aria-pressed','false');setBackendStatus('You unfollowed this creator.')}else{const {error}=await bmnSupabase.from('follows').insert({follower_id:bmnSession.user.id,following_id:userId});if(error)throw error;bmnFollowing.add(userId);button.textContent='Following ✓';button.setAttribute('aria-pressed','true');try{await bmnSupabase.from('notifications').insert({user_id:userId,actor_id:bmnSession.user.id,type:'follow',message:'started following you'})}catch(_){}setBackendStatus('You are now following this creator.')}const stat=content.querySelector('.bmn-profile-stats .bmn-profile-stat:last-child strong');if(stat){const current=Number((stat.textContent||'').replace(/,/g,''))||0;stat.textContent=Math.max(0,current+(bmnFollowing.has(userId)?1:-1)).toLocaleString()}await loadCommunityPosts()}catch(error){setBackendStatus(error.message||'Follow action failed. Check the follows table and its permissions.',true)}finally{button.disabled=false}});content.querySelector('#bmnProfileMessageShortcut')?.addEventListener('click',()=>{modal.classList.remove('open');if(window.bmnOpenConversation){window.bmnOpenConversation(userId);return}const select=$('#bmnMessageRecipient');if(select)select.value=userId;$('#bmnMessageContent')?.focus();$('#bmnSocialHub')?.scrollIntoView({behavior:'smooth',block:'start'})});content.querySelector('#bmnProfileTipShortcut')?.addEventListener('click',async()=>{if(!bmnSession){setBackendStatus('Sign in before tipping a creator.',true);return}const amount=Number(prompt('Tip amount in USD (minimum $1, maximum $500):','5'));if(!Number.isFinite(amount)||amount<1||amount>500){setBackendStatus('Enter an amount between $1 and $500 USD.',true);return}const button=content.querySelector('#bmnProfileTipShortcut');if(button)button.disabled=true;try{const {data:sessionData}=await bmnSupabase.auth.getSession();const token=sessionData?.session?.access_token||bmnSession.access_token;const apiBase=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');const response=await fetch(apiBase+'/api/monetization/send-tip',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({creator_user_id:userId,tip_amount_usd:amount})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.checkout_gateway_url)throw new Error(result.error||'Checkout could not be started.');location.assign(result.checkout_gateway_url)}catch(error){setBackendStatus(error.message||'Could not start creator tip checkout.',true);if(button)button.disabled=false}});content.querySelectorAll('[data-open-post]').forEach(tile=>tile.addEventListener('click',()=>{modal.classList.remove('open');const post=$('[data-post-id="'+CSS.escape(tile.dataset.openPost)+'"]');post?.scrollIntoView({behavior:'smooth',block:'center'})}));}catch(error){content.innerHTML='<div class="backend-empty">Could not open this profile: '+escapeHTML(error.message||'Try again.')+'</div>'}}
 
@@ -2529,7 +2529,7 @@ if(profileScreen&&!$('#bmnProfileV2')){
  if(panel){panel.classList.add('bmn-account-legacy');document.body.appendChild(panel);}
  const accountStyle=document.createElement('style');accountStyle.textContent='.bmn-account-legacy{display:none!important}.bmn-account-legacy.bmn-account-visible{display:block!important;position:fixed!important;z-index:10040!important;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));width:min(680px,calc(100% - 24px));max-height:calc(100svh - 24px - env(safe-area-inset-top));overflow:auto;margin:0 auto!important;padding:18px;border:1px solid var(--line);border-radius:24px;background:var(--clear-glass-bg);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 80px rgba(0,0,0,.36)}body.community-mode #appProfileScreen #bmnAccountPanel{display:none!important}';document.head.appendChild(accountStyle);
  $('#bmnProfileMenuOpen').addEventListener('click',()=>menu.classList.add('open'));
- menu.addEventListener('click',e=>{if(e.target===menu||e.target.dataset.profileAction==='close'){menu.classList.remove('open');return}const action=e.target.dataset.profileAction;if(!action)return;menu.classList.remove('open');if(action==='edit'){openProfileEditor()}else if(action==='account'){if(!window.bmnSession){if(typeof window.bmnOpenAuthGate==='function')window.bmnOpenAuthGate('Sign in or create your BMN account');return}const p=$('#bmnAccountPanel');if(p){p.classList.add('bmn-account-visible');p.style.display='block';setBackendStatus('Account details opened from the three-line menu.')} }else if(action==='password'){if(!bmnSupabase||!bmnSession){setBackendStatus('Sign in first to change your password.',true);openProfileEditor();return}const password=prompt('Enter a new password (at least 6 characters):');if(password===null)return;if(password.length<6){setBackendStatus('Password must be at least 6 characters.',true);return}bmnSupabase.auth.updateUser({password}).then(({error})=>setBackendStatus(error?error.message:'Password updated successfully.',!!error)).catch(err=>setBackendStatus(err.message||'Could not update password.',true))}else if(action==='theme'){setTheme(body.classList.contains('light')?'dark':'light')}else if(action==='signout'){logout?.click()}});
+ menu.addEventListener('click',e=>{if(e.target===menu||e.target.dataset.profileAction==='close'){menu.classList.remove('open');return}const action=e.target.dataset.profileAction;if(!action)return;menu.classList.remove('open');if(action==='edit'){openProfileEditor()}else if(action==='account'){const p=$('#bmnAccountPanel');if(p){p.classList.add('bmn-account-visible');p.style.display='block';setBackendStatus('Account details opened from the three-line menu.')} }else if(action==='password'){if(!bmnSupabase||!bmnSession){setBackendStatus('Sign in first to change your password.',true);openProfileEditor();return}const password=prompt('Enter a new password (at least 6 characters):');if(password===null)return;if(password.length<6){setBackendStatus('Password must be at least 6 characters.',true);return}bmnSupabase.auth.updateUser({password}).then(({error})=>setBackendStatus(error?error.message:'Password updated successfully.',!!error)).catch(err=>setBackendStatus(err.message||'Could not update password.',true))}else if(action==='theme'){setTheme(body.classList.contains('light')?'dark':'light')}else if(action==='signout'){$('#bmnSignOut')?.click()}});
  function openProfileEditor(){const p=$('#bmnAccountPanel');if(!p)return;p.classList.add('bmn-account-visible');p.scrollIntoView({behavior:'smooth',block:'center'});$('#bmnEditBio')?.focus({preventScroll:true});}
  window.bmnRefreshProfileV2=function(){
   const uid=bmnSession?.user?.id,me=uid?bmnProfiles[uid]||{}:{};
@@ -2699,9 +2699,9 @@ window.setAppView=(view,updateHash=true)=>setAppView(view,updateHash);
 // OAuth buttons call Supabase Auth directly; a provider must first be enabled in Supabase Auth settings.
 function bmnAddOAuthControls(){
  const controls=$('#bmnAuthControls');if(!controls||$('#bmnOAuthControls'))return;
- const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google" aria-label="Continue with Google"><span aria-hidden="true" style="font-weight:800;color:#4285f4">G</span> Continue with Google</button><button type="button" class="bmn-oauth-button" data-oauth-provider="apple" aria-label="Continue with Apple ID"><span aria-hidden="true">●</span> Apple ID</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google sign-in uses the BMN Supabase Google provider. Apple ID works only after Apple authentication is configured.</p>';
+ const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google"><span aria-hidden="true">G</span> Continue with Google</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google sign-in requires the Google provider and redirect URL to be enabled in Supabase.</p>';
  controls.appendChild(wrap);
- wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=window.location.origin+window.location.pathname+'#community-page';const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
+ wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=location.origin+location.pathname+'#community-page';const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
  $('#bmnForgotPassword')?.addEventListener('click',async()=>{const email=$('#bmnEmail')?.value.trim();if(!email){setBackendStatus('Enter your email address first, then tap Forgot password.',true);$('#bmnEmail')?.focus();return}try{const {error}=await bmnSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;setBackendStatus('If this email belongs to an account, a password reset link has been sent.')}catch(err){setBackendStatus(err.message||'Could not send password reset email.',true)}})
 }
 bmnAddOAuthControls();
@@ -3301,10 +3301,16 @@ body.community-mode[data-app-screen="profile"] .bmn-profile-post-tile span{displ
     const stories=q('.bmn-inbox-stories');if(!stories||stories.querySelector('[data-story-picker]'))return;
     const first=stories.querySelector('[data-inbox-story="0"]');if(!first)return;
     first.dataset.storyPicker='1';
-    first.addEventListener('click',e=>{
+    first.addEventListener('click',async e=>{
       e.preventDefault();
+      if(!window.bmnSession?.user){if(window.bmnOpenAuth)window.bmnOpenAuth();else setBackendStatus('Sign in to add a story.',true);return;}
       let input=q('#bmnStoryFileInput');
-      if(!input){input=document.createElement('input');input.id='bmnStoryFileInput';input.type='file';input.accept='image/*,video/*';input.hidden=true;document.body.appendChild(input);input.addEventListener('change',()=>{const file=input.files?.[0];if(!file)return;const old=first.querySelector('span:last-child');if(old)old.textContent='Story selected';setBackendStatus('Story selected. Story publishing is ready for the next Stories backend table.');});}
+      if(!input){input=document.createElement('input');input.id='bmnStoryFileInput';input.type='file';input.accept='image/*,video/*';input.hidden=true;document.body.appendChild(input);
+        input.addEventListener('change',async()=>{const file=input.files?.[0];if(!file)return;const userId=window.bmnSession?.user?.id;if(!userId){setBackendStatus('Your session expired. Sign in again.',true);input.value='';return;}if(!/^image\/|^video\//.test(file.type)){setBackendStatus('Choose a photo or video for your story.',true);input.value='';return;}if(file.size>50*1024*1024){setBackendStatus('Stories must be 50 MB or smaller with the current Storage configuration.',true);input.value='';return;}
+          try{setBackendStatus('Uploading your story…');const media_path=await uploadCommunityFile(file,'stories');const media_type=file.type.startsWith('video/')?'video':'image';const expires_at=new Date(Date.now()+24*60*60*1000).toISOString();const {data,error}=await bmnSupabase.from('community_stories').insert({user_id:userId,media_path,media_type,caption:'',expires_at,status:'published'}).select('id').single();if(error)throw error;const old=first.querySelector('span:last-child');if(old)old.textContent='Your Story · Add more';first.setAttribute('aria-label','Your story uploaded. Tap to add another.');setBackendStatus('Story uploaded and saved. You can add another story anytime.');try{const url=await resolveStorageUrl(media_path);const modal=document.createElement('div');modal.className='bmn-story-preview-v23';modal.innerHTML='<button type="button" aria-label="Close story preview">×</button>'+(media_type==='video'?'<video controls autoplay playsinline src="'+escapeHTML(url)+'"></video>':'<img alt="Your story preview" src="'+escapeHTML(url)+'">');modal.querySelector('button').onclick=()=>modal.remove();modal.addEventListener('click',ev=>{if(ev.target===modal)modal.remove()});document.body.appendChild(modal);}catch(_){}
+          }catch(error){setBackendStatus('Story was not published: '+(error.message||'Check the community_stories table, Storage permissions and RLS policies.'),true);}finally{input.value='';}
+        });
+      }
       input.click();
     });
   }
@@ -4083,7 +4089,7 @@ function enhancePost(post){
 }
 function enhanceAll(){ $$('#community .community-post').forEach(enhancePost); }
 function addStories(){const inbox=$('#bmnInboxV2');if(!inbox||$('#bmnStoriesV10'))return;const box=document.createElement('div');box.id='bmnStoriesV10';box.className='bmn-stories';const profiles=Object.values(window.bmnProfiles||{}).filter(p=>p&&p.id).slice(0,12);const mine=window.bmnSession?.user?.id?(window.bmnProfiles||{})[window.bmnSession.user.id]:null;const list=[mine||{display_name:'Your Story',username:'you'}];/* only the viewer's own Story tile: no story rings for other users until a Stories table exists */box.innerHTML=list.slice(0,12).map((p,i)=>{const avatar=p.avatar_display_url||p.avatar_url||'';return '<button class="bmn-story" type="button" data-story-user="'+(p.id||'')+'"><span class="bmn-story-ring"><span class="bmn-story-inner">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="">':(i===0?'＋':String((p.display_name||p.username||'B')[0]).toUpperCase()))+'</span></span><span class="bmn-story-name">'+(i===0?'Your Story':(p.display_name||p.username||'Creator'))+'</span></button>'}).join('');inbox.insertBefore(box,inbox.querySelector('.bmn-inbox-search'));box.addEventListener('click',e=>{const b=e.target.closest('.bmn-story');if(!b)return;if(!b.dataset.storyUser&&window.setBackendStatus)window.setBackendStatus('Add a photo or video to create your first story.');else if(window.setBackendStatus)window.setBackendStatus('Stories UI is ready. Story publishing can connect when the Stories table is enabled.');});}
-function addProfileArchitecture(){const screen=$('#appProfileScreen');if(!screen||$('#bmnProfileArchitectureV10'))return;const panel=document.createElement('section');panel.id='bmnProfileArchitectureV10';panel.className='bmn-profile-architecture';const uid=window.bmnSession?.user?.id;const p=(window.bmnProfiles||{})[uid]||{display_name:'BMN',username:'thisisbmn',bio:'Creator • Editor • Storyteller'};const avatar=p.avatar_display_url||p.avatar_url||'';panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="BMN profile">':'BMN')+'</div><div><div class="pa-name">'+(p.display_name||'BMN')+'</div><div class="pa-handle">@'+(p.username||'thisisbmn')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div><div class="pa-stat"><strong>'+((window.cachedLikes||{})?Object.values(window.cachedLikes||{}).reduce((a,b)=>a+b,0):0)+'</strong><span>Likes</span></div></div><p class="pa-bio">'+(p.bio||'Creator • Editor • Storyteller')+'</p><div class="bmn-pins" id="bmnPinsV11"></div>';screen.prepend(panel);}
+function addProfileArchitecture(){const screen=$('#appProfileScreen');if(!screen||$('#bmnProfileArchitectureV10'))return;const panel=document.createElement('section');panel.id='bmnProfileArchitectureV10';panel.className='bmn-profile-architecture';const uid=window.bmnSession?.user?.id;const p=(window.bmnProfiles||{})[uid]||{display_name:uid?'Your profile':'Sign in to view your profile',username:'',bio:''};const avatar=p.avatar_display_url||p.avatar_url||'';panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+String(avatar).replace(/"/g,'&quot;')+'" alt="Profile picture">':(uid?String((p.display_name||'U')[0]).toUpperCase():'＋'))+'</div><div><div class="pa-name">'+(p.display_name||(uid?'Your profile':'Sign in to view your profile'))+'</div><div class="pa-handle">'+(p.username?'@'+p.username:'')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div><div class="pa-stat"><strong>'+((window.cachedLikes||{})?Object.values(window.cachedLikes||{}).reduce((a,b)=>a+b,0):0)+'</strong><span>Likes</span></div></div><p class="pa-bio">'+(p.bio||'')+'</p><div class="bmn-pins" id="bmnPinsV11"></div>';screen.prepend(panel);}
 function wireProfileRefresh(){addProfileArchitecture();addStories();}
 const observer=new MutationObserver(()=>{enhanceAll();wireProfileRefresh()});
 observer.observe(document.body,{childList:true,subtree:true});
@@ -5154,7 +5160,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)comVideos()
 /* ============ H. Auth / settings: always escapable ============ */
 function authPanel(){return $('#bmnAccountPanel')}
 const authBackdrop=document.createElement('div');authBackdrop.id='bmnAuthBackdrop';document.body.appendChild(authBackdrop);
-function openAuth(){const p=authPanel();if(!p)return;p.classList.add('bmn-account-visible');p.style.display='block';ensureX(p,closeAuth);syncAuthBackdrop();const em=$('#bmnEmail');if(em&&!window.bmnSession)safe(()=>em.focus({preventScroll:true}))}
+function openAuth(){const p=authPanel();if(!p)return;p.classList.add('bmn-account-visible');p.style.display='block';ensureX(p,closeAuth);syncAuthBackdrop();const em=$('#bmnEmail');if(em&&!window.bmnSession)safe(()=>em.focus({preventScroll:true}))} window.bmnOpenAuth=openAuth;
 function closeAuth(){const p=authPanel();if(!p)return;p.classList.remove('bmn-account-visible');p.style.removeProperty('display');syncAuthBackdrop()}
 function syncAuthBackdrop(){const p=authPanel();authBackdrop.classList.toggle('open',!!(p&&p.classList.contains('bmn-account-visible')))}
 authBackdrop.addEventListener('click',closeAuth);
@@ -6605,7 +6611,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   };
   const ico = (name, cls) => '<svg class="lgtt-ico ' + (cls || '') + '" aria-hidden="true"><use href="#lgi-' + name + '"/></svg>';
   const initials = u => (u.name || u.handle || '?').replace(/[^A-Za-z0-9 ]/g, '').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-  const avatar = (u, cls) => '<span class="lgtt-avatar ' + (cls || '') + '" style="--h:' + u.hue + '" aria-hidden="true">' + esc(initials(u)) + '</span>';
+  const avatar = (u, cls) => '<span class="lgtt-avatar ' + (cls || '') + '" style="--h:' + u.hue + '" aria-hidden="true">' + ((u.avatar || u.avatar_url) ? '<img loading="lazy" decoding="async" src="' + esc(u.avatar || u.avatar_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">' : esc(initials(u))) + '</span>';
   const fmtTime = ts => { const d = new Date(ts); return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'); };
   const fmtDur = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const ago = mins => mins < 1 ? 'now' : mins < 60 ? Math.round(mins) + 'm' : mins < 1440 ? Math.round(mins / 60) + 'h' : Math.round(mins / 1440) + 'd';
@@ -6623,12 +6629,11 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      3.2 Data model — starts empty; populated only from BMN Community records.
      --------------------------------------------------------------- */
   const U = {
-    bmn: { id: 'bmn', name: 'BMN®', handle: 'thisisbmn', hue: 262, verified: false, me: true,
-      followers: null, following: null, likes: null,
-      bio: 'Creator · Editor · Storyteller', link: 'tiktok.com/@thisisbmn', linkHref: 'https://www.tiktok.com/@thisisbmn' }
+    bmn: { id: 'bmn', name: 'BMN®', handle: 'thisisbmn', hue: 262, verified: false, me: false,
+      followers: null, following: null, likes: null, bio: 'Creator · Editor · Storyteller', link: 'tiktok.com/@thisisbmn', linkHref: 'https://www.tiktok.com/@thisisbmn' }
   };
   if (CFG.profile) Object.assign(U.bmn, CFG.profile);
-  const ME = U.bmn;
+  const ME = { id: 'guest', name: 'Your profile', handle: '', hue: 262, verified: false, me: true, followers: null, following: null, likes: null, bio: '', link: '', linkHref: '' };
 
   const SC = {                                                 // reusable scene palettes
     s1: { k: 'bars',  a: '#15123a', b: '#5a2bd6', c: '#ff4d8d', g: '🎬', kin: ['CUT', 'BEAT', 'DROP'] },
@@ -6644,7 +6649,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   let POSTS = (CFG.posts && CFG.posts.length ? CFG.posts : []).map(p => Object.assign({}, p));
 
   const seg = (scene, text, mins) => ({ scene, text, ago: ago(mins) });
-  const STORIES0 = [{ u: 'bmn', me: true, segs: [] }];
+  const STORIES0 = [];
 
   const CHATS0 = [];
   const REPLIES = { default: [], question: [], thanks: [], greet: [] };
@@ -6674,7 +6679,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   // Migrate away from known reference-only demo accounts left by earlier builds.
   ['kele','amaka','sade'].forEach(id=>{if(S.follows)delete S.follows[id];});
   if(Array.isArray(S.blocked))S.blocked=S.blocked.filter(handle=>!['spam.account','bot.bot123'].includes(String(handle)));
-  Object.assign(ME, S.profile || {});
+  if (window.bmnSession && window.bmnSession.user) Object.assign(ME, S.profile || {}); else { S.profile = {}; ME.id = 'guest'; ME.name = 'Your profile'; ME.handle = ''; ME.bio = ''; ME.link = ''; ME.linkHref = ''; ME.followers = null; ME.following = null; ME.likes = null; ME.me = true; }
 
   /* ---------------------------------------------------------------
      3.4 Haptics — navigator.vibrate on every tap / gesture / long-press
@@ -7474,7 +7479,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   }
   const Stories = (() => {
     let ui = 0, si = 0, raf = 0, last = 0, el_ = 0, paused = false, held = false, holdT = 0, suppress = false, liked = false;
-    const model = () => STORIES0.map(s => s.me ? Object.assign({}, s, { segs: S.myStories.map(m => ({ scene: m.scene, text: m.text, ago: ago((Date.now() - m.t) / 60000) })) }) : s);
+    const model = () => [{ u: ME.id, me: true, segs: S.myStories.map(m => ({ scene: m.scene, text: m.text, ago: ago((Date.now() - m.t) / 60000) })) }].concat(STORIES0.filter(s => !s.me));
     const viewable = () => model().filter(s => !s.live && s.segs.length);
     function renderInto(box) {
       if (!box) return;
@@ -7527,6 +7532,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       haptic('tick');
     }
     function composer() {
+      if (!window.bmnSession || !window.bmnSession.user) { if (window.bmnOpenAuth) window.bmnOpenAuth(); else toast('Sign in to add a story.', 'key'); return; }
       const sw = [SC.s1, SC.s2, SC.s3, SC.s4, SC.s5, SC.s6]; let cur = 0;
       const paint = () => { R.SpPreview.style.setProperty('--sa', sw[cur].a); R.SpPreview.style.setProperty('--sb', sw[cur].b); R.SpPreview.style.setProperty('--sc', sw[cur].c); $$('button', R.SpSwatches).forEach((b, i) => { b.classList.toggle('on', i === cur); b.setAttribute('aria-checked', i === cur); }); };
       R.SpSwatches.innerHTML = sw.map((s, i) => '<button type="button" role="radio" aria-label="Background ' + (i + 1) + '" style="--sa:' + s.a + ';--sc:' + s.c + '"></button>').join('');
@@ -7535,6 +7541,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       openLayer(R.StoryComposer, { kind: 'sheet' });
     }
     function post() {
+      if (!window.bmnSession || !window.bmnSession.user) { if (window.bmnOpenAuth) window.bmnOpenAuth(); return; }
       const text = R.SpText.value.trim(); if (!text) { toast('Type something first', 'info'); haptic('warn'); R.SpText.focus(); return; }
       S.myStories.push({ scene: Stories._sw(), text, t: Date.now() }); S.seen[ME.id] = 0; save(); closeLayer(R.StoryComposer); render(); haptic('success'); toast('Added to your story', 'check');
       $$('.lgtt-story-item[data-story="' + ME.id + '"]', R.root).forEach(b => wobble(b, { amp: 2, rot: 6 }));
@@ -7655,20 +7662,41 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const s = $('#lgttChatStatus'); const typing = typingId === c.id;
       s.className = typing || c.online ? 'live' : ''; s.innerHTML = typing ? '<span class="lgtt-typing-dots"><i></i><i></i><i></i></span> typing…' : c.online ? 'Active now' : 'Active recently';
     }
+    async function loadServerHistory(c) {
+      const me=window.bmnSession?.user?.id, sb=window.bmnSupabase, peer=String(c?.u||'');
+      if(!me||!sb||!peer||peer==='bmn'||peer==='guest')return;
+      try {
+        let query=sb.from('messages').select('*').order('created_at',{ascending:true});
+        if(peer===me) query=query.eq('sender_id',me).eq('receiver_id',me);
+        else query=query.or('and(sender_id.eq.'+me+',receiver_id.eq.'+peer+'),and(sender_id.eq.'+peer+',receiver_id.eq.'+me+')');
+        const {data,error}=await query; if(error)throw error;
+        const remote=(data||[]).filter(m=>!(String(m.sender_id)===String(me)&&m.deleted_by_sender)&&!(String(m.receiver_id)===String(me)&&m.deleted_by_receiver)).map(m=>({serverId:m.id,me:String(m.sender_id)===String(me),t:new Date(m.created_at||Date.now()).getTime(),text:String(m.content||m.message||''),seen:!!m.is_read})).filter(m=>m.text);
+        if(openId!==c.id)return;
+        const locals=(c.msgs||[]).filter(m=>m.serverId||m.localOnly===true);
+        const seen=new Set(remote.map(m=>m.serverId)); c.msgs=remote.concat(locals.filter(m=>!m.serverId||!seen.has(m.serverId))).sort((a,b)=>a.t-b.t); persistSelfChat(c); renderChat(false);
+      } catch(err) { toast('Messages could not be loaded from the server: '+(err.message||'check messages table permissions.'),'warn'); }
+    }
     function openChat(id) {
       const c = chats.find(x => x.id === id); if (!c) return; openId = id; c.unread = 0; const u = userFor(c.u);
       $('#lgttChatAv').outerHTML = avatar(u, 'lgtt-sm').replace('class="', 'id="lgttChatAv" class="'); $('#lgttChatName').textContent = u.name;
       R.ChatInput.value = ''; syncCompose(); renderChat(false); badge();
       openLayer(R.Chat, { kind: 'over', onClose: () => { openId = null; renderList(); } });
-
+      loadServerHistory(c);
     }
     function syncCompose() { const has = !!R.ChatInput.value.trim(); $('.lgtt-send', R.ChatForm).disabled = !has; $('.lgtt-float-compose', R.Chat).classList.toggle('has-text', has); }
-    function send(text, big) {
+    async function send(text, big) {
       const c = chats.find(x => x.id === openId); if (!c || !text.trim()) return;
+      const session=window.bmnSession, sb=window.bmnSupabase; if(!session?.user||!sb){if(window.bmnOpenAuth)window.bmnOpenAuth();else toast('Sign in to send messages.','key');return;}
       if (S.settings.whoMessage === 'none') { toast('Messages are turned off in your privacy settings', 'lock'); return; }
-      c.msgs.push({ me: true, t: Date.now(), text: text.trim(), seen: false }); persistSelfChat(c); R.ChatInput.value = ''; syncCompose(); haptic('send');
-      renderChat(true); toast(c.u===ME.id?'Self-chat saved on this device only.':'Message is only shown in this open session; connect the real BMN messaging backend to deliver it.', 'info');
+      if(!navigator.onLine){toast('You are offline. The message has not been sent. Reconnect to send it.','warn');return;}
+      const receiver=String(c.u||''); if(!receiver||receiver==='bmn'||receiver==='guest'){toast('This conversation is not connected to a real account. Open a signed-in creator profile to message them.','warn');return;}
+      try {
+        const payload={sender_id:session.user.id,receiver_id:receiver,content:text.trim()};
+        const {data,error}=await sb.from('messages').insert(payload).select('*').single(); if(error)throw error;
+        c.msgs.push({serverId:data?.id,me:true,t:new Date(data?.created_at||Date.now()).getTime(),text:String(data?.content||text.trim()),seen:!!data?.is_read}); persistSelfChat(c); R.ChatInput.value=''; syncCompose(); haptic('send'); renderChat(true); toast('Message sent and saved to your account.','check');
+      } catch(err) { toast('Message was not sent or saved: '+(err.message||'check the messages table and its RLS policies.'),'warn'); }
     }
+
     function pickReply(text) { const t = text.toLowerCase(); if (/^(hi|hey|yo|hello|sup)\b/.test(t)) return pick(REPLIES.greet); if (/thank|thanks|appreciate/.test(t)) return pick(REPLIES.thanks); if (t.includes('?')) return pick(REPLIES.question); return pick(REPLIES.default); }
     async function autoReply(c, text, forced) {
       // Deliberately no synthetic replies. Connect this action to the real messages backend before delivery is shown.
@@ -7699,7 +7727,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       open, openChat, bind, badge, setTab, ensure, simulateIncoming, chats: () => chats, refresh() { if (R.Dm) { renderList(); if (openId) renderChat(true); } },
       current: () => chats.find(c => c.id === openId), heart() { send('❤️', true); },
       openWith(uid) { const c = ensure(uid); open(); setTimeout(() => openChat(c.id), 80); },
-      clear() { const c = chats.find(x => x.id === openId); if (c) { c.msgs = []; persistSelfChat(c); renderChat(false); } },
+      clear() { const c = chats.find(x => x.id === openId); if (c) { const me=window.bmnSession?.user?.id,peer=String(c.u||''),sb=window.bmnSupabase; if(!me||!sb){toast('Sign in to manage saved messages.','key');return;} Confirm.ask('Clear this conversation for you?','This hides the conversation from your account only. It does not erase the other person’s copy.','Clear for me',async()=>{try{const {error}=await sb.rpc('bmn_clear_conversation',{p_peer:peer});if(error)throw error;c.msgs=[];persistSelfChat(c);renderChat(false);toast('Conversation cleared from your account.','check')}catch(err){toast('Conversation was not cleared: '+(err.message||'run the BMN messaging migration and check RLS policies.'),'warn')}},true); } },
       newChat() { const have = new Set(chats.map(c => c.u)); const items = Object.values(U).filter(u => !u.me && !have.has(u.id)).map(u => ({ label: '@' + u.handle, icon: 'user', fn: () => Dm.openWith(u.id) })); if (!items.length) { toast('You already have a chat with everyone here', 'info'); return; } Menu.open(items); }
     };
   })();
@@ -7762,6 +7790,11 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     };
     function renderHead() {
       const u = user(), f = !!S.follows[u.id];
+      if (!window.bmnSession || !window.bmnSession.user) {
+        R.ProfHead.innerHTML = '<div class="lgtt-guest-profile"><div class="lgtt-guest-avatar">＋</div><h2>Your profile starts here</h2><p>Sign in or create an account to add a profile photo, publish videos, follow creators and manage your messages.</p><button type="button" class="lgtt-btn lgtt-pill lgtt-primary" data-bmn-auth-open>Sign in / Create account</button></div>';
+        R.ProfMenu.style.visibility = 'hidden';
+        return;
+      }
       const myStory = u.me && S.myStories.length;
       const followers = u.followers == null ? null : Number(u.followers) + (!u.me && f ? 1 : 0);
       R.ProfHead.innerHTML =
@@ -7818,13 +7851,13 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     const L = (id, icon, c1, c2, title, desc, val, danger) => ({ t: 'link', id, icon, c1, c2, title, desc, val, danger });
     function groups() {
       const u = ME;
-      if (tab === 'account') return [
-        { prof: true },
-        { h: 'Account', rows: [L('edit', 'user', '#58aaff', '#9b6bff', 'Display name', '', u.name), L('edit', 'sliders', '#59f1e6', '#58aaff', 'Username', '', '@' + u.handle), L('pw', 'key', '#ffd166', '#ff8a5c', 'Password', 'Managed by your BMN account', 'Change'),
-          O('language', 'globe', '#b18cff', '#58aaff', 'Language', '', ['English', 'Pidgin', 'Yorùbá'])] },
-        { h: 'Linked accounts', rows: [L('ext:https://www.tiktok.com/@thisisbmn', 'link', '#ff5c8a', '#ff2d6f', 'TikTok', '@thisisbmn', 'Open'), L('ext:https://www.youtube.com/@thisisbmn', 'link', '#ff3b5c', '#ff6a88', 'YouTube', '@thisisbmn', 'Open')] },
-        { h: 'Session', rows: [L('switch', 'users', '#58aaff', '#59f1e6', 'Switch account', '', ''), L('logout', 'logout', '#ff8a5c', '#ff5c8a', 'Log out', 'Preview session only — does not touch your site login', ''), L('delete', 'trash', '#ff3b5c', '#ff6a88', 'Delete account', 'Removes saved data from this device', '', true)] }
-      ];
+      if (tab === 'account') {
+        const signed = !!(window.bmnSession && window.bmnSession.user);
+        const rows = signed
+          ? [L('edit', 'user', '#58aaff', '#9b6bff', 'Display name and profile', '', u.name), L('edit', 'sliders', '#59f1e6', '#58aaff', 'Username and bio', '', u.handle ? '@' + u.handle : ''), L('pw', 'key', '#ffd166', '#ff8a5c', 'Change password', 'Update your BMN Community password', 'Change'), L('phone', 'phone', '#59f1e6', '#58aaff', 'Phone number', 'Add or verify a phone number', 'Manage'), O('language', 'globe', '#b18cff', '#58aaff', 'App language', 'Choose from the language list', ['English'])]
+          : [L('auth', 'user', '#58aaff', '#9b6bff', 'Sign in or create account', 'Your profile and personal settings appear after sign-in', 'Sign in'), O('language', 'globe', '#b18cff', '#58aaff', 'App language', 'Choose from the language list', ['English'])];
+        return [{ prof: true }, { h: signed ? 'Your account' : 'General settings', rows }, ...(signed ? [{ h: 'Your links', rows: [L('website', 'link', '#ff5c8a', '#ff2d6f', 'Website', u.link || 'Add in Edit profile', u.link ? 'Open' : '')] }, { h: 'Session', rows: [L('switch', 'users', '#58aaff', '#59f1e6', 'Switch account', '', ''), L('logout', 'logout', '#ff8a5c', '#ff5c8a', 'Sign out', 'Sign out of BMN Community on this device', 'Sign out'), L('delete', 'trash', '#ff3b5c', '#ff6a88', 'Delete account', 'Contact support to securely delete your account and data', '', true)] }] : [])];
+      }
       if (tab === 'privacy') return [
         { h: 'Discoverability', rows: [T('private', 'lock', '#58aaff', '#9b6bff', 'Private account', 'Only approved followers can watch your videos'), T('suggest', 'users', '#59f1e6', '#58aaff', 'Suggest account to others', 'Appear in “Creators to follow”'), T('activity', 'live', '#3ddc84', '#59f1e6', 'Activity status', 'Let friends see when you are online')] },
         { h: 'Interactions', rows: [O('whoComment', 'comment', '#ffd166', '#ff8a5c', 'Who can comment', '', ['everyone', 'friends', 'none']), O('whoMessage', 'mail', '#b18cff', '#ff5c8a', 'Who can message me', '', ['everyone', 'friends', 'none']), T('downloads', 'download', '#58aaff', '#59f1e6', 'Allow downloads', 'Let others save your videos')] },
@@ -7842,14 +7875,14 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     function rowHTML(r) {
       const ic = '<span class="lgtt-set-ic" style="--c1:' + r.c1 + ';--c2:' + r.c2 + '">' + ico(r.icon) + '</span>', txt = '<span class="lgtt-set-txt"><strong>' + esc(r.title) + '</strong>' + (r.desc ? '<small>' + esc(r.desc) + '</small>' : '') + '</span>';
       if (r.t === 'toggle') return '<div class="lgtt-set-row">' + ic + txt + '<button type="button" class="lgtt-switch" role="switch" aria-label="' + esc(r.title) + '" aria-checked="' + !!S.settings[r.key] + '" data-set="' + r.key + '" data-haptic="none"></button></div>';
-      if (r.t === 'opts') return '<div class="lgtt-set-row">' + ic + txt + '<span class="lgtt-opts" data-opt="' + r.key + '">' + r.choices.map(c => '<button type="button" class="' + (S.settings[r.key] === c ? 'on' : '') + '" data-v="' + c + '">' + (c === 'none' ? 'No one' : c[0].toUpperCase() + c.slice(1)) + '</button>').join('') + '</span></div>';
+      if (r.t === 'opts' && r.key === 'language') { const codes = 'af am ar as az be bg bn bs ca ceb co cs cy da de dv el en eo es et eu fa fi fil fj fo fr fy ga gd gl gu ha haw he hi hmn hr ht hu hy id ig is it ja jv ka kk km kn ko ku ky la lb lo lt lv mg mi mk ml mn mr ms mt my ne nl no ny pa pl ps pt ro ru rw sd si sk sl sm sn so sq sr st su sv sw ta te tg th tk tl tr tt ug uk ur uz vi xh yi yo zh zu ab aa ace ach ada ady agq ain ak ale alt an ang arc arn ast av avk awa ay bal ban bar bas bax bbc bci bcl bej bem bew bho bik bin biu bla bra brx bss bug bua byn cad car cch cdo ce cgg chb chg chk chm cho chp chr chy ckb cop cr crh csb cu cv dar dav del den dgr din dje doi dsb dua dyo dz ebu efi egy eka elx enm esu eve ewo fan fat ff fon frc frm fro frp fur gaa gag gan gay gba gez gil glk gmh goh gom gon gor got grb grc gsw gub guz gv gwi hak haw hif hil hit hmn hne ho hsb hsn hup iba ibb ilo inh io jbo jpr jrb kaa kab kac kaj kam kaw kbd kcg kfo kg kha kho ki kj kk kl kmb kok kos kpe krc kri krj krl kru ks ksb ksf ksh ku kum kut kv kw lad lag lah lam lez lg li lij liv lmo ln lol loz lrc ltg lu lua luy mad maf mag mai mak man mas mdf mdh mdr men mer mfe mhk mic min mkh mlg mni moh mos mua mul mus mwl mwr myv na nah nap naq nb nds new ng nia niu njo nmg nn nnh nog non nov nqo nr nso nus nv nym nyn nyo nzi oc oj om or os ota pa pag pal pam pap pau pcd pdc pdt peo pfl pi pih pis pms pnt pon prg pro qu rm rn rof rom root rup rwk sa sah sam saq sas sat sc scn sco sd se seh sei sel ses sg sga shi shn shu sid sma smj smn sms snk snv soj sqi srn srr ss ssy stq sux sus swb syr szl taq tay tei tem teo ter tet tig tiv tkl tkr tlh tli tmh tn to tog tpi trv ts tsd tsi ttj tum tw tyv udm uga umb und vai ve vec vep vls vmw vo vot vro wae wal war was wbp wls wo wuu xal xmf yao yap ybb yrl yue za zdj zea zgh zkt zxx zza'.split(' '); let names=[]; try { const dn=new Intl.DisplayNames(['en'],{type:'language'}); names=[...new Set(codes)].map(code=>{let name=code;try{name=dn.of(code)||code}catch(_){}return {code,name}}).filter(x=>x.name&&x.name!==x.code.toUpperCase()).sort((a,b)=>a.name.localeCompare(b.name)); } catch(_) { names=[{code:'en',name:'English'},{code:'fr',name:'French'},{code:'yo',name:'Yoruba'},{code:'ig',name:'Igbo'},{code:'pcm',name:'Nigerian Pidgin'}]; } if(!names.some(x=>x.code==='pcm')) names.push({code:'pcm',name:'Nigerian Pidgin'}); return '<div class="lgtt-set-row lgtt-language-row">' + ic + '<span class="lgtt-set-txt"><strong>' + esc(r.title) + '</strong><small>Search and select a language</small><input class="lgtt-language-search" type="search" placeholder="Search languages…" aria-label="Search languages" data-language-search></span><select class="lgtt-language-select" data-language-picker aria-label="App language">' + names.map(x=>'<option value="'+esc(x.name)+'" '+(String(S.settings.language||'English')===x.name?'selected':'')+'>'+esc(x.name)+'</option>').join('') + '</select></div>'; } if (r.t === 'opts') return '<div class="lgtt-set-row">' + ic + txt + '<span class="lgtt-opts" data-opt="' + r.key + '">' + r.choices.map(c => '<button type="button" class="' + (S.settings[r.key] === c ? 'on' : '') + '" data-v="' + c + '">' + (c === 'none' ? 'No one' : c[0].toUpperCase() + c.slice(1)) + '</button>').join('') + '</span></div>';
       return '<button type="button" class="lgtt-set-row' + (r.danger ? ' danger' : '') + '" data-link="' + esc(r.id) + '">' + ic + txt + '<span class="lgtt-set-val">' + esc(r.val || '') + ico('chev-r') + '</span></button>';
     }
     function render() {
       let n = 0;
       R.SetBody.innerHTML = groups().map(g => {
         const i = n++;
-        if (g.prof) return '<div class="lgtt-set-group" style="--n:' + i + '"><div class="lgtt-set-card lgtt-glass"><div class="lgtt-set-prof">' + avatar(ME, 'lgtt-md') + '<div style="flex:1"><strong>' + esc(ME.name) + '</strong><small>@' + esc(ME.handle) + '</small></div><button type="button" class="lgtt-btn lgtt-pill lgtt-sm" data-link="edit">Edit</button></div></div></div>';
+        if (g.prof) { if (!window.bmnSession || !window.bmnSession.user) return '<div class="lgtt-set-group" style="--n:' + i + '"><div class="lgtt-set-card lgtt-glass"><div class="lgtt-set-prof lgtt-set-guest"><span class="lgtt-guest-avatar">＋</span><div style="flex:1"><strong>General settings</strong><small>No account is signed in on this device.</small></div><button type="button" class="lgtt-btn lgtt-pill lgtt-sm lgtt-primary" data-link="auth">Sign in</button></div></div></div>'; return '<div class="lgtt-set-group" style="--n:' + i + '"><div class="lgtt-set-card lgtt-glass"><div class="lgtt-set-prof">' + avatar(ME, 'lgtt-md') + '<div style="flex:1"><strong>' + esc(ME.name) + '</strong><small>@' + esc(ME.handle) + '</small></div><button type="button" class="lgtt-btn lgtt-pill lgtt-sm" data-link="edit">Edit</button></div></div></div>'; }
         if (g.kw) return '<div class="lgtt-set-group" style="--n:' + i + '"><h4>Comment filter</h4><div class="lgtt-set-card lgtt-glass"><div class="lgtt-set-row" style="border:0"><span class="lgtt-set-ic" style="--c1:#ff5c8a;--c2:#ff8a5c">' + ico('ban') + '</span><span class="lgtt-set-txt"><strong>Hide comments with keywords</strong><small>Hidden in every comment drawer</small></span></div>' +
           '<div class="lgtt-kw">' + (S.filterWords.map((w, k) => '<span>' + esc(w) + '<button type="button" data-kw-del="' + k + '" aria-label="Remove ' + esc(w) + '">' + ico('x') + '</button></span>').join('') || '<small style="color:var(--lg-fg-3)">No keywords yet</small>') + '</div>' +
           '<form class="lgtt-kw-add" id="lgttKwForm"><input id="lgttKwInput" maxlength="24" placeholder="Add a keyword…" aria-label="New keyword"><button type="submit" class="lgtt-btn lgtt-pill lgtt-sm lgtt-primary">Add</button></form></div></div>';
@@ -7860,12 +7893,15 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     function apply() { App.applySettings(); Profile.refreshHead(); }
     function link(id) {
       if (id === 'edit') return Edit.open();
-      if (id === 'pw') return toast('Password changes are managed by your BMN account', 'key');
+      if (id === 'pw') { if (!window.bmnSession || !window.bmnSupabase) return window.bmnOpenAuth ? window.bmnOpenAuth() : toast('Sign in to manage your account.', 'key'); const password = prompt('Enter a new password (at least 8 characters):'); if (!password) return; if (password.length < 8) return toast('Use at least 8 characters for your password.', 'warn'); window.bmnSupabase.auth.updateUser({ password }).then(({error}) => error ? toast('Password could not be changed: ' + error.message, 'warn') : toast('Password updated.', 'check')).catch(e => toast(e.message || 'Password update failed.', 'warn')); return; }
       if (id.startsWith('ext:')) return window.open(id.slice(4), '_blank', 'noopener');
-      if (id === 'switch') return toast('Only one account in this preview', 'users');
-      if (id === 'logout') return Confirm.ask('Log out?', 'This only ends the Reels preview session. Your website login is not affected.', 'Log out', () => { haptic('success'); closeLayer(R.Settings); toast('Signed out of the Reels preview', 'logout'); });
-      if (id === 'delete') return Confirm.ask('Delete Reels data?', 'Likes, favourites, follows, stories and comments stored on this device will be removed.', 'Delete', () => { resetData(); toast('Reels data deleted from this device', 'trash'); }, true);
-      if (id === 'data') return toast('Data export is requested from your BMN account', 'download');
+      if (id === 'switch') { if(!window.bmnSession||!window.bmnSupabase)return window.bmnOpenAuth?window.bmnOpenAuth():toast('Sign in first.','key'); return Confirm.ask('Switch account?','This signs out the current account on this device so another person can sign in.','Switch account',async()=>{const {error}=await window.bmnSupabase.auth.signOut();if(error)return toast('Could not switch accounts: '+error.message,'warn');closeLayer(R.Settings);if(window.bmnOpenAuth)window.bmnOpenAuth();}); }
+      if (id === 'auth') return window.bmnOpenAuth ? window.bmnOpenAuth() : toast('Sign-in panel is unavailable. Reload and try again.', 'warn');
+      if (id === 'website') { if (ME.linkHref) window.open(ME.linkHref, '_blank', 'noopener'); else Edit.open(); return; }
+      if (id === 'phone') { if(!window.bmnSession||!window.bmnSupabase)return window.bmnOpenAuth?window.bmnOpenAuth():toast('Sign in to manage your phone number.','key'); const phone=prompt('Enter the phone number with country code (for example +234…):'); if(!phone)return; window.bmnSupabase.auth.updateUser({phone:phone.trim()}).then(async({error})=>{if(error)throw error;const token=prompt('Enter the verification code sent to '+phone.trim()+':');if(!token)return;const result=await window.bmnSupabase.auth.verifyOtp({phone:phone.trim(),token:token.trim(),type:'phone_change'});if(result.error)throw result.error;toast('Phone number updated.','check')}).catch(e=>toast('Phone number could not be changed: '+(e.message||'confirm SMS authentication is configured in Supabase.'),'warn')); return; }
+      if (id === 'logout') { if (!window.bmnSession || !window.bmnSupabase) return toast('No signed-in account was found.', 'info'); return Confirm.ask('Sign out?', 'This will sign out of your real BMN Community account on this device.', 'Sign out', async () => { const {error}=await window.bmnSupabase.auth.signOut(); if(error) return toast('Could not sign out: '+error.message,'warn'); closeLayer(R.Settings); toast('Signed out of BMN Community.','logout'); }); }
+      if (id === 'delete') return toast('Secure account deletion is not enabled yet. Your account has not been deleted.', 'warn');
+      if (id === 'data') return toast('Data export is not enabled yet. No export request was submitted.', 'download');
       if (id === 'policy') return toast('Link your privacy policy URL in LGTT_CONFIG', 'info');
       if (id === 'clear') return Confirm.ask('Reset Reels data?', 'This clears likes, favourites, follows, stories and added comments on this device.', 'Reset', () => { resetData(); toast('Reels data reset', 'check'); }, true);
       if (id === 'about') return toast('BMN Liquid Glass Reels v1.0', 'info');
@@ -7879,11 +7915,13 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       R.SetBody.addEventListener('click', e => {
         const sw = e.target.closest('[data-set]');
         if (sw) { const k = sw.dataset.set; S.settings[k] = !S.settings[k]; save(); sw.setAttribute('aria-checked', S.settings[k]); wobble(sw.closest('.lgtt-set-row'), { amp: 0.6, rot: 0.1 }); haptic(S.settings[k] ? 'success' : 'tap'); if (k === 'haptics' && S.settings.haptics) { lastHap = 0; haptic('success'); } apply(); return; }
+        const lang = e.target.closest('[data-language-picker]'); if (lang) { S.settings.language = lang.value; save(); toast('Language preference saved. Full interface translation is not enabled yet.', 'check'); return; }
         const op = e.target.closest('[data-opt] [data-v]'); if (op) { const k = op.parentElement.dataset.opt; S.settings[k] = op.dataset.v; save(); $$('[data-v]', op.parentElement).forEach(x => x.classList.toggle('on', x === op)); haptic('select'); return; }
         const lk = e.target.closest('[data-link]'); if (lk) { link(lk.dataset.link); return; }
         const ub = e.target.closest('[data-unblock]'); if (ub) { S.blocked = S.blocked.filter(x => x !== ub.dataset.unblock); save(); haptic('success'); render(); toast('Unblocked', 'check'); return; }
         const kd = e.target.closest('[data-kw-del]'); if (kd) { S.filterWords.splice(+kd.dataset.kwDel, 1); save(); haptic('tap'); render(); return; }
       });
+      R.SetBody.addEventListener('input', e => { if (!e.target.matches('[data-language-search]')) return; const q=e.target.value.trim().toLocaleLowerCase(); const sel=R.SetBody.querySelector('[data-language-picker]'); if(!sel)return; [...sel.options].forEach(o=>{o.hidden=!!q&&!o.textContent.toLocaleLowerCase().includes(q)}); if(q){const first=[...sel.options].find(o=>!o.hidden);if(first)sel.value=first.value;} });
       R.SetBody.addEventListener('submit', e => { if (e.target.id !== 'lgttKwForm') return; e.preventDefault(); const v = $('#lgttKwInput').value.trim(); if (!v) return; if (!S.filterWords.includes(v)) S.filterWords.push(v); save(); haptic('success'); render(); $('#lgttKwInput').focus(); });
       scrollWobble(R.SetBody, () => R.SetBody.querySelector('.lgtt-set-card'), { amp: 0.6, rot: 0.1 });
     }
@@ -7892,6 +7930,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 
   const Edit = {
     open() {
+      if (!window.bmnSession || !window.bmnSession.user) { if (window.bmnOpenAuth) window.bmnOpenAuth(); return; }
       const f = R.EditForm; f.name.value = ME.name; f.handle.value = ME.handle; f.bio.value = ME.bio || ''; f.link.value = ME.link || '';
       openLayer(R.Edit, { kind: 'sheet' });
     },
@@ -7901,6 +7940,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         if (!f.name.value.trim() || !handle) { haptic('warn'); return; }
         Object.assign(ME, { name: f.name.value.trim(), handle, bio: f.bio.value.trim(), link: f.link.value.trim(), linkHref: f.link.value.trim() ? (/^https?:/.test(f.link.value.trim()) ? f.link.value.trim() : 'https://' + f.link.value.trim()) : '' });
         S.profile = { name: ME.name, handle: ME.handle, bio: ME.bio, link: ME.link, linkHref: ME.linkHref }; save();
+        const accountId=window.bmnSession?.user?.id; if(accountId&&window.bmnSupabase){window.bmnSupabase.from('profiles').upsert({id:accountId,display_name:ME.name,username:ME.handle,bio:ME.bio,website_url:ME.link,updated_at:new Date().toISOString()},{onConflict:'id'}).then(({error})=>{if(error)toast('Profile could not sync to your account: '+error.message,'warn');else toast('Profile saved to your account.','check')}).catch(err=>toast(err.message||'Profile sync failed.','warn'));}
         closeLayer(R.Edit); Profile.render(ME.id); if (R.Settings.classList.contains('is-open')) Settings.render(); Stories.render(); haptic('success'); toast('Profile updated', 'check');
       });
     }
@@ -8003,16 +8043,18 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     /* ---- click delegation for every data-act in the overlay ---- */
     function onClick(e) {
       const t = e.target;
+      if (t.closest('[data-bmn-auth-open]')) { e.preventDefault(); if (window.bmnOpenAuth) window.bmnOpenAuth(); return; }
       const dock = t.closest('[data-dock]');
       if (dock) {
         const d = dock.dataset.dock; haptic('tap');
-        if (d === 'create') Create.open(); else if (d === 'inbox') Dm.open(); else if (d === 'profile') Views.set('profile', ME.id); else Views.set(d);
+        if (['create','inbox','profile'].includes(d) && !(window.bmnSession && window.bmnSession.user)) { if (window.bmnOpenAuth) window.bmnOpenAuth(); else toast('Sign in or create an account to continue.', 'key'); return; } if (d === 'create') Create.open(); else if (d === 'inbox') Dm.open(); else if (d === 'profile') Views.set('profile', ME.id); else Views.set(d);
         return;
       }
       const story = t.closest('[data-story]'); if (story) { haptic('tap'); Stories.openUser(story.dataset.story); return; }
       const tabBtn = t.closest('[data-tab]'); if (tabBtn && tabBtn.closest('#lgttTabs')) { Feed.setMode(tabBtn.dataset.tab); return; }
       const a = t.closest('[data-act]'); if (!a) return;
       const act = a.dataset.act, slide = a.closest('.lgtt-slide'), post = slide && slide._post;
+      if (['like','save','follow','comment','edit-profile','message','repost','story-post'].includes(act) && !(window.bmnSession && window.bmnSession.user)) { e.preventDefault(); if (window.bmnOpenAuth) window.bmnOpenAuth(); else toast('Sign in or create an account to continue.', 'key'); return; }
       switch (act) {
         case 'close': Overlay.close(); break;
         case 'close-layer': { const L = a.closest('[data-layer]'); if (L) closeLayer(L); break; }
@@ -8167,6 +8209,29 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     haptic: k => haptic(k), toast
   };
 
+  window.bmnLGTTAccountSync = async function(session) {
+    try {
+      const user = session && session.user;
+      if (!user) {
+        ME.id='guest'; ME.name='Your profile'; ME.handle=''; ME.bio=''; ME.link=''; ME.linkHref=''; ME.avatar_url=''; ME.avatar=''; ME.followers=null; ME.following=null; ME.likes=null; ME.me=true;
+        U.guest=ME; delete S.profile; S.myStories=[]; save();
+      } else {
+        const meta=user.user_metadata||{}; let profile={};
+        try { const sb=window.bmnSupabase; if(sb){ const r=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle(); if(!r.error&&r.data) profile=r.data; } } catch(_) {}
+        const base=String(user.email||'').split('@')[0]||'creator';
+        ME.id=user.id; ME.name=profile.display_name||meta.display_name||meta.full_name||base; ME.handle=String(profile.username||meta.username||base).replace(/^@/,''); ME.bio=profile.bio||''; ME.link=profile.website_url||''; ME.linkHref=ME.link?( /^https?:\/\//i.test(ME.link)?ME.link:'https://'+ME.link):''; ME.avatar_url=profile.avatar_url||''; ME.avatar=profile.avatar_display_url||profile.avatar_url||''; try{if(ME.avatar_url&&window.resolveStorageUrl)ME.avatar=await window.resolveStorageUrl(ME.avatar_url)}catch(_){} ME.me=true;
+        U[user.id]=ME; S.profile={name:ME.name,handle:ME.handle,bio:ME.bio,link:ME.link,linkHref:ME.linkHref}; save();
+      }
+      if (window.LGTT) { window.LGTT.setUser(ME); window.LGTT.refreshProfile(); }
+      if (R.Settings && R.Settings.classList.contains('is-open')) Settings.render();
+      if (ST.view==='profile') Profile.render(ME.id);
+      Stories.render();
+    } catch(err) { console.warn('BMN account sync:',err); }
+  };
+  if (window.bmnSupabase && window.bmnSupabase.auth) {
+    window.bmnSupabase.auth.getSession().then(({data})=>window.bmnLGTTAccountSync(data&&data.session)).catch(()=>window.bmnLGTTAccountSync(null));
+    window.bmnSupabase.auth.onAuthStateChange((_event,session)=>{ window.bmnSession=session; window.bmnLGTTAccountSync(session); });
+  } else window.bmnLGTTAccountSync(window.bmnSession||null);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', App.boot); else App.boot();
 })();
 
@@ -8886,93 +8951,97 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
 })();
 </script>
 
-<style id="bmn-auth-gate-fix">
-#bmnAuthGate{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:max(22px,env(safe-area-inset-top)) 20px max(22px,env(safe-area-inset-bottom));background:radial-gradient(100% 75% at 50% 0%,#17213a 0%,#090b14 55%,#03040a 100%);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;overflow:auto}
-#bmnAuthGate.is-visible{display:flex}
-#bmnAuthGate .bmn-auth-card{position:relative;width:min(100%,430px);padding:26px 22px 22px;border-radius:28px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.075);box-shadow:0 24px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%)}
-#bmnAuthGate .bmn-auth-mark{width:54px;height:54px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(140deg,rgba(255,255,255,.25),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);font-weight:900;font-size:19px;letter-spacing:-1px;margin-bottom:18px}
-#bmnAuthGate .bmn-gate-close{position:absolute;top:12px;right:12px;width:36px;min-height:36px;padding:0;border-radius:50%;font-size:25px;line-height:1;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18)}
-#bmnAuthGate h1{font-size:clamp(28px,7vw,38px);line-height:1.05;letter-spacing:-.045em;margin:0 0 9px;color:#fff}
-#bmnAuthGate p{font-size:14px;line-height:1.55;color:rgba(255,255,255,.74);margin:0 0 20px}
-#bmnAuthGate input{display:block;width:100%;box-sizing:border-box;margin:9px 0;padding:14px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;font:inherit;outline:none}
-#bmnAuthGate input::placeholder{color:rgba(255,255,255,.58)}
-#bmnAuthGate .bmn-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
-#bmnAuthGate button{min-height:46px;border-radius:14px;padding:10px 12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:#fff;font:650 14px/1.2 inherit;cursor:pointer}
-#bmnAuthGate button.primary{background:#fff;color:#080a11;border-color:#fff}
-#bmnAuthGate .bmn-auth-status{min-height:20px;margin:13px 0 0;font-size:12px;color:#c8d7ff;overflow-wrap:anywhere}
-#bmnAuthGate .bmn-gate-divider{display:flex;align-items:center;gap:10px;margin:17px 0 12px;color:rgba(255,255,255,.62);font-size:10px;letter-spacing:.12em}#bmnAuthGate .bmn-gate-divider:before,#bmnAuthGate .bmn-gate-divider:after{content:"";height:1px;flex:1;background:rgba(255,255,255,.18)}
-#bmnAuthGate .bmn-gate-oauth{display:grid;grid-template-columns:1fr;gap:9px}#bmnAuthGate .bmn-gate-oauth button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);font-weight:600}#bmnAuthGate .bmn-gate-oauth button:disabled{opacity:.55;cursor:wait}#bmnAuthGate .bmn-google-mark{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#fff;color:#4285f4;font-weight:800;font-size:14px}#bmnAuthGate .bmn-apple-mark{font-size:20px;line-height:1;color:#fff}#bmnAuthGate .bmn-gate-provider-note{font-size:10px!important;line-height:1.45!important;margin:9px 0 0!important;color:rgba(255,255,255,.52)!important}
-#bmnRealLogout{position:fixed!important;z-index:2147482000;top:max(12px,env(safe-area-inset-top));right:12px;display:none!important;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(15,17,24,.55);color:#fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);font:600 12px system-ui}
-#bmnRealLogout.is-visible{display:none!important}
-</style>
-<div id="bmnAuthGate" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
- <div class="bmn-auth-card">
-  <button type="button" id="bmnGateClose" aria-label="Close sign-in" class="bmn-gate-close">×</button>
-  <div class="bmn-auth-mark">BMN®</div>
-  <h1 id="bmnAuthTitle">Your BMN community, your account.</h1>
-  <p>Keep watching while you explore. Sign in or create an account to like posts, follow creators, upload videos, and manage your profile.</p>
-  <form id="bmnGateForm">
-   <input id="bmnGateEmail" type="email" autocomplete="email" placeholder="Email address" required>
-   <input id="bmnGatePassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required>
-   <input id="bmnGateName" type="text" autocomplete="name" placeholder="Your display name (for new accounts)" maxlength="80" style="display:none">
-   <input id="bmnGateUsername" type="text" autocomplete="username" placeholder="Choose a username (for new accounts)" maxlength="30" style="display:none">
-   <div class="bmn-auth-actions"><button class="primary" type="submit" id="bmnGateSignIn">Sign in</button><button type="button" id="bmnGateCreate">Create account</button></div>
-  </form>
-  <div class="bmn-gate-divider"><span>OR CONTINUE WITH</span></div>
-  <div class="bmn-gate-oauth">
-   <button type="button" data-gate-provider="google"><span aria-hidden="true" class="bmn-google-mark">G</span> Continue with Google</button>
-  </div>
-  <p class="bmn-gate-provider-note">Google sign-in requires the Google provider to be enabled in BMN Supabase authentication settings.</p>
-  <p class="bmn-auth-status" id="bmnGateStatus" role="status" aria-live="polite">Connecting securely to BMN Community…</p>
- </div>
-</div>
-<button id="bmnRealLogout" type="button" aria-label="Sign out of your BMN Community account">Log out</button>
-<script id="bmn-account-isolation-and-startup-repair">
-(()=>{'use strict';
-const $=id=>document.getElementById(id);let creating=false,client=null,authReady=false;
-const gate=$('bmnAuthGate'),status=$('bmnGateStatus'),name=$('bmnGateName'),username=$('bmnGateUsername'),create=$('bmnGateCreate'),signIn=$('bmnGateSignIn'),form=$('bmnGateForm'),logout=$('bmnRealLogout');
-function setStatus(t,error=false){if(status){status.textContent=t;status.style.color=error?'#ffb7c1':'#c8d7ff'}}
-function setCreateMode(on){creating=!!on;name.style.display=creating?'block':'none';username.style.display=creating?'block':'none';name.required=creating;username.required=creating;signIn.textContent=creating?'Create account':'Sign in';create.textContent=creating?'Use existing account':'Create account';$('bmnAuthTitle').textContent=creating?'Create your BMN account':'Welcome back';$('bmnGatePassword').autocomplete=creating?'new-password':'current-password';}
-function openAuthGate(reason='Sign in to continue'){if(!gate)return;setCreateMode(false);gate.dataset.reason=reason;const title=$('bmnAuthTitle');if(title)title.textContent=reason;gate.classList.add('is-visible');setTimeout(()=>{const email=$('bmnGateEmail');if(email)email.focus({preventScroll:true})},80)}
-window.bmnOpenAuthGate=openAuthGate;
-function closeAuthGate(){gate?.classList.remove('is-visible')}
-function updateGate(session){authReady=true;const signedIn=!!session;if(signedIn){closeAuthGate();setStatus('Signed in securely.')}const menuSignOut=document.querySelector('#bmnProfileMenuSheet [data-profile-action="signout"]');if(menuSignOut)menuSignOut.hidden=!signedIn;const accountAction=document.querySelector('#bmnProfileMenuSheet [data-profile-action="account"]');if(accountAction)accountAction.textContent=signedIn?'Account details':'Sign in / Create account';if(signedIn){const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}window.bmnSession=session||null;}
-$('bmnGateClose')?.addEventListener('click',closeAuthGate);
-gate?.addEventListener('click',e=>{if(e.target===gate)closeAuthGate()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gate?.classList.contains('is-visible'))closeAuthGate()});
-// Let visitors browse the For You feed. Ask for an account only when they enter Profile, like, follow, comment, save, create, or inbox.
-document.addEventListener('click',e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;
- const profileTab=t.closest('[data-app-view="profile"]');if(profileTab&&!window.bmnSession){setTimeout(()=>openAuthGate('Sign in or create your BMN account'),120);return}
- const like=t.closest('.bmn-like,.bmn-like-comment');if(like&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to like posts');return}
- const restricted=t.closest('[data-app-view="create"],[data-app-view="inbox"]');if(restricted&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate(restricted.dataset.appView==='create'?'Sign in to create and upload posts':'Sign in to open your inbox');return}
- const follow=t.closest('.bmn-follow');if(follow&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to follow creators');return}
- const comment=t.closest('.bmn-toggle-comments');if(comment&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to join the conversation');return}
- const save=t.closest('.bmn-save-post');if(save&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to save posts');return}
-},true);
-create?.addEventListener('click',()=>setCreateMode(!creating));
-// OAuth for new and returning members. Google covers Gmail accounts; Apple uses Apple ID.
-gate?.querySelectorAll('[data-gate-provider]').forEach(button=>button.addEventListener('click',async()=>{
- if(!client){setStatus('The account service is still connecting. Please try again in a moment.',true);return}
- const provider=button.dataset.gateProvider;button.disabled=true;setStatus('Opening '+(provider==='google'?'Google / Gmail':'Apple ID')+' sign-in…');
- try{const redirectTo=window.location.origin+window.location.pathname+'#community-page';const {error}=await client.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error;}
- catch(err){setStatus((err?.message||'Could not start social sign-in')+'. Check that '+(provider==='google'?'Google':'Apple')+' is enabled in Supabase Auth and the redirect URL is allowed.',true);button.disabled=false;}
-}));
-form?.addEventListener('submit',async e=>{e.preventDefault();if(!client){setStatus('The account service is still connecting. Check your connection and try again.',true);return}
- const email=$('bmnGateEmail').value.trim(),password=$('bmnGatePassword').value;
- if(!email||password.length<6){setStatus('Enter a valid email and a password of at least 6 characters.',true);return}
- signIn.disabled=true;create.disabled=true;setStatus(creating?'Creating your account…':'Signing in…');
- try{let result;if(creating){const un=username.value.trim()||email.split('@')[0];const dn=name.value.trim()||un;result=await client.auth.signUp({email,password,options:{data:{username:un,display_name:dn}}});if(result.error)throw result.error;if(!result.data.session){setStatus('Account created. Check your email to confirm it, then return here and sign in.');return}}else{result=await client.auth.signInWithPassword({email,password});if(result.error)throw result.error}
- if(result?.data?.session){window.bmnSession=result.data.session;updateGate(result.data.session);setStatus('You are signed in. Loading your community…');try{window.bmnRefreshProfileV2?.();window.bmnRenderInboxV2?.()}catch(_){}}
- }catch(err){setStatus(err?.message||'Could not sign in. Please check your details and try again.',true)}finally{signIn.disabled=false;create.disabled=false}
-});
-logout?.addEventListener('click',async()=>{if(!client)return;logout.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.bmnSession=null;updateGate(null);setCreateMode(false);setStatus('You are signed out. Sign in or create an account to continue.')}catch(e){setStatus(e?.message||'Could not sign out.',true)}finally{logout.disabled=false}});
-function bindClient(){client=window.bmnSupabase||null;if(!client){return false}try{client.auth.getSession().then(({data,error})=>{if(error)throw error;updateGate(data?.session||null)}).catch(()=>{updateGate(null);setStatus('Could not check your session. Please sign in again.',true)});client.auth.onAuthStateChange((_event,session)=>{window.bmnSession=session;updateGate(session)});return true}catch(_){return false}}
-let attempts=0;const wait=setInterval(()=>{attempts++;if(bindClient()){clearInterval(wait);return}if(attempts>40){clearInterval(wait);updateGate(null);setStatus('BMN account service did not connect. Check your internet connection and reload.',true)}},250);
-const profileObserver=new MutationObserver(()=>{const signed=!!window.bmnSession;logout?.classList.toggle('is-visible',signed)});if(document.body)profileObserver.observe(document.body,{attributes:true,attributeFilter:['data-app-screen']});
-// Startup recovery: never leave the entire page hidden behind a splash if an optional initializer stalls.
-setTimeout(()=>{try{const root=document.documentElement,app=document.getElementById('lgtt'),track=document.getElementById('lgttTrack'),splash=document.getElementById('bmnSplash');if(root.classList.contains('bmn-starting')&&app&&track){root.classList.remove('bmn-starting');root.classList.add('bmn-community-app');app.hidden=false;app.style.removeProperty('display');app.style.setProperty('visibility','visible','important');app.style.setProperty('opacity','1','important');app.classList.add('is-open');if(splash)splash.remove()}}catch(_){try{document.documentElement.classList.remove('bmn-starting');const sp=document.getElementById('bmnSplash');if(sp)sp.remove()}catch(__){}}},4500);
+<script id="bmn-v23-fullscreen-camera">
+(()=>{'use strict';const $=s=>document.querySelector(s);let stream=null,recorder=null,chunks=[];
+ function close(){const ov=$('#bmnCaptureStudio');if(ov)ov.remove();if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}recorder=null;chunks=[];}
+ function open(){if(!window.bmnSession?.user){window.bmnOpenAuth?.();return;}if($('#bmnCaptureStudio'))return;const ov=document.createElement('div');ov.id='bmnCaptureStudio';ov.innerHTML='<div class="bmn-capture-top"><button type="button" data-cap-close aria-label="Close camera">×</button><span>Create</span><button type="button" data-cap-flip>↻</button></div><video id="bmnCapturePreview" autoplay muted playsinline></video><div class="bmn-capture-bottom"><button type="button" data-cap-gallery>Photos / videos</button><button type="button" class="bmn-capture-shutter" data-cap-photo aria-label="Take photo">●</button><button type="button" data-cap-record>Record video</button><input id="bmnCaptureCaption" maxlength="2200" placeholder="Add a caption…" aria-label="Post caption"><button type="button" data-cap-publish>Publish</button><p id="bmnCaptureStatus">Allow camera access or choose a photo/video.</p></div><input id="bmnCaptureFile" type="file" accept="image/*,video/*" hidden><canvas id="bmnCaptureCanvas" hidden><img id="bmnCaptureImagePreview" alt="Selected photo preview" hidden>';
+ const style=document.createElement('style');style.id='bmn-v23-camera-style';style.textContent='#bmnCaptureStudio{position:fixed;inset:0;z-index:10080;background:#030305;color:#fff;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));box-sizing:border-box}#bmnCaptureStudio .bmn-capture-top{display:flex;align-items:center;justify-content:space-between;min-height:48px}#bmnCaptureStudio button{color:#fff;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.10);border-radius:999px;padding:11px 15px;font:inherit}#bmnCaptureStudio .bmn-capture-top button{width:42px;height:42px;padding:0;font-size:24px}#bmnCapturePreview{flex:1;min-height:0;width:100%;height:100%;object-fit:cover;border-radius:20px;background:#101014;margin:8px 0}#bmnCaptureStudio .bmn-capture-bottom{display:flex;align-items:center;justify-content:space-around;gap:10px;flex-wrap:wrap;padding-top:10px}#bmnCaptureStudio .bmn-capture-shutter{width:70px;height:70px;border:5px solid #fff;background:rgba(255,255,255,.15);font-size:28px}#bmnCaptureStudio #bmnCaptureCaption{width:100%;box-sizing:border-box;min-height:42px;border:1px solid rgba(255,255,255,.22);border-radius:13px;background:rgba(255,255,255,.10);color:#fff;padding:10px 12px;font:inherit}#bmnCaptureStudio #bmnCaptureImagePreview{max-width:100%;max-height:calc(100% - 70px);object-fit:contain;border-radius:18px;margin:8px auto}#bmnCaptureStudio #bmnCaptureStatus{width:100%;text-align:center;font-size:12px;opacity:.8;margin:0}';document.head.appendChild(style);document.body.appendChild(ov);
+ const preview=$('#bmnCapturePreview'),status=$('#bmnCaptureStatus'),file=$('#bmnCaptureFile');
+ const useFile=f=>{if(!f)return;const dt=new DataTransfer();dt.items.add(f);const target=$('#bmnPostFile')||$('#bmnCommunityMediaFile');if(target){target.files=dt.files;target.dispatchEvent(new Event('change',{bubbles:true}));const image=$('#bmnCaptureImagePreview');if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}preview.srcObject=null;preview.pause();preview.removeAttribute('src');preview.controls=false;if(f.type.startsWith('image/')){image.src=URL.createObjectURL(f);image.hidden=false;preview.hidden=true;}else{image.hidden=true;preview.hidden=false;preview.src=URL.createObjectURL(f);preview.controls=true;preview.muted=true;preview.load();}status.textContent='Media selected. Add a caption, then tap Publish.';ov.dataset.mediaReady='1';}else{status.textContent='The existing post composer file input was not found.';}};
+ ov.querySelector('[data-cap-close]').onclick=close;ov.querySelector('[data-cap-gallery]').onclick=()=>file.click();file.onchange=()=>useFile(file.files?.[0]);
+ ov.querySelector('[data-cap-publish]').onclick=()=>{if(ov.dataset.mediaReady!=='1'){status.textContent='Choose or capture a photo/video first.';return;}const caption=$('#bmnCaptureCaption').value.trim(),content=$('#bmnPostContent'),publish=$('#bmnPublishPost');if(content)content.value=caption;if(!publish){status.textContent='The post publish control was not found. Your selected media is still available in the composer.';return;}status.textContent='Publishing through BMN Community…';publish.click();const backend=$('#bmnBackendStatus');if(backend){const mirror=()=>{status.textContent=backend.textContent||'Publishing…';if(/published|post created|upload complete/i.test(backend.textContent||'')){observer.disconnect();setTimeout(close,900)}if(/could not|failed|error/i.test(backend.textContent||''))observer.disconnect();};const observer=new MutationObserver(mirror);observer.observe(backend,{childList:true,subtree:true,characterData:true});mirror();}else status.textContent='Publish started. Check the Community upload status for the final result.';};
+ ov.querySelector('[data-cap-photo]').onclick=()=>{if(!stream){status.textContent='Open the camera first, or choose a photo/video.';return;}const canvas=$('#bmnCaptureCanvas');canvas.width=preview.videoWidth||720;canvas.height=preview.videoHeight||1280;canvas.getContext('2d').drawImage(preview,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(blob)useFile(new File([blob],'bmn-photo-'+Date.now()+'.jpg',{type:'image/jpeg'}));},'image/jpeg',.92);};
+ ov.querySelector('[data-cap-record]').onclick=()=>{if(!stream){status.textContent='Open the camera first.';return;}if(typeof MediaRecorder==='undefined'){status.textContent='Video recording is not supported by this browser. Choose a video instead.';return;}if(!recorder){chunks=[];try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});useFile(new File([blob],'bmn-video-'+Date.now()+'.webm',{type:blob.type}));};recorder.start();status.textContent='Recording… tap Record video again to stop.';ov.querySelector('[data-cap-record]').textContent='Stop recording';}catch(e){status.textContent=e.message||'Could not start recording.';}}else{recorder.stop();recorder=null;}};
+ ov.querySelector('[data-cap-flip]').onclick=async()=>{if(!stream)return;const old=stream;const facing=old.getVideoTracks()[0]?.getSettings()?.facingMode==='user'?'environment':'user';old.getTracks().forEach(t=>t.stop());try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:true});preview.srcObject=stream;}catch(e){status.textContent='Could not switch camera: '+(e.message||'permission denied');}};
+ (async()=>{try{if(!navigator.mediaDevices?.getUserMedia){status.textContent='This browser cannot open an in-page camera here. Choose photos/videos instead.';return;}stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:true});preview.srcObject=stream;status.textContent='Camera ready. Capture a photo, record video, or choose existing media.';}catch(e){status.textContent='Camera permission was not granted. You can still choose a photo/video.';}})();
+ }
+ // Plus/Create buttons open the full-screen capture experience.
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-dock="create"],#bmnOpenCamera,[data-community-jump="create"]');if(!b)return;if(b.id==='bmnOpenCamera')return;e.preventDefault();e.stopImmediatePropagation();open();},true);
 })();
 </script>
+
+<script id="bmn-v23-account-flow-and-search">
+(()=>{'use strict';
+ const $=s=>document.querySelector(s);
+ const signed=()=>!!(window.bmnSession&&window.bmnSession.user);
+ const openAuth=()=>{if(typeof window.bmnOpenAuth==='function')window.bmnOpenAuth();else {const p=$('#bmnAccountPanel');if(p){p.classList.add('bmn-account-visible');p.style.display='block';}else alert('Sign-in is temporarily unavailable. Please reload and try again.');}};
+ window.bmnOpenAuth=openAuth;
+ // The main profile architecture must never substitute BMN's account for an anonymous visitor.
+ async function cleanAnonymousProfile(){
+   const panel=$('#bmnProfileArchitectureV10'), profile=$('#bmnProfileV2'), editor=$('#bmnProfileEditor');
+   if(signed()){
+     const uid=window.bmnSession.user.id, meta=window.bmnSession.user.user_metadata||{};
+     let p=(window.bmnProfiles||{})[uid]||{};
+     try { if(window.bmnSupabase){const r=await window.bmnSupabase.from('profiles').select('*').eq('id',uid).maybeSingle();if(!r.error&&r.data){p=r.data;window.bmnProfiles=window.bmnProfiles||{};window.bmnProfiles[uid]=p;}} } catch(_) {}
+     const name=p.display_name||meta.display_name||meta.full_name||(window.bmnSession.user.email||'').split('@')[0]||'Your profile';
+     const handle=p.username||meta.username||(window.bmnSession.user.email||'').split('@')[0]||''; const bio=p.bio||''; let avatar=p.avatar_display_url||p.avatar_url||'';
+     try{if(avatar&&window.resolveStorageUrl)avatar=await window.resolveStorageUrl(avatar)}catch(_){}
+     const safe=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+     if(panel){panel.innerHTML='<div class="pa-head"><div class="pa-avatar">'+(avatar?'<img src="'+safe(avatar)+'" alt="Profile picture">':safe(name[0]||'U'))+'</div><div><div class="pa-name">'+safe(name)+'</div><div class="pa-handle">'+(handle?'@'+safe(handle):'')+'</div></div></div><div class="pa-stats"><div class="pa-stat"><strong>'+((window.cachedPosts||[]).filter(x=>x.user_id===uid).length)+'</strong><span>Posts</span></div><div class="pa-stat"><strong>'+((window.bmnFollowing||new Set()).size||0)+'</strong><span>Following</span></div></div><p class="pa-bio">'+safe(bio)+'</p><button type="button" class="backend-btn primary" data-bmn-edit-profile>Edit profile</button>';} 
+     if(profile){profile.innerHTML='<div class="bmn-profile-header"><h2>Profile</h2><button type="button" data-bmn-open-settings-menu class="bmn-profile-menu" aria-label="Open account settings">☰</button></div><div class="bmn-profile-summary"><div class="bmn-avatar">'+(avatar?'<img class="bmn-avatar-image" src="'+safe(avatar)+'" alt="Profile picture">':safe(name[0]||'U'))+'</div><div><div class="bmn-profile-name">'+safe(name)+'</div><div class="bmn-profile-handle">'+(handle?'@'+safe(handle):'')+'</div></div></div><p class="bmn-profile-bio">'+safe(bio)+'</p><button type="button" class="backend-btn primary" data-bmn-edit-profile>Edit profile</button>';} 
+     if(editor)editor.style.display='block'; return;
+   }
+   if(panel){panel.innerHTML='<div class="pa-head"><div class="pa-avatar">＋</div><div><div class="pa-name">Your profile</div><div class="pa-handle">Sign in to get started</div></div></div><p class="pa-bio">Create an account or sign in to add a profile photo, upload stories, manage your posts and message people.</p><button type="button" class="backend-btn primary" data-bmn-auth-open>Sign in / Create account</button>';}
+   if(profile){profile.innerHTML='<div class="bmn-profile-header"><h2>Profile</h2></div><div class="bmn-profile-summary"><div class="bmn-avatar">＋</div><div><div class="bmn-profile-name">Your profile</div><div class="bmn-profile-handle">Sign in to get started</div></div></div><p class="bmn-profile-bio">Your profile, posts and account details will appear here after you sign in.</p><button type="button" class="backend-btn primary" data-bmn-auth-open>Sign in / Create account</button>';}
+   if(editor)editor.style.display='none';
+ }
+
+ document.addEventListener('click',e=>{
+   if(e.target.closest('[data-bmn-auth-open]')){e.preventDefault();openAuth();return;}
+   const edit=e.target.closest('[data-bmn-edit-profile]');if(edit&&signed()){e.preventDefault();$('#bmnProfileEditor')?.scrollIntoView({behavior:'smooth',block:'center'});return;} const menu=e.target.closest('[data-bmn-open-settings-menu]');if(menu&&signed()){e.preventDefault();$('#bmnProfileMenuSheet')?.classList.add('open');return;} const dock=e.target.closest('[data-dock="profile"],#dockProfile,[data-community-jump="profile"]');
+   if(dock&&!signed()){e.preventDefault();e.stopImmediatePropagation();openAuth();return;}
+   const action=e.target.closest('[data-profile-action="edit"],[data-profile-action="password"],[data-bmn-edit-profile],#bmnProfileEditShortcut,#bmnProfileEdit,#bmnAvatarInput');
+   if(action&&!signed()){e.preventDefault();e.stopImmediatePropagation();openAuth();return;}
+ },true);
+ // Sign-in options are available from profile and account settings without auto-opening on page load.
+ function sync(){cleanAnonymousProfile().catch(()=>{});}
+ document.addEventListener('DOMContentLoaded',sync);setTimeout(sync,0);setTimeout(sync,700);setTimeout(sync,1800);
+ if(window.bmnSupabase?.auth){window.bmnSupabase.auth.getSession().then(({data})=>{window.bmnSession=data?.session||null;sync();}).catch(sync);window.bmnSupabase.auth.onAuthStateChange((_event,session)=>{window.bmnSession=session;setTimeout(sync,80);});}
+ // Make the existing search field filter posts as the visitor types and let Enter reveal results.
+ const search=$('#communitySearch');
+ if(search){search.addEventListener('input',()=>{try{if(typeof window.renderCommunityPosts==='function')window.renderCommunityPosts(window.cachedPosts||[],window.cachedLikes||{},window.cachedMyLikes||new Set());}catch(_){} });search.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.body.classList.add('community-mode');document.querySelector('#communityFeed')?.scrollIntoView({behavior:'smooth',block:'start'});}});}
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-act="goto-discover"],#lgi-search,[aria-label*="Search"]');if(!b)return;setTimeout(()=>{const input=$('#lgttDiscSearch');if(input){input.focus({preventScroll:true});input.scrollIntoView({block:'nearest'});}},100);},true);
+ // Offline playback: don't force-pause the currently visible media just because the network drops.
+ window.addEventListener('offline',()=>{const vids=[...document.querySelectorAll('#communityFeed video')];const active=vids.map(v=>({v,r:v.getBoundingClientRect()})).filter(x=>x.r.bottom>0&&x.r.top<window.innerHeight).sort((a,b)=>Math.min(b.r.bottom,window.innerHeight)-Math.max(b.r.top,0)-(Math.min(a.r.bottom,window.innerHeight)-Math.max(a.r.top,0)))[0]?.v;if(active&&active.readyState>=2){try{const end=active.buffered.length?active.buffered.end(active.buffered.length-1):0;if(active.currentTime<end){active.preload='auto';active.play().catch(()=>{});}}catch(_){}}});
+ // Preserve the current playback buffer. Do not reset src/currentTime when the browser goes offline.
+ document.addEventListener('error',e=>{const v=e.target;if(v instanceof HTMLVideoElement&&v.closest('#communityFeed')&&v.readyState>=2&&v.buffered.length){try{const end=v.buffered.end(v.buffered.length-1);if(v.currentTime<end)v.play().catch(()=>{});}catch(_){}}},true);
+})();
+</script>
+
+<style id="bmn-v23-story-preview-style">.bmn-story-preview-v23{position:fixed;inset:0;z-index:10090;background:rgba(0,0,0,.96);display:flex;align-items:center;justify-content:center;padding:calc(14px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom))}.bmn-story-preview-v23 img,.bmn-story-preview-v23 video{max-width:100%;max-height:100%;object-fit:contain;border-radius:18px}.bmn-story-preview-v23>button{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top));width:42px;height:42px;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:rgba(255,255,255,.15);color:white;font-size:25px}</style>
+<style id="bmn-v23-fullscreen-auth-repair">
+html,body{min-height:100%;margin:0}
+html{background:#050505;overscroll-behavior:none}
+body.community-mode{width:100%;min-height:100dvh;min-height:100svh;margin:0!important;padding:0!important;overflow-x:hidden;background:#050505!important;}
+body.community-mode #communityPage,body.community-mode #communityPage *{box-sizing:border-box}
+body.community-mode #communityPage{width:100vw!important;max-width:none!important;margin:0!important;padding:0!important;min-height:100dvh;min-height:100svh;overflow-x:clip}
+body.community-mode #lgtt{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;height:100svh!important;box-sizing:border-box!important;max-width:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;}
+body.community-mode #lgtt .lgtt-stage{width:100%!important;height:100%!important;min-height:100%!important;max-width:none!important;margin:0!important;border-radius:0!important;}
+body.community-mode #lgtt .lgtt-slide,body.community-mode #lgtt .lgtt-media{width:100%!important;max-width:none!important}
+body.community-mode #lgtt .lgtt-dock{left:50%!important;transform:translateX(-50%);bottom:calc(4px + env(safe-area-inset-bottom,0px))!important;z-index:90!important}
+body.community-mode #lgtt .lgtt-stage{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}
+body.community-mode #lgtt .lgtt-chat-h,body.community-mode #lgtt #lgttChat,body.community-mode #lgtt #lgttMsgs,body.community-mode #lgtt #lgttDm{max-width:none!important}
+body.community-mode #lgtt .lgtt-guest-profile{padding:26px 18px;text-align:center;max-width:420px;margin:10vh auto 0}
+body.community-mode #lgtt .lgtt-guest-avatar{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:50%;font-size:28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22)}
+body.community-mode #lgtt .lgtt-guest-profile p{line-height:1.55;opacity:.78;margin:10px auto 20px;max-width:340px}
+body.community-mode #lgtt .lgtt-language-row{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:start;gap:10px;padding:14px}
+body.community-mode #lgtt .lgtt-language-row .lgtt-set-txt{display:flex;flex-direction:column;gap:9px;min-width:0}
+body.community-mode #lgtt .lgtt-language-search,body.community-mode #lgtt .lgtt-language-select{width:100%;min-width:0;border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.08);color:inherit;font:inherit}
+body.community-mode #lgtt .lgtt-language-select option{color:#111;background:#fff}
+body.community-mode #lgtt .lgtt-set-guest{align-items:center}
+@media(max-width:600px){body.community-mode #lgtt .lgtt-stage{border-radius:0!important}body.community-mode #lgtt .lgtt-dock{width:min(520px,calc(100vw - 18px))!important}}
+@supports(padding:max(0px)){body.community-mode #lgtt{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
+</style>
 
 </body>
 </html>
