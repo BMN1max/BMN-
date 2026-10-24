@@ -2529,7 +2529,7 @@ if(profileScreen&&!$('#bmnProfileV2')){
  if(panel){panel.classList.add('bmn-account-legacy');document.body.appendChild(panel);}
  const accountStyle=document.createElement('style');accountStyle.textContent='.bmn-account-legacy{display:none!important}.bmn-account-legacy.bmn-account-visible{display:block!important;position:fixed!important;z-index:10040!important;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));width:min(680px,calc(100% - 24px));max-height:calc(100svh - 24px - env(safe-area-inset-top));overflow:auto;margin:0 auto!important;padding:18px;border:1px solid var(--line);border-radius:24px;background:var(--clear-glass-bg);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 80px rgba(0,0,0,.36)}body.community-mode #appProfileScreen #bmnAccountPanel{display:none!important}';document.head.appendChild(accountStyle);
  $('#bmnProfileMenuOpen').addEventListener('click',()=>menu.classList.add('open'));
- menu.addEventListener('click',e=>{if(e.target===menu||e.target.dataset.profileAction==='close'){menu.classList.remove('open');return}const action=e.target.dataset.profileAction;if(!action)return;menu.classList.remove('open');if(action==='edit'){openProfileEditor()}else if(action==='account'){const p=$('#bmnAccountPanel');if(p){p.classList.add('bmn-account-visible');p.style.display='block';setBackendStatus('Account details opened from the three-line menu.')} }else if(action==='password'){if(!bmnSupabase||!bmnSession){setBackendStatus('Sign in first to change your password.',true);openProfileEditor();return}const password=prompt('Enter a new password (at least 6 characters):');if(password===null)return;if(password.length<6){setBackendStatus('Password must be at least 6 characters.',true);return}bmnSupabase.auth.updateUser({password}).then(({error})=>setBackendStatus(error?error.message:'Password updated successfully.',!!error)).catch(err=>setBackendStatus(err.message||'Could not update password.',true))}else if(action==='theme'){setTheme(body.classList.contains('light')?'dark':'light')}else if(action==='signout'){$('#bmnSignOut')?.click()}});
+ menu.addEventListener('click',e=>{if(e.target===menu||e.target.dataset.profileAction==='close'){menu.classList.remove('open');return}const action=e.target.dataset.profileAction;if(!action)return;menu.classList.remove('open');if(action==='edit'){openProfileEditor()}else if(action==='account'){if(!window.bmnSession){if(typeof window.bmnOpenAuthGate==='function')window.bmnOpenAuthGate('Sign in or create your BMN account');return}const p=$('#bmnAccountPanel');if(p){p.classList.add('bmn-account-visible');p.style.display='block';setBackendStatus('Account details opened from the three-line menu.')} }else if(action==='password'){if(!bmnSupabase||!bmnSession){setBackendStatus('Sign in first to change your password.',true);openProfileEditor();return}const password=prompt('Enter a new password (at least 6 characters):');if(password===null)return;if(password.length<6){setBackendStatus('Password must be at least 6 characters.',true);return}bmnSupabase.auth.updateUser({password}).then(({error})=>setBackendStatus(error?error.message:'Password updated successfully.',!!error)).catch(err=>setBackendStatus(err.message||'Could not update password.',true))}else if(action==='theme'){setTheme(body.classList.contains('light')?'dark':'light')}else if(action==='signout'){logout?.click()}});
  function openProfileEditor(){const p=$('#bmnAccountPanel');if(!p)return;p.classList.add('bmn-account-visible');p.scrollIntoView({behavior:'smooth',block:'center'});$('#bmnEditBio')?.focus({preventScroll:true});}
  window.bmnRefreshProfileV2=function(){
   const uid=bmnSession?.user?.id,me=uid?bmnProfiles[uid]||{}:{};
@@ -8889,8 +8889,9 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
 <style id="bmn-auth-gate-fix">
 #bmnAuthGate{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:max(22px,env(safe-area-inset-top)) 20px max(22px,env(safe-area-inset-bottom));background:radial-gradient(100% 75% at 50% 0%,#17213a 0%,#090b14 55%,#03040a 100%);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;overflow:auto}
 #bmnAuthGate.is-visible{display:flex}
-#bmnAuthGate .bmn-auth-card{width:min(100%,430px);padding:26px 22px 22px;border-radius:28px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.075);box-shadow:0 24px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%)}
+#bmnAuthGate .bmn-auth-card{position:relative;width:min(100%,430px);padding:26px 22px 22px;border-radius:28px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.075);box-shadow:0 24px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%)}
 #bmnAuthGate .bmn-auth-mark{width:54px;height:54px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(140deg,rgba(255,255,255,.25),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);font-weight:900;font-size:19px;letter-spacing:-1px;margin-bottom:18px}
+#bmnAuthGate .bmn-gate-close{position:absolute;top:12px;right:12px;width:36px;min-height:36px;padding:0;border-radius:50%;font-size:25px;line-height:1;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18)}
 #bmnAuthGate h1{font-size:clamp(28px,7vw,38px);line-height:1.05;letter-spacing:-.045em;margin:0 0 9px;color:#fff}
 #bmnAuthGate p{font-size:14px;line-height:1.55;color:rgba(255,255,255,.74);margin:0 0 20px}
 #bmnAuthGate input{display:block;width:100%;box-sizing:border-box;margin:9px 0;padding:14px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;font:inherit;outline:none}
@@ -8901,14 +8902,15 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
 #bmnAuthGate .bmn-auth-status{min-height:20px;margin:13px 0 0;font-size:12px;color:#c8d7ff;overflow-wrap:anywhere}
 #bmnAuthGate .bmn-gate-divider{display:flex;align-items:center;gap:10px;margin:17px 0 12px;color:rgba(255,255,255,.62);font-size:10px;letter-spacing:.12em}#bmnAuthGate .bmn-gate-divider:before,#bmnAuthGate .bmn-gate-divider:after{content:"";height:1px;flex:1;background:rgba(255,255,255,.18)}
 #bmnAuthGate .bmn-gate-oauth{display:grid;grid-template-columns:1fr;gap:9px}#bmnAuthGate .bmn-gate-oauth button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);font-weight:600}#bmnAuthGate .bmn-gate-oauth button:disabled{opacity:.55;cursor:wait}#bmnAuthGate .bmn-google-mark{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#fff;color:#4285f4;font-weight:800;font-size:14px}#bmnAuthGate .bmn-apple-mark{font-size:20px;line-height:1;color:#fff}#bmnAuthGate .bmn-gate-provider-note{font-size:10px!important;line-height:1.45!important;margin:9px 0 0!important;color:rgba(255,255,255,.52)!important}
-#bmnRealLogout{position:fixed;z-index:2147482000;top:max(12px,env(safe-area-inset-top));right:12px;display:none;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(15,17,24,.55);color:#fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);font:600 12px system-ui}
-#bmnRealLogout.is-visible{display:block}
+#bmnRealLogout{position:fixed!important;z-index:2147482000;top:max(12px,env(safe-area-inset-top));right:12px;display:none!important;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(15,17,24,.55);color:#fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);font:600 12px system-ui}
+#bmnRealLogout.is-visible{display:none!important}
 </style>
-<div id="bmnAuthGate" class="is-visible" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
+<div id="bmnAuthGate" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
  <div class="bmn-auth-card">
+  <button type="button" id="bmnGateClose" aria-label="Close sign-in" class="bmn-gate-close">×</button>
   <div class="bmn-auth-mark">BMN®</div>
-  <h1 id="bmnAuthTitle">Your community starts here.</h1>
-  <p>Sign in to your own BMN Community account, or create one. Your profile and activity belong to your account, not the device owner.</p>
+  <h1 id="bmnAuthTitle">Your BMN community, your account.</h1>
+  <p>Keep watching while you explore. Sign in or create an account to like posts, follow creators, upload videos, and manage your profile.</p>
   <form id="bmnGateForm">
    <input id="bmnGateEmail" type="email" autocomplete="email" placeholder="Email address" required>
    <input id="bmnGatePassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required>
@@ -8919,9 +8921,8 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
   <div class="bmn-gate-divider"><span>OR CONTINUE WITH</span></div>
   <div class="bmn-gate-oauth">
    <button type="button" data-gate-provider="google"><span aria-hidden="true" class="bmn-google-mark">G</span> Continue with Google</button>
-   <button type="button" data-gate-provider="apple"><span aria-hidden="true" class="bmn-apple-mark">●</span> Continue with Apple</button>
   </div>
-  <p class="bmn-gate-provider-note">Google and Apple sign-in require their providers to be enabled in the BMN Supabase authentication settings.</p>
+  <p class="bmn-gate-provider-note">Google sign-in requires the Google provider to be enabled in BMN Supabase authentication settings.</p>
   <p class="bmn-auth-status" id="bmnGateStatus" role="status" aria-live="polite">Connecting securely to BMN Community…</p>
  </div>
 </div>
@@ -8932,7 +8933,22 @@ const $=id=>document.getElementById(id);let creating=false,client=null,authReady
 const gate=$('bmnAuthGate'),status=$('bmnGateStatus'),name=$('bmnGateName'),username=$('bmnGateUsername'),create=$('bmnGateCreate'),signIn=$('bmnGateSignIn'),form=$('bmnGateForm'),logout=$('bmnRealLogout');
 function setStatus(t,error=false){if(status){status.textContent=t;status.style.color=error?'#ffb7c1':'#c8d7ff'}}
 function setCreateMode(on){creating=!!on;name.style.display=creating?'block':'none';username.style.display=creating?'block':'none';name.required=creating;username.required=creating;signIn.textContent=creating?'Create account':'Sign in';create.textContent=creating?'Use existing account':'Create account';$('bmnAuthTitle').textContent=creating?'Create your BMN account':'Welcome back';$('bmnGatePassword').autocomplete=creating?'new-password':'current-password';}
-function updateGate(session){authReady=true;const signedIn=!!session;gate?.classList.toggle('is-visible',!signedIn);logout?.classList.toggle('is-visible',signedIn);if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}}
+function openAuthGate(reason='Sign in to continue'){if(!gate)return;setCreateMode(false);gate.dataset.reason=reason;const title=$('bmnAuthTitle');if(title)title.textContent=reason;gate.classList.add('is-visible');setTimeout(()=>{const email=$('bmnGateEmail');if(email)email.focus({preventScroll:true})},80)}
+window.bmnOpenAuthGate=openAuthGate;
+function closeAuthGate(){gate?.classList.remove('is-visible')}
+function updateGate(session){authReady=true;const signedIn=!!session;if(signedIn){closeAuthGate();setStatus('Signed in securely.')}const menuSignOut=document.querySelector('#bmnProfileMenuSheet [data-profile-action="signout"]');if(menuSignOut)menuSignOut.hidden=!signedIn;const accountAction=document.querySelector('#bmnProfileMenuSheet [data-profile-action="account"]');if(accountAction)accountAction.textContent=signedIn?'Account details':'Sign in / Create account';if(signedIn){const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}window.bmnSession=session||null;}
+$('bmnGateClose')?.addEventListener('click',closeAuthGate);
+gate?.addEventListener('click',e=>{if(e.target===gate)closeAuthGate()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gate?.classList.contains('is-visible'))closeAuthGate()});
+// Let visitors browse the For You feed. Ask for an account only when they enter Profile, like, follow, comment, save, create, or inbox.
+document.addEventListener('click',e=>{const t=e.target instanceof Element?e.target:null;if(!t)return;
+ const profileTab=t.closest('[data-app-view="profile"]');if(profileTab&&!window.bmnSession){setTimeout(()=>openAuthGate('Sign in or create your BMN account'),120);return}
+ const like=t.closest('.bmn-like,.bmn-like-comment');if(like&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to like posts');return}
+ const restricted=t.closest('[data-app-view="create"],[data-app-view="inbox"]');if(restricted&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate(restricted.dataset.appView==='create'?'Sign in to create and upload posts':'Sign in to open your inbox');return}
+ const follow=t.closest('.bmn-follow');if(follow&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to follow creators');return}
+ const comment=t.closest('.bmn-toggle-comments');if(comment&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to join the conversation');return}
+ const save=t.closest('.bmn-save-post');if(save&&!window.bmnSession){e.preventDefault();e.stopImmediatePropagation();openAuthGate('Sign in to save posts');return}
+},true);
 create?.addEventListener('click',()=>setCreateMode(!creating));
 // OAuth for new and returning members. Google covers Gmail accounts; Apple uses Apple ID.
 gate?.querySelectorAll('[data-gate-provider]').forEach(button=>button.addEventListener('click',async()=>{
