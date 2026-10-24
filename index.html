@@ -1944,6 +1944,74 @@ html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-android[data
 html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #lgttProfGrid .lgtt-tile .bmn-profile-media-preview{pointer-events:none!important}
 </style>
+
+<style id="bmn-playback-layout-polish-v19">
+/* Keep the video genuinely edge-to-edge; never round or inset the video canvas. */
+#lgtt{position:fixed!important;inset:0!important;top:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-height:none!important;padding:0!important;border-radius:0!important;background:#000!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#lgtt .lgtt-stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;margin:0!important}
+#lgtt .lgtt-v-feed,#lgtt .lgtt-feed,#lgtt .lgtt-track,#lgtt .lgtt-slide,#lgtt .lgtt-media,#lgtt video.lgtt-vid{border-radius:0!important}
+#lgtt .lgtt-slide{inset:0!important;width:100%!important;height:100%!important}
+#lgtt video.lgtt-vid{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;background:#000!important}
+/* Lower the floating dock slightly while respecting each device's home-indicator safe area. */
+#lgtt .lgtt-dock{bottom:calc(4px + var(--lg-safe-b, env(safe-area-inset-bottom, 0px)))!important}
+/* Inbox, messages and profile use clean app surfaces; keep the Liquid Glass controls untouched. */
+#lgtt .lgtt-v-profile,#lgtt #lgttProfScroll,#lgtt #lgttProfLayout,#lgtt #lgttDmScroll,#lgtt #lgttChat,#lgtt #lgttMsgs{background:#050505!important}
+body.light #lgtt .lgtt-v-profile,body.light #lgtt #lgttProfScroll,body.light #lgtt #lgttProfLayout,body.light #lgtt #lgttDmScroll,body.light #lgtt #lgttChat,body.light #lgtt #lgttMsgs{background:#f7f8fb!important;color:#171a22!important}
+#lgtt #lgttMsgs{background-color:#050505!important}
+body.light #lgtt #lgttMsgs{background-color:#f7f8fb!important}
+@media(min-width:600px){#lgtt .lgtt-stage{height:100%!important;border-radius:0!important}#lgtt .lgtt-v-feed,#lgtt .lgtt-feed{border-radius:0!important}}
+</style>
+
+
+<style id="bmn-theme-wallpaper-dock-v20">
+/* V20: keep inbox/profile surfaces theme-solid; only the dock remains Liquid Glass. */
+html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile,
+html[data-bmn-theme="dark"] #lgtt #lgttProfScroll,
+html[data-bmn-theme="dark"] #lgtt #lgttProfLayout,
+html[data-bmn-theme="dark"] #lgtt #lgttDm,
+html[data-bmn-theme="dark"] #lgtt #lgttDmScroll,
+html[data-bmn-theme="dark"] #lgtt #lgttChat,
+html[data-bmn-theme="dark"] #lgtt #lgttMsgs,
+html[data-bmn-theme="dark"] #lgtt .lgtt-prof-head,
+html[data-bmn-theme="dark"] #lgtt .lgtt-prof-tabs,
+html[data-bmn-theme="dark"] #lgtt .lgtt-prof-bar {
+  background-color:#050505!important;color:#f7f7f8!important;
+}
+html[data-bmn-theme="light"] #lgtt .lgtt-v-profile,
+html[data-bmn-theme="light"] #lgtt #lgttProfScroll,
+html[data-bmn-theme="light"] #lgtt #lgttProfLayout,
+html[data-bmn-theme="light"] #lgtt #lgttDm,
+html[data-bmn-theme="light"] #lgtt #lgttDmScroll,
+html[data-bmn-theme="light"] #lgtt #lgttChat,
+html[data-bmn-theme="light"] #lgtt #lgttMsgs,
+html[data-bmn-theme="light"] #lgtt .lgtt-prof-head,
+html[data-bmn-theme="light"] #lgtt .lgtt-prof-tabs,
+html[data-bmn-theme="light"] #lgtt .lgtt-prof-bar {
+  background-color:#f7f8fb!important;color:#171a22!important;
+}
+html[data-bmn-theme="dark"] #lgtt #lgttDm,
+html[data-bmn-theme="dark"] #lgtt #lgttChat {background-image:none!important}
+html[data-bmn-theme="light"] #lgtt #lgttDm,
+html[data-bmn-theme="light"] #lgtt #lgttChat {background-image:none!important}
+/* Custom chat wallpaper covers the whole conversation viewport, behind the header and composer. */
+#lgtt #lgttChat {position:absolute!important;isolation:isolate;background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper {background-color:#050505!important;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper::before {content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.36),rgba(0,0,0,.10) 36%,rgba(0,0,0,.28));}
+#lgtt #lgttChat.bmn-chat-full-wallpaper > * {position:relative;z-index:1;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper .lgtt-chat-h {background:transparent!important;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper #lgttMsgs {background:transparent!important;background-image:none!important;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper .lgtt-float-compose {background:transparent!important;}
+#lgtt #lgttMsgs.bmn-custom-wallpaper::before {display:none!important;}
+/* Use an explicit near-black default wallpaper while keeping Light mode responsive. */
+html[data-bmn-theme="dark"] #lgtt #lgttChat:not(.bmn-chat-full-wallpaper) {background:#050505!important;}
+html[data-bmn-theme="light"] #lgtt #lgttChat:not(.bmn-chat-full-wallpaper) {background:#f7f8fb!important;}
+/* Bring the floating dock down toward the device navigation/home-indicator area without entering it. */
+#lgtt .lgtt-dock {bottom:calc(4px + var(--lg-safe-b))!important;}
+#lgtt .lgtt-stage {--lg-dock-space:calc(66px + 8px + var(--lg-safe-b))!important;}
+@media(max-width:599px){#lgtt .lgtt-dock{bottom:calc(4px + var(--lg-safe-b))!important}}
+@media(prefers-reduced-motion:reduce){#lgtt .lgtt-dock{transition:none!important}}
+</style>
+
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -5264,7 +5332,7 @@ async function watermarkImage(blob,handle){
 async function saveBlob(blob,name){
   const file=safe(()=>new File([blob],name,{type:blob.type}));
   if(file&&(IOS||ANDROID)&&navigator.canShare&&safe(()=>navigator.canShare({files:[file]}))){
-    try{await navigator.share({files:[file],title:'BMN'});return}catch(e){if(e&&e.name==='AbortError')return}
+    try{await navigator.share({files:[file],title:'Save from BMN'});return}catch(e){if(e&&e.name==='AbortError')return}
   }
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000);
@@ -5277,21 +5345,27 @@ async function downloadWatermarked(id){
   if(!src){toast('This post has no media to download.');return}
   const isVideo=media.tagName==='VIDEO',handle=rec?handleOf(rec):'@creator';
   const base='bmn-'+handle.replace(/[^\w.-]/g,'')+'-'+String(id).slice(0,8);
+  let originalBlob=null;
   dlBusy=true;toast('Preparing download…',0);
   try{
     const resp=await fetch(src,{mode:'cors'});if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const blob=await resp.blob();
+    originalBlob=await resp.blob();
     let out;
-    if(isVideo)out=await watermarkVideo(blob,handle,p=>toast('Adding watermark… '+p+'%',0));
-    else out=await watermarkImage(blob,handle);
-    const ext=/mp4/.test(out.type)?'mp4':/webm/.test(out.type)?'webm':/png/.test(out.type)?'png':(isVideo?'mp4':'png');
-    toastHide();await saveBlob(out,base+'.'+ext);toast('Saved with BMN watermark.');
+    if(isVideo)out=await watermarkVideo(originalBlob,handle,p=>toast('Adding watermark… '+p+'%',0));
+    else out=await watermarkImage(originalBlob,handle);
+    // iOS Photos accepts compatible movie files; if the browser can only encode WebM, share the original instead.
+    let watermarked= true;
+    if(isVideo&&/webm/i.test(out.type)&&/mp4|quicktime/i.test(originalBlob.type)){out=originalBlob;watermarked=false}
+    const ext=/mp4/i.test(out.type)?'mp4':/quicktime/i.test(out.type)?'mov':/webm/i.test(out.type)?'webm':/png/i.test(out.type)?'png':(isVideo?'mp4':'png');
+    toastHide();await saveBlob(out,base+'.'+ext);
+    toast(isVideo?'Share the video and choose “Save Video” to add it to Photos. '+(watermarked?'BMN watermark included.':'Original video shared for Photos compatibility.'):(watermarked?'Image ready to save.':'Image ready to save.'),5000);
   }catch(err){
     toastHide();
-    try{ /* last resort: hand over the original file so the person is never left empty-handed */
-      const a=document.createElement('a');a.href=src;a.download=base+(isVideo?'.mp4':'.jpg');a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
-      toast('Saved the original — the watermark could not be added on this device.',3800);
-    }catch(_){toast('Download failed. Check your connection and try again.',3600)}
+    try{
+      // If watermark processing fails, still offer the actual media through the native share sheet.
+      if(originalBlob){const ext=/quicktime/i.test(originalBlob.type)?'mov':/mp4/i.test(originalBlob.type)?'mp4':/webm/i.test(originalBlob.type)?'webm':(isVideo?'mp4':'jpg');await saveBlob(originalBlob,base+'-original.'+ext);toast(isVideo?'Choose “Save Video” in the share sheet to add it to Photos. The watermark could not be applied on this device.':'Original image ready to save.',5000)}
+      else {const a=document.createElement('a');a.href=src;a.download=base+(isVideo?'.mp4':'.jpg');a.rel='noopener';document.body.appendChild(a);a.click();a.remove();toast('Direct download started. If your browser offers sharing, choose Save Video to add it to Photos.',4500)}
+    }catch(_){toast('Could not open the save sheet. Try opening this video in Safari and sharing it to Photos.',4200)}
   }finally{dlBusy=false}
 }
 
@@ -8503,15 +8577,15 @@ document.addEventListener('pointerdown',()=>{if(root.classList.contains('bmn-com
 function installWallpaper(){
  const chat=$('#lgttChat'),header=chat?.querySelector('.lgtt-chat-h'),msgs=$('#lgttMsgs');if(!chat||!header||!msgs)return;
  const key=()=>{const n=($('#lgttChatName')?.textContent||'conversation').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,64)||'conversation';return 'bmn-chat-wallpaper-v17:'+n};
- const apply=data=>{if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const value=String(data);msgs.style.backgroundImage=value.startsWith('gradient:')?value.slice(9):(value.startsWith('linear-gradient')||value.startsWith('radial-gradient')?value:'linear-gradient(rgba(5,7,14,.20),rgba(5,7,14,.20)),url("'+value.replace(/"/g,'\\"')+'")');msgs.classList.add('bmn-custom-wallpaper')};
+ const apply=data=>{chat.style.backgroundImage='';chat.classList.remove('bmn-chat-full-wallpaper');if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const value=String(data);chat.style.backgroundImage=value.startsWith('gradient:')?value.slice(9):(value.startsWith('linear-gradient')||value.startsWith('radial-gradient')?value:'url("'+value.replace(/"/g,'\\"')+'")');chat.classList.add('bmn-chat-full-wallpaper');msgs.style.backgroundImage='none';msgs.classList.add('bmn-custom-wallpaper')};
  let input=$('#bmnWallpaperInputV17'),button=$('#bmnWallpaperButtonV17'),preset=header.querySelector('[data-bmn-wallpaper-preset-v18]');
  if(button){const nextKey=key();if(button.dataset.bmnWallpaperKey!==nextKey){button.dataset.bmnWallpaperKey=nextKey;safe(()=>apply(localStorage.getItem(nextKey)||''))}return;}
  input=document.createElement('input');input.type='file';input.accept='image/*';input.id='bmnWallpaperInputV17';input.hidden=true;header.appendChild(input);
- button=document.createElement('button');button.id='bmnWallpaperButtonV17';button.type='button';button.className='lgtt-btn lgtt-round lgtt-sm';button.textContent='▧';button.title='Message background';button.setAttribute('aria-label','Choose message background');header.appendChild(button);
- preset=document.createElement('button');preset.type='button';preset.dataset.bmnWallpaperPresetV18='1';preset.className='lgtt-btn lgtt-round lgtt-sm';preset.textContent='✦';preset.title='Message background presets';preset.setAttribute('aria-label','Message background presets');header.appendChild(preset);
+ button=document.createElement('button');button.id='bmnWallpaperButtonV17';button.type='button';button.className='lgtt-btn lgtt-round lgtt-sm';button.textContent='▧';button.title='Full-screen message wallpaper';button.setAttribute('aria-label','Choose full-screen message wallpaper');header.appendChild(button);
+ preset=document.createElement('button');preset.type='button';preset.dataset.bmnWallpaperPresetV18='1';preset.className='lgtt-btn lgtt-round lgtt-sm';preset.textContent='✦';preset.title='Wallpaper presets, including Midnight';preset.setAttribute('aria-label','Wallpaper presets including Midnight');header.appendChild(preset);
  button.addEventListener('click',()=>input.click());
  input.addEventListener('change',()=>{const f=input.files?.[0];if(!f||!f.type.startsWith('image/'))return;if(f.size>1500000){alert('Choose a message background image under 1.5 MB.');return}const r=new FileReader();r.onload=()=>{const d=String(r.result||'');safe(()=>localStorage.setItem(key(),d));apply(d);button.dataset.bmnWallpaperKey=key()};r.readAsDataURL(f)});
- preset.addEventListener('click',()=>{const choices=['linear-gradient(135deg,rgba(38,58,100,.95),rgba(117,72,150,.88))','linear-gradient(135deg,rgba(8,50,70,.96),rgba(38,115,125,.88))','linear-gradient(135deg,rgba(35,26,56,.96),rgba(112,50,89,.88))'];const cur=localStorage.getItem(key())||'';const idx=Math.max(0,choices.indexOf(cur.startsWith('gradient:')?cur.slice(9):cur));const next='gradient:'+choices[(idx+1)%choices.length];safe(()=>localStorage.setItem(key(),next));apply(next);button.dataset.bmnWallpaperKey=key()});
+ preset.addEventListener('click',()=>{const choices=['linear-gradient(145deg,rgba(2,3,8,.99),rgba(12,14,24,.98) 52%,rgba(24,25,42,.97))','linear-gradient(135deg,rgba(38,58,100,.95),rgba(117,72,150,.88))','linear-gradient(135deg,rgba(8,50,70,.96),rgba(38,115,125,.88))','linear-gradient(135deg,rgba(35,26,56,.96),rgba(112,50,89,.88))'];const cur=localStorage.getItem(key())||'';const idx=choices.indexOf(cur.startsWith('gradient:')?cur.slice(9):cur);const next='gradient:'+choices[(idx+1+choices.length)%choices.length];safe(()=>localStorage.setItem(key(),next));apply(next);button.dataset.bmnWallpaperKey=key()});
  button.dataset.bmnWallpaperKey=key();safe(()=>apply(localStorage.getItem(key())||''));
 }
 
@@ -8624,6 +8698,43 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.BMN_FINAL_COMPLETE={enterCommunity,enterPersonal,applyAppearance,patchProfileTiles,patchVideoSlides};
 })();
 </script>
+
+<script id="bmn-stop-background-playback-v19">
+(()=>{
+ 'use strict';
+ const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+ const root=q('#lgtt'); if(!root)return;
+ const pauseVideo=v=>{try{if(v instanceof HTMLMediaElement&&!v.paused){v.pause();v.removeAttribute('autoplay')}}catch(_){}};
+ function shouldFeedPlay(){
+  const stage=q('#lgttStage',root);
+  return !!(root.isConnected&&!root.hidden&&root.classList.contains('is-open')&&stage&&stage.dataset.view==='feed'&&!stage.classList.contains('has-layer')&&!stage.classList.contains('has-sheet')&&!q('#lgttComments.is-open',root)&&!q('#lgttChat.is-open',root)&&!document.hidden);
+ }
+ function enforcePlayback(){
+  const canFeed=shouldFeedPlay();
+  qa('video,audio').forEach(v=>{
+   if(!canFeed){pauseVideo(v);return;}
+   if(!v.closest('#lgtt')){pauseVideo(v);return;}
+   const slide=v.closest('.lgtt-slide');
+   if(v.matches('.lgtt-vid')&&(!slide||!slide.classList.contains('is-active')||slide.hidden||getComputedStyle(slide).visibility==='hidden'))pauseVideo(v);
+  });
+ }
+ let scheduled=false;
+ const schedule=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;enforcePlayback()});};
+ document.addEventListener('visibilitychange',schedule,true);
+ document.addEventListener('pagehide',()=>qa('video,audio').forEach(pauseVideo),true);
+ document.addEventListener('click',e=>{
+  const nav=e.target.closest('[data-dock],[data-act],[data-lgtt-open],.bmn-switch-personal,[data-view="community"],[data-view="bmn"]');
+  if(nav){setTimeout(schedule,0);setTimeout(schedule,80);setTimeout(schedule,260)}
+ },true);
+ const mo=new MutationObserver(schedule);
+ mo.observe(root,{subtree:true,attributes:true,attributeFilter:['class','hidden','aria-hidden','data-view','style']});
+ const stage=q('#lgttStage');if(stage)mo.observe(stage,{attributes:true,attributeFilter:['class','data-view']});
+ // Guard app routing when the Community overlay is hidden or the original BMN page is shown.
+ const bodyMo=new MutationObserver(schedule);bodyMo.observe(document.body,{attributes:true,attributeFilter:['class','data-app-screen']});
+ schedule();
+})();
+</script>
+
 </body>
 </html>
 
