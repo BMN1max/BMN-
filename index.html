@@ -2699,7 +2699,7 @@ window.setAppView=(view,updateHash=true)=>setAppView(view,updateHash);
 // OAuth buttons call Supabase Auth directly; a provider must first be enabled in Supabase Auth settings.
 function bmnAddOAuthControls(){
  const controls=$('#bmnAuthControls');if(!controls||$('#bmnOAuthControls'))return;
- const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google" aria-label="Continue with Google"><span aria-hidden="true" style="font-weight:800;color:#4285f4">G</span> Continue with Google</button><button type="button" class="bmn-oauth-button" data-oauth-provider="apple" aria-label="Continue with Apple ID"><span aria-hidden="true">●</span> Apple ID</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google sign-in uses the BMN Supabase Google provider. Apple ID works only after Apple authentication is configured.</p>';
+ const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google" aria-label="Continue with Google"><span aria-hidden="true" style="font-weight:800;color:#4285f4">G</span> Continue with Google</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google sign-in uses the configured BMN Supabase provider.</p>';
  controls.appendChild(wrap);
  wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=window.location.origin+window.location.pathname+'#community-page';const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
  $('#bmnForgotPassword')?.addEventListener('click',async()=>{const email=$('#bmnEmail')?.value.trim();if(!email){setBackendStatus('Enter your email address first, then tap Forgot password.',true);$('#bmnEmail')?.focus();return}try{const {error}=await bmnSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;setBackendStatus('If this email belongs to an account, a password reset link has been sent.')}catch(err){setBackendStatus(err.message||'Could not send password reset email.',true)}})
@@ -7761,7 +7761,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       return [];
     };
     function renderHead() {
-      const u = user(), f = !!S.follows[u.id];
+      const signedIn=!!(window.bmnSession?.user?.id); const guestOwn=!signedIn&&uid===ME.id; const u=guestOwn?{id:'guest',name:'Your profile',handle:'sign-in',hue:210,me:false,verified:false,bio:'Sign in to complete your profile',followers:null,following:null,likes:null,link:'',linkHref:''}:user(), f = !!S.follows[u.id];
       const myStory = u.me && S.myStories.length;
       const followers = u.followers == null ? null : Number(u.followers) + (!u.me && f ? 1 : 0);
       R.ProfHead.innerHTML =
@@ -7770,14 +7770,12 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         '<div class="lgtt-handle">@' + esc(u.handle) + '</div>' +
         (u.me && S.settings.private ? '<span class="lgtt-private-tag">' + ico('lock') + 'Private account</span>' : '') +
         '<div class="lgtt-stats"><button type="button" class="lgtt-stat" data-stat><b data-to="' + u.following + '">0</b><span>Following</span></button><button type="button" class="lgtt-stat" data-stat><b data-to="' + followers + '">0</b><span>Followers</span></button><button type="button" class="lgtt-stat" data-stat><b data-to="' + u.likes + '">0</b><span>Likes</span></button></div>' +
-        '<div class="lgtt-prof-actions">' + (u.me
-          ? '<button type="button" class="lgtt-btn lgtt-pill" data-act="edit-profile">' + ico('edit') + 'Edit profile</button><button type="button" class="lgtt-btn lgtt-pill" data-act="share-profile">' + ico('share') + 'Share profile</button>'
-          : '<button type="button" class="lgtt-btn lgtt-pill' + (f ? '' : ' lgtt-primary') + '" data-act="follow" data-u="' + u.id + '">' + ico(f ? 'usercheck' : 'userplus') + (f ? 'Following' : 'Follow') + '</button><button type="button" class="lgtt-btn lgtt-pill" data-act="message" data-u="' + u.id + '">' + ico('mail') + 'Message</button>') + '</div>' +
+        '<div class="lgtt-prof-actions">' + (guestOwn ? '<button type="button" class="lgtt-btn lgtt-pill lgtt-primary" data-act="auth-profile">Sign in to complete your profile</button>' : (u.me ? '<button type="button" class="lgtt-btn lgtt-pill" data-act="edit-profile">' + ico('edit') + 'Edit profile</button><button type="button" class="lgtt-btn lgtt-pill" data-act="share-profile">' + ico('share') + 'Share profile</button>' : '<button type="button" class="lgtt-btn lgtt-pill' + (f ? '' : ' lgtt-primary') + '" data-act="follow" data-u="' + u.id + '">' + ico(f ? 'usercheck' : 'userplus') + (f ? 'Following' : 'Follow') + '</button><button type="button" class="lgtt-btn lgtt-pill" data-act="message" data-u="' + u.id + '">' + ico('mail') + 'Message</button>')) + '</div>' +
         '<p class="lgtt-bio">' + esc(u.bio || '').replace(/\n/g, '<br>') + '</p>' +
         (u.link ? '<a class="lgtt-link" href="' + esc(u.linkHref || ('https://' + u.link)) + '" target="_blank" rel="noopener noreferrer">' + ico('link') + esc(u.link) + '</a>' : '') +
         ''; 
       $$('[data-to]', R.ProfHead).forEach(n => { const value = Number(n.dataset.to); if (Number.isFinite(value) && value >= 0) countUp(n, value); else n.textContent = '—'; });
-      $('#lgttProfBarTitle').textContent = '@' + u.handle; R.ProfMenu.style.visibility = u.me ? '' : 'hidden';
+      $('#lgttProfBarTitle').textContent = '@' + u.handle; R.ProfMenu.style.visibility = guestOwn || u.me ? '' : 'hidden';
     }
     function renderBmn() {
       R.Bmn.innerHTML =
@@ -7823,7 +7821,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         { h: 'Account', rows: [L('edit', 'user', '#58aaff', '#9b6bff', 'Display name', '', u.name), L('edit', 'sliders', '#59f1e6', '#58aaff', 'Username', '', '@' + u.handle), L('pw', 'key', '#ffd166', '#ff8a5c', 'Password', 'Managed by your BMN account', 'Change'),
           O('language', 'globe', '#b18cff', '#58aaff', 'Language', '', ['English', 'Pidgin', 'Yorùbá'])] },
         { h: 'Linked accounts', rows: [L('ext:https://www.tiktok.com/@thisisbmn', 'link', '#ff5c8a', '#ff2d6f', 'TikTok', '@thisisbmn', 'Open'), L('ext:https://www.youtube.com/@thisisbmn', 'link', '#ff3b5c', '#ff6a88', 'YouTube', '@thisisbmn', 'Open')] },
-        { h: 'Session', rows: [L('switch', 'users', '#58aaff', '#59f1e6', 'Switch account', '', ''), L('logout', 'logout', '#ff8a5c', '#ff5c8a', 'Log out', 'Preview session only — does not touch your site login', ''), L('delete', 'trash', '#ff3b5c', '#ff6a88', 'Delete account', 'Removes saved data from this device', '', true)] }
+        { h: 'Session', rows: [L('switch', 'users', '#58aaff', '#59f1e6', 'Switch account', '', ''), L('logout', 'logout', '#ff8a5c', '#ff5c8a', 'Log out', 'Signs out of your BMN Community account', ''), L('delete', 'trash', '#ff3b5c', '#ff6a88', 'Delete account', 'Removes saved data from this device', '', true)] }
       ];
       if (tab === 'privacy') return [
         { h: 'Discoverability', rows: [T('private', 'lock', '#58aaff', '#9b6bff', 'Private account', 'Only approved followers can watch your videos'), T('suggest', 'users', '#59f1e6', '#58aaff', 'Suggest account to others', 'Appear in “Creators to follow”'), T('activity', 'live', '#3ddc84', '#59f1e6', 'Activity status', 'Let friends see when you are online')] },
@@ -7863,7 +7861,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       if (id === 'pw') return toast('Password changes are managed by your BMN account', 'key');
       if (id.startsWith('ext:')) return window.open(id.slice(4), '_blank', 'noopener');
       if (id === 'switch') return toast('Only one account in this preview', 'users');
-      if (id === 'logout') return Confirm.ask('Log out?', 'This only ends the Reels preview session. Your website login is not affected.', 'Log out', () => { haptic('success'); closeLayer(R.Settings); toast('Signed out of the Reels preview', 'logout'); });
+      if (id === 'logout') return Confirm.ask('Log out of BMN Community?', 'You will be signed out of this BMN account on this device.', 'Log out', async () => { const sb=window.bmnSupabase; if(!sb){toast('BMN account service is not connected','info');return;} try{const {error}=await sb.auth.signOut();if(error)throw error;window.bmnSession=null;window.bmnAuthRequested=false;window.bmnCloseAuthGate?.();closeLayer(R.Settings);toast('Signed out of BMN Community','logout');setTimeout(()=>document.querySelector('#lgttDock [data-dock="profile"]')?.click(),0);}catch(e){toast(e?.message||'Could not sign out','info');} });
       if (id === 'delete') return Confirm.ask('Delete Reels data?', 'Likes, favourites, follows, stories and comments stored on this device will be removed.', 'Delete', () => { resetData(); toast('Reels data deleted from this device', 'trash'); }, true);
       if (id === 'data') return toast('Data export is requested from your BMN account', 'download');
       if (id === 'policy') return toast('Link your privacy policy URL in LGTT_CONFIG', 'info');
@@ -7909,7 +7907,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   /* ---------------------------------------------------------------
      3.13 VIEWS · OVERLAY · LAUNCHER · EVENTS · API · BOOT
      --------------------------------------------------------------- */
-  const DOCK_INDEX = { feed: 0, discover: 1, profile: 4 };
+  const DOCK_INDEX = { feed: 0, discover: 1, create: 2, inbox: 3, profile: 4 };
   const Views = {
     prev: 'feed',
     cur: () => ST.view,
@@ -7919,7 +7917,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       closeAllLayers();
       ST.view = v; R.stage.dataset.view = v;
       $$('.lgtt-view', R.root).forEach(s => { s.hidden = s.dataset.v !== v; });
-      $$('.lgtt-dk[data-dock]', R.root).forEach(b => { const on = b.dataset.dock === v && (v !== 'profile' || (arg || ME.id) === ME.id); b.classList.toggle('on', on); });
+      $$('.lgtt-dk[data-dock]', R.root).forEach(b => { const on = b.dataset.dock === v && (v !== 'profile' || (arg || ME.id) === ME.id); b.classList.toggle('on', on); b.setAttribute('aria-current',on?'page':'false'); });
       const i = DOCK_INDEX[v]; R.Lens.style.opacity = (v === 'profile' && arg && arg !== ME.id) || i == null ? 0 : 1; if (i != null) R.Lens.style.setProperty('--i', v === 'profile' && arg !== ME.id ? 0 : i);
       if (v === 'discover') Discover.render();
       if (v === 'profile') Profile.render(arg || ME.id);
@@ -8006,7 +8004,11 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const dock = t.closest('[data-dock]');
       if (dock) {
         const d = dock.dataset.dock; haptic('tap');
-        if (d === 'create') Create.open(); else if (d === 'inbox') Dm.open(); else if (d === 'profile') Views.set('profile', ME.id); else Views.set(d);
+        if (d === 'create' || d === 'inbox') {
+          $$('.lgtt-dk[data-dock]', R.root).forEach(b => { const on=b.dataset.dock===d; b.classList.toggle('on',on); b.setAttribute('aria-current',on?'page':'false'); });
+          R.Lens.style.opacity='1'; R.Lens.style.setProperty('--i', d==='create' ? 2 : 3);
+          if(d==='create') Create.open(); else Dm.open();
+        } else if (d === 'profile') Views.set('profile', ME.id); else Views.set(d);
         return;
       }
       const story = t.closest('[data-story]'); if (story) { haptic('tap'); Stories.openUser(story.dataset.story); return; }
@@ -8664,7 +8666,7 @@ function startAdaptiveSplash(){
  const memory=Number(navigator.deviceMemory||4);
  // The animation gets a brief minimum to be visible, then waits for the actual app shell.
  // Lower-capability devices get a little more visual time; slow startup is never cut off by this minimum.
- const minVisible=reduced?120:((cores<=4||memory<=4)?1050:760);
+ const minVisible=reduced?80:((cores<=4||memory<=4)?300:240);
  const started=performance.now();let raf=0,done=false;
  const poll=()=>{
    if(done)return;
@@ -8684,7 +8686,7 @@ function startAdaptiveSplash(){
     const tag=$('#bmnSplash .sp-tag');if(tag)tag.textContent='BMN COMMUNITY · RELOADING';
     if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';}
    }
- },12000);
+ },3500);
  const finish=()=>{if(done)return;};
  if(document.fonts?.ready)document.fonts.ready.then(()=>{}).catch(()=>{});
  raf=requestAnimationFrame(poll);
@@ -8902,26 +8904,29 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
 #bmnAuthGate .bmn-gate-divider{display:flex;align-items:center;gap:10px;margin:17px 0 12px;color:rgba(255,255,255,.62);font-size:10px;letter-spacing:.12em}#bmnAuthGate .bmn-gate-divider:before,#bmnAuthGate .bmn-gate-divider:after{content:"";height:1px;flex:1;background:rgba(255,255,255,.18)}
 #bmnAuthGate .bmn-gate-oauth{display:grid;grid-template-columns:1fr;gap:9px}#bmnAuthGate .bmn-gate-oauth button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);font-weight:600}#bmnAuthGate .bmn-gate-oauth button:disabled{opacity:.55;cursor:wait}#bmnAuthGate .bmn-google-mark{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#fff;color:#4285f4;font-weight:800;font-size:14px}#bmnAuthGate .bmn-apple-mark{font-size:20px;line-height:1;color:#fff}#bmnAuthGate .bmn-gate-provider-note{font-size:10px!important;line-height:1.45!important;margin:9px 0 0!important;color:rgba(255,255,255,.52)!important}
 #bmnRealLogout{position:fixed;z-index:2147482000;top:max(12px,env(safe-area-inset-top));right:12px;display:none;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(15,17,24,.55);color:#fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);font:600 12px system-ui}
-#bmnRealLogout.is-visible{display:block}
+#bmnRealLogout.is-visible{display:none!important}
 </style>
-<div id="bmnAuthGate" class="is-visible" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
+<div id="bmnAuthGate" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
  <div class="bmn-auth-card">
+  <button type="button" id="bmnGateClose" aria-label="Close sign in">×</button>
   <div class="bmn-auth-mark">BMN®</div>
   <h1 id="bmnAuthTitle">Your community starts here.</h1>
   <p>Sign in to your own BMN Community account, or create one. Your profile and activity belong to your account, not the device owner.</p>
-  <form id="bmnGateForm">
+  <div class="bmn-gate-choice">
+   <button type="button" class="bmn-gate-google" data-gate-provider="google"><span aria-hidden="true" class="bmn-google-mark">G</span> Continue with Google</button>
+   <button type="button" id="bmnShowEmailAuth">Sign in with email</button>
+   <button type="button" id="bmnGateCreateStart">Create an account with email</button>
+  </div>
+  <div class="bmn-gate-divider"><span>EMAIL ACCOUNT</span></div>
+  <form id="bmnGateForm" style="display:none">
    <input id="bmnGateEmail" type="email" autocomplete="email" placeholder="Email address" required>
    <input id="bmnGatePassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required>
-   <input id="bmnGateName" type="text" autocomplete="name" placeholder="Your display name (for new accounts)" maxlength="80" style="display:none">
-   <input id="bmnGateUsername" type="text" autocomplete="username" placeholder="Choose a username (for new accounts)" maxlength="30" style="display:none">
+   <input id="bmnGateName" type="text" autocomplete="name" placeholder="Your display name" maxlength="80" style="display:none">
+   <input id="bmnGateUsername" type="text" autocomplete="username" placeholder="Choose a username" maxlength="30" style="display:none">
    <div class="bmn-auth-actions"><button class="primary" type="submit" id="bmnGateSignIn">Sign in</button><button type="button" id="bmnGateCreate">Create account</button></div>
+   <button type="button" id="bmnGateForgotPassword">Forgot password?</button>
   </form>
-  <div class="bmn-gate-divider"><span>OR CONTINUE WITH</span></div>
-  <div class="bmn-gate-oauth">
-   <button type="button" data-gate-provider="google"><span aria-hidden="true" class="bmn-google-mark">G</span> Continue with Google</button>
-   <button type="button" data-gate-provider="apple"><span aria-hidden="true" class="bmn-apple-mark">●</span> Continue with Apple</button>
-  </div>
-  <p class="bmn-gate-provider-note">Google and Apple sign-in require their providers to be enabled in the BMN Supabase authentication settings.</p>
+  <p class="bmn-gate-provider-note">Email sign-in and account creation use BMN’s existing Supabase authentication. Google sign-in uses the configured Google provider.</p>
   <p class="bmn-auth-status" id="bmnGateStatus" role="status" aria-live="polite">Connecting securely to BMN Community…</p>
  </div>
 </div>
@@ -8932,7 +8937,14 @@ const $=id=>document.getElementById(id);let creating=false,client=null,authReady
 const gate=$('bmnAuthGate'),status=$('bmnGateStatus'),name=$('bmnGateName'),username=$('bmnGateUsername'),create=$('bmnGateCreate'),signIn=$('bmnGateSignIn'),form=$('bmnGateForm'),logout=$('bmnRealLogout');
 function setStatus(t,error=false){if(status){status.textContent=t;status.style.color=error?'#ffb7c1':'#c8d7ff'}}
 function setCreateMode(on){creating=!!on;name.style.display=creating?'block':'none';username.style.display=creating?'block':'none';name.required=creating;username.required=creating;signIn.textContent=creating?'Create account':'Sign in';create.textContent=creating?'Use existing account':'Create account';$('bmnAuthTitle').textContent=creating?'Create your BMN account':'Welcome back';$('bmnGatePassword').autocomplete=creating?'new-password':'current-password';}
-function updateGate(session){authReady=true;const signedIn=!!session;gate?.classList.toggle('is-visible',!signedIn);logout?.classList.toggle('is-visible',signedIn);if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}}
+function updateGate(session){authReady=true;window.bmnSession=session||null;const signedIn=!!session;if(signedIn)window.bmnAuthRequested=false;gate?.classList.toggle('is-visible',!signedIn&&window.bmnAuthRequested===true);logout?.classList.remove('is-visible');document.body.classList.toggle('bmn-auth-open',!signedIn&&window.bmnAuthRequested===true);if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}}
+window.bmnAuthRequested=false;
+window.bmnOpenAuthGate=function(reason){window.bmnAuthRequested=true;gate?.classList.add('is-visible');if(reason)setStatus(reason);document.body.classList.add('bmn-auth-open');setTimeout(()=>{if(form&&form.style.display!=='none')$('bmnGateEmail')?.focus({preventScroll:true});else $('bmnShowEmailAuth')?.focus({preventScroll:true})},40)};
+window.bmnCloseAuthGate=function(){window.bmnAuthRequested=false;gate?.classList.remove('is-visible');document.body.classList.remove('bmn-auth-open')};
+$('bmnGateClose')?.addEventListener('click',()=>window.bmnCloseAuthGate());
+$('bmnShowEmailAuth')?.addEventListener('click',()=>{if(form){form.style.display='block';$('bmnShowEmailAuth').textContent='Email sign-in selected';$('bmnGateEmail')?.focus({preventScroll:true})}});
+$('bmnGateCreateStart')?.addEventListener('click',()=>{if(form)form.style.display='block';if(!creating)create?.click();$('bmnGateEmail')?.focus({preventScroll:true})});
+$('bmnGateForgotPassword')?.addEventListener('click',async()=>{const email=$('bmnGateEmail')?.value.trim();if(!email){setStatus('Enter your email address first, then tap Forgot password again.',true);$('bmnGateEmail')?.focus();return}if(!client){setStatus('BMN account service is still connecting. Try again shortly.',true);return}try{const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname+'#community-page'});if(error)throw error;setStatus('Password reset email requested. Check your inbox and spam folder.')}catch(e){setStatus(e?.message||'Could not request a password reset.',true)}});
 create?.addEventListener('click',()=>setCreateMode(!creating));
 // OAuth for new and returning members. Google covers Gmail accounts; Apple uses Apple ID.
 gate?.querySelectorAll('[data-gate-provider]').forEach(button=>button.addEventListener('click',async()=>{
@@ -8950,7 +8962,7 @@ form?.addEventListener('submit',async e=>{e.preventDefault();if(!client){setStat
  }catch(err){setStatus(err?.message||'Could not sign in. Please check your details and try again.',true)}finally{signIn.disabled=false;create.disabled=false}
 });
 logout?.addEventListener('click',async()=>{if(!client)return;logout.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.bmnSession=null;updateGate(null);setCreateMode(false);setStatus('You are signed out. Sign in or create an account to continue.')}catch(e){setStatus(e?.message||'Could not sign out.',true)}finally{logout.disabled=false}});
-function bindClient(){client=window.bmnSupabase||null;if(!client){return false}try{client.auth.getSession().then(({data,error})=>{if(error)throw error;updateGate(data?.session||null)}).catch(()=>{updateGate(null);setStatus('Could not check your session. Please sign in again.',true)});client.auth.onAuthStateChange((_event,session)=>{window.bmnSession=session;updateGate(session)});return true}catch(_){return false}}
+function bindClient(){client=window.bmnSupabase||null;if(!client){return false}try{client.auth.getSession().then(({data,error})=>{if(error)throw error;updateGate(data?.session||null)}).catch(()=>{updateGate(null);setStatus('Could not check your session. Please sign in again.',true)});client.auth.onAuthStateChange((_event,session)=>{updateGate(session)});return true}catch(_){return false}}
 let attempts=0;const wait=setInterval(()=>{attempts++;if(bindClient()){clearInterval(wait);return}if(attempts>40){clearInterval(wait);updateGate(null);setStatus('BMN account service did not connect. Check your internet connection and reload.',true)}},250);
 const profileObserver=new MutationObserver(()=>{const signed=!!window.bmnSession;logout?.classList.toggle('is-visible',signed)});if(document.body)profileObserver.observe(document.body,{attributes:true,attributeFilter:['data-app-screen']});
 // Startup recovery: never leave the entire page hidden behind a splash if an optional initializer stalls.
@@ -9062,11 +9074,6 @@ window.BMNAppStandard={openInbox:()=>{if(!session())return openAuth('Sign in to 
 })();
 </script>
 
-</body>
-</html>
-
-
-
 <!-- BMN Community App Standard Authentication Repair v27 -->
 <style id="bmn-auth-repair-v27">
 #bmnAuthGate{z-index:100000!important}
@@ -9170,3 +9177,56 @@ document.addEventListener('keydown',e=>{
 waitForClient().then(sb=>sb.auth.getSession()).then(r=>applySession(r?.data?.session||null)).catch(()=>{});
 })();
 </script>
+
+<style id="bmn-final-repair-v28-css">
+html,body{min-height:100%;background:#070711}
+html.bmn-starting,html.bmn-starting body{background:#070711!important;overflow:hidden!important}
+#bmnSplash{background:radial-gradient(90% 70% at 50% 38%,#16203c 0%,#080a14 62%,#04050a 100%)!important}
+#lgtt{position:fixed!important;inset:0!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-height:none!important;margin:0!important;padding:0!important;border-radius:0!important;overflow:hidden!important;z-index:2147482000!important}
+#lgtt .lgtt-stage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-height:none!important;margin:0!important;border-radius:0!important}
+#lgtt .lgtt-dock{bottom:calc(5px + env(safe-area-inset-bottom,0px))!important;z-index:100!important}
+#lgtt .lgtt-dock-lens{background:linear-gradient(145deg,rgba(103,184,255,.32),rgba(173,140,255,.24))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 5px 18px rgba(74,133,255,.20)!important;pointer-events:none!important}
+#lgtt .lgtt-dk{touch-action:manipulation;cursor:pointer}#lgtt .lgtt-dk.on{background:transparent!important;box-shadow:none!important}#lgtt .lgtt-dk:focus-visible{outline:2px solid rgba(120,190,255,.8);outline-offset:-3px}
+#bmnAuthGate{z-index:2147483000!important;display:none;overscroll-behavior:contain}
+#bmnAuthGate.is-visible{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+html.bmn-community-app body>#bmnAuthGate.is-visible{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+#bmnAuthGate .bmn-auth-card{position:relative;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}
+#bmnGateClose{position:absolute;right:13px;top:12px;width:36px;min-height:36px;padding:0;border-radius:50%;font-size:25px;line-height:1;background:rgba(255,255,255,.08)}
+#bmnAuthGate .bmn-gate-choice{display:grid;gap:9px;margin:18px 0 8px}
+#bmnAuthGate .bmn-gate-choice button{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px}
+#bmnAuthGate .bmn-gate-google{background:#fff!important;color:#121722!important;border-color:#fff!important}
+#bmnShowEmailAuth{background:rgba(255,255,255,.10)!important}
+#bmnGateCreateStart{background:transparent!important}
+#bmnGateForm[style*="display: none"]{display:none!important}
+#bmnGateForgotPassword{display:block;width:100%;margin-top:8px;background:transparent!important;border:0!important;text-decoration:underline;min-height:38px!important}
+#bmnRealLogout{display:none!important}
+body.bmn-auth-open{overflow:hidden!important}
+@media(max-width:600px){#bmnAuthGate{padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))!important}#bmnAuthGate .bmn-auth-card{width:100%;padding:24px 17px 18px;border-radius:24px}#lgtt .lgtt-dock{width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important}}
+@media(prefers-reduced-motion:reduce){#bmnSplash *{animation:none!important;transition:none!important}}
+</style>
+<script id="bmn-final-repair-v28-routing">
+(()=>{'use strict';const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
+const signed=()=>!!(window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id);
+const auth=reason=>{if(typeof window.bmnOpenAuthGate==='function')window.bmnOpenAuthGate(reason||'Sign in with Google or email to continue.');else{const g=$('#bmnAuthGate');if(g)g.classList.add('is-visible')}};
+// Anonymous visitors can browse feeds, open profiles, and open Inbox. Account-only actions ask for sign-in.
+document.addEventListener('click',e=>{
+ const t=e.target.closest('#lgtt [data-dock],#lgtt [data-act],#bmnProfileV2Handle,#bmnProfileV2Name,#bmnProfileV2Avatar,[data-profile-action="account"]');if(!t)return;
+ if(t.matches('#bmnProfileV2Handle,#bmnProfileV2Name,#bmnProfileV2Avatar')&&!signed()){e.preventDefault();auth('Sign in with Google or email to complete your profile.');return}
+ if(t.matches('[data-profile-action="account"]')&&!signed()){e.preventDefault();e.stopImmediatePropagation();auth('Sign in with Google or email to manage your account.');return}
+ if(!t.closest('#lgtt')||signed())return;
+ const d=t.dataset.dock,act=t.dataset.act;
+ if(d==='create'||act==='follow'||act==='message'||act==='like'||act==='save'||act==='auth-profile'){
+   if(d==='create'){const dock=$('#lgttDock');const lens=$('#lgttLens');$$('#lgttDock [data-dock]').forEach(b=>b.classList.toggle('on',b.dataset.dock==='create'));if(lens){lens.style.opacity='1';lens.style.setProperty('--i','2')}}
+   e.preventDefault();e.stopImmediatePropagation();auth(act==='auth-profile'?'Sign in with Google or email to complete your profile.':d==='create'?'Sign in with Google or email to publish a post.':act==='follow'?'Sign in with Google or email to follow creators.':act==='message'?'Sign in with Google or email to message people.':'Sign in with Google or email to use this feature.');
+ }
+},true);
+// Keep the real sign-out action in the existing Profile > Settings & account menu.
+document.addEventListener('click',e=>{const b=e.target.closest('#bmnGateClose');if(b){e.preventDefault();window.bmnCloseAuthGate?.()}},true);
+// Avoid blanking the viewport when a device rotates or Safari's visual viewport changes.
+const fit=()=>{const root=$('#lgtt');if(root&&root.classList.contains('is-open')){root.style.height='100dvh';root.style.minHeight='100vh'}};
+window.addEventListener('resize',fit,{passive:true});window.visualViewport?.addEventListener('resize',fit,{passive:true});
+})();
+</script>
+
+</body>
+</html>
