@@ -1,8 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="bmn-starting">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual>
+<style id="bmn-first-paint-guard">
+html.bmn-starting,html.bmn-starting body{background:#070711!important;overflow:hidden!important;min-height:100%;}
+html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){visibility:hidden!important;pointer-events:none!important;}
+html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;position:fixed!important;inset:0!important;z-index:2147483647!important;opacity:1!important;animation:none!important;background:#070711!important;}
+html.bmn-community-app body> :not(#lgtt):not(script):not(style){display:none!important;visibility:hidden!important;pointer-events:none!important;}
+html.bmn-community-app body>#lgtt{display:block!important;visibility:visible!important;}
+html.bmn-community-app body>#lgtt[hidden]{display:none!important;}
+html.bmn-community-app body{overflow:hidden!important;background:#05070d!important;}
+</style>
+ content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
 <meta name="theme-color" content="#070711">
 <script>try{localStorage.setItem("bmn-v11-sound","on")}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -4913,7 +4923,7 @@ syncChrome();window.addEventListener('load',()=>setTimeout(syncChrome,300),{once
 
 /* ============ C. Splash cleanup (CSS already fades it out) ============ */
 const splash=$('#bmnSplash');
-if(splash){const kill=()=>splash.remove();splash.addEventListener('animationend',e=>{if(e.animationName==='bmnSplashOut')kill()});setTimeout(kill,3600)}
+if(splash){splash.addEventListener('animationend',e=>{if(e.animationName==='bmnSplashOut'&&!document.documentElement.classList.contains('bmn-starting'))splash.remove()});}
 
 /* ============ D. Toast ============ */
 const toastEl=document.createElement('div');toastEl.id='bmnToast';toastEl.setAttribute('role','status');toastEl.setAttribute('aria-live','polite');document.body.appendChild(toastEl);
@@ -8245,8 +8255,10 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 #lgtt .lgtt-v-feed .lgtt-stories-wrap{display:none!important}
 #lgtt #lgttDmScroll .lgtt-stories-wrap,#lgtt #lgttDiscScroll .lgtt-stories-wrap{display:block!important;visibility:visible!important;opacity:1!important}
 #lgtt #lgttMute{display:none!important;visibility:hidden!important;pointer-events:none!important}
-#bmnSplash{animation-duration:1.35s!important;z-index:2147483647!important}
-#bmnSplash .sp-logo,#bmnSplash .sp-tag{animation-duration:1.1s!important}
+#bmnSplash{animation:none!important;opacity:1;visibility:visible;z-index:2147483647!important;background:#070711!important}
+#bmnSplash .sp-logo{animation:bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both!important}
+#bmnSplash .sp-tag{animation:bmnSplashTag .45s ease .32s both!important}
+html.bmn-starting #bmnSplash .sp-logo::before,html.bmn-starting #bmnSplash .sp-logo::after{animation:bmnSplashRing .75s ease-out .28s both!important}
 #lgttDiscScroll .bmn-friends-home{padding:clamp(12px,3vw,22px);min-height:100%;color:var(--lg-fg,#fff)}
 #lgttDiscScroll .bmn-friends-headline{font:750 clamp(24px,4vw,34px)/1.1 system-ui;margin:8px 0 6px;letter-spacing:-.04em}
 #lgttDiscScroll .bmn-friends-sub{opacity:.7;font:13px/1.5 system-ui;margin:0 0 16px}
@@ -8263,61 +8275,38 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 #lgttDiscScroll .bmn-friend-post video{display:block;width:100%;max-height:56vh;object-fit:contain;border-radius:12px;margin-top:10px;background:#050505}
 #lgttDiscScroll .bmn-friends-empty{padding:24px 14px;text-align:center;opacity:.75;border:1px dashed #ffffff2e;border-radius:18px;font:13px/1.6 system-ui}
 </style>
-<script id="bmn-community-primary-v12-js">
+<script id="bmn-community-primary-v13-js">
 (()=>{'use strict';
 const $=(s,r=document)=>r.querySelector(s);
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let activeFriendsTab='posts', friendRenderToken=0;
-function meId(){return String(window.bmnSession?.user?.id||'')}
-function showCommunityOnly(){document.body.classList.add('community-mode');document.body.dataset.bmnNav='fyp';document.body.dataset.appScreen='home';document.body.classList.remove('bmn-friends-mode');}
-function showMainSite(){
-  // Closing the overlay returns to the BMN home, never the retired Community landing page.
-  const personal=$('.view-switch [data-view="personal"]')||$('[data-view="personal"]');
-  if(personal){personal.click();return;}
-  document.body.classList.remove('community-mode');document.body.dataset.appScreen='home';
-  const home=$('[data-view="home"]');if(home)home.click();
+let activeFriendsTab='posts',friendRenderToken=0;
+function meId(){return String(window.bmnSession?.user?.id||window.bmnSupabase?.auth?.getSession?.()?.data?.session?.user?.id||'')}
+function enterCommunityOnly(){
+ const root=document.documentElement,body=document.body;
+ root.classList.add('bmn-community-app');root.classList.remove('bmn-starting');
+ body.classList.remove('community-mode','bmn-friends-mode');body.dataset.bmnNav='fyp';body.dataset.appScreen='home';
+ const old=$('#communityPage'),oldFeed=$('#community');if(old){old.style.display='none';old.setAttribute('aria-hidden','true')}if(oldFeed){oldFeed.style.display='none';oldFeed.setAttribute('aria-hidden','true')}
 }
 function friendName(id){const p=(window.bmnProfiles||{})[id]||{};return p.display_name||p.full_name||p.username||p.name||'BMN Community member'}
 function friendHandle(id){const p=(window.bmnProfiles||{})[id]||{};return p.username?'@'+p.username:'@member-'+String(id).slice(0,8)}
 function friendAvatar(id){const p=(window.bmnProfiles||{})[id]||{};return p.avatar_display_url||p.avatar_url||p.avatar||''}
 function shell(){const host=$('#lgttDiscScroll');if(!host)return null;let app=$('.bmn-friends-home',host);if(!app){host.innerHTML='';app=document.createElement('div');app.className='bmn-friends-home';host.appendChild(app)}return app}
-function setTab(tab){activeFriendsTab=tab;renderFriends()}
 function tabButton(tab,label){return '<button type="button" data-friends-tab="'+tab+'" aria-selected="'+(activeFriendsTab===tab)+'">'+label+'</button>'}
-function profileCard(id){const name=friendName(id),avatar=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(avatar?'<img loading="lazy" decoding="async" src="'+esc(avatar)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}
-function empty(msg){return '<div class="bmn-friends-empty">'+esc(msg)+'</div>'}
-async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)return {following:[],followers:[],error:!uid?'Sign in to see your friends.':'Connect to BMN to load your relationships.'};try{const [a,b]=await Promise.all([sb.from('follows').select('following_id').eq('follower_id',uid),sb.from('follows').select('follower_id').eq('following_id',uid)]);if(a.error||b.error)return {following:[],followers:[],error:'Your following list could not be loaded. Check your connection or follow-table permissions.'};return {following:[...new Set((a.data||[]).map(x=>String(x.following_id)).filter(x=>x&&x!==uid))],followers:[...new Set((b.data||[]).map(x=>String(x.follower_id)).filter(x=>x&&x!==uid))]};}catch(_){return {following:[],followers:[],error:'Your relationships could not be loaded right now.'}}}
-async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host);const uid=meId();const rel=await loadRelationships(uid);if(token!==friendRenderToken||!list.isConnected)return;let html='';
- if(rel.error){html=empty(rel.error)}
- else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){
-  const ids=rel[activeFriendsTab];
-  if(ids.length){const sb=window.bmnSupabase;const unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>{window.bmnProfiles[p.id]=p})}}catch(_){}}
-   if(token!==friendRenderToken)return;html=ids.map(profileCard).join('');
-  }else html=empty(activeFriendsTab==='following'?'You are not following anyone yet. Follow creators to see their posts here.':'You do not have any followers yet.');
- }else{
-  const set=new Set(rel.following);const posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  if(posts.length){html=posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'';const video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join('')}
-  else html=empty('No published posts from people you follow yet. This feed uses real posts only.');
- }
- if(token===friendRenderToken&&list.isConnected)list.innerHTML=html;
-}
-function enterFriends(){setTimeout(renderFriends,80)}
-// Replace Discover with the actual Friends surface when the overlay routes to that view.
-function watchView(){const stage=$('#lgttStage');if(!stage)return;const apply=()=>{if(stage.dataset.view==='discover')enterFriends()};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
-document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();setTab(tab.dataset.friendsTab);return;}const close=e.target.closest('#lgtt [data-act="close"]');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.close();setTimeout(showMainSite,50);return;}},true);
-// Opening the app starts on the immersive FYP after the splash has had its short, bounded intro.
-function boot(){
- const splash=$('#bmnSplash');if(splash){splash.style.display='grid';splash.style.animationDuration='1.35s';setTimeout(()=>{if(splash.isConnected)splash.remove()},2000)}
- // Keep retired Community layouts from flashing or returning on the X control.
- const old=$('#communityPage'),oldFeed=$('#community');if(old)old.setAttribute('aria-hidden','true');if(oldFeed)oldFeed.setAttribute('aria-hidden','true');
- showCommunityOnly();
- const start=()=>{if(!window.LGTT){setTimeout(start,80);return;}try{window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}catch(_){}}
- setTimeout(start,Math.min(1450,2000));
+function empty(msg){return '<div class="bmn-friends-empty">'+String(msg).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>'}
+async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)return {following:[],followers:[],error:!uid?'Sign in to see your friends.':'Connect to BMN to load your relationships.'};try{const [a,b]=await Promise.all([sb.from('follows').select('following_id').eq('follower_id',uid),sb.from('follows').select('follower_id').eq('following_id',uid)]);if(a.error||b.error)return {following:[],followers:[],error:'Your relationships could not be loaded. Check your connection or follow-table permissions.'};return {following:[...new Set((a.data||[]).map(x=>String(x.following_id)).filter(x=>x&&x!==uid))],followers:[...new Set((b.data||[]).map(x=>String(x.follower_id)).filter(x=>x&&x!==uid))]}}catch(_){return {following:[],followers:[],error:'Your relationships could not be loaded right now.'}}}
+async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
+function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
+document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
+function boot(){const splash=$('#bmnSplash');const introMs=1350;
+ // Keep the splash as the only visible UI while the Community overlay is prepared.
+ document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.animation='none';splash.style.opacity='1';}
+ // Force the app-only shell before removing the splash; the portfolio never paints.
+ const start=()=>{enterCommunityOnly();if(window.LGTT){try{window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}catch(_){}}else setTimeout(start,60);};
+ setTimeout(()=>{start();if(splash&&splash.isConnected)splash.remove();document.documentElement.classList.remove('bmn-starting');},introMs);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-// Try audible playback on the first real gesture; browsers may still require this gesture for sound autoplay.
+// Audio playback is attempted after the first user gesture because mobile browsers may block audible autoplay.
 let unlocked=false;document.addEventListener('pointerdown',()=>{if(unlocked)return;unlocked=true;document.querySelectorAll('#lgtt video.lgtt-vid').forEach(v=>{v.muted=false;if(v.readyState>=2)v.play().catch(()=>{});});},{capture:true,passive:true});
-// If the Community route is selected later, keep it immersive rather than restoring the retired page.
-window.addEventListener('load',()=>{const old=$('#communityPage'),oldFeed=$('#community');if(old)old.style.display='none';if(oldFeed)oldFeed.style.display='none';});
+window.addEventListener('load',()=>{enterCommunityOnly();if(!$('#lgttTrack')?.children.length)window.bmnSyncLGTTRealData?.();});
 })();
 </script>
 
