@@ -8783,6 +8783,145 @@ setInterval(reconcile,500);reconcile();
 })();
 </script>
 
+
+<style id="bmn-edge-to-edge-final-fix">
+/* FINAL EDGE-TO-EDGE FYP FIX
+   The media surface owns the complete viewport. The bottom navigation floats above it
+   instead of reserving a black strip underneath it. */
+html,body{width:100%;min-width:100%;}
+html{background:#000!important;}
+body.community-mode[data-app-screen="home"]{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#000!important;
+}
+body.community-mode[data-app-screen="home"] #communityPage,
+body.community-mode[data-app-screen="home"] #bmnAppScreens,
+body.community-mode[data-app-screen="home"] #appHomeScreen,
+body.community-mode[data-app-screen="home"] #community,
+body.community-mode[data-app-screen="home"] #community .community-grid,
+body.community-mode[data-app-screen="home"] #community .community-post,
+body.community-mode[data-app-screen="home"] #community .post-preview,
+body.community-mode[data-app-screen="home"] #community .post-preview img,
+body.community-mode[data-app-screen="home"] #community .post-preview video{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+}
+body.community-mode[data-app-screen="home"] #bmnAppScreens,
+body.community-mode[data-app-screen="home"] #appHomeScreen,
+body.community-mode[data-app-screen="home"] #community,
+body.community-mode[data-app-screen="home"] #community .community-grid{
+  height:100%!important;
+  min-height:100%!important;
+  max-height:none!important;
+  padding:0!important;
+  background:#000!important;
+}
+body.community-mode[data-app-screen="home"] #community .community-grid{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+body.community-mode[data-app-screen="home"] #community .community-post{
+  height:100%!important;
+  min-height:100%!important;
+  max-height:none!important;
+  padding:0!important;
+  background:#000!important;
+  overflow:hidden!important;
+  scroll-snap-align:start!important;
+}
+body.community-mode[data-app-screen="home"] #community .post-preview,
+body.community-mode[data-app-screen="home"] #community .post-preview.has-media,
+body.community-mode[data-app-screen="home"] #community .post-preview img,
+body.community-mode[data-app-screen="home"] #community .post-preview video{
+  position:absolute!important;
+  inset:0!important;
+  height:100%!important;
+  min-height:100%!important;
+  max-height:none!important;
+  padding:0!important;
+  background:#000!important;
+  object-fit:cover!important;
+}
+/* No black reserved area behind the dock. */
+body.community-mode[data-app-screen="home"] .app-dock{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:max(10px,env(safe-area-inset-bottom,0px))!important;
+  width:min(420px,calc(100vw - 28px))!important;
+  max-width:calc(100vw - 28px)!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:6px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  background:rgba(255,255,255,.035)!important;
+  background-image:linear-gradient(180deg,rgba(255,255,255,.105),rgba(255,255,255,.018))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.07),0 22px 60px rgba(0,0,0,.48)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(210%)!important;
+  backdrop-filter:blur(28px) saturate(210%)!important;
+  transform:translateX(-50%)!important;
+  z-index:2147483001!important;
+}
+body.community-mode[data-app-screen="home"] .app-dock>button{
+  height:50px!important;
+  min-height:50px!important;
+  background:transparent!important;
+  border:1px solid transparent!important;
+  box-shadow:none!important;
+}
+/* Keep the Liquid Glass create/active treatments without turning the whole dock opaque. */
+body.community-mode[data-app-screen="home"] .app-dock>button.active,
+body.community-mode[data-app-screen="home"] .app-dock>button[aria-current="page"]{
+  background:linear-gradient(180deg,rgba(72,160,255,.48),rgba(10,110,255,.25))!important;
+  border-color:rgba(170,212,255,.42)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 4px 18px rgba(10,132,255,.18)!important;
+}
+/* The iOS home-indicator/safe-area is part of the same painted surface. */
+body.community-mode[data-app-screen="home"]::after{
+  content:"";
+  position:fixed;
+  z-index:2147483000;
+  left:0;right:0;bottom:0;
+  height:env(safe-area-inset-bottom,0px);
+  background:transparent!important;
+  pointer-events:none;
+}
+/* The actual video layer must remain underneath every control, including the safe area. */
+#lgtt,
+#lgtt .lgtt-stage,
+#lgtt .lgtt-slide,
+#lgtt .lgtt-media,
+#lgtt video.lgtt-vid{
+  background:#000!important;
+}
+</style>
+<script id="bmn-edge-to-edge-viewport-final">
+(()=>{
+  'use strict';
+  const setVH=()=>{
+    const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    document.documentElement.style.setProperty('--bmn-real-vh',h+'px');
+  };
+  setVH();
+  window.addEventListener('resize',setVH,{passive:true});
+  window.visualViewport?.addEventListener('resize',setVH,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(setVH,250),{passive:true});
+})();
+</script>
+
 </body>
 </html>
 
