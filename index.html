@@ -7415,7 +7415,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     },
     forPost(slide) {
       if (!slide || !slide._post) return; const p = slide._post, b = baseId(p.id);
-      Menu.open([
+      const items=[
         { label: S.saved[b] ? 'Remove from Favourites' : 'Add to Favourites', icon: 'bookmark', fn: () => Feed.toggleSave(p) },
         { label: 'Playback speed · 0.5×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 0.5; v.play().catch(() => {}); toast('Playback speed 0.5×', 'play'); } } },
         { label: 'Playback speed · 1×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 1; v.play().catch(() => {}); toast('Playback speed 1×', 'play'); } } },
@@ -7426,7 +7426,18 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         '-',
         { label: 'Not interested', icon: 'eyeoff', fn: () => Feed.notInterested(slide) },
         { label: 'Report', icon: 'flag', danger: true, fn: () => Confirm.ask('Report this video?', 'We will review it against the community guidelines.', 'Report', () => toast('Thanks — report submitted', 'flag'), true) }
-      ]);
+      ];
+      const me=String(window.bmnSession?.user?.id||'');
+      const record=(window.cachedPosts||[]).find(x=>String(x.id)===String(p.id))||(window.cachedPosts||[]).find(x=>String(x.media_display_url||x.media_url||x.video_url||'')===String(p.src||''));
+      const owned=!!(me&&((record&&String(record.user_id)===me)||String(p.u)==='bmn'));
+      if(owned){
+        const status=String(record?.status||p.status||'published').toLowerCase();
+        items.splice(items.length-2,0,
+          {label:'Edit caption',icon:'edit',fn:async()=>{const sb=window.bmnSupabase;if(!sb||!me)return toast('Sign in to edit your post','info');const current=String(record?.content||record?.caption||p.cap||'');const revised=prompt('Edit your post caption:',current);if(revised===null)return;if(!revised.trim())return toast('Caption cannot be empty','info');let result=await sb.from('posts').update({content:revised.trim(),caption:revised.trim(),updated_at:new Date().toISOString()}).eq('id',record?.id||p.id).eq('user_id',me);if(result.error&&/caption|column|schema cache/i.test(String(result.error.message||'')))result=await sb.from('posts').update({content:revised.trim(),updated_at:new Date().toISOString()}).eq('id',record?.id||p.id).eq('user_id',me);if(result.error)return toast('Could not update caption: '+result.error.message,'info');if(typeof window.loadCommunityPosts==='function')await window.loadCommunityPosts();toast('Post caption updated','success');}},
+          {label:status==='published'?'Make post private':'Publish post',icon:status==='published'?'eyeoff':'eye',fn:async()=>{const sb=window.bmnSupabase;if(!sb||!me)return toast('Sign in to change post privacy','info');const next=status==='published'?'private':'published';const result=await sb.from('posts').update({status:next,updated_at:new Date().toISOString()}).eq('id',record?.id||p.id).eq('user_id',me);if(result.error)return toast('Could not change privacy: '+result.error.message,'info');if(typeof window.loadCommunityPosts==='function')await window.loadCommunityPosts();toast(next==='private'?'Post is now private':'Post is published','success');}},
+          {label:'Delete post',icon:'trash',danger:true,fn:async()=>{const sb=window.bmnSupabase;if(!sb||!me)return toast('Sign in to delete your post','info');if(!confirm('Delete this post permanently?'))return;const postId=record?.id||p.id;const result=await sb.from('posts').delete().eq('id',postId).eq('user_id',me);if(result.error)return toast('Could not delete post: '+result.error.message,'info');if(typeof window.loadCommunityPosts==='function')await window.loadCommunityPosts();toast('Post deleted','success');}});
+      }
+      Menu.open(items);
     }
   };
 
@@ -7626,7 +7637,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     function bubble(m, i) {
       const post = m.share && POSTS.find(p => baseId(p.id) === m.share);
       let inner = '';
-      if (post) { const u = userFor(post.u); inner += '<button type="button" class="lgtt-share-card" data-open-post="' + esc(post.id) + '"><span class="th">' + sceneHTML(post.scene) + '</span><span><b>@' + esc(u.handle) + '</b><small>' + esc(post.cap) + '</small></span></button>'; }
+      if (post) { const u = userFor(post.u), poster=String(post.poster||post.thumbnail_display_url||post.thumbnail_url||''); const thumb=/^(https?:\/\/|blob:|data:)/i.test(poster)?'<img loading="lazy" decoding="async" src="'+esc(poster)+'" alt="Video preview">':sceneHTML(post.scene); inner += '<button type="button" class="lgtt-share-card" data-open-post="' + esc(post.id) + '"><span class="th">' + thumb + '<i class="bmn-shared-play" aria-hidden="true">▶</i></span><span><b>@' + esc(u.handle) + '</b><small>' + esc(post.cap||'Shared video') + '</small></span></button>'; }
       if (m.text) inner += '<div class="lgtt-bubble' + (isBig(m.text) ? ' big' : '') + '" data-mi="' + i + '">' + esc(m.text) + (m.react ? '<span class="lgtt-react">' + m.react + '</span>' : '') + '</div>';
       return '<div class="lgtt-msg' + (m.me ? ' me' : '') + (m.react ? ' has-react' : '') + '" data-i="' + i + '">' + inner + '</div>';
     }
@@ -8569,7 +8580,10 @@ function patchVideoSlides(){
    const raw=p.src||'';if(/^https?:|^blob:|^data:/i.test(raw)){v.src=raw;v.load()}
  }});
 }
-function unlockAudio(){for(const v of $$('video.lgtt-vid')){v.muted=false;v.volume=1;v.play().catch(()=>{})}}
+function unlockAudio(){
+ const active=$('#lgttTrack .lgtt-slide.is-active');
+ $$('video,audio').forEach(v=>{if(!(v instanceof HTMLMediaElement))return;const belongs=!!(active&&v.matches('video.lgtt-vid')&&v.closest('.lgtt-slide')===active);if(!belongs){try{v.pause()}catch(_){}return;}v.muted=false;v.volume=1;if(!document.hidden&&root.classList.contains('is-open')&&$('#lgttStage')?.dataset.view==='feed'&&!$('#lgttStage')?.classList.contains('has-layer')&&!$('#lgttStage')?.classList.contains('has-sheet'))v.play().catch(()=>{});});
+}
 
 document.addEventListener('pointerdown',()=>{if(root.classList.contains('bmn-community-app'))unlockAudio()},{capture:true,passive:true});
 
@@ -8577,14 +8591,14 @@ document.addEventListener('pointerdown',()=>{if(root.classList.contains('bmn-com
 function installWallpaper(){
  const chat=$('#lgttChat'),header=chat?.querySelector('.lgtt-chat-h'),msgs=$('#lgttMsgs');if(!chat||!header||!msgs)return;
  const key=()=>{const n=($('#lgttChatName')?.textContent||'conversation').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,64)||'conversation';return 'bmn-chat-wallpaper-v17:'+n};
- const apply=data=>{chat.style.backgroundImage='';chat.classList.remove('bmn-chat-full-wallpaper');if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const value=String(data);chat.style.backgroundImage=value.startsWith('gradient:')?value.slice(9):(value.startsWith('linear-gradient')||value.startsWith('radial-gradient')?value:'url("'+value.replace(/"/g,'\\"')+'")');chat.classList.add('bmn-chat-full-wallpaper');msgs.style.backgroundImage='none';msgs.classList.add('bmn-custom-wallpaper')};
+ const apply=data=>{chat.style.backgroundImage='';chat.style.removeProperty('--bmn-chat-wallpaper');chat.classList.remove('bmn-chat-full-wallpaper');if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const value=String(data);const image=value.startsWith('gradient:')?value.slice(9):(value.startsWith('linear-gradient')||value.startsWith('radial-gradient')?value:'url("'+value.replace(/"/g,'\"')+'")');chat.style.setProperty('--bmn-chat-wallpaper',image);chat.classList.add('bmn-chat-full-wallpaper');msgs.style.backgroundImage='none';msgs.classList.add('bmn-custom-wallpaper')};
  let input=$('#bmnWallpaperInputV17'),button=$('#bmnWallpaperButtonV17'),preset=header.querySelector('[data-bmn-wallpaper-preset-v18]');
  if(button){const nextKey=key();if(button.dataset.bmnWallpaperKey!==nextKey){button.dataset.bmnWallpaperKey=nextKey;safe(()=>apply(localStorage.getItem(nextKey)||''))}return;}
  input=document.createElement('input');input.type='file';input.accept='image/*';input.id='bmnWallpaperInputV17';input.hidden=true;header.appendChild(input);
  button=document.createElement('button');button.id='bmnWallpaperButtonV17';button.type='button';button.className='lgtt-btn lgtt-round lgtt-sm';button.textContent='▧';button.title='Full-screen message wallpaper';button.setAttribute('aria-label','Choose full-screen message wallpaper');header.appendChild(button);
  preset=document.createElement('button');preset.type='button';preset.dataset.bmnWallpaperPresetV18='1';preset.className='lgtt-btn lgtt-round lgtt-sm';preset.textContent='✦';preset.title='Wallpaper presets, including Midnight';preset.setAttribute('aria-label','Wallpaper presets including Midnight');header.appendChild(preset);
  button.addEventListener('click',()=>input.click());
- input.addEventListener('change',()=>{const f=input.files?.[0];if(!f||!f.type.startsWith('image/'))return;if(f.size>1500000){alert('Choose a message background image under 1.5 MB.');return}const r=new FileReader();r.onload=()=>{const d=String(r.result||'');safe(()=>localStorage.setItem(key(),d));apply(d);button.dataset.bmnWallpaperKey=key()};r.readAsDataURL(f)});
+ input.addEventListener('change',()=>{const f=input.files?.[0];if(!f||!f.type.startsWith('image/'))return;const reader=new FileReader();reader.onerror=()=>alert('This image could not be read. Please choose another photo.');reader.onload=()=>{const raw=String(reader.result||'');const img=new Image();img.onerror=()=>alert('This image format could not be displayed. Please choose a JPG or PNG.');img.onload=()=>{try{const max=1600,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const d=canvas.toDataURL('image/jpeg',.78);try{localStorage.setItem(key(),d)}catch(_){alert('Your browser storage is full. Remove older site data or choose a smaller wallpaper.');return}apply(d);button.dataset.bmnWallpaperKey=key();input.value=''}catch(_){alert('Could not prepare this wallpaper. Please try another image.')}};img.src=raw};reader.readAsDataURL(f)});
  preset.addEventListener('click',()=>{const choices=['linear-gradient(145deg,rgba(2,3,8,.99),rgba(12,14,24,.98) 52%,rgba(24,25,42,.97))','linear-gradient(135deg,rgba(38,58,100,.95),rgba(117,72,150,.88))','linear-gradient(135deg,rgba(8,50,70,.96),rgba(38,115,125,.88))','linear-gradient(135deg,rgba(35,26,56,.96),rgba(112,50,89,.88))'];const cur=localStorage.getItem(key())||'';const idx=choices.indexOf(cur.startsWith('gradient:')?cur.slice(9):cur);const next='gradient:'+choices[(idx+1+choices.length)%choices.length];safe(()=>localStorage.setItem(key(),next));apply(next);button.dataset.bmnWallpaperKey=key()});
  button.dataset.bmnWallpaperKey=key();safe(()=>apply(localStorage.getItem(key())||''));
 }
@@ -8732,6 +8746,40 @@ window.BMN_FINAL_COMPLETE={enterCommunity,enterPersonal,applyAppearance,patchPro
  // Guard app routing when the Community overlay is hidden or the original BMN page is shown.
  const bodyMo=new MutationObserver(schedule);bodyMo.observe(document.body,{attributes:true,attributeFilter:['class','data-app-screen']});
  schedule();
+})();
+</script>
+
+
+<style id="bmn-final-playback-and-wallpaper-v21">
+/* Keep the immersive FYP edge-to-edge through the device safe area. */
+#lgtt{position:fixed!important;inset:0!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100%!important;padding:0!important;margin:0!important;overflow:hidden!important;}
+#lgtt .lgtt-stage,#lgtt #lgttVFeed,#lgtt .lgtt-v-feed,#lgtt .lgtt-feed,#lgtt #lgttTrack,#lgtt .lgtt-track,#lgtt .lgtt-slide,#lgtt .lgtt-media,#lgtt video.lgtt-vid{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;border-radius:0!important;}
+#lgtt .lgtt-slide{overflow:hidden!important;background:#000!important;}
+#lgtt .lgtt-media{overflow:hidden!important;background:#000 center/cover no-repeat!important;}
+#lgtt video.lgtt-vid{object-fit:cover!important;object-position:center center!important;background:#000!important;}
+/* A real selected wallpaper is a dedicated full-viewport layer, not a theme background. */
+#lgtt #lgttChat.bmn-chat-full-wallpaper::before{background-image:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.06) 36%,rgba(0,0,0,.25)),var(--bmn-chat-wallpaper)!important;background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important;}
+#lgtt #lgttChat.bmn-chat-full-wallpaper{background-image:none!important;background-color:#050505!important;}
+#lgtt .lgtt-share-card .th{position:relative!important;display:block!important;overflow:hidden!important;aspect-ratio:9/12!important;background:#10131b!important;border-radius:12px!important;}
+#lgtt .lgtt-share-card .th>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;}
+#lgtt .lgtt-share-card .bmn-shared-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.48);color:#fff;font-size:13px;box-shadow:0 2px 10px #0005;}
+@media(min-width:600px){#lgtt .lgtt-stage{height:100%!important;width:100%!important;max-height:none!important;border-radius:0!important;}}
+</style>
+<script id="bmn-single-active-video-v21">
+(()=>{'use strict';
+const all=()=>Array.from(document.querySelectorAll('video,audio'));
+const root=document.querySelector('#lgtt');if(!root)return;
+function canPlay(v){const stage=document.querySelector('#lgttStage'),slide=v.closest('.lgtt-slide');return !document.hidden&&root.classList.contains('is-open')&&stage?.dataset.view==='feed'&&!stage.classList.contains('has-layer')&&!stage.classList.contains('has-sheet')&&!document.querySelector('#lgttChat.is-open,#lgttComments.is-open')&&v.matches('video.lgtt-vid')&&slide?.classList.contains('is-active')&&getComputedStyle(slide).visibility!=='hidden'}
+function pauseAll(except=null){all().forEach(v=>{if(v!==except){try{v.pause()}catch(_){}}})}
+function reconcile(){const playing=all().filter(v=>!v.paused);let keep=null;for(const v of playing){if(canPlay(v)&&!keep)keep=v;else{try{v.pause()}catch(_){}}}if(!keep){const active=document.querySelector('#lgttTrack .lgtt-slide.is-active video.lgtt-vid');if(active&&!canPlay(active))try{active.pause()}catch(_){}}}
+document.addEventListener('play',e=>{const v=e.target;if(!(v instanceof HTMLMediaElement))return;if(!canPlay(v)){try{v.pause()}catch(_){}return}pauseAll(v)},true);
+const navSel='[data-dock],[data-act],[data-lgtt-open],.bmn-switch-personal,[data-view="community"],[data-view="bmn"],[data-open-post]';
+document.addEventListener('click',e=>{if(e.target.closest(navSel)){pauseAll();setTimeout(reconcile,0);setTimeout(reconcile,180)}},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseAll();else reconcile()},true);
+document.addEventListener('pagehide',()=>pauseAll(),true);
+const mo=new MutationObserver(()=>{if(!root.classList.contains('is-open')||!canPlay(document.querySelector('#lgttTrack .lgtt-slide.is-active video.lgtt-vid')||document.createElement('video')))pauseAll();else reconcile()});
+mo.observe(root,{subtree:true,attributes:true,attributeFilter:['class','hidden','aria-hidden','data-view','style']});
+setInterval(reconcile,500);reconcile();
 })();
 </script>
 
