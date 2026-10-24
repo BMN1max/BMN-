@@ -9066,3 +9066,107 @@ window.BMNAppStandard={openInbox:()=>{if(!session())return openAuth('Sign in to 
 </html>
 
 
+
+<!-- BMN Community App Standard Authentication Repair v27 -->
+<style id="bmn-auth-repair-v27">
+#bmnAuthGate{z-index:100000!important}
+#bmnAuthGate .bmn-gate-card{max-width:460px;width:min(92vw,460px)}
+#bmnAuthGate input{box-sizing:border-box;width:100%;min-height:48px}
+#bmnAuthGate .bmn-auth-status{min-height:22px}
+.bmn-auth-busy{opacity:.65!important;pointer-events:none!important}
+</style>
+<script id="bmn-auth-repair-v27-js">
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const waitForClient=async()=>{
+  for(let i=0;i<80;i++){
+    if(window.bmnSupabase?.auth)return window.bmnSupabase;
+    await new Promise(r=>setTimeout(r,100));
+  }
+  throw new Error('BMN account service is not connected. Please reload and try again.');
+};
+const showMain=t=>{try{window.setBackendStatus?.(t,false)}catch(_){};const e=$('bmnBackendStatus');if(e)e.textContent=t};
+const showGate=(t,err=false)=>{const e=$('bmnGateStatus');if(e){e.textContent=t;e.style.color=err?'#ffb7c1':'#c8d7ff'}};
+const applySession=async(session)=>{
+  window.bmnSession=session||null;
+  try{if(typeof window.updateAuthUI==='function')window.updateAuthUI()}catch(_){}
+  try{window.bmnRefreshProfileV2?.()}catch(_){}
+  try{window.bmnRenderInboxV2?.()}catch(_){}
+  try{window.loadCommunityPosts?.()}catch(_){}
+};
+const explain=e=>{
+  const m=String(e?.message||e||'Authentication failed.');
+  if(/invalid login credentials/i.test(m))return 'Email or password is incorrect.';
+  if(/email not confirmed/i.test(m))return 'Please confirm your email address first, then sign in again.';
+  if(/user already registered/i.test(m))return 'This email already has an account. Tap Sign in instead.';
+  if(/password.*6/i.test(m))return 'Password must be at least 6 characters.';
+  return m;
+};
+async function signIn(email,password,ui='main'){
+  const sb=await waitForClient();
+  email=String(email||'').trim(); password=String(password||'');
+  if(!email||!password)throw new Error('Enter your email and password.');
+  if(password.length<6)throw new Error('Password must be at least 6 characters.');
+  if(ui==='gate')showGate('Signing in…'); else showMain('Signing in…');
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  await applySession(data?.session||null);
+  if(ui==='gate')showGate('Signed in successfully.'); else showMain('You are signed in. Welcome back!');
+  const gate=$('bmnAuthGate');if(gate)gate.classList.remove('is-visible');
+  return data?.session||null;
+}
+async function signUp(email,password,name,username,ui='main'){
+  const sb=await waitForClient();
+  email=String(email||'').trim();password=String(password||'');
+  name=String(name||'').trim();username=String(username||'').trim()||email.split('@')[0];
+  if(!email||!password)throw new Error('Enter your email and password.');
+  if(password.length<6)throw new Error('Password must be at least 6 characters.');
+  if(ui==='gate')showGate('Creating your account…'); else showMain('Creating your account…');
+  const {data,error}=await sb.auth.signUp({email,password,options:{data:{username,display_name:name||username}}});
+  if(error)throw error;
+  if(data?.session){await applySession(data.session);if(ui==='gate')showGate('Account created. You are signed in.');else showMain('Account created. Welcome to BMN Community!');}
+  else if(ui==='gate')showGate('Account created. Check your email to confirm your account, then sign in.');
+  else showMain('Account created. Check your email to confirm your account, then sign in.');
+  return data?.session||null;
+}
+async function handleMain(kind){
+  const si=$('bmnSignIn'),su=$('bmnSignUp');
+  try{
+    si?.classList.add('bmn-auth-busy');su?.classList.add('bmn-auth-busy');
+    if(kind==='signin')await signIn($('bmnEmail')?.value,$('bmnPassword')?.value,'main');
+    else await signUp($('bmnEmail')?.value,$('bmnPassword')?.value,$('bmnDisplayName')?.value,$('bmnUsername')?.value,'main');
+  }catch(e){showMain(explain(e));}finally{si?.classList.remove('bmn-auth-busy');su?.classList.remove('bmn-auth-busy')}
+}
+async function handleGate(){
+  const form=$('bmnGateForm'),btn=$('bmnGateSignIn'),create=$('bmnGateCreate');
+  const creating=btn?.textContent?.trim().toLowerCase()==='create account';
+  try{
+    btn?.classList.add('bmn-auth-busy');create?.classList.add('bmn-auth-busy');
+    if(creating)await signUp($('bmnGateEmail')?.value,$('bmnGatePassword')?.value,$('bmnGateName')?.value,$('bmnGateUsername')?.value,'gate');
+    else await signIn($('bmnGateEmail')?.value,$('bmnGatePassword')?.value,'gate');
+  }catch(e){showGate(explain(e),true);}finally{btn?.classList.remove('bmn-auth-busy');create?.classList.remove('bmn-auth-busy')}
+}
+// Capture-phase handlers deliberately replace the older duplicated auth handlers in this file.
+document.addEventListener('click',e=>{
+  const b=e.target.closest?.('#bmnSignIn,#bmnSignUp');
+  if(!b)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  handleMain(b.id==='bmnSignUp'?'signup':'signin');
+},true);
+document.addEventListener('submit',e=>{
+  if(e.target?.id!=='bmnGateForm')return;
+  e.preventDefault();e.stopImmediatePropagation();handleGate();
+},true);
+// Make Enter in the main email/password fields submit sign-in instead of doing nothing.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const t=e.target;
+  if(t?.id==='bmnEmail'||t?.id==='bmnPassword'){
+    e.preventDefault();e.stopImmediatePropagation();handleMain('signin');
+  }
+},true);
+// If a session already exists, synchronize every UI surface.
+waitForClient().then(sb=>sb.auth.getSession()).then(r=>applySession(r?.data?.session||null)).catch(()=>{});
+})();
+</script>
