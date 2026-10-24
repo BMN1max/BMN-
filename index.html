@@ -8937,7 +8937,7 @@ const $=id=>document.getElementById(id);let creating=false,client=null,authReady
 const gate=$('bmnAuthGate'),status=$('bmnGateStatus'),name=$('bmnGateName'),username=$('bmnGateUsername'),create=$('bmnGateCreate'),signIn=$('bmnGateSignIn'),form=$('bmnGateForm'),logout=$('bmnRealLogout');
 function setStatus(t,error=false){if(status){status.textContent=t;status.style.color=error?'#ffb7c1':'#c8d7ff'}}
 function setCreateMode(on){creating=!!on;name.style.display=creating?'block':'none';username.style.display=creating?'block':'none';name.required=creating;username.required=creating;signIn.textContent=creating?'Create account':'Sign in';create.textContent=creating?'Use existing account':'Create account';$('bmnAuthTitle').textContent=creating?'Create your BMN account':'Welcome back';$('bmnGatePassword').autocomplete=creating?'new-password':'current-password';}
-function updateGate(session){authReady=true;window.bmnSession=session||null;const signedIn=!!session;if(signedIn)window.bmnAuthRequested=false;gate?.classList.toggle('is-visible',!signedIn&&window.bmnAuthRequested===true);logout?.classList.remove('is-visible');document.body.classList.toggle('bmn-auth-open',!signedIn&&window.bmnAuthRequested===true);if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}}
+function updateGate(session){authReady=true;window.bmnSession=session||null;const signedIn=!!session;if(signedIn)window.bmnAuthRequested=false;gate?.classList.toggle('is-visible',!signedIn&&window.bmnAuthRequested===true);logout?.classList.remove('is-visible');document.body.classList.toggle('bmn-auth-open',!signedIn&&window.bmnAuthRequested===true);if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';setTimeout(()=>{const dest=window.bmnPendingAuthDestination;if(dest&&window.BMNAppStandard){window.bmnPendingAuthDestination=null;window.BMNAppStandard.showView(dest);if(dest==='inbox')window.bmnRenderInboxV2?.();if(dest==='profile')window.bmnRefreshProfileV2?.();}},180);}}
 window.bmnAuthRequested=false;
 window.bmnOpenAuthGate=function(reason){window.bmnAuthRequested=true;gate?.classList.add('is-visible');if(reason)setStatus(reason);document.body.classList.add('bmn-auth-open');setTimeout(()=>{if(form&&form.style.display!=='none')$('bmnGateEmail')?.focus({preventScroll:true});else $('bmnShowEmailAuth')?.focus({preventScroll:true})},40)};
 window.bmnCloseAuthGate=function(){window.bmnAuthRequested=false;gate?.classList.remove('is-visible');document.body.classList.remove('bmn-auth-open')};
@@ -8996,7 +8996,12 @@ setTimeout(()=>{try{const root=document.documentElement,app=document.getElementB
 const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
 function safe(fn){try{return fn()}catch(e){console.warn('[BMN app]',e);return null}}
 function session(){return window.bmnSession||null}
-function openAuth(reason){
+function openAuth(reason,destination){
+  if(destination)window.bmnPendingAuthDestination=destination;
+  if(typeof window.bmnOpenAuthGate==='function'){
+    window.bmnOpenAuthGate(reason||'Sign in with Google or email to continue.');
+    return;
+  }
   const p=q('#bmnAccountPanel');
   if(!p){q('#bmnSignIn')?.click();return;}
   p.classList.add('bmn-account-visible');p.style.display='block';
@@ -9016,12 +9021,36 @@ function ensureViews(){
  return true;
 }
 function hideFunctional(){qa('.bmn-functional-view').forEach(v=>v.hidden=true);document.documentElement.classList.remove('bmn-app-standard')}
-function ensureProfileAuth(){const body=q('#bmnFunctionalProfileView .bmn-functional-body');if(!body)return;if(session()){q('#bmnFunctionalProfileAuth')?.remove();return}if(q('#bmnFunctionalProfileAuth'))return;const box=document.createElement('div');box.id='bmnFunctionalProfileAuth';box.className='bmn-functional-auth';box.innerHTML='<h3>Sign in to BMN Community</h3><p>Sign in with Google or email to use your profile, follow creators, message people and publish.</p><button type="button" class="backend-btn primary" id="bmnFunctionalGoogle">Continue with Google</button><button type="button" class="backend-btn" id="bmnFunctionalEmail">Sign in / Create account</button>';body.prepend(box);q('#bmnFunctionalGoogle').addEventListener('click',()=>q('#bmnOAuthControls [data-oauth-provider=google]')?.click());q('#bmnFunctionalEmail').addEventListener('click',()=>openAuth('Sign in or create your BMN Community account.'));}
+function ensureAuthCard(kind){
+ const view=q('#bmnFunctional'+kind.charAt(0).toUpperCase()+kind.slice(1)+'View');
+ const body=view&&q('.bmn-functional-body',view);if(!body)return;
+ const cardId='bmnFunctional'+kind.charAt(0).toUpperCase()+kind.slice(1)+'Auth';
+ const contentId=kind==='profile'?'#bmnProfileV2':kind==='inbox'?'#bmnInboxV2':kind==='create'?'#create':null;
+ if(session()){
+   q('#'+cardId)?.remove();body.classList.remove('bmn-auth-required');
+   if(contentId&&q(contentId))q(contentId).style.removeProperty('display');
+   return;
+ }
+ body.classList.add('bmn-auth-required');
+ if(contentId&&q(contentId))q(contentId).style.setProperty('display','none','important');
+ if(q('#'+cardId))return;
+ const title=kind==='profile'?'Sign in to complete your profile':kind==='inbox'?'Sign in to open your Inbox':'Sign in to create on BMN';
+ const copy=kind==='profile'?'Use your own account to edit your profile, follow creators, view your posts and manage settings.':kind==='inbox'?'Sign in to see your real messages, activity and conversations. After signing in, your Inbox will open here.':'Sign in to upload and publish videos to BMN Community.';
+ const box=document.createElement('div');box.id=cardId;box.className='bmn-functional-auth';
+ box.innerHTML='<h3>'+title+'</h3><p>'+copy+'</p><button type="button" class="backend-btn primary" data-bmn-auth-google>Continue with Google</button><button type="button" class="backend-btn" data-bmn-auth-email>Sign in with email</button><button type="button" class="backend-btn" data-bmn-auth-create>Create an account</button>';
+ body.prepend(box);
+ box.querySelector('[data-bmn-auth-google]').addEventListener('click',()=>{window.bmnPendingAuthDestination=kind;window.bmnOpenAuthGate?.('Continue with Google to use your BMN Community account.');setTimeout(()=>q('#bmnAuthGate [data-gate-provider="google"]')?.click(),100)});
+ box.querySelector('[data-bmn-auth-email]').addEventListener('click',()=>{window.bmnPendingAuthDestination=kind;window.bmnOpenAuthGate?.('Sign in with your email and password.');setTimeout(()=>q('#bmnShowEmailAuth')?.click(),80)});
+ box.querySelector('[data-bmn-auth-create]').addEventListener('click',()=>{window.bmnPendingAuthDestination=kind;window.bmnOpenAuthGate?.('Create your BMN Community account with email.');setTimeout(()=>q('#bmnGateCreateStart')?.click(),80)});
+}
+function ensureProfileAuth(){ensureAuthCard('profile')}
 function showView(kind){
  if(!ensureViews())return;
  const v=q('#bmnFunctional'+kind.charAt(0).toUpperCase()+kind.slice(1)+'View'); if(!v)return;
- qa('.bmn-functional-view').forEach(x=>x.hidden=x!==v);document.documentElement.classList.add('bmn-app-standard');if(kind==='profile')ensureProfileAuth();
+ qa('.bmn-functional-view').forEach(x=>x.hidden=x!==v);document.documentElement.classList.add('bmn-app-standard');
+ if(['profile','inbox','create'].includes(kind))ensureAuthCard(kind);
  qa('#lgttDock .lgtt-dk[data-dock]').forEach(b=>b.classList.toggle('on',b.dataset.dock===kind));
+ if(kind==='inbox'&&session())refreshInbox();
 }
 function refreshInbox(){safe(()=>window.bmnRenderInboxV2?.());safe(()=>window.loadSocialHub?.());}
 function openConversation(id){
@@ -9048,9 +9077,9 @@ function installNav(){
   if(!['inbox','profile','create'].includes(kind))return;
   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
   ensureViews();
-  if(kind==='inbox'){if(!session()){openAuth('Sign in to use your Inbox and messages.');return}showView('inbox');refreshInbox();}
-  if(kind==='profile'){if(!session()){showView('profile');return}showView('profile');window.bmnRefreshProfileV2?.();}
-  if(kind==='create'){if(!session()){openAuth('Sign in or create an account before publishing to BMN Community.');return}showView('create');}
+  if(kind==='inbox'){if(!session()){window.bmnPendingAuthDestination='inbox';showView('inbox');return}showView('inbox');refreshInbox();}
+  if(kind==='profile'){window.bmnPendingAuthDestination=session()?null:'profile';showView('profile');if(session())window.bmnRefreshProfileV2?.();}
+  if(kind==='create'){if(!session()){openAuth('Sign in or create an account before publishing to BMN Community.','create');return}showView('create');}
   installConversationClear();
  },true);
  document.addEventListener('click',e=>{const b=e.target.closest('[data-bmn-functional-back]');if(!b)return;e.preventDefault();hideFunctional();q('#lgttDock [data-dock="feed"]')?.click();},true);
@@ -9070,7 +9099,7 @@ function boot(){ensureViews();installNav();installProfileAccount();installVideoP
  const authObs=new MutationObserver(()=>{ensureViews();installConversationClear()});authObs.observe(document.body,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.BMNAppStandard={openInbox:()=>{if(!session())return openAuth('Sign in to use your Inbox.');showView('inbox');refreshInbox()},openProfile:()=>showView('profile'),openCreate:()=>{if(!session())return openAuth('Sign in before creating a post.');showView('create')}};
+window.BMNAppStandard={openInbox:()=>{if(!session()){window.bmnPendingAuthDestination='inbox';showView('inbox');return openAuth('Sign in to use your Inbox.','inbox')}showView('inbox');refreshInbox()},openProfile:()=>{window.bmnPendingAuthDestination=session()?null:'profile';showView('profile')},openCreate:()=>{if(!session())return openAuth('Sign in before creating a post.','create');showView('create')},showView};
 })();
 </script>
 
@@ -9230,3 +9259,13 @@ window.addEventListener('resize',fit,{passive:true});window.visualViewport?.addE
 
 </body>
 </html>
+
+<style id="bmn-v29-profile-inbox-auth">
+#lgtt .bmn-functional-view .bmn-functional-body.bmn-auth-required{display:flex;flex-direction:column;justify-content:flex-start;min-height:calc(100dvh - 140px)}
+#lgtt .bmn-functional-auth{width:100%;max-width:460px;margin:clamp(18px,6vh,56px) auto 24px;padding:24px 20px;border:1px solid rgba(220,237,255,.22);border-radius:24px;background:rgba(15,20,34,.46);box-shadow:inset 0 1px 0 rgba(255,255,255,.16);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%)}
+#lgtt .bmn-functional-auth h3{margin:0 0 9px;font-size:22px;letter-spacing:-.035em;color:inherit}
+#lgtt .bmn-functional-auth p{margin:0 0 16px;color:var(--muted,rgba(255,255,255,.72));font-size:13px;line-height:1.55}
+#lgtt .bmn-functional-auth button{display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:9px;padding:11px 14px;border:1px solid rgba(220,237,255,.24);border-radius:14px;background:rgba(255,255,255,.075);color:inherit;font:600 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;cursor:pointer}
+#lgtt .bmn-functional-auth button.primary{background:rgba(255,255,255,.92);color:#10131c;border-color:rgba(255,255,255,.95)}
+#lgtt .bmn-functional-view[hidden]{display:none!important}
+</style>
