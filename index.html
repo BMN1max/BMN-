@@ -8885,6 +8885,64 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-v-profile :is(h1,h2,h3,h4,h5,h6,p,span,s
  setInterval(connect,2000);connect();
 })();
 </script>
+
+<style id="bmn-auth-gate-fix">
+#bmnAuthGate{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:max(22px,env(safe-area-inset-top)) 20px max(22px,env(safe-area-inset-bottom));background:radial-gradient(100% 75% at 50% 0%,#17213a 0%,#090b14 55%,#03040a 100%);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;overflow:auto}
+#bmnAuthGate.is-visible{display:flex}
+#bmnAuthGate .bmn-auth-card{width:min(100%,430px);padding:26px 22px 22px;border-radius:28px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.075);box-shadow:0 24px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%)}
+#bmnAuthGate .bmn-auth-mark{width:54px;height:54px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(140deg,rgba(255,255,255,.25),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);font-weight:900;font-size:19px;letter-spacing:-1px;margin-bottom:18px}
+#bmnAuthGate h1{font-size:clamp(28px,7vw,38px);line-height:1.05;letter-spacing:-.045em;margin:0 0 9px;color:#fff}
+#bmnAuthGate p{font-size:14px;line-height:1.55;color:rgba(255,255,255,.74);margin:0 0 20px}
+#bmnAuthGate input{display:block;width:100%;box-sizing:border-box;margin:9px 0;padding:14px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.2);color:#fff;font:inherit;outline:none}
+#bmnAuthGate input::placeholder{color:rgba(255,255,255,.58)}
+#bmnAuthGate .bmn-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+#bmnAuthGate button{min-height:46px;border-radius:14px;padding:10px 12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:#fff;font:650 14px/1.2 inherit;cursor:pointer}
+#bmnAuthGate button.primary{background:#fff;color:#080a11;border-color:#fff}
+#bmnAuthGate .bmn-auth-status{min-height:20px;margin:13px 0 0;font-size:12px;color:#c8d7ff;overflow-wrap:anywhere}
+#bmnRealLogout{position:fixed;z-index:2147482000;top:max(12px,env(safe-area-inset-top));right:12px;display:none;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(15,17,24,.55);color:#fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);font:600 12px system-ui}
+#bmnRealLogout.is-visible{display:block}
+</style>
+<div id="bmnAuthGate" class="is-visible" role="dialog" aria-modal="true" aria-labelledby="bmnAuthTitle">
+ <div class="bmn-auth-card">
+  <div class="bmn-auth-mark">BMN®</div>
+  <h1 id="bmnAuthTitle">Your community starts here.</h1>
+  <p>Sign in to your own BMN Community account, or create one. Your profile and activity belong to your account, not the device owner.</p>
+  <form id="bmnGateForm">
+   <input id="bmnGateEmail" type="email" autocomplete="email" placeholder="Email address" required>
+   <input id="bmnGatePassword" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)" minlength="6" required>
+   <input id="bmnGateName" type="text" autocomplete="name" placeholder="Your display name (for new accounts)" maxlength="80" style="display:none">
+   <input id="bmnGateUsername" type="text" autocomplete="username" placeholder="Choose a username (for new accounts)" maxlength="30" style="display:none">
+   <div class="bmn-auth-actions"><button class="primary" type="submit" id="bmnGateSignIn">Sign in</button><button type="button" id="bmnGateCreate">Create account</button></div>
+  </form>
+  <p class="bmn-auth-status" id="bmnGateStatus" role="status" aria-live="polite">Connecting securely to BMN Community…</p>
+ </div>
+</div>
+<button id="bmnRealLogout" type="button">Log out</button>
+<script id="bmn-account-isolation-and-startup-repair">
+(()=>{'use strict';
+const $=id=>document.getElementById(id);let creating=false,client=null,authReady=false;
+const gate=$('bmnAuthGate'),status=$('bmnGateStatus'),name=$('bmnGateName'),username=$('bmnGateUsername'),create=$('bmnGateCreate'),signIn=$('bmnGateSignIn'),form=$('bmnGateForm'),logout=$('bmnRealLogout');
+function setStatus(t,error=false){if(status){status.textContent=t;status.style.color=error?'#ffb7c1':'#c8d7ff'}}
+function setCreateMode(on){creating=!!on;name.style.display=creating?'block':'none';username.style.display=creating?'block':'none';name.required=creating;username.required=creating;signIn.textContent=creating?'Create account':'Sign in';create.textContent=creating?'Use existing account':'Create account';$('bmnAuthTitle').textContent=creating?'Create your BMN account':'Welcome back';$('bmnGatePassword').autocomplete=creating?'new-password':'current-password';}
+function updateGate(session){authReady=true;const signedIn=!!session;gate?.classList.toggle('is-visible',!signedIn);logout?.classList.toggle('is-visible',signedIn&&document.body?.dataset?.appScreen==='profile');if(signedIn){setStatus('Signed in securely.');const oldName=document.querySelector('#bmnDisplayName');if(oldName)oldName.value='';}}
+create?.addEventListener('click',()=>setCreateMode(!creating));
+form?.addEventListener('submit',async e=>{e.preventDefault();if(!client){setStatus('The account service is still connecting. Check your connection and try again.',true);return}
+ const email=$('bmnGateEmail').value.trim(),password=$('bmnGatePassword').value;
+ if(!email||password.length<6){setStatus('Enter a valid email and a password of at least 6 characters.',true);return}
+ signIn.disabled=true;create.disabled=true;setStatus(creating?'Creating your account…':'Signing in…');
+ try{let result;if(creating){const un=username.value.trim()||email.split('@')[0];const dn=name.value.trim()||un;result=await client.auth.signUp({email,password,options:{data:{username:un,display_name:dn}}});if(result.error)throw result.error;if(!result.data.session){setStatus('Account created. Check your email to confirm it, then return here and sign in.');return}}else{result=await client.auth.signInWithPassword({email,password});if(result.error)throw result.error}
+ if(result?.data?.session){window.bmnSession=result.data.session;updateGate(result.data.session);setStatus('You are signed in. Loading your community…')}
+ }catch(err){setStatus(err?.message||'Could not sign in. Please check your details and try again.',true)}finally{signIn.disabled=false;create.disabled=false}
+});
+logout?.addEventListener('click',async()=>{if(!client)return;logout.disabled=true;try{const {error}=await client.auth.signOut();if(error)throw error;window.bmnSession=null;updateGate(null);setCreateMode(false);setStatus('You are signed out. Sign in or create an account to continue.')}catch(e){setStatus(e?.message||'Could not sign out.',true)}finally{logout.disabled=false}});
+function bindClient(){client=window.bmnSupabase||null;if(!client){return false}try{client.auth.getSession().then(({data,error})=>{if(error)throw error;updateGate(data?.session||null)}).catch(()=>{updateGate(null);setStatus('Could not check your session. Please sign in again.',true)});client.auth.onAuthStateChange((_event,session)=>{window.bmnSession=session;updateGate(session)});return true}catch(_){return false}}
+let attempts=0;const wait=setInterval(()=>{attempts++;if(bindClient()){clearInterval(wait);return}if(attempts>40){clearInterval(wait);updateGate(null);setStatus('BMN account service did not connect. Check your internet connection and reload.',true)}},250);
+const profileObserver=new MutationObserver(()=>{const signed=!!window.bmnSession;logout?.classList.toggle('is-visible',signed&&document.body?.dataset?.appScreen==='profile')});if(document.body)profileObserver.observe(document.body,{attributes:true,attributeFilter:['data-app-screen']});
+// Startup recovery: never leave the entire page hidden behind a splash if an optional initializer stalls.
+setTimeout(()=>{try{const root=document.documentElement,app=document.getElementById('lgtt'),track=document.getElementById('lgttTrack'),splash=document.getElementById('bmnSplash');if(root.classList.contains('bmn-starting')&&app&&track){root.classList.remove('bmn-starting');root.classList.add('bmn-community-app');app.hidden=false;app.style.removeProperty('display');app.style.setProperty('visibility','visible','important');app.style.setProperty('opacity','1','important');app.classList.add('is-open');if(splash)splash.remove()}}catch(_){try{document.documentElement.classList.remove('bmn-starting');const sp=document.getElementById('bmnSplash');if(sp)sp.remove()}catch(__){}}},4500);
+})();
+</script>
+
 </body>
 </html>
 
