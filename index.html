@@ -2184,7 +2184,7 @@ const bmnViewedPosts=new Set();let bmnViewObserver=null;function trackCommunityP
 function bmnScrollToSharedPost(){const match=location.hash.match(/^#post-(.+)$/);if(!match)return;let id='';try{id=decodeURIComponent(match[1])}catch(_){return}if(!id)return;/* Shared links should bypass the current search and feed filters. */bmnFeedMode='fyp';if(communitySearch)communitySearch.value='';document.querySelectorAll('#communityFilters .platform-filter').forEach(button=>button.classList.toggle('active',button.dataset.communityFilter==='all'));const tabs=$('#bmnFeedTabs');tabs?.querySelectorAll('[data-feed-mode]').forEach(button=>button.classList.toggle('active',button.dataset.feedMode==='fyp'));if(cachedPosts.length)renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);const target=communityFeed?.querySelector('[data-post-id="'+CSS.escape(id)+'"]');if(target){setTimeout(()=>target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'}),180);target.setAttribute('tabindex','-1');setTimeout(()=>target.focus({preventScroll:true}),450)}}
 window.addEventListener('hashchange',()=>{if(/^#post-/.test(location.hash))bmnScrollToSharedPost()});
 const bmnWithTimeout=(promise,ms=10000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("The community service timed out. Please check your connection and try again.")),ms))]);
-async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connecting to community service…',true);return}if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Loading BMN Community…</div>';try{const {data:posts,error}=await bmnWithTimeout(bmnSupabase.from('posts').select('*').order('created_at',{ascending:false}).limit(100));if(error)throw error;cachedPosts=(posts||[]).map(p=>{const mediaUrl=p.media_url||p.video_url||p.mediaUrl||null;const kind=bmnMediaKind({media_url:mediaUrl,media_type:p.media_type||p.type||''});return {...p,media_url:mediaUrl,media_type:kind,content:p.content??p.caption??p.title??''}});window.cachedPosts=cachedPosts;bmnFollowing.clear();if(bmnSession?.user?.id){try{const followResult=await bmnSupabase.from('follows').select('following_id').eq('follower_id',bmnSession.user.id);if(!followResult.error)(followResult.data||[]).forEach(row=>bmnFollowing.add(row.following_id))}catch(_){}}bmnFollowers.clear();if(bmnSession?.user?.id){try{const followerResult=await bmnSupabase.from('follows').select('follower_id').eq('following_id',bmnSession.user.id);if(!followerResult.error)(followerResult.data||[]).forEach(row=>bmnFollowers.add(row.follower_id))}catch(_){}}const userIds=[...new Set(cachedPosts.map(p=>p.user_id).filter(Boolean))];if(bmnSession?.user?.id&&!userIds.includes(bmnSession.user.id))userIds.push(bmnSession.user.id);bmnProfiles={};if(userIds.length){const pr=await bmnWithTimeout(bmnSupabase.from('profiles').select('*').in('id',userIds));if(!pr.error)(pr.data||[]).forEach(p=>bmnProfiles[p.id]=p)}window.bmnProfiles=bmnProfiles;
+async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connecting to community service…',true);return}if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Loading BMN Community…</div>';try{const {data:posts,error}=await bmnWithTimeout(bmnSupabase.from('posts').select('*').order('created_at',{ascending:false}).limit(30));if(error)throw error;cachedPosts=(posts||[]).map(p=>{const mediaUrl=p.media_url||p.video_url||p.mediaUrl||null;const kind=bmnMediaKind({media_url:mediaUrl,media_type:p.media_type||p.type||''});return {...p,media_url:mediaUrl,media_type:kind,content:p.content??p.caption??p.title??''}});window.cachedPosts=cachedPosts;bmnFollowing.clear();if(bmnSession?.user?.id){try{const followResult=await bmnSupabase.from('follows').select('following_id').eq('follower_id',bmnSession.user.id);if(!followResult.error)(followResult.data||[]).forEach(row=>bmnFollowing.add(row.following_id))}catch(_){}}bmnFollowers.clear();if(bmnSession?.user?.id){try{const followerResult=await bmnSupabase.from('follows').select('follower_id').eq('following_id',bmnSession.user.id);if(!followerResult.error)(followerResult.data||[]).forEach(row=>bmnFollowers.add(row.follower_id))}catch(_){}}const userIds=[...new Set(cachedPosts.map(p=>p.user_id).filter(Boolean))];if(bmnSession?.user?.id&&!userIds.includes(bmnSession.user.id))userIds.push(bmnSession.user.id);bmnProfiles={};if(userIds.length){const pr=await bmnWithTimeout(bmnSupabase.from('profiles').select('*').in('id',userIds));if(!pr.error)(pr.data||[]).forEach(p=>bmnProfiles[p.id]=p)}window.bmnProfiles=bmnProfiles;
 // Resolve private-bucket URLs for posts and avatars without making the bucket public.
 await Promise.all(cachedPosts.map(async p=>{p.media_type=bmnMediaKind({media_url:p.media_url,media_type:p.media_type});try{p.media_display_url=await resolveStorageUrl(p.media_url)}catch(error){p.media_display_url='';p.media_resolution_error=error?.message||'Media URL could not be resolved'}}));await Promise.all(Object.values(bmnProfiles).map(async p=>{try{p.avatar_display_url=await resolveStorageUrl(p.avatar_url)}catch(_){p.avatar_display_url=''}}));
 const likesRes=await bmnWithTimeout(bmnSupabase.from('likes').select('post_id,user_id').limit(5000));cachedLikes={};cachedMyLikes=new Set();if(!likesRes.error)(likesRes.data||[]).forEach(l=>{cachedLikes[l.post_id]=(cachedLikes[l.post_id]||0)+1;if(bmnSession?.user?.id===l.user_id)cachedMyLikes.add(l.post_id)});window.cachedLikes=cachedLikes;window.cachedMyLikes=cachedMyLikes;let commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,content,created_at').order('created_at',{ascending:true}).limit(1000));if(commentsRes.error){commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,body,created_at').order('created_at',{ascending:true}).limit(1000));if(!commentsRes.error)commentsRes.data=(commentsRes.data||[]).map(c=>({...c,content:c.body||''}));}cachedComments={};if(!commentsRes.error)(commentsRes.data||[]).forEach(c=>(cachedComments[c.post_id]||(cachedComments[c.post_id]=[])).push(c));window.cachedComments=cachedComments;if(communityFeed){renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);trackCommunityPostViews();bmnScrollToSharedPost()}if(bmnSession?.user?.id){fillProfileEditor(bmnProfiles[bmnSession.user.id]||{});updateAvatarEditor(bmnProfiles[bmnSession.user.id]||{});const select=$('#bmnMessageRecipient');if(select){const current=select.value;select.innerHTML='<option value="">Choose a creator</option>'+Object.values(bmnProfiles).filter(p=>p.id!==bmnSession.user.id).map(p=>'<option value="'+escapeHTML(p.id)+'">'+escapeHTML(p.display_name||p.username||'Creator')+' (@'+escapeHTML(p.username||'creator')+')</option>').join('');select.value=current}await loadSocialHub()}else{updateAvatarEditor({});loadSocialHub()}setBackendStatus(cachedPosts.length?'Community loaded · '+cachedPosts.length+' posts':'Community is ready. Be the first to post.');if(typeof window.bmnSyncLGTTRealData==='function')window.bmnSyncLGTTRealData();}catch(error){if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Could not load posts: '+escapeHTML(error.message||'Please reload and try again.')+'</div>';setBackendStatus('Could not load Community: '+(error.message||'check Supabase tables and permissions'),true)}}window.loadCommunityPosts=loadCommunityPosts;
@@ -8153,8 +8153,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
  if(document.body){mo.observe(document.body,{attributes:true,attributeFilter:['class']});openOnCommunityEntry();}
  document.addEventListener('DOMContentLoaded',()=>{sync();openOnCommunityEntry();});
  window.addEventListener('load',()=>{sync();connectRealtime();ensureOwnerShortcut();});
- // Community posts are loaded asynchronously; retry briefly, then realtime refreshes are handled by the app's reload path.
- let attempts=0;const poll=setInterval(()=>{sync();openOnCommunityEntry();ensureOwnerShortcut();connectRealtime();if(++attempts>30)clearInterval(poll);},1000);
+ // Avoid repeatedly remapping every post each second. Initial lifecycle hooks and Supabase realtime keep data fresh.
+ ['bmn:community-updated','bmn:posts-updated','bmn:profiles-updated','bmn:follows-updated'].forEach(name=>document.addEventListener(name,()=>{sync();connectRealtime();}));
 })();
 </script>
 
@@ -8230,6 +8230,161 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
  window.addEventListener('hashchange',()=>setTimeout(addFriendsStories,120));
 })();
 </script>
+
+<style id="bmn-fix-pass-20261024">
+/* Final interface corrections: retain the immersive Reels overlay as the only Community UI. */
+#bmnSplash{animation:bmnSplashOut .45s cubic-bezier(.4,0,.2,1) 1.35s forwards!important}
+.lgtt-mute,#lgttMute{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#lgttFriendsView{position:absolute;inset:0;overflow:auto;padding:calc(28px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));background:transparent;color:var(--lg-fg,#fff);overscroll-behavior:contain}
+#lgttFriendsView .bmn-friends-head{font-size:28px;font-weight:800;letter-spacing:-.04em;margin:0 0 6px}
+#lgttFriendsView .bmn-friends-sub{font-size:13px;opacity:.7;margin:0 0 18px}
+#lgttFriendsView .bmn-friends-tabs{display:flex;gap:8px;position:sticky;top:0;z-index:2;padding:7px 0 12px;background:linear-gradient(to bottom,rgba(7,8,16,.88),rgba(7,8,16,.55));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+#lgttFriendsView .bmn-friends-tabs button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.055);color:inherit;border-radius:999px;padding:10px 15px;font:inherit;font-size:12px;font-weight:700}
+#lgttFriendsView .bmn-friends-tabs button[aria-pressed="true"]{background:rgba(255,255,255,.19);border-color:rgba(255,255,255,.42)}
+#lgttFriendsView .bmn-friends-list{display:grid;gap:12px}
+#lgttFriendsView .bmn-friend-row,#lgttFriendsView .bmn-friend-post{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.045);border-radius:20px;padding:13px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#lgttFriendsView .bmn-friend-row{display:flex;align-items:center;gap:12px;text-align:left;color:inherit;width:100%}
+#lgttFriendsView .bmn-friend-avatar{width:43px;height:43px;flex:0 0 43px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:rgba(255,255,255,.12);font-weight:800}
+#lgttFriendsView .bmn-friend-avatar img{width:100%;height:100%;object-fit:cover}
+#lgttFriendsView .bmn-friend-meta{min-width:0;display:grid;gap:3px}
+#lgttFriendsView .bmn-friend-meta strong{font-size:13px;overflow-wrap:anywhere}
+#lgttFriendsView .bmn-friend-meta small,#lgttFriendsView .bmn-friend-post small{font-size:11px;opacity:.68}
+#lgttFriendsView .bmn-friend-post video,#lgttFriendsView .bmn-friend-post img{display:block;width:100%;max-height:52vh;object-fit:contain;border-radius:14px;background:#05060b;margin:10px 0}
+#lgttFriendsView .bmn-friend-post p{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#lgttFriendsView .bmn-friends-empty{padding:22px 14px;text-align:center;opacity:.72;font-size:13px;border:1px dashed rgba(255,255,255,.22);border-radius:18px}
+.lgtt-open video{touch-action:pan-y}
+</style>
+<script id="bmn-final-interface-fixes-20261024">
+(()=>{
+ 'use strict';
+ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+ const splash=$('#bmnSplash');
+ // The splash must never trap the user: remove it by 2 seconds even if an animation event is missed.
+ if(splash){splash.addEventListener('animationend',e=>{if(e.animationName==='bmnSplashOut')splash.remove()});setTimeout(()=>splash.remove(),2000)}
+ // The X means exit Community entirely. It must not expose the older landing/feed interface underneath.
+ document.addEventListener('click',e=>{
+   const x=e.target.closest&&e.target.closest('#lgtt [data-act="close"]');
+   if(!x)return;
+   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+   try{window.LGTT?.close()}catch(_){}
+   document.body.classList.remove('community-mode','bmn-friends-mode');
+   delete document.body.dataset.appScreen;
+   document.documentElement.classList.remove('lgtt-open');
+   const root=$('#lgtt');if(root){root.classList.remove('is-open');root.setAttribute('aria-hidden','true')}
+   if(location.hash==='#reels'||location.hash.startsWith('#reel-')){try{history.replaceState(null,'',location.pathname+location.search)}catch(_){}}
+ },true);
+ // The Reels three-dot/hold menu gets speed controls and a download action as well as the existing actions.
+ const originalSetPosts=window.LGTT&&window.LGTT.setPosts;
+ function directDownload(post){
+   const src=post&&(post.src||post.video_url||post.media_url||post.videoUrl);
+   if(!src){window.LGTT?.toast?.('This post has no downloadable video URL.');return}
+   const a=document.createElement('a');a.href=src;a.download='BMN-video-'+String(post.id||'post')+'.mp4';a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();
+   window.LGTT?.toast?.('Download opened. Your browser may ask where to save it.');
+ }
+ function findPost(slide){return slide&&slide._post||null}
+ function addMenuActions(){
+   const scriptTexts=[...document.scripts].filter(x=>x.textContent.includes('const Menu = {')&&x.textContent.includes('Menu.forPost'));
+   if(!scriptTexts.length||window.__bmnOverlayMenuPatched)return;
+   // Override the visible menu through delegated click handling, while leaving its original items intact.
+   const menu=$('#lgttMenuList');if(!menu)return;
+   window.__bmnOverlayMenuPatched=true;
+ }
+ // Patch menu behavior at the menu-opening point by adding the two controls to each generated menu.
+ const mo=new MutationObserver(()=>{
+   const list=$('#lgttMenuList');if(!list||list.querySelector('.bmn-overlay-speed-label'))return;
+   const heading=$('#lgttMenu');if(!heading)return;
+   const divider=document.createElement('hr');divider.setAttribute('aria-hidden','true');list.appendChild(divider);
+   const speedLabel=document.createElement('div');speedLabel.className='bmn-overlay-speed-label';speedLabel.textContent='Playback speed';speedLabel.style.cssText='padding:10px 14px 4px;font-size:11px;opacity:.65';list.appendChild(speedLabel);
+   const speedRow=document.createElement('div');speedRow.style.cssText='display:flex;gap:7px;padding:4px 10px 10px';
+   [['0.5×',.5],['1×',1],['2×',2]].forEach(([label,rate])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.bmnRate=String(rate);b.style.cssText='flex:1;border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:10px 4px;background:rgba(255,255,255,.08);color:inherit';b.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();const v=$('#lgttTrack .lgtt-slide.is-active video')||$('#lgttTrack video');if(v){v.playbackRate=rate;window.LGTT?.toast?.('Playback speed '+label)}else window.LGTT?.toast?.('No video is currently available.');});speedRow.appendChild(b)});list.appendChild(speedRow);
+   const dl=document.createElement('button');dl.type='button';dl.className='bmn-row';dl.style.cssText='width:100%;display:flex;align-items:center;gap:10px;padding:13px 15px;border:0;background:transparent;color:inherit;text-align:left';dl.innerHTML='<span aria-hidden="true">⬇</span><span>Download video</span>';dl.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();const slide=$('#lgttTrack .lgtt-slide.is-active')||$('#lgttTrack .lgtt-slide');const p=slide&&slide._post;if(p)directDownload(p);else window.LGTT?.toast?.('No video is currently available.');});list.appendChild(dl);
+ });
+ mo.observe(document.body,{childList:true,subtree:true});
+ // Replace the Discover destination with a Friends page driven exclusively by real cached posts and follow IDs.
+ function getGlobal(name){try{if(name==='cachedPosts'&&typeof cachedPosts!=='undefined')return cachedPosts;if(name==='bmnProfiles'&&typeof bmnProfiles!=='undefined')return bmnProfiles;if(name==='bmnFollowing'&&typeof bmnFollowing!=='undefined')return bmnFollowing;if(name==='bmnFollowers'&&typeof bmnFollowers!=='undefined')return bmnFollowers;if(name==='bmnSession'&&typeof bmnSession!=='undefined')return bmnSession}catch(_){}try{return window[name]}catch(_){return undefined}}
+ function toArray(value){if(!value)return[];if(value instanceof Set)return [...value];if(Array.isArray(value))return value;if(typeof value==='object')return Object.keys(value).filter(k=>value[k]).map(k=>k);return[]}
+ function profiles(){return window.bmnProfiles||getGlobal('bmnProfiles')||{}}
+ function posts(){return window.cachedPosts||getGlobal('cachedPosts')||[]}
+ function idsFor(which){const fromWindow=which==='following'?window.bmnFollowing:window.bmnFollowers;const fromLexical=getGlobal(which==='following'?'bmnFollowing':'bmnFollowers');return toArray(fromWindow||fromLexical).map(x=>typeof x==='string'?x:(x.user_id||x.following_id||x.follower_id||x.id)).filter(Boolean)}
+ function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function author(post){const p=profiles()[post.user_id]||{};return {id:post.user_id,name:p.display_name||p.full_name||p.username||'Creator',handle:p.username?'@'+String(p.username).replace(/^@/,''):'',avatar:p.avatar_url||p.avatar||p.profile_image_url||''}}
+ function media(post){return post.video_url||post.media_url||post.videoUrl||post.src||post.content||''}
+ let friendsTab='posts';
+ function renderFriends(){
+   const host=$('#lgttFriendsView');if(!host)return;
+   const followIds=idsFor('following'),followerIds=idsFor('followers'),current=window.bmnSession?.user?.id||getGlobal('bmnSession')?.user?.id||'';
+   let content='';
+   if(friendsTab==='posts'){
+     const rows=posts().filter(p=>p&&p.user_id&&followIds.includes(String(p.user_id))&&(!p.status||p.status==='published')).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+     if(!rows.length)content='<div class="bmn-friends-empty">No posts from accounts you follow are available yet. Follow people and their published posts will appear here.</div>';
+     else content=rows.map(p=>{const a=author(p),src=media(p),cap=p.caption||p.title||'';const visual=/\.(mp4|webm|mov)(\?|$)/i.test(src)||String(p.media_type||'').includes('video')?`<video src="${safe(src)}" controls playsinline preload="metadata"></video>`:src?`<img src="${safe(src)}" loading="lazy" alt="Post media">`:'';return `<article class="bmn-friend-post"><div class="bmn-friend-row"><span class="bmn-friend-avatar">${a.avatar?`<img src="${safe(a.avatar)}" loading="lazy" alt="">`:safe((a.name||'C').slice(0,1).toUpperCase())}</span><span class="bmn-friend-meta"><strong>${safe(a.name)}</strong><small>${safe(a.handle)}</small></span></div>${visual}<p>${safe(cap)}</p><small>${safe(p.created_at?new Date(p.created_at).toLocaleString(): 'Published post')}</small></article>`}).join('');
+   } else {
+     const ids=friendsTab==='following'?followIds:followerIds;
+     if(!ids.length)content=`<div class="bmn-friends-empty">${friendsTab==='following'?'You are not following any accounts yet.':'No follower records are available yet.'}</div>`;
+     else content=ids.map(id=>{const p=profiles()[id]||{};const name=p.display_name||p.full_name||p.username||'Creator';const handle=p.username?'@'+String(p.username).replace(/^@/,''):'';const av=p.avatar_url||p.avatar||p.profile_image_url||'';return `<div class="bmn-friend-row"><span class="bmn-friend-avatar">${av?`<img src="${safe(av)}" loading="lazy" alt="">`:safe(String(name).slice(0,1).toUpperCase())}</span><span class="bmn-friend-meta"><strong>${safe(name)}</strong><small>${safe(handle)}</small></span></div>`}).join('');
+   }
+   host.innerHTML=`<h2 class="bmn-friends-head">Friends</h2><p class="bmn-friends-sub">Posts from people you follow, your following list, and your followers.</p><div class="bmn-friends-tabs" role="tablist"><button type="button" data-bmn-friends-tab="posts" aria-pressed="${friendsTab==='posts'}">Friends’ posts</button><button type="button" data-bmn-friends-tab="following" aria-pressed="${friendsTab==='following'}">Following · ${followIds.length}</button><button type="button" data-bmn-friends-tab="followers" aria-pressed="${friendsTab==='followers'}">Followers · ${followerIds.length}</button></div><div class="bmn-friends-list">${content}</div>`;
+   host.querySelectorAll('[data-bmn-friends-tab]').forEach(b=>b.addEventListener('click',()=>{friendsTab=b.dataset.bmnFriendsTab;renderFriends()}));
+ }
+ function mountFriends(){const section=$('[data-v="discover"]');if(!section)return;let host=$('#lgttFriendsView');if(!host){host=document.createElement('div');host.id='lgttFriendsView';section.appendChild(host)};$$(':scope > .lgtt-scroll',section).forEach(el=>el.style.display='none');renderFriends()}
+ document.addEventListener('click',e=>{const dock=e.target.closest&&e.target.closest('#lgttDock [data-dock="discover"]');if(dock)setTimeout(mountFriends,0);const tab=e.target.closest&&e.target.closest('#lgttFriendsView [data-bmn-friends-tab]');if(tab)setTimeout(renderFriends,0)},true);
+ // Rename Discover everywhere in the overlay's navigation; it now leads to Friends.
+ function renameDiscover(){ $$('[data-dock="discover"] span').forEach(el=>{el.textContent='Friends'});const sec=$('[data-v="discover"]');if(sec){sec.setAttribute('aria-label','Friends');const h=$('#lgttDiscScroll h2');if(h)h.textContent='Friends'} }
+ const navObserver=new MutationObserver(()=>{if($('#lgtt'))renameDiscover()});navObserver.observe(document.body,{childList:true,subtree:true});
+ // Refresh on actual navigation/data signals rather than polling, to avoid unnecessary lag.
+ ['bmn:community-updated','bmn:posts-updated','bmn:profiles-updated','bmn:follows-updated'].forEach(name=>document.addEventListener(name,()=>{if($('#lgttFriendsView'))renderFriends()}));
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('#lgttFriendsView'))renderFriends()});
+ // Best-effort audible playback for the active video only. Browsers may still require a user gesture.
+ function enableSound(){const root=$('#lgtt');if(!root||!root.classList.contains('is-open'))return;const v=$('#lgttTrack .lgtt-slide.is-active video')||$('#lgttTrack video');if(!v)return;v.muted=false;v.defaultMuted=false;v.volume=1;const p=v.play();if(p&&p.catch)p.catch(()=>{})}
+ document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#lgtt'))enableSound()},true);
+ // Ensure newly rendered overlay videos are audible and the mute control never returns.
+ const style=document.createElement('style');style.textContent='#lgttMute,.lgtt-mute{display:none!important}';document.head.appendChild(style);
+})();
+</script>
+
+
+<script id="bmn-community-first-fast-load-20261024">
+(()=>{
+ 'use strict';
+ const start=()=>{
+   const body=document.body,root=document.getElementById('lgtt');
+   if(!body||!root)return;
+   // Open the existing immersive Community overlay as the app's initial screen.
+   body.classList.add('community-mode');
+   body.dataset.appScreen='home';
+   body.dataset.bmnImmersiveOpened='yes';
+   document.documentElement.classList.add('lgtt-open');
+   try{window.LGTT?.open();}catch(e){console.warn('[BMN] Community could not open immediately:',e);}
+   // Paint the shell first; fetch posts immediately afterward without blocking first render.
+   const refresh=async()=>{
+     try{
+       if((!Array.isArray(window.cachedPosts)||!window.cachedPosts.length)&&typeof window.loadCommunityPosts==='function'){
+         await window.loadCommunityPosts();
+       }
+       window.bmnSyncLGTTRealData?.();
+     }catch(e){console.warn('[BMN] Community feed refresh failed:',e?.message||e);}
+   };
+   if('requestIdleCallback' in window) requestIdleCallback(()=>refresh(),{timeout:250}); else setTimeout(refresh,0);
+   // Only the current/nearby slide should fetch eagerly; defer the rest to reduce network and decode pressure.
+   const track=document.getElementById('lgttTrack');
+   const tuneVideos=()=>{
+     if(!track)return;
+     const slides=track.querySelectorAll('.lgtt-slide');
+     slides.forEach((slide,index)=>{
+       const video=slide.querySelector('video');if(!video)return;
+       const active=slide.classList.contains('is-active')||slide.getAttribute('aria-current')==='true';
+       video.playsInline=true;video.setAttribute('playsinline','');
+       video.preload=active?'auto':(index<2?'metadata':'none');
+       if(active){video.muted=false;video.defaultMuted=false;const play=video.play();if(play?.catch)play.catch(()=>{});}
+       else if(!video.paused)video.pause();
+     });
+   };
+   if(track){new MutationObserver(tuneVideos).observe(track,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-current']});tuneVideos();}
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
+
 </body>
 </html>
 
