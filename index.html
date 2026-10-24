@@ -1879,6 +1879,45 @@ body.light .bmn-owner-console{background:linear-gradient(135deg,rgba(54,125,220,
 @media(prefers-reduced-motion:reduce){.bmn-owner-console *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 </style>
 
+
+<style id="bmn-correction-pass-v15">
+/* Restore an unmistakable opening animation before either website surface can paint. */
+html.bmn-starting,html.bmn-starting body{background:#060711!important;overflow:hidden!important}
+html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+html.bmn-starting #bmnSplash{display:flex!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:22px!important;opacity:1!important;visibility:visible!important;z-index:2147483647!important;pointer-events:none!important;background:radial-gradient(90% 70% at 50% 38%,#182544 0%,#090b17 62%,#03040a 100%)!important;animation:none!important}
+#bmnSplash .sp-logo{opacity:1!important;scale:1!important;animation:bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both!important}
+#bmnSplash .sp-logo b{opacity:1!important}
+#bmnSplash .sp-logo::before,#bmnSplash .sp-logo::after{content:""!important;animation:bmnSplashRing 1.15s ease-out .2s forwards!important}
+#bmnSplash .sp-logo::after{animation-delay:.42s!important}
+#bmnSplash .sp-tag{opacity:0;animation:bmnSplashTag .45s ease .3s both!important}
+#bmnSplash.bmn-splash-exit{animation:bmnSplashOut .26s ease forwards!important}
+/* The community is a full-screen app. Old portfolio sections remain in source but never become the Community route. */
+html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community,html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap{display:none!important}
+html.bmn-community-app body>#lgtt{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;padding:0!important;overflow:hidden!important}
+html.bmn-community-app #lgtt .lgtt-stage{height:100%!important;min-height:0!important;max-height:100%!important}
+html.bmn-community-app #lgtt .lgtt-dock{bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important;transform:translateX(-50%)!important;margin:0!important}
+/* Unified overlay theme: light mode changes the whole surface, not just a few controls. */
+html[data-bmn-theme="light"] #lgtt{background:#f4f6fb!important;color:#171a24!important;--lg-bg:#f4f6fb;--lg-fg:#171a24;--lg-fg-2:#343c4d;--lg-fg-3:#697386}
+html[data-bmn-theme="light"] #lgtt .lgtt-view,html[data-bmn-theme="light"] #lgtt .lgtt-page,html[data-bmn-theme="light"] #lgtt .lgtt-over,html[data-bmn-theme="light"] #lgtt .lgtt-sheet,html[data-bmn-theme="light"] #lgtt .lgtt-comments,html[data-bmn-theme="light"] #lgtt .lgtt-chat,html[data-bmn-theme="light"] #lgtt .lgtt-settings{background:#f4f6fb!important;color:#171a24!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-glass,html[data-bmn-theme="light"] #lgtt .lgtt-glass-strong,html[data-bmn-theme="light"] #lgtt .lgtt-dock,html[data-bmn-theme="light"] #lgtt .lgtt-tabs{background:rgba(255,255,255,.82)!important;color:#171a24!important;border-color:rgba(30,40,60,.13)!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-btn,html[data-bmn-theme="light"] #lgtt .lgtt-chip,html[data-bmn-theme="light"] #lgtt .lgtt-tab{color:#171a24!important}
+html[data-bmn-theme="light"] #lgtt input,html[data-bmn-theme="light"] #lgtt textarea{background:rgba(25,35,55,.055)!important;color:#171a24!important;border-color:rgba(30,40,60,.16)!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-msg:not(.me){background:#fff!important;color:#171a24!important;border-color:rgba(30,40,60,.1)!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-empty,html[data-bmn-theme="light"] #lgtt .lgtt-prof-head,html[data-bmn-theme="light"] #lgtt .lgtt-prof-tabs{color:#171a24!important}
+/* Real profile media previews with actual view counts. */
+#lgttProfGrid .lgtt-tile{position:relative;overflow:hidden;background:#111!important;isolation:isolate}
+#lgttProfGrid .bmn-profile-media-preview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1} #lgttProfGrid .lgtt-tile:has(.bmn-profile-media-preview)>.lgtt-scene,#lgttProfGrid .lgtt-tile:has(.bmn-profile-media-preview)>.scene{display:none!important}
+#lgttProfGrid .lgtt-tile>.cap{position:absolute;left:0;right:0;bottom:0;z-index:2}
+#lgttProfGrid .bmn-profile-view-count{position:absolute;left:7px;top:7px;z-index:3;border-radius:20px;padding:4px 7px;background:#0009;color:#fff;font:700 11px/1.2 system-ui;backdrop-filter:blur(8px)}
+#lgttProfGrid .bmn-profile-media-preview~.cap{background:linear-gradient(transparent,#0009)}
+/* Chat wallpaper is confined to the message history, never the composer/header. */
+#lgttMsgs{background-position:center;background-size:cover;background-repeat:no-repeat;background-color:transparent;position:relative}
+#lgttMsgs.bmn-custom-wallpaper{background-blend-mode:normal}
+#lgttMsgs.bmn-custom-wallpaper::before{content:"";position:absolute;inset:0;background:rgba(5,7,14,.38);pointer-events:none;z-index:0}
+#lgttMsgs>*{position:relative;z-index:1}
+.bmn-wallpaper-btn{flex:0 0 auto!important}
+</style>
+
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -8298,7 +8337,7 @@ async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)r
 async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
 function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
-function boot(){const splash=$('#bmnSplash');const introMs=1050;
+function boot(){const splash=$('#bmnSplash');const introMs=1450;
  // Keep the splash as the only visible UI while the Community overlay is prepared.
  document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.opacity='1';const logo=splash.querySelector('.sp-logo'),tag=splash.querySelector('.sp-tag');if(logo){logo.style.animation='none';void logo.offsetWidth;logo.style.animation='bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both';}if(tag){tag.style.animation='none';void tag.offsetWidth;tag.style.animation='bmnSplashTag .45s ease .32s both';}}
  // Force the app-only shell before removing the splash; the portfolio never paints.
@@ -8392,6 +8431,90 @@ document.addEventListener('click',e=>{const l=e.target.closest('label[for="bmnPo
 function installThemeControl(){const panel=$('#lgttSettings');if(!panel||$('#bmnThemeToggle'))return;const header=panel.querySelector('.lgtt-over-h');if(!header)return;const b=document.createElement('button');b.id='bmnThemeToggle';b.type='button';b.className='lgtt-btn lgtt-pill';b.style.cssText='font-size:12px;white-space:nowrap';header.appendChild(b);const update=()=>{let theme=document.documentElement.getAttribute('data-bmn-theme')||'dark';b.textContent=theme==='light'?'☾ Dark mode':'☀ Light mode';b.setAttribute('aria-pressed',String(theme==='light'))};b.addEventListener('click',()=>{const next=(document.documentElement.getAttribute('data-bmn-theme')||'dark')==='dark'?'light':'dark';document.documentElement.setAttribute('data-bmn-theme',next);try{localStorage.setItem('bmn-theme',next)}catch(_){}update()});try{const saved=localStorage.getItem('bmn-theme');if(saved==='light'||saved==='dark')document.documentElement.setAttribute('data-bmn-theme',saved)}catch(_){}update()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installThemeControl,{once:true});else installThemeControl();
 
+})();
+</script>
+
+
+<script id="bmn-correction-pass-v15-js">
+(()=>{'use strict';
+const $=(q,r=document)=>r.querySelector();
+const safe=(fn)=>{try{return fn()}catch(_){return null}};
+function forceSplash(){
+ const root=document.documentElement,splash=$('#bmnSplash');if(!splash)return;
+ root.classList.add('bmn-starting');
+ splash.classList.remove('bmn-splash-exit');splash.style.cssText+=';display:flex!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;z-index:2147483647!important;opacity:1!important;visibility:visible!important;';
+ const logo=$('.sp-logo',splash),tag=$('.sp-tag',splash);
+ for(const el of [logo,tag])if(el){el.style.animation='none';void el.offsetWidth;}
+ if(logo)logo.style.animation='bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both';
+ if(tag)tag.style.animation='bmnSplashTag .45s ease .3s both';
+ // Restart the ring animations even if an earlier startup handler disabled them.
+ if(logo){logo.style.setProperty('--bmn-ring-restart',String(Date.now()));logo.classList.remove('bmn-ring-restart');void logo.offsetWidth;logo.classList.add('bmn-ring-restart');}
+}
+function enterCommunity(){
+ const root=document.documentElement,body=document.body,overlay=$('#lgtt'),splash=$('#bmnSplash');
+ root.classList.add('bmn-community-app');root.classList.remove('bmn-starting');body.classList.remove('community-mode','bmn-friends-mode');body.dataset.bmnNav='fyp';body.dataset.appScreen='home';
+ for(const el of [$('#communityPage'),$('#community'),$('.topbar'),$('main.wrap')])if(el){el.style.setProperty('display','none','important');el.setAttribute('aria-hidden','true');}
+ if(overlay){overlay.hidden=false;overlay.style.removeProperty('display');overlay.style.setProperty('visibility','visible','important');overlay.classList.add('is-open');safe(()=>window.LGTT?.open({view:'feed'}));}
+ if(splash){splash.classList.add('bmn-splash-exit');setTimeout(()=>{if(splash.isConnected)splash.remove()},280)}
+ safe(()=>history.replaceState(null,'','#community-page'));
+}
+function enterPersonal(){
+ const root=document.documentElement,body=document.body,overlay=$('#lgtt');root.classList.remove('bmn-community-app','bmn-starting');body.classList.remove('community-mode','bmn-friends-mode');
+ if(overlay){overlay.classList.remove('is-open');overlay.style.setProperty('display','none','important');overlay.setAttribute('aria-hidden','true')}
+ for(const el of [$('#communityPage'),$('#community')])if(el){el.style.setProperty('display','none','important');el.setAttribute('aria-hidden','true')}
+ const top=$('.topbar'),main=$('main.wrap');if(top){top.style.removeProperty('display');top.removeAttribute('aria-hidden')}if(main){main.style.removeProperty('display');main.removeAttribute('aria-hidden')}
+ safe(()=>history.replaceState(null,'','#home'));
+}
+// Reopen the immersive Community from any old Community nav control; never route to the retired landing page.
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-view="community"],a[href="#community"],a[href="#community-page"],#communityNav,#bmnCommunityButton');
+ if(!b||b.closest('#lgtt'))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterCommunity();
+},true);
+// The B button always means switch to the original BMN home page.
+document.addEventListener('click',e=>{const b=e.target.closest('#lgtt [data-act="bmn-home"]');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterPersonal()},true);
+// Keep the first screen animation intact and let the app take over after ~1.35s, never more than 2s.
+function startup(){forceSplash();const start=Date.now();const finish=()=>{const ready=!!(window.LGTT&&typeof window.LGTT.open==='function');if(!ready&&Date.now()-start<1550){setTimeout(finish,30);return}enterCommunity()};setTimeout(finish,1320)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startup,{once:true});else startup();
+
+// Map actual Supabase posts to profile tiles; use real thumbnails/video previews and real view counts only.
+function decorateProfileTiles(){
+ const grid=$('#lgttProfGrid');if(!grid)return;
+ const posts=window.cachedPosts||[];
+ grid.querySelectorAll('.lgtt-tile[data-id]').forEach(tile=>{
+  const id=String(tile.dataset.id||''),p=posts.find(x=>String(x.id)===id);if(!p)return;
+  const old=tile.querySelector('.bmn-profile-media-preview');if(old)old.remove();const oldCount=tile.querySelector('.bmn-profile-view-count');if(oldCount)oldCount.remove();
+  const src=p.thumbnail_display_url||p.thumbnail_url||p.thumbnail||p.poster_url||p.media_display_url||p.media_url||p.video_url||'';
+  if(src){let media;const isImage=/\.(png|jpe?g|webp|gif|avif)(\?|#|$)/i.test(src)||String(p.media_type||'').toLowerCase()==='image';if(isImage){media=document.createElement('img');media.alt='';media.loading='lazy';media.decoding='async';media.src=src}else{media=document.createElement('video');media.muted=true;media.playsInline=true;media.preload='metadata';media.poster=p.thumbnail_display_url||p.thumbnail_url||p.thumbnail||p.poster_url||'';media.src=src;media.addEventListener('loadedmetadata',()=>{try{media.currentTime=.1}catch(_){}} ,{once:true});}media.className='bmn-profile-media-preview';media.setAttribute('aria-hidden','true');tile.prepend(media)}
+  const views=Number.isFinite(Number(p.views))?Number(p.views):null;if(views!==null){const badge=document.createElement('span');badge.className='bmn-profile-view-count';badge.textContent='▶ '+views.toLocaleString();tile.appendChild(badge)}
+  const cap=tile.querySelector('.cap .t');if(cap){const text=p.caption||p.content||p.title||'';cap.textContent=(views===null?'':views.toLocaleString()+' views · ')+text.slice(0,100)}
+ });
+}
+const grid=$('#lgttProfGrid');if(grid){new MutationObserver(()=>decorateProfileTiles()).observe(grid,{childList:true,subtree:true});decorateProfileTiles()}
+window.addEventListener('bmn:posts-updated',decorateProfileTiles);document.addEventListener('visibilitychange',()=>{if(!document.hidden)decorateProfileTiles()});
+
+// Per-chat custom wallpaper. Image is stored locally on this device; no fake remote sync is claimed.
+function installChatWallpaper(){
+ const chat=$('#lgttChat'),header=chat?.querySelector('.lgtt-over-h'),msgs=$('#lgttMsgs');if(!chat||!header||!msgs||$('#bmnWallpaperPick'))return;
+ const input=document.createElement('input');input.type='file';input.accept='image/*';input.id='bmnWallpaperPick';input.hidden=true;header.appendChild(input);
+ const btn=document.createElement('button');btn.type='button';btn.className='lgtt-btn lgtt-round lgtt-xs bmn-wallpaper-btn';btn.title='Choose chat wallpaper';btn.setAttribute('aria-label','Choose message wallpaper');btn.textContent='▧';header.appendChild(btn);
+ const chatKey=()=>{const name=($('#lgttChatName')?.textContent||'conversation').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,64)||'conversation';return 'bmn-chat-wallpaper-v1:'+name};function apply(data){if(data){msgs.style.backgroundImage='linear-gradient(rgba(4,6,12,.26),rgba(4,6,12,.26)),url("'+data+'")';msgs.classList.add('bmn-custom-wallpaper')}else{msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper')}}
+ function restore(){safe(()=>apply(localStorage.getItem(chatKey())||''))}restore();btn.addEventListener('click',()=>input.click());input.addEventListener('change',()=>{const f=input.files&&input.files[0];if(!f)return;if(!f.type.startsWith('image/'))return alert('Choose an image for your message wallpaper.');if(f.size>1200000)return alert('Please choose an image under 1.2 MB so it can be saved reliably on this device.');const reader=new FileReader();reader.onload=()=>{const data=String(reader.result||'');try{localStorage.setItem(chatKey(),data);apply(data)}catch(_){alert('This image is too large to save as a wallpaper on this device. Choose a smaller image.')}};reader.readAsDataURL(f)});const nameNode=$('#lgttChatName');if(nameNode)new MutationObserver(restore).observe(nameNode,{childList:true,subtree:true,characterData:true});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(installChatWallpaper,0),{once:true});else installChatWallpaper();
+const chatObserver=new MutationObserver(()=>installChatWallpaper());if(document.body)chatObserver.observe(document.body,{childList:true,subtree:true});
+
+// Real media download: use native share-with-file when supported, then a direct download/open fallback.
+async function downloadCurrentVideo(){
+ const videos=[...document.querySelectorAll('#lgtt video')].filter(v=>v.currentSrc||v.src);const video=videos.find(v=>{const r=v.getBoundingClientRect();return r.width>0&&r.height>0})||videos[0];const src=video&&(video.currentSrc||video.src);if(!src){alert('No video is available to download on this screen.');return}
+ const filename='BMN-video-'+Date.now()+'.mp4';
+ try{const response=await fetch(src,{mode:'cors'});if(!response.ok)throw new Error('download');const blob=await response.blob();const file=new File([blob],filename,{type:blob.type||'video/mp4'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'BMN video'});return}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);return}catch(_){try{const a=document.createElement('a');a.href=src;a.download=filename;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}catch(__){window.open(src,'_blank','noopener')}}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#lgtt [data-act="download"]');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();downloadCurrentVideo()},true);
+
+// Keep the two theme systems in sync and make the overlay mode selectable without conflicting styles.
+function applyTheme(mode){const resolved=mode==='light'?'light':'dark';document.documentElement.setAttribute('data-bmn-theme',resolved);document.body.classList.toggle('light',resolved==='light');safe(()=>localStorage.setItem('bmn-theme',resolved));safe(()=>localStorage.setItem('bmn-theme-mode',resolved));const btn=$('#bmnThemeToggle');if(btn){btn.textContent=resolved==='light'?'☾ Dark mode':'☀ Light mode';btn.setAttribute('aria-pressed',String(resolved==='light'))}}
+safe(()=>{const stored=localStorage.getItem('bmn-theme-mode')||localStorage.getItem('bmn-theme');if(stored==='light'||stored==='dark')applyTheme(stored)});
+document.addEventListener('click',e=>{const b=e.target.closest('#bmnThemeToggle');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();applyTheme((document.documentElement.getAttribute('data-bmn-theme')||'dark')==='dark'?'light':'dark')},true);
 })();
 </script>
 
