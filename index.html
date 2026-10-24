@@ -2,6 +2,7 @@
 <html lang="en" class="bmn-starting">
 <head>
 <meta charset="utf-8">
+<meta name="keywords" content="BMN Community, BMN, Nigerian creators, creator community, video editing, digital storytelling, entertainment, FYP, For You, Following, creator profiles, messaging, social media">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
 <style id="bmn-first-paint-guard">
 html.bmn-starting,html.bmn-starting body{background:#070711!important;overflow:hidden!important;min-height:100%;}
@@ -2012,6 +2013,30 @@ html[data-bmn-theme="light"] #lgtt #lgttChat:not(.bmn-chat-full-wallpaper) {back
 @media(prefers-reduced-motion:reduce){#lgtt .lgtt-dock{transition:none!important}}
 </style>
 
+
+<style id="bmn-v24-stability">
+/* BMN Community v24 stability layer: preserve the existing visual design, reduce iPhone work. */
+html.bmn-community-app,html.bmn-community-app body{width:100%;height:100%;height:100dvh;min-height:100dvh;overflow:hidden!important;overscroll-behavior:none}
+html.bmn-community-app #bmn-liquid-canvas{display:none!important}
+html.bmn-community-app .lgtt-slide{contain:layout paint style;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0)}
+html.bmn-community-app #lgtt video.lgtt-vid{contain:strict;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0);will-change:transform}
+body.community-mode[data-app-screen="inbox"] main.wrap{width:100%!important;max-width:none!important;margin:0!important;padding-left:0!important;padding-right:0!important}
+body.community-mode[data-app-screen="inbox"] #communityPage,body.community-mode[data-app-screen="inbox"] #community{display:none!important}
+body.community-mode[data-app-screen="inbox"] #appInboxScreen{width:100%!important;max-width:none!important;margin:0!important;box-sizing:border-box}
+@media(max-width:700px){html.bmn-community-app #lgtt .lgtt-stage{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important}html.bmn-community-app #lgtt .lgtt-feed{width:100vw!important;height:100dvh!important}}
+@media(prefers-reduced-motion:reduce){html.bmn-community-app .lgtt-slide{transition:none!important}}
+</style>
+
+<style id="bmn-performance-v25">
+/* BMN Community performance guard: keep the FYP full-screen without forcing the browser to rasterize every card at once. */
+html,body{overscroll-behavior-y:none;}
+body.community-mode #community .community-grid{contain:layout paint style;}
+body.community-mode #community .community-post{contain:layout paint;content-visibility:auto;contain-intrinsic-size:100vh;}
+body.community-mode #community .community-post video{display:block;width:100%;height:100%;object-fit:cover;background:#080b12;}
+body.community-mode #community .community-post video:not([data-bmn-active="true"]){will-change:auto;}
+#lgttTrack .lgtt-slide{contain:layout paint;}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -2391,7 +2416,7 @@ function setView(view, updateHash=true){
   body.classList.toggle('community-mode',community);
   viewButtons.forEach(b=>b.classList.toggle('active',b.dataset.view===view));
   document.title=community?'BMN® — Creator Community':'BMN® — Creator · Editor · Storyteller';
-  if(updateHash){history.replaceState(null,'',community?'#community-page':'#home');window.scrollTo({top:0,behavior:'smooth'});}
+  if(updateHash){history.replaceState(null,'',community?'#community-page':'#home');window.scrollTo(0,0);}
 }
 viewButtons.forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view);if(b.dataset.view==='community')setAppView('home')}));
 function setAppView(view,updateHash=true){
@@ -2402,7 +2427,7 @@ function setAppView(view,updateHash=true){
  const titles={home:'Home',discover:'Discover creators',create:'Create a post',inbox:'Inbox',profile:'Profile'};
  const title=$('#appScreenTitle');if(title)title.textContent=titles[view]||'BMN Community';
  if(updateHash){const hashes={home:'#community-page',discover:'#discover',create:'#create',inbox:'#inbox',profile:'#profile'};history.replaceState(null,'',hashes[view]);}
- window.scrollTo({top:0,behavior:'smooth'});
+ window.scrollTo(0,0);
  if(view==='inbox')loadSocialHub?.();
  if(view==='profile'&&bmnSession)fillProfileEditor(bmnProfiles[bmnSession.user.id]||{});
 }
@@ -3697,8 +3722,7 @@ function routeDock(view){
   if(typeof window.bmnSetFeedMode==='function')window.bmnSetFeedMode('fyp');
   $$('[data-app-view]').forEach(b=>{const active=b.dataset.appView==='home';b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false')});
   const profile=$('#appProfileScreen');if(profile)profile.style.display='none';const home=$('#appHomeScreen');if(home)home.style.display='block';
-  window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-  setTimeout(()=>{if(body.dataset.appScreen!=='home')body.dataset.appScreen='home';const feed=$('#community');if(feed)feed.scrollIntoView({block:'start',behavior:'smooth'})},80);
+  window.scrollTo(0,0);
  }else if(view==='discover'){
   body.classList.add('community-mode','bmn-friends-mode');body.classList.remove('bmn-conversation-open');
   if(typeof window.setAppView==='function')window.setAppView('home');body.dataset.appScreen='home';
@@ -6921,7 +6945,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const s = el('article', 'lgtt-slide');
       s.dataset.id = p.id; s._post = p; s._t = 0; s._paused = false;
       const media = p.src
-        ? '<video class="lgtt-vid" src="' + esc(p.src) + '" loop playsinline webkit-playsinline autoplay preload="metadata"></video>'
+        ? '<video class="lgtt-vid" src="' + esc(p.src) + '" loop playsinline webkit-playsinline preload="metadata"></video>'
         : sceneHTML(p.scene);
       s.innerHTML =
         '<div class="lgtt-media">' + media + '</div><div class="lgtt-shade"></div>' +
@@ -6963,13 +6987,25 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     }
 
     /* ---- layout: every slide is positioned from one float `pos` (zoom + fade while travelling) ---- */
+    let layoutCenter = -1;
     function layout() {
       H = R.Feed.clientHeight || H;
-      for (let i = 0; i < n; i++) {
-        const s = slides[i], d = i - pos, a = Math.abs(d);
-        if (a > 1.5) { if (s._v) { s.style.visibility = 'hidden'; s._v = false; } continue; }
-        if (!s._v) { s.style.visibility = 'visible'; s._v = true; }
-        const t = Math.min(1, a);
+      const center = Math.round(pos);
+      // Visibility is updated only when crossing a slide. Transform work stays limited
+      // to the active slide plus its two neighbours, which keeps iPhone swipe FPS stable
+      // even when the feed contains many posts.
+      if (center !== layoutCenter) {
+        layoutCenter = center;
+        for (let i = 0; i < n; i++) {
+          const near = Math.abs(i - center) <= 1;
+          const s = slides[i];
+          if (near) { s.style.visibility = 'visible'; s._v = true; }
+          else if (s._v) { s.style.visibility = 'hidden'; s._v = false; }
+        }
+      }
+      const lo = Math.max(0, center - 1), hi = Math.min(n - 1, center + 1);
+      for (let i = lo; i <= hi; i++) {
+        const s = slides[i], d = i - pos, a = Math.abs(d), t = Math.min(1, a);
         s.style.transform = 'translate3d(0,' + (d * H).toFixed(1) + 'px,0) scale(' + (1 - 0.11 * t).toFixed(4) + ')';
         s.style.opacity = (1 - 0.6 * t).toFixed(3);
         s.style.zIndex = String(10 - Math.round(a * 4));
@@ -7028,13 +7064,19 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const s = slides[idx]; if (!s) return;
       const stopped = s._paused || blocked;
       s.classList.toggle('is-paused', stopped);
-      if (s.vid) {
+      // Keep only the active video fully warm. Adjacent videos get metadata only;
+      // everything else is paused and released from preload so swiping does not make
+      // Safari decode several videos at once.
+      slides.forEach((slide, j) => {
+        if (!slide.vid) return;
+        const near = Math.abs(j - idx) <= 1;
+        slide.vid.preload = j === idx ? 'auto' : (near ? 'metadata' : 'none');
+        if (j !== idx || stopped) { try { slide.vid.pause(); } catch (_) {} }
+      });
+      if (s.vid && !stopped) {
         s.vid.muted = !S.settings.sound;
-        s.vid.preload = 'auto';
-        if (stopped) s.vid.pause(); else { const pr = s.vid.play(); if (pr && pr.catch) pr.catch(() => {}); }
+        const pr = s.vid.play(); if (pr && pr.catch) pr.catch(() => {});
       }
-      // Only warm the next slide's metadata; do not make every feed video compete for bandwidth.
-      const next = slides[idx + 1]; if (next && next.vid) next.vid.preload = 'metadata';
     }
     function togglePlay(fromKey) {
       const s = slides[idx]; if (!s || !s._post) return;
@@ -8729,7 +8771,7 @@ function startAdaptiveSplash(){
  const memory=Number(navigator.deviceMemory||4);
  // The animation gets a brief minimum to be visible, then waits for the actual app shell.
  // Lower-capability devices get a little more visual time; slow startup is never cut off by this minimum.
- const minVisible=reduced?120:((cores<=4||memory<=4)?1050:760);
+ const minVisible=reduced?80:220;
  const started=performance.now();let raf=0,done=false;
  const poll=()=>{
    if(done)return;
@@ -8749,7 +8791,7 @@ function startAdaptiveSplash(){
     const tag=$('#bmnSplash .sp-tag');if(tag)tag.textContent='BMN COMMUNITY · RELOADING';
     if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';}
    }
- },12000);
+ },3500);
  const finish=()=>{if(done)return;};
  if(document.fonts?.ready)document.fonts.ready.then(()=>{}).catch(()=>{});
  raf=requestAnimationFrame(poll);
@@ -8764,7 +8806,16 @@ function observe(){
  patchVideoSlides();patchProfileTiles();installWallpaper();installAppearance();relabelFriends();bindFriendsView();
 }
 
+function clearStaleBMNStartup(){
+ try{
+   if('serviceWorker' in navigator){
+     navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{try{r.update()}catch(_){}})).catch(()=>{});
+   }
+ }catch(_){}
+}
+
 function boot(){
+ clearStaleBMNStartup();
  // Start the splash handoff first so an enhancement error can never leave the user trapped on the logo.
  try{startAdaptiveSplash();}catch(_){try{root.classList.remove('bmn-starting');}catch(e){}}
  safe(()=>{const saved=safe(()=>localStorage.getItem('bmn-theme-mode'))||'system';applyAppearance(saved,false);watchSystem();bindRouting();observe();});
@@ -9043,6 +9094,34 @@ body.community-mode #lgtt .lgtt-set-guest{align-items:center}
 @supports(padding:max(0px)){body.community-mode #lgtt{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}
 </style>
 
+
+<script id="bmn-v24-error-guard">
+(()=>{
+  window.addEventListener('error',e=>{try{console.error('[BMN runtime]',e.error||e.message)}catch(_){}});
+  window.addEventListener('unhandledrejection',e=>{try{console.error('[BMN promise]',e.reason)}catch(_){}});
+})();
+</script>
+
+<script id="bmn-active-video-manager-v25">
+(()=>{
+ 'use strict';
+ const root=document.getElementById('lgtt'); if(!root)return;
+ const getVideos=()=>Array.from(root.querySelectorAll('video'));
+ const pauseOthers=(active)=>getVideos().forEach(v=>{if(v!==active){try{v.pause();v.removeAttribute('autoplay');v.dataset.bmnActive='false'}catch(_){}}});
+ const update=()=>{
+   const stage=document.getElementById('lgttStage');
+   if(!stage||stage.dataset.view!=='feed'||root.hidden||!root.classList.contains('is-open')){getVideos().forEach(v=>{try{v.pause();v.dataset.bmnActive='false'}catch(_){}});return}
+   const candidates=getVideos().filter(v=>v.closest('.lgtt-slide,[data-post-id],article'));
+   let active=null,best=-1; const h=innerHeight||1;
+   candidates.forEach(v=>{const r=v.getBoundingClientRect();const vis=Math.max(0,Math.min(r.bottom,h)-Math.max(r.top,0));const score=vis/(r.height||1);if(score>best){best=score;active=v}});
+   if(active&&best>.55){pauseOthers(active);active.dataset.bmnActive='true';active.muted=true;active.playsInline=true;active.play().catch(()=>{});}else pauseOthers(null);
+ };
+ let raf=0; const schedule=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(update)};
+ window.addEventListener('scroll',schedule,{passive:true}); window.addEventListener('resize',schedule,{passive:true}); document.addEventListener('visibilitychange',schedule);
+ new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
+ setTimeout(update,400);
+})();
+</script>
 </body>
 </html>
 
