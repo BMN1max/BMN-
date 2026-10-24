@@ -1936,6 +1936,29 @@ html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!imp
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
+<script id="bmn-startup-emergency-v18">
+/* Emergency startup guard: the splash can never trap the app. It is a last-resort
+   escape hatch only; normal startup hands off as soon as the Community shell is ready. */
+(function(){
+  var released=false;
+  function release(){
+    if(released)return; released=true;
+    try{document.documentElement.classList.remove('bmn-starting');}catch(e){}
+    try{var splash=document.getElementById('bmnSplash');if(splash)splash.remove();}catch(e){}
+    try{
+      if(window.BMN_FINAL_COMPLETE&&typeof window.BMN_FINAL_COMPLETE.enterCommunity==='function'){
+        window.BMN_FINAL_COMPLETE.enterCommunity();
+      }else{
+        var lg=document.getElementById('lgtt');
+        if(lg){lg.hidden=false;lg.style.removeProperty('display');lg.style.setProperty('visibility','visible','important');lg.classList.add('is-open');}
+        document.documentElement.classList.add('bmn-community-app');
+      }
+    }catch(e){}
+  }
+  window.__BMN_RELEASE_STARTUP=release;
+  setTimeout(release,2400);
+})();
+</script>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
 <div class="scene" aria-hidden="true"><div class="fluid f1"></div><div class="fluid f2"></div><div class="fluid f3"></div><div class="fluid f4"></div><div class="ribbon r1"></div><div class="ribbon r2"></div></div>
 <div class="scroll-progress" id="scrollProgress"></div>
@@ -8497,17 +8520,29 @@ function appReady(){
  const posts=Array.isArray(window.cachedPosts)?window.cachedPosts:[];const hasReal=posts.some(p=>p&&p.media_display_url);
  return hasReal ? track.children.length>0 : true;
 }
-function finishCommunityStartup(){if(startupDone)return;startupDone=true;enterCommunity();const splash=$('#bmnSplash');if(splash){splash.classList.add('bmn-splash-exit');setTimeout(()=>splash.remove(),340)}}
+function finishCommunityStartup(){
+ if(startupDone)return; startupDone=true;
+ try{enterCommunity();}catch(e){
+   try{root.classList.remove('bmn-starting');root.classList.add('bmn-community-app');}catch(_){}
+   try{const overlay=$('#lgtt');if(overlay){overlay.hidden=false;overlay.style.removeProperty('display');overlay.style.setProperty('visibility','visible','important');overlay.classList.add('is-open');}}catch(_){}
+ }
+ try{const splash=$('#bmnSplash');if(splash){splash.classList.add('bmn-splash-exit');setTimeout(()=>splash.remove(),340)}}catch(_){}
+ try{window.__BMN_RELEASE_STARTUP&&window.__BMN_RELEASE_STARTUP();}catch(_){}
+}
 function startAdaptiveSplash(){
  const splash=$('#bmnSplash');root.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1'}
  const started=performance.now();let raf=0;
- const poll=()=>{if(appReady()){safe(()=>window.bmnSyncLGTTRealData?.());requestAnimationFrame(()=>setTimeout(()=>{if(appReady())finishCommunityStartup();else poll()},0));return}
-   // Safety only: this is not the loading duration. Readiness decides the handoff.
-   if(performance.now()-started>1800){finishCommunityStartup();return}
-   raf=requestAnimationFrame(poll)
+ const poll=()=>{
+   try{
+     if(appReady()){safe(()=>window.bmnSyncLGTTRealData?.());finishCommunityStartup();return}
+   }catch(_){}
+   // Readiness decides the normal handoff; the emergency guard is only a final escape hatch.
+   if(performance.now()-started>2100){finishCommunityStartup();return}
+   raf=requestAnimationFrame(poll);
  };
  if(document.fonts?.ready)document.fonts.ready.then(()=>{}).catch(()=>{});
- raf=requestAnimationFrame(poll);setTimeout(()=>cancelAnimationFrame(raf),2200);
+ raf=requestAnimationFrame(poll);
+ setTimeout(()=>cancelAnimationFrame(raf),2300);
 }
 
 function observe(){
@@ -8519,10 +8554,11 @@ function observe(){
 }
 
 function boot(){
- const saved=safe(()=>localStorage.getItem('bmn-theme-mode'))||'system';applyAppearance(saved,false);watchSystem();bindRouting();observe();
- document.addEventListener('click',()=>setTimeout(()=>{observe();installCreateBridge();},0),true);
- new MutationObserver(()=>{observe();installCreateBridge()}).observe(document.body,{childList:true,subtree:true});
- startAdaptiveSplash();
+ // Start the splash handoff first so an enhancement error can never leave the user trapped on the logo.
+ try{startAdaptiveSplash();}catch(_){try{root.classList.remove('bmn-starting');}catch(e){}}
+ safe(()=>{const saved=safe(()=>localStorage.getItem('bmn-theme-mode'))||'system';applyAppearance(saved,false);watchSystem();bindRouting();observe();});
+ safe(()=>document.addEventListener('click',()=>setTimeout(()=>{safe(observe);safe(installCreateBridge);},0),true));
+ safe(()=>new MutationObserver(()=>{safe(observe);safe(installCreateBridge)}).observe(document.body,{childList:true,subtree:true}));
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
