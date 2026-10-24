@@ -5,10 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual>
 <style id="bmn-first-paint-guard">
 html.bmn-starting,html.bmn-starting body{background:#070711!important;overflow:hidden!important;min-height:100%;}
-html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){visibility:hidden!important;pointer-events:none!important;}
+html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+html.bmn-starting body>#lgtt,html.bmn-starting body>#communityPage,html.bmn-starting body>#community,html.bmn-starting body>.topbar{display:none!important;visibility:hidden!important;opacity:0!important;}
+html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;opacity:1!important;}
 html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;position:fixed!important;inset:0!important;z-index:2147483647!important;opacity:1!important;animation:none!important;background:#070711!important;}
 html.bmn-community-app body> :not(#lgtt):not(script):not(style){display:none!important;visibility:hidden!important;pointer-events:none!important;}
 html.bmn-community-app body>#lgtt{display:block!important;visibility:visible!important;}
+html.bmn-starting.bmn-community-app body>#lgtt{display:none!important;visibility:hidden!important;opacity:0!important;}
 html.bmn-community-app body>#lgtt[hidden]{display:none!important;}
 html.bmn-community-app body{overflow:hidden!important;background:#05070d!important;}
 </style>
@@ -8282,8 +8285,6 @@ let activeFriendsTab='posts',friendRenderToken=0;
 function meId(){return String(window.bmnSession?.user?.id||window.bmnSupabase?.auth?.getSession?.()?.data?.session?.user?.id||'')}
 function enterCommunityOnly(){
  const root=document.documentElement,body=document.body;
- // Do not release bmn-starting here: several async hooks call this function during page load.
- // The startup controller alone is allowed to reveal the app after the intro has played.
  root.classList.add('bmn-community-app');
  body.classList.remove('community-mode','bmn-friends-mode');body.dataset.bmnNav='fyp';body.dataset.appScreen='home';
  const old=$('#communityPage'),oldFeed=$('#community');if(old){old.style.display='none';old.setAttribute('aria-hidden','true')}if(oldFeed){oldFeed.style.display='none';oldFeed.setAttribute('aria-hidden','true')}
@@ -8298,22 +8299,22 @@ async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)r
 async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
 function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
-function boot(){
- const root=document.documentElement,splash=$('#bmnSplash');
- const introMs=1450; // one intentional intro, under the requested two-second limit
- root.classList.add('bmn-starting');
- if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';splash.style.animation='none';}
- // Never reveal the portfolio while waiting for the immersive Community shell.
- enterCommunityOnly();
- const startedAt=Date.now();
- const launch=()=>{
-   if(!window.LGTT && Date.now()-startedAt<1850){setTimeout(launch,40);return;}
-   try{if(window.LGTT){window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}}catch(err){console.warn('[BMN startup] Community launch deferred:',err?.message||err);}
-   // Reveal only after the intro duration and after attempting to open Community.
-   if(splash&&splash.isConnected)splash.remove();
-   root.classList.remove('bmn-starting');
+function boot(){const splash=$('#bmnSplash');const introMs=1350;
+ // Keep the splash as the only visible UI while the Community overlay is prepared.
+ document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.animation='none';splash.style.opacity='1';}
+ // Force the app-only shell before removing the splash; the portfolio never paints.
+ const bootStartedAt=Date.now();
+ const finishStartup=()=>{
+  const reelsReady=!!(window.LGTT&&typeof window.LGTT.open==='function');
+  // Keep the splash covering every page until the immersive Community module is ready,
+  // but never let the intro exceed two seconds.
+  if(!reelsReady&&Date.now()-bootStartedAt<1900){setTimeout(finishStartup,40);return;}
+  enterCommunityOnly();
+  if(reelsReady){try{window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}catch(_){}}
+  if(splash&&splash.isConnected)splash.remove();
+  requestAnimationFrame(()=>{document.documentElement.classList.remove('bmn-starting');});
  };
- setTimeout(launch,introMs);
+ setTimeout(finishStartup,introMs);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 // Audio playback is attempted after the first user gesture because mobile browsers may block audible autoplay.
