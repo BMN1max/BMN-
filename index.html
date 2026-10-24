@@ -8,7 +8,7 @@ html.bmn-starting,html.bmn-starting body{background:#070711!important;overflow:h
 html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
 html.bmn-starting body>#lgtt,html.bmn-starting body>#communityPage,html.bmn-starting body>#community,html.bmn-starting body>.topbar{display:none!important;visibility:hidden!important;opacity:0!important;}
 html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;opacity:1!important;}
-html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;position:fixed!important;inset:0!important;z-index:2147483647!important;opacity:1!important;animation:none!important;background:#070711!important;}
+html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;position:fixed!important;inset:0!important;z-index:2147483647!important;opacity:1!important;background:radial-gradient(90% 70% at 50% 38%,#16203c 0%,#080a14 62%,#04050a 100%)!important;}
 html.bmn-community-app body> :not(#lgtt):not(script):not(style){display:none!important;visibility:hidden!important;pointer-events:none!important;}
 html.bmn-community-app body>#lgtt{display:block!important;visibility:visible!important;}
 html.bmn-starting.bmn-community-app body>#lgtt{display:none!important;visibility:hidden!important;opacity:0!important;}
@@ -6113,7 +6113,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     <div class="lgtt-ambient" aria-hidden="true"><i></i><i></i><i></i></div>
 
     <!-- Desktop-only close affordance outside the stage -->
-    <button class="lgtt-outer-close lgtt-btn lgtt-round" type="button" data-act="close" aria-label="Close Reels"><svg class="lgtt-ico"><use href="#lgi-x"/></svg></button>
+    <button class="lgtt-outer-close lgtt-btn lgtt-round bmn-switch-personal" type="button" data-act="bmn-home" aria-label="Switch to BMN page" title="BMN page"><span aria-hidden="true">B</span></button>
 
     <!-- The stage: phone-width column (widens for the Profile + BMN layout on desktop) -->
     <div class="lgtt-stage" id="lgttStage" data-view="feed">
@@ -6127,7 +6127,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         <!-- Top bar: tabs + stories (glass, floats over the video) -->
         <header class="lgtt-top" id="lgttTop">
           <div class="lgtt-top-row">
-            <button class="lgtt-btn lgtt-round lgtt-sm" type="button" data-act="close" aria-label="Close Reels"><svg class="lgtt-ico"><use href="#lgi-x"/></svg></button>
+            <button class="lgtt-btn lgtt-round lgtt-sm bmn-switch-personal" type="button" data-act="bmn-home" aria-label="Switch to BMN page" title="BMN page"><span aria-hidden="true">B</span></button>
             <div class="lgtt-tabs lgtt-glass" id="lgttTabs" role="tablist" aria-label="Feed">
               <i class="lgtt-tab-ind" aria-hidden="true"></i>
               <button type="button" role="tab" data-tab="following" aria-selected="false">Following</button>
@@ -7259,7 +7259,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         { label: 'Playback speed · 0.5×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 0.5; v.play().catch(() => {}); toast('Playback speed 0.5×', 'play'); } } },
         { label: 'Playback speed · 1×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 1; v.play().catch(() => {}); toast('Playback speed 1×', 'play'); } } },
         { label: 'Playback speed · 2×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 2; v.play().catch(() => {}); toast('Playback speed 2×', 'play'); } } },
-        { label: 'Download video', icon: 'download', fn: () => { if (!p.src) return toast('No video file is available to download', 'info'); const a = document.createElement('a'); a.href = p.src; a.download = 'bmn-video-' + String(p.id || 'video').replace(/[^a-z0-9_-]/gi, '') + '.mp4'; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); } },
+        { label: 'Download video / Save to Photos', icon: 'download', fn: async () => { if (!p.src) return toast('No video file is available to download', 'info'); const filename='bmn-video-'+String(p.id||'video').replace(/[^a-z0-9_-]/gi,'')+'.mp4'; try { const response=await fetch(p.src,{mode:'cors'}); if(!response.ok)throw new Error('download unavailable'); const blob=await response.blob(); const file=new File([blob],filename,{type:blob.type||'video/mp4'}); if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'BMN video'});return;} const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast('Video download started. On iPhone, use Share → Save Video if offered.','download'); } catch(err) { const a=document.createElement('a');a.href=p.src;a.download=filename;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();toast('Opened the video for download. If iOS does not save to Photos directly, use Share → Save Video.','download'); } } },
         { label: 'Copy link', icon: 'link', fn: () => copyText(postUrl(p)).then(() => toast('Link copied', 'link')) },
         { label: 'Share…', icon: 'share', fn: () => Share.open(p) },
         '-',
@@ -8257,7 +8257,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 #lgtt .lgtt-v-feed .lgtt-stories-wrap{display:none!important}
 #lgtt #lgttDmScroll .lgtt-stories-wrap,#lgtt #lgttDiscScroll .lgtt-stories-wrap{display:block!important;visibility:visible!important;opacity:1!important}
 #lgtt #lgttMute{display:none!important;visibility:hidden!important;pointer-events:none!important}
-#bmnSplash{animation:none!important;opacity:1;visibility:visible;z-index:2147483647!important;background:#070711!important}
+#bmnSplash{opacity:1;visibility:visible;z-index:2147483647!important;background:radial-gradient(90% 70% at 50% 38%,#16203c 0%,#080a14 62%,#04050a 100%)!important}
 #bmnSplash .sp-logo{animation:bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both!important}
 #bmnSplash .sp-tag{animation:bmnSplashTag .45s ease .32s both!important}
 html.bmn-starting #bmnSplash .sp-logo::before,html.bmn-starting #bmnSplash .sp-logo::after{animation:bmnSplashRing .75s ease-out .28s both!important}
@@ -8298,19 +8298,19 @@ async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)r
 async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
 function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
-function boot(){const splash=$('#bmnSplash');const introMs=1350;
+function boot(){const splash=$('#bmnSplash');const introMs=1050;
  // Keep the splash as the only visible UI while the Community overlay is prepared.
- document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.animation='none';splash.style.opacity='1';}
+ document.documentElement.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.opacity='1';const logo=splash.querySelector('.sp-logo'),tag=splash.querySelector('.sp-tag');if(logo){logo.style.animation='none';void logo.offsetWidth;logo.style.animation='bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both';}if(tag){tag.style.animation='none';void tag.offsetWidth;tag.style.animation='bmnSplashTag .45s ease .32s both';}}
  // Force the app-only shell before removing the splash; the portfolio never paints.
  const bootStartedAt=Date.now();
  const finishStartup=()=>{
   const reelsReady=!!(window.LGTT&&typeof window.LGTT.open==='function');
   // Keep the splash covering every page until the immersive Community module is ready,
   // but never let the intro exceed two seconds.
-  if(!reelsReady&&Date.now()-bootStartedAt<1900){setTimeout(finishStartup,40);return;}
+  if(!reelsReady&&Date.now()-bootStartedAt<1550){setTimeout(finishStartup,35);return;}
   enterCommunityOnly();
   if(reelsReady){try{window.LGTT.open({view:'feed'});const mute=$('#lgttMute');if(mute)mute.remove();watchView();}catch(_){}}
-  if(splash&&splash.isConnected)splash.remove();
+  if(splash&&splash.isConnected){splash.style.animation='bmnSplashOut .24s ease forwards';setTimeout(()=>{if(splash.isConnected)splash.remove();},260);}
   requestAnimationFrame(()=>{document.documentElement.classList.remove('bmn-starting');});
  };
  setTimeout(finishStartup,introMs);
@@ -8319,6 +8319,79 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 // Audio playback is attempted after the first user gesture because mobile browsers may block audible autoplay.
 let unlocked=false;document.addEventListener('pointerdown',()=>{if(unlocked)return;unlocked=true;document.querySelectorAll('#lgtt video.lgtt-vid').forEach(v=>{v.muted=false;if(v.readyState>=2)v.play().catch(()=>{});});},{capture:true,passive:true});
 window.addEventListener('load',()=>{enterCommunityOnly();if(!$('#lgttTrack')?.children.length)window.bmnSyncLGTTRealData?.();});
+})();
+</script>
+
+
+<style id="bmn-final-stability-pass">
+/* Full-viewport app shell: respect the iPhone safe area without leaving a dead black strip. */
+html.bmn-community-app,html.bmn-community-app body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden!important;overscroll-behavior:none;background:#05070d!important}
+html.bmn-community-app #lgtt{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100vh!important;min-height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;margin:0!important;padding:0!important}
+#lgtt .lgtt-stage{height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important}
+#lgtt .lgtt-dock{position:absolute!important;bottom:calc(env(safe-area-inset-bottom,0px) + 6px)!important;transform-origin:50% 50%;margin-bottom:0!important}
+#lgtt .lgtt-stage.has-layer .lgtt-dock{transform:translateY(160%)!important}
+/* Keep the profile focused on identity, bio, profile tabs and posts. Settings stays in the three-line menu. */
+#lgttProfLayout{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"head" "tabs" "grid"!important;gap:10px!important}
+#lgttBmn{display:none!important}
+#lgttProfHead{width:100%;min-width:0}
+#lgttProfTabs{position:sticky;top:0;z-index:3}
+#lgttProfGrid{min-width:0;width:100%}
+#lgtt .bmn-switch-personal{display:inline-flex!important;align-items:center!important;justify-content:center!important;font-weight:900!important;font-size:17px!important;letter-spacing:-.07em!important}
+#lgtt .bmn-switch-personal span{display:block;font:900 17px/1 -apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;letter-spacing:-.07em;color:currentColor}
+/* Splash animation is deliberately forced even if the device has reduced-motion enabled. */
+#bmnSplash{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;opacity:1;visibility:visible}
+#bmnSplash .sp-logo{animation:bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both!important}
+#bmnSplash .sp-logo::before{animation:bmnSplashRing 1.15s ease-out .25s forwards!important}
+#bmnSplash .sp-logo::after{animation:bmnSplashRing 1.15s ease-out .48s forwards!important}
+#bmnSplash .sp-tag{animation:bmnSplashTag .45s ease .32s both!important}
+#bmnSplash.bmn-splash-exit{animation:bmnSplashOut .24s ease forwards!important}
+/* Theme preference for the overlay. */
+html[data-bmn-theme="light"] #lgtt{--lg-bg:#f4f6fb;--lg-fg:#171a24;color:#171a24;background:#f4f6fb!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-glass,html[data-bmn-theme="light"] #lgtt .lgtt-glass-strong,html[data-bmn-theme="light"] #lgtt .lgtt-over,html[data-bmn-theme="light"] #lgtt .lgtt-sheet{background:rgba(250,251,255,.88)!important;color:#171a24!important;border-color:rgba(30,40,60,.13)!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-page-h,html[data-bmn-theme="light"] #lgtt .lgtt-prof-head,html[data-bmn-theme="light"] #lgtt .lgtt-prof-tabs,html[data-bmn-theme="light"] #lgtt .lgtt-prof-grid{color:#171a24}
+html[data-bmn-theme="light"] #lgtt input,html[data-bmn-theme="light"] #lgtt textarea{color:#171a24!important;background:rgba(20,30,50,.05)!important}
+</style>
+<script id="bmn-final-stability-pass-js">
+(()=>{'use strict';
+const $=(q,r=document)=>r.querySelector(q);
+// Use B as a deliberate route switch, not as a close action that can trigger old-page handlers.
+document.addEventListener('click',e=>{
+ const b=e.target.closest('#lgtt [data-act="bmn-home"]');if(!b)return;
+ e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+ const root=document.documentElement,overlay=$('#lgtt');
+ root.classList.remove('bmn-community-app','bmn-starting');
+ document.body.classList.remove('community-mode','bmn-friends-mode');
+ if(overlay){overlay.classList.remove('is-open');overlay.hidden=true;overlay.style.display='none';}
+ const splash=$('#bmnSplash');if(splash)splash.remove();
+ const personal=$('[data-view="personal"]');if(personal){try{personal.click()}catch(_){}}
+ document.querySelectorAll('body>*').forEach(el=>{if(!['lgtt','bmnSplash'].includes(el.id)&&!['SCRIPT','STYLE'].includes(el.tagName)){el.style.removeProperty('display');el.style.removeProperty('visibility');el.style.removeProperty('opacity');el.style.removeProperty('pointer-events');}});
+ try{history.replaceState(null,'','#home')}catch(_){}
+},true);
+// Put a reliable create form inside the existing Create sheet, using the existing authenticated upload pipeline.
+function installCreateBridge(){
+ const host=$('#lgttCreateBody');if(!host||host.querySelector('#bmnOverlayFile'))return;host.dataset.bmnBridge='1';
+ host.innerHTML='<div class="bmn-overlay-create"><label for="bmnOverlayFile" class="lgtt-btn lgtt-pill lgtt-primary" style="display:flex;justify-content:center;gap:8px;cursor:pointer">＋ Choose photo or video</label><input id="bmnOverlayFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" style="position:absolute;width:1px;height:1px;opacity:.01;pointer-events:none"/><div id="bmnOverlayPreview" style="display:none;margin:12px 0;border-radius:16px;overflow:hidden"></div><textarea id="bmnOverlayCaption" maxlength="3000" placeholder="Write a caption…" aria-label="Post caption" style="display:block;width:100%;min-height:100px;box-sizing:border-box;margin:12px 0;padding:13px;border-radius:15px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit"></textarea><p id="bmnOverlayUploadStatus" role="status" style="font-size:12px;opacity:.8"></p><button id="bmnOverlayPublish" type="button" class="lgtt-btn lgtt-pill lgtt-primary" style="width:100%;justify-content:center">Publish post ↗</button><p style="font-size:11px;opacity:.65;margin-top:9px">Publishing requires a signed-in account. Your post uses the existing BMN upload and Supabase pipeline.</p></div>';
+ const file=$('#bmnOverlayFile'),preview=$('#bmnOverlayPreview'),caption=$('#bmnOverlayCaption'),status=$('#bmnOverlayUploadStatus');
+ file.addEventListener('change',()=>{preview.replaceChildren();const f=file.files&&file.files[0];if(!f){preview.style.display='none';return}preview.style.display='block';let node;if(f.type.startsWith('video/')){node=document.createElement('video');node.controls=true;node.playsInline=true;node.muted=true;node.src=URL.createObjectURL(f);node.style.width='100%'}else if(f.type.startsWith('image/')){node=document.createElement('img');node.src=URL.createObjectURL(f);node.alt='Selected post preview';node.style.cssText='width:100%;display:block;object-fit:contain;max-height:45vh'}else{status.textContent='Choose an image or video file.';return}preview.appendChild(node);status.textContent=f.name+' selected';});
+ $('#bmnOverlayPublish').addEventListener('click',()=>{
+  const original=$('#bmnPostFile'),originalCaption=$('#bmnPostContent'),publish=$('#bmnPublishPost');
+  if(!original||!originalCaption||!publish){status.textContent='The upload service is not ready yet. Close and reopen Create, then try again.';return}
+  const f=file.files&&file.files[0];if(!f){status.textContent='Choose a photo or video first.';return}
+  try{const dt=new DataTransfer();dt.items.add(f);original.files=dt.files;original.dispatchEvent(new Event('change',{bubbles:true}));originalCaption.value=caption.value;originalCaption.dispatchEvent(new Event('input',{bubbles:true}));status.textContent='Uploading…';publish.click();
+   const oldStatus=$('#bmnPostStatus');if(oldStatus){const obs=new MutationObserver(()=>{status.textContent=oldStatus.textContent||'Upload submitted.';});obs.observe(oldStatus,{childList:true,subtree:true,characterData:true});setTimeout(()=>obs.disconnect(),120000);}
+  }catch(err){status.textContent='Could not attach this file in this browser. Please try again or use a smaller video.';}
+ });
+}
+// Open the Create sheet from the dock and install its upload bridge after the overlay module is ready.
+document.addEventListener('click',e=>{if(e.target.closest('#lgtt [data-dock="create"]'))setTimeout(installCreateBridge,0)},true);
+document.addEventListener('click',e=>{const b=e.target.closest('#lgttCreateBody [data-create="upload"]');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();installCreateBridge();},true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(installCreateBridge,0),{once:true});else setTimeout(installCreateBridge,0);
+// Keep the native picker reachable from a visible label even when a theme or overlay handler stops bubbling.
+document.addEventListener('click',e=>{const l=e.target.closest('label[for="bmnPostFile"]');if(!l)return;const i=$('#bmnPostFile');if(i){e.preventDefault();i.click()}},true);
+// Add a persistent light/dark control to Settings without replacing existing settings.
+function installThemeControl(){const panel=$('#lgttSettings');if(!panel||$('#bmnThemeToggle'))return;const header=panel.querySelector('.lgtt-over-h');if(!header)return;const b=document.createElement('button');b.id='bmnThemeToggle';b.type='button';b.className='lgtt-btn lgtt-pill';b.style.cssText='font-size:12px;white-space:nowrap';header.appendChild(b);const update=()=>{let theme=document.documentElement.getAttribute('data-bmn-theme')||'dark';b.textContent=theme==='light'?'☾ Dark mode':'☀ Light mode';b.setAttribute('aria-pressed',String(theme==='light'))};b.addEventListener('click',()=>{const next=(document.documentElement.getAttribute('data-bmn-theme')||'dark')==='dark'?'light':'dark';document.documentElement.setAttribute('data-bmn-theme',next);try{localStorage.setItem('bmn-theme',next)}catch(_){}update()});try{const saved=localStorage.getItem('bmn-theme');if(saved==='light'||saved==='dark')document.documentElement.setAttribute('data-bmn-theme',saved)}catch(_){}update()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installThemeControl,{once:true});else installThemeControl();
+
 })();
 </script>
 
