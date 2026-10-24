@@ -10,7 +10,7 @@ html.bmn-starting body>#lgtt,html.bmn-starting body>#communityPage,html.bmn-star
 html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;opacity:1!important;}
 html.bmn-starting #bmnSplash{display:flex!important;visibility:visible!important;position:fixed!important;inset:0!important;z-index:2147483647!important;opacity:1!important;background:radial-gradient(90% 70% at 50% 38%,#16203c 0%,#080a14 62%,#04050a 100%)!important;}
 html.bmn-community-app body> :not(#lgtt):not(script):not(style){display:none!important;visibility:hidden!important;pointer-events:none!important;}
-html.bmn-community-app body>#lgtt{display:block!important;visibility:visible!important;}
+html.bmn-community-app body>#lgtt{display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;}
 html.bmn-starting.bmn-community-app body>#lgtt{display:none!important;visibility:hidden!important;opacity:0!important;}
 html.bmn-community-app body>#lgtt[hidden]{display:none!important;}
 html.bmn-community-app body{overflow:hidden!important;background:#05070d!important;}
@@ -1886,8 +1886,10 @@ body.light .bmn-owner-console{background:linear-gradient(135deg,rgba(54,125,220,
    transparent Liquid Glass, System appearance, real profile media, and chat wallpaper. */
 html.bmn-community-app,html.bmn-community-app body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden!important;overscroll-behavior:none;background:#05070d!important}
 html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community,html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap{display:none!important}
-html.bmn-community-app #lgtt{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}
+html.bmn-community-app #lgtt{display:flex!important;align-items:center!important;justify-content:center!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}
 html.bmn-community-app #lgtt .lgtt-stage{height:100%!important;min-height:0!important;max-height:100%!important}
+@media(min-width:600px) and (min-height:560px){html.bmn-community-app #lgtt .lgtt-stage{width:min(460px,calc(100vw - 48px))!important;height:calc(100dvh - 28px)!important;max-height:calc(100dvh - 28px)!important;border-radius:36px!important;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 50px 120px -20px rgba(0,0,0,.75),0 0 80px -20px rgba(120,150,255,.35)!important}}
+@media(max-width:599px){html.bmn-community-app #lgtt .lgtt-stage{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;box-shadow:none!important}}
 /* There is exactly one BMN switch: the B button in the feed top row. */
 html.bmn-community-app #lgtt>.lgtt-outer-close{display:none!important}
 html.bmn-community-app #lgtt .lgtt-top-row>.bmn-switch-personal{display:grid!important}
@@ -1907,6 +1909,7 @@ html[data-bmn-theme="dark"] #lgtt .lgtt-glass,html[data-bmn-theme="dark"] #lgtt 
 html[data-bmn-theme="light"] #lgtt,html[data-bmn-theme="light"] #lgtt .lgtt-view,html[data-bmn-theme="light"] #lgtt .lgtt-page{background:transparent!important;color:#172132!important}
 html[data-bmn-theme="light"] #lgtt .lgtt-glass,html[data-bmn-theme="light"] #lgtt .lgtt-glass-strong,html[data-bmn-theme="light"] #lgtt .lgtt-dock,html[data-bmn-theme="light"] #lgtt .lgtt-tabs,html[data-bmn-theme="light"] #lgtt .lgtt-over,html[data-bmn-theme="light"] #lgtt .lgtt-sheet,html[data-bmn-theme="light"] #lgtt .lgtt-comments,html[data-bmn-theme="light"] #lgtt .lgtt-compose-pill{
  background:rgba(255,255,255,.055)!important;background-image:linear-gradient(145deg,rgba(255,255,255,.19),rgba(255,255,255,.035))!important;border:1px solid rgba(255,255,255,.36)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),inset 0 -1px 0 rgba(255,255,255,.12),0 18px 45px rgba(40,55,80,.12)!important;backdrop-filter:blur(24px) saturate(185%) contrast(1.03)!important;-webkit-backdrop-filter:blur(24px) saturate(185%) contrast(1.03)!important}
+html[data-bmn-theme="light"] #lgtt .lgtt-glass,html[data-bmn-theme="light"] #lgtt .lgtt-glass-strong,html[data-bmn-theme="light"] #lgtt .lgtt-dock,html[data-bmn-theme="light"] #lgtt .lgtt-tabs,html[data-bmn-theme="light"] #lgtt .lgtt-over,html[data-bmn-theme="light"] #lgtt .lgtt-sheet,html[data-bmn-theme="light"] #lgtt .lgtt-comments,html[data-bmn-theme="light"] #lgtt .lgtt-compose-pill{background:rgba(255,255,255,.035)!important;background-image:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.012))!important;border-color:rgba(255,255,255,.30)!important;backdrop-filter:blur(16px) saturate(170%)!important;-webkit-backdrop-filter:blur(16px) saturate(170%)!important}
 html[data-bmn-theme="light"] #lgtt .lgtt-btn,html[data-bmn-theme="light"] #lgtt .lgtt-tab,html[data-bmn-theme="light"] #lgtt .lgtt-tabs button{color:#172132!important}
 html[data-bmn-theme="light"] #lgtt .lgtt-side .lgtt-btn,html[data-bmn-theme="light"] #lgtt .lgtt-author,html[data-bmn-theme="light"] #lgtt .lgtt-cap,html[data-bmn-theme="light"] #lgtt .lgtt-music{color:#fff!important;text-shadow:0 1px 10px rgba(0,0,0,.65)}
 html[data-bmn-theme="light"] #lgtt input,html[data-bmn-theme="light"] #lgtt textarea,html[data-bmn-theme="light"] #lgtt select{background:rgba(255,255,255,.09)!important;color:#172132!important;border-color:rgba(255,255,255,.38)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
@@ -1932,33 +1935,18 @@ html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!imp
 @keyframes bmnFinalTag{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes bmnFinalSplashOut{to{opacity:0;transform:scale(1.015);visibility:hidden}}
 @media(prefers-reduced-motion:reduce){#bmnSplash .sp-logo,#bmnSplash .sp-tag{animation:none!important}#bmnSplash .sp-logo::before,#bmnSplash .sp-logo::after{animation:none!important}}
+
+/* Platform split: Android uses familiar solid TikTok-style controls; iPhone/iPad retain BMN Liquid Glass. */
+html.bmn-android #lgtt .lgtt-glass,html.bmn-android #lgtt .lgtt-glass-strong,html.bmn-android #lgtt .lgtt-dock,html.bmn-android #lgtt .lgtt-tabs,html.bmn-android #lgtt .lgtt-over,html.bmn-android #lgtt .lgtt-sheet,html.bmn-android #lgtt .lgtt-comments,html.bmn-android #lgtt .lgtt-compose-pill{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(18,18,20,.96)!important;background-image:none!important;border-color:rgba(255,255,255,.10)!important;box-shadow:none!important}
+html.bmn-android #lgtt .lgtt-btn,html.bmn-android #lgtt .lgtt-tab,html.bmn-android #lgtt .lgtt-tabs button{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass-strong,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-dock,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-tabs,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-over,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-sheet,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-comments,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-compose-pill{background:#f7f8fb!important;color:#172033!important;border-color:rgba(20,35,60,.12)!important}
+/* BMN v18 repair: one startup controller, one route switch, mutation-safe profile previews. */
+html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#lgttProfGrid .lgtt-tile .bmn-profile-media-preview{pointer-events:none!important}
 </style>
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
-<script id="bmn-startup-emergency-v18">
-/* Emergency startup guard: the splash can never trap the app. It is a last-resort
-   escape hatch only; normal startup hands off as soon as the Community shell is ready. */
-(function(){
-  var released=false;
-  function release(){
-    if(released)return; released=true;
-    try{document.documentElement.classList.remove('bmn-starting');}catch(e){}
-    try{var splash=document.getElementById('bmnSplash');if(splash)splash.remove();}catch(e){}
-    try{
-      if(window.BMN_FINAL_COMPLETE&&typeof window.BMN_FINAL_COMPLETE.enterCommunity==='function'){
-        window.BMN_FINAL_COMPLETE.enterCommunity();
-      }else{
-        var lg=document.getElementById('lgtt');
-        if(lg){lg.hidden=false;lg.style.removeProperty('display');lg.style.setProperty('visibility','visible','important');lg.classList.add('is-open');}
-        document.documentElement.classList.add('bmn-community-app');
-      }
-    }catch(e){}
-  }
-  window.__BMN_RELEASE_STARTUP=release;
-  setTimeout(release,2400);
-})();
-</script>
 <canvas id="bmn-liquid-canvas" aria-hidden="true"></canvas>
 <div class="scene" aria-hidden="true"><div class="fluid f1"></div><div class="fluid f2"></div><div class="fluid f3"></div><div class="fluid f4"></div><div class="ribbon r1"></div><div class="ribbon r2"></div></div>
 <div class="scroll-progress" id="scrollProgress"></div>
@@ -2114,8 +2102,15 @@ function bmnIsMissingColumnError(err){const m=String(err&&(err.message||err.deta
 function bmnDeriveTitle(caption,file,external){const c=String(caption||'').split('\n')[0].trim();if(c)return c.slice(0,80);const n=String(file&&file.name||'').replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').trim();if(n)return n.slice(0,80);try{const u=new URL(external);const last=decodeURIComponent(u.pathname.split('/').filter(Boolean).pop()||'').replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').trim();if(last)return last.slice(0,80)}catch(_){}return 'Untitled'}
 /* Tries the documented schema first (title + caption + content + video_url), then falls back ONLY on missing-column errors.
    RLS / NOT NULL / auth errors are never retried, so they surface honestly. */
-async function bmnInsertPost(client,uid,title,caption,mediaUrl){
-  const attempts=[
+async function bmnInsertPost(client,uid,title,caption,mediaUrl,thumbnailUrl=null){
+  const withThumb=thumbnailUrl?[
+    {user_id:uid,title,caption,content:caption,video_url:mediaUrl,thumbnail_url:thumbnailUrl},
+    {user_id:uid,title,caption,video_url:mediaUrl,thumbnail_url:thumbnailUrl},
+    {user_id:uid,title,content:caption,video_url:mediaUrl,thumbnail_url:thumbnailUrl},
+    {user_id:uid,title,video_url:mediaUrl,thumbnail_url:thumbnailUrl},
+    {user_id:uid,content:caption,media_url:mediaUrl,thumbnail_url:thumbnailUrl}
+  ]:[];
+  const attempts=[...withThumb,
     {user_id:uid,title,caption,content:caption,video_url:mediaUrl},
     {user_id:uid,title,caption,video_url:mediaUrl},
     {user_id:uid,title,content:caption,video_url:mediaUrl},
@@ -2277,7 +2272,18 @@ async function loadCommunityPosts(){if(!bmnSupabase){setBackendStatus('Connectin
 // Resolve private-bucket URLs for posts and avatars without making the bucket public.
 await Promise.all(cachedPosts.map(async p=>{p.media_type=bmnMediaKind({media_url:p.media_url,media_type:p.media_type});try{p.media_display_url=await resolveStorageUrl(p.media_url)}catch(error){p.media_display_url='';p.media_resolution_error=error?.message||'Media URL could not be resolved'};try{const thumb=p.thumbnail_url||p.thumbnail||p.poster_url||'';p.thumbnail_display_url=thumb?await resolveStorageUrl(thumb):''}catch(_){p.thumbnail_display_url=''}}));await Promise.all(Object.values(bmnProfiles).map(async p=>{try{p.avatar_display_url=await resolveStorageUrl(p.avatar_url)}catch(_){p.avatar_display_url=''}}));
 const likesRes=await bmnWithTimeout(bmnSupabase.from('likes').select('post_id,user_id').limit(5000));cachedLikes={};cachedMyLikes=new Set();if(!likesRes.error)(likesRes.data||[]).forEach(l=>{cachedLikes[l.post_id]=(cachedLikes[l.post_id]||0)+1;if(bmnSession?.user?.id===l.user_id)cachedMyLikes.add(l.post_id)});window.cachedLikes=cachedLikes;window.cachedMyLikes=cachedMyLikes;let commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,content,created_at').order('created_at',{ascending:true}).limit(1000));if(commentsRes.error){commentsRes=await bmnWithTimeout(bmnSupabase.from('comments').select('post_id,id,user_id,body,created_at').order('created_at',{ascending:true}).limit(1000));if(!commentsRes.error)commentsRes.data=(commentsRes.data||[]).map(c=>({...c,content:c.body||''}));}cachedComments={};if(!commentsRes.error)(commentsRes.data||[]).forEach(c=>(cachedComments[c.post_id]||(cachedComments[c.post_id]=[])).push(c));window.cachedComments=cachedComments;if(communityFeed){renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);trackCommunityPostViews();bmnScrollToSharedPost()}if(bmnSession?.user?.id){fillProfileEditor(bmnProfiles[bmnSession.user.id]||{});updateAvatarEditor(bmnProfiles[bmnSession.user.id]||{});const select=$('#bmnMessageRecipient');if(select){const current=select.value;select.innerHTML='<option value="">Choose a creator</option>'+Object.values(bmnProfiles).filter(p=>p.id!==bmnSession.user.id).map(p=>'<option value="'+escapeHTML(p.id)+'">'+escapeHTML(p.display_name||p.username||'Creator')+' (@'+escapeHTML(p.username||'creator')+')</option>').join('');select.value=current}await loadSocialHub()}else{updateAvatarEditor({});loadSocialHub()}setBackendStatus(cachedPosts.length?'Community loaded · '+cachedPosts.length+' posts':'Community is ready. Be the first to post.');if(typeof window.bmnSyncLGTTRealData==='function')window.bmnSyncLGTTRealData();}catch(error){if(communityFeed)communityFeed.innerHTML='<div class="backend-empty">Could not load posts: '+escapeHTML(error.message||'Please reload and try again.')+'</div>';setBackendStatus('Could not load Community: '+(error.message||'check Supabase tables and permissions'),true)}}window.loadCommunityPosts=loadCommunityPosts;
-$('#bmnPublishPost')?.addEventListener('click',async()=>{const btn=$('#bmnPublishPost'),status=$('#bmnPostStatus'),caption=$('#bmnPostContent')?.value.trim()||'',file=$('#bmnPostFile')?.files?.[0]||null,external=$('#bmnPostMediaUrl')?.value.trim()||'';if(!bmnSupabase){setBackendStatus('Community is still connecting. Reload and try again.',true);return}if(!bmnSession){setBackendStatus('Sign in first to publish a post.',true);return}if(!file&&!external){setBackendStatus('Add a video (or an https media link) before posting. Every post needs media.',true);return}if(file&&file.size>bmnMaxUploadBytes(file,'posts')){setBackendStatus('This file is larger than '+bmnMaxUploadMB(file,'posts')+' MB. Choose a smaller file.',true);return}if(external&&!/^https:\/\//i.test(external)){setBackendStatus('Media links must begin with https://',true);return}btn.disabled=true;btn.textContent='Publishing…';if(status)status.textContent='Preparing your post…';try{let media_url=external||null;if(file){if(status)status.textContent='Uploading '+file.name+'…';media_url=await uploadCommunityFile(file,'posts',pct=>{if(status)status.textContent='Uploading '+file.name+'… '+pct+'%'})}if(status)status.textContent='Saving post…';const {error}=await bmnInsertPost(bmnSupabase,bmnSession.user.id,bmnDeriveTitle(caption,file,external),caption,media_url);if(error){if(media_url?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([media_url.slice(8)])}catch(_){}}throw error}$('#bmnPostContent').value='';if($('#bmnPostMediaUrl'))$('#bmnPostMediaUrl').value='';clearBmnMediaPreview();if(status)status.textContent='Posted successfully.';setBackendStatus('Your post is live in BMN Community.');await loadCommunityPosts();const feed=$('#communityFeed');if(feed)feed.scrollIntoView({behavior:'smooth',block:'start'});}catch(error){const message=bmnFriendlyPostError(error);if(status)status.textContent='Could not publish: '+message;setBackendStatus('Post failed: '+message,true)}finally{btn.disabled=false;btn.textContent='Post to Community ↗'}});
+async function bmnCreateVideoThumbnail(file){
+ if(!file||!String(file.type||'').startsWith('video/'))return null;
+ return new Promise(resolve=>{
+  let done=false,timer=0,url='';const video=document.createElement('video');video.muted=true;video.playsInline=true;video.preload='auto';video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+  const finish=blob=>{if(done)return;done=true;clearTimeout(timer);video.pause();video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);if(!blob){resolve(null);return}try{resolve(new File([blob],String(file.name||'video').replace(/\.[^.]+$/,'')+'-preview.jpg',{type:'image/jpeg',lastModified:Date.now()}))}catch(_){resolve(null)}};
+  const draw=()=>{try{if(!video.videoWidth||!video.videoHeight)return finish(null);const scale=Math.min(1,720/video.videoWidth);const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));const ctx=canvas.getContext('2d');if(!ctx)return finish(null);ctx.drawImage(video,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>finish(blob),'image/jpeg',.84)}catch(_){finish(null)}};
+  video.addEventListener('loadedmetadata',()=>{try{if(Number.isFinite(video.duration)&&video.duration>0)video.currentTime=Math.min(.25,video.duration*.1);else draw()}catch(_){draw()}},{once:true});
+  video.addEventListener('seeked',draw,{once:true});video.addEventListener('error',()=>finish(null),{once:true});
+  timer=setTimeout(()=>finish(null),5000);try{url=URL.createObjectURL(file);video.src=url;video.load()}catch(_){finish(null)}
+ });
+}
+$('#bmnPublishPost')?.addEventListener('click',async()=>{const btn=$('#bmnPublishPost'),status=$('#bmnPostStatus'),caption=$('#bmnPostContent')?.value.trim()||'',file=$('#bmnPostFile')?.files?.[0]||null,external=$('#bmnPostMediaUrl')?.value.trim()||'';if(!bmnSupabase){setBackendStatus('Community is still connecting. Reload and try again.',true);return}if(!bmnSession){setBackendStatus('Sign in first to publish a post.',true);return}if(!file&&!external){setBackendStatus('Add a video (or an https media link) before posting. Every post needs media.',true);return}if(file&&file.size>bmnMaxUploadBytes(file,'posts')){setBackendStatus('This file is larger than '+bmnMaxUploadMB(file,'posts')+' MB. Choose a smaller file.',true);return}if(external&&!/^https:\/\//i.test(external)){setBackendStatus('Media links must begin with https://',true);return}btn.disabled=true;btn.textContent='Publishing…';if(status)status.textContent='Preparing your post…';let media_url=external||null,thumbnail_url=null;try{if(file){if(String(file.type||'').startsWith('video/')){if(status)status.textContent='Preparing video preview…';const previewFile=await bmnCreateVideoThumbnail(file);if(previewFile){try{thumbnail_url=await uploadCommunityFile(previewFile,'thumbnails')}catch(previewError){console.warn('[BMN preview] Thumbnail upload unavailable; the profile grid will use the video frame.',previewError?.message||previewError)}}}if(status)status.textContent='Uploading '+file.name+'…';media_url=await uploadCommunityFile(file,'posts',pct=>{if(status)status.textContent='Uploading '+file.name+'… '+pct+'%'})}if(status)status.textContent='Saving post…';const {error}=await bmnInsertPost(bmnSupabase,bmnSession.user.id,bmnDeriveTitle(caption,file,external),caption,media_url,thumbnail_url);if(error){for(const u of [media_url,thumbnail_url])if(u?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([u.slice(8)])}catch(_){}}throw error}$('#bmnPostContent').value='';if($('#bmnPostMediaUrl'))$('#bmnPostMediaUrl').value='';clearBmnMediaPreview();if(status)status.textContent='Posted successfully.';setBackendStatus('Your post is live in BMN Community.');await loadCommunityPosts();const feed=$('#communityFeed');if(feed)feed.scrollIntoView({behavior:'smooth',block:'start'});}catch(error){if(thumbnail_url?.startsWith('storage:')){try{await bmnSupabase.storage.from('community-media').remove([thumbnail_url.slice(8)])}catch(_){}}const message=bmnFriendlyPostError(error);if(status)status.textContent='Could not publish: '+message;setBackendStatus('Post failed: '+message,true)}finally{btn.disabled=false;btn.textContent='Post to Community ↗'}});
 $('#bmnAvatarInput')?.addEventListener('change',async event=>{const file=event.target.files?.[0];if(!file)return;if(!bmnSession){setBackendStatus('Sign in to add a profile picture.',true);return}if(!file.type.startsWith('image/')){setBackendStatus('Choose an image for your profile picture.',true);return}if(file.size>5*1024*1024){setBackendStatus('Profile pictures must be 5 MB or smaller.',true);return}const input=event.target;try{setBackendStatus('Uploading profile picture…');const avatar_url=await uploadCommunityFile(file,'avatars');const {error}=await bmnSupabase.from('profiles').update({avatar_url,updated_at:new Date().toISOString()}).eq('id',bmnSession.user.id);if(error)throw error;if(!bmnProfiles[bmnSession.user.id])bmnProfiles[bmnSession.user.id]={id:bmnSession.user.id};bmnProfiles[bmnSession.user.id].avatar_url=avatar_url;try{bmnProfiles[bmnSession.user.id].avatar_display_url=await resolveStorageUrl(avatar_url)}catch(_){}updateAvatarEditor(bmnProfiles[bmnSession.user.id]);setBackendStatus('Profile picture saved.');}catch(error){setBackendStatus('Profile picture could not be saved: '+(error.message||'check Storage permissions and avatar_url column'),true)}finally{input.value=''}});
 async function openBMNPublicProfile(userId){const modal=$('#bmnPublicProfileModal'),content=$('#bmnPublicProfileContent');if(!modal||!content)return;modal.classList.add('open');content.innerHTML='<div class="backend-empty">Loading creator profile…</div>';try{let profile=bmnProfiles[userId];if(!profile){const {data,error}=await bmnSupabase.from('profiles').select('*').eq('id',userId).maybeSingle();if(error)throw error;profile=data||{id:userId};bmnProfiles[userId]=profile}try{profile.avatar_display_url=await resolveStorageUrl(profile.avatar_url)}catch(_){}const posts=cachedPosts.filter(p=>p.user_id===userId);let totalViews=0;posts.forEach(p=>{totalViews+=Number(p.views||0)});const isMine=bmnSession?.user?.id===userId;let followersLabel='—';try{const fr=await bmnSupabase.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',userId);if(!fr.error)followersLabel=Number(fr.count||0).toLocaleString()}catch(_){}const avatar=bmnAvatarMarkup(profile,true);const isFollowing=bmnFollowing.has(userId);content.innerHTML='<div class="bmn-profile-top">'+avatar+'<div style="min-width:0"><h2 style="margin:0 0 4px;overflow-wrap:anywhere">'+escapeHTML(profile.display_name||profile.username||'BMN creator')+'</h2><p style="margin:0;opacity:.72">@'+escapeHTML(profile.username||'creator')+'</p>'+(profile.website_url?'<a href="'+escapeHTML(profile.website_url)+'" target="_blank" rel="noopener noreferrer" style="color:inherit;display:inline-block;margin-top:7px">Website ↗</a>':'')+'</div></div><p style="margin:15px 0;line-height:1.5">'+escapeHTML(profile.bio||'No bio added yet.')+'</p><div class="bmn-profile-stats"><div class="bmn-profile-stat"><strong>'+posts.length+'</strong><small>Posts</small></div><div class="bmn-profile-stat"><strong>'+totalViews.toLocaleString()+'</strong><small>Views*</small></div><div class="bmn-profile-stat"><strong>'+followersLabel+'</strong><small>Followers</small></div></div><div class="backend-row" style="justify-content:space-between"><strong>Posts</strong>'+(isMine?'<button class="backend-btn" id="bmnProfileEditShortcut" type="button">Edit profile</button>':'<div style="display:flex;gap:7px;flex-wrap:wrap"><button class="backend-btn primary" id="bmnProfileFollowToggle" type="button" aria-pressed="'+(isFollowing?'true':'false')+'">'+(isFollowing?'Following ✓':'Follow +')+'</button><button class="backend-btn" id="bmnProfileMessageShortcut" type="button">Message</button>'+(window.BMN_TIPS_ENABLED===true&&window.BMN_API_BASE_URL?'<button class="backend-btn" id="bmnProfileTipShortcut" type="button">Tip creator</button>':'')+'</div>')+'</div><div class="bmn-profile-posts">'+(posts.length?posts.map(p=>{const media=p.media_display_url?(p.media_type==='video'?'<video src="'+escapeHTML(p.media_display_url)+'#t=0.1" muted playsinline preload="metadata"></video>':'<img src="'+escapeHTML(p.media_display_url)+'" alt="" loading="lazy">'):'<span>'+escapeHTML((p.content||'Text post').slice(0,100))+'</span>';return '<button class="bmn-profile-post-tile" type="button" data-open-post="'+escapeHTML(p.id)+'">'+media+'<span>'+(p.views?Number(p.views).toLocaleString()+' views · ':'')+escapeHTML((p.content||'').slice(0,70))+'</span></button>'}).join(''):'<div class="bmn-profile-empty">No posts yet.</div>')+'</div><p class="composer-hint" style="margin-top:12px">Views count when a post is viewed. Follower totals are shown when the follows table is available.</p>';content.querySelector('#bmnProfileEditShortcut')?.addEventListener('click',()=>{modal.classList.remove('open');$('#bmnProfileEditor')?.scrollIntoView({behavior:'smooth',block:'center'})});content.querySelector('#bmnProfileFollowToggle')?.addEventListener('click',async(event)=>{const button=event.currentTarget;if(!bmnSession){setBackendStatus('Sign in to follow creators.',true);return}if(!bmnSupabase||userId===bmnSession.user.id)return;button.disabled=true;try{if(bmnFollowing.has(userId)){const {error}=await bmnSupabase.from('follows').delete().eq('follower_id',bmnSession.user.id).eq('following_id',userId);if(error)throw error;bmnFollowing.delete(userId);button.textContent='Follow +';button.setAttribute('aria-pressed','false');setBackendStatus('You unfollowed this creator.')}else{const {error}=await bmnSupabase.from('follows').insert({follower_id:bmnSession.user.id,following_id:userId});if(error)throw error;bmnFollowing.add(userId);button.textContent='Following ✓';button.setAttribute('aria-pressed','true');try{await bmnSupabase.from('notifications').insert({user_id:userId,actor_id:bmnSession.user.id,type:'follow',message:'started following you'})}catch(_){}setBackendStatus('You are now following this creator.')}const stat=content.querySelector('.bmn-profile-stats .bmn-profile-stat:last-child strong');if(stat){const current=Number((stat.textContent||'').replace(/,/g,''))||0;stat.textContent=Math.max(0,current+(bmnFollowing.has(userId)?1:-1)).toLocaleString()}await loadCommunityPosts()}catch(error){setBackendStatus(error.message||'Follow action failed. Check the follows table and its permissions.',true)}finally{button.disabled=false}});content.querySelector('#bmnProfileMessageShortcut')?.addEventListener('click',()=>{modal.classList.remove('open');if(window.bmnOpenConversation){window.bmnOpenConversation(userId);return}const select=$('#bmnMessageRecipient');if(select)select.value=userId;$('#bmnMessageContent')?.focus();$('#bmnSocialHub')?.scrollIntoView({behavior:'smooth',block:'start'})});content.querySelector('#bmnProfileTipShortcut')?.addEventListener('click',async()=>{if(!bmnSession){setBackendStatus('Sign in before tipping a creator.',true);return}const amount=Number(prompt('Tip amount in USD (minimum $1, maximum $500):','5'));if(!Number.isFinite(amount)||amount<1||amount>500){setBackendStatus('Enter an amount between $1 and $500 USD.',true);return}const button=content.querySelector('#bmnProfileTipShortcut');if(button)button.disabled=true;try{const {data:sessionData}=await bmnSupabase.auth.getSession();const token=sessionData?.session?.access_token||bmnSession.access_token;const apiBase=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');const response=await fetch(apiBase+'/api/monetization/send-tip',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({creator_user_id:userId,tip_amount_usd:amount})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.checkout_gateway_url)throw new Error(result.error||'Checkout could not be started.');location.assign(result.checkout_gateway_url)}catch(error){setBackendStatus(error.message||'Could not start creator tip checkout.',true);if(button)button.disabled=false}});content.querySelectorAll('[data-open-post]').forEach(tile=>tile.addEventListener('click',()=>{modal.classList.remove('open');const post=$('[data-post-id="'+CSS.escape(tile.dataset.openPost)+'"]');post?.scrollIntoView({behavior:'smooth',block:'center'})}));}catch(error){content.innerHTML='<div class="backend-empty">Could not open this profile: '+escapeHTML(error.message||'Try again.')+'</div>'}}
 
@@ -6189,9 +6195,6 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     <!-- Ambient colour bleed from the current video, blurred behind the stage -->
     <div class="lgtt-ambient" aria-hidden="true"><i></i><i></i><i></i></div>
 
-    <!-- Desktop-only close affordance outside the stage -->
-    <button class="lgtt-outer-close lgtt-btn lgtt-round bmn-switch-personal" type="button" data-act="bmn-home" aria-label="Switch to BMN page" title="BMN page"><span aria-hidden="true">B</span></button>
-
     <!-- The stage: phone-width column (widens for the Profile + BMN layout on desktop) -->
     <div class="lgtt-stage" id="lgttStage" data-view="feed">
 
@@ -6965,6 +6968,9 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       return fromKey;
     }
     function paint(s, t, dur) {
+      // Slides can be replaced while the clock is active (for example when the real feed is empty).
+      // Ignore a stale/incomplete slide instead of throwing from the animation frame loop.
+      if (!s || !s._fill || !s._thumb || !s._tc || !s._time || !s._prog) return;
       const p = clamp(t / dur, 0, 1);
       s._fill.style.transform = 'scaleX(' + p.toFixed(4) + ')'; s._thumb.style.left = (p * 100).toFixed(2) + '%';
       const sec = Math.floor(t);
@@ -7091,7 +7097,11 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       $$('#lgttTabs button', R.root).forEach(b => { const on = b.dataset.tab === mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
       moveInd(R.Tabs);
       if (!posts.length) {
-        const e = el('article', 'lgtt-slide is-empty', '<div class="lgtt-media"><div class="lgtt-scene k-aurora" style="--sa:#10142e;--sb:#2a2f66;--sc:#58aaff"><i class="bl b1"></i><i class="bl b2"></i><i class="bl b3"></i></div></div><div class="lgtt-empty" style="position:absolute;inset:0;z-index:3">' + ico('users') + '<b>Nothing here yet</b><span>Follow creators from For You to build your Following feed.</span><button type="button" class="lgtt-btn lgtt-pill lgtt-primary" data-act="tab" data-tab="fyp">Browse For You</button></div>');
+        const followingEmpty = mode === 'following';
+        const emptyTitle = followingEmpty ? 'Nothing here yet' : 'No videos yet';
+        const emptyText = followingEmpty ? 'Follow creators from For You to build your Following feed.' : 'Published videos from BMN Community will appear here when creators share them.';
+        const emptyAction = followingEmpty ? '<button type="button" class="lgtt-btn lgtt-pill lgtt-primary" data-act="tab" data-tab="fyp">Browse For You</button>' : '';
+        const e = el('article', 'lgtt-slide is-empty', '<div class="lgtt-media"><div class="lgtt-scene k-aurora" style="--sa:#10142e;--sb:#2a2f66;--sc:#58aaff"><i class="bl b1"></i><i class="bl b2"></i><i class="bl b3"></i></div></div><div class="lgtt-empty" style="position:absolute;inset:0;z-index:3">' + ico(followingEmpty ? 'users' : 'play') + '<b>' + emptyTitle + '</b><span>' + emptyText + '</span>' + emptyAction + '</div>');
         e._post = null; slides = [e]; R.Track.appendChild(e); n = 1; idx = 0; pos = 0; layout(); activate(0, true); return;
       }
       posts.forEach(p => { const s = slideEl(p); slides.push(s); R.Track.appendChild(s); });
@@ -8195,7 +8205,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
    const posts=Array.isArray(window.cachedPosts)?window.cachedPosts:[];
    const profiles=window.bmnProfiles&&typeof window.bmnProfiles==='object'?window.bmnProfiles:{};
    if(!app||typeof app.setPosts!=='function')return;
-   const usable=posts.filter(p=>p&&p.id&&(p.media_display_url||p.media_url||p.video_url)&&(!p.status||String(p.status).toLowerCase()==='published'));
+   const usable=posts.filter(p=>p&&p.id&&/^(https?:\/\/|blob:|data:)/i.test(String(p.media_display_url||''))&&(!p.status||String(p.status).toLowerCase()==='published'));
    const ids=[...new Set(usable.map(p=>String(p.user_id||'')).filter(Boolean))];
    ids.forEach((id,index)=>{
      const p=profiles[id]||{};
@@ -8203,15 +8213,16 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
    });
    const mapped=usable.map(p=>{
      const author=profiles[p.user_id]||{};
-     const raw=p.media_display_url||p.media_url||p.video_url||'';
+     const raw=/^(https?:\/\/|blob:|data:)/i.test(String(p.media_display_url||''))?String(p.media_display_url):'';
      const mediaType=String(p.media_type||p.type||'').toLowerCase();
-     const video=!mediaType.includes('image')&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(raw);
+     const isImage=mediaType.includes('image')||/\.(png|jpe?g|webp|gif|avif)(?:[?#]|$)/i.test(raw);
+     const video=!!raw&&!isImage&&!mediaType.startsWith('audio');
      const cap=String(p.caption||p.content||p.title||'');
      const id=String(p.id);
      const likes=Object.prototype.hasOwnProperty.call(window.cachedLikes||{},p.id)?Number(window.cachedLikes[p.id]):null;
      const comments=Array.isArray((window.cachedComments||{})[p.id])?(window.cachedComments[p.id].length):null;
      const currentId=String(window.bmnSession?.user?.id||'');
-     return {id,u:(currentId&&String(p.user_id||'')===currentId)?'bmn':String(p.user_id||''),cap,music:'',dur:null,likes,comments,saves:null,shares:null,src:video?raw:'',poster:p.thumbnail_url||p.poster_url||'',scene:{k:'aurora',a:'#111827',b:'#24324a',c:'#5a8dd8',g:'',kin:[]},created_at:p.created_at,realMediaType:mediaType,authorName:author.display_name||author.username||'BMN Community member'};
+     return {id,u:(currentId&&String(p.user_id||'')===currentId)?'bmn':String(p.user_id||''),cap,music:'',dur:null,likes,comments,saves:null,shares:null,src:video?raw:'',poster:/^(https?:\/\/|blob:|data:)/i.test(String(p.thumbnail_display_url||''))?String(p.thumbnail_display_url):'',scene:{k:'aurora',a:'#111827',b:'#24324a',c:'#5a8dd8',g:'',kin:[]},created_at:p.created_at,realMediaType:mediaType,authorName:author.display_name||author.username||'BMN Community member'};
    }).filter(p=>p.src);
    const sig=JSON.stringify(mapped.map(p=>[p.id,p.src,p.likes,p.comments,p.saves,p.shares,p.cap]));
    if(sig!==lastSignature){lastSignature=sig;app.setPosts(mapped);}
@@ -8422,13 +8433,18 @@ function enterCommunity(){
 function enterPersonal(){
  communityActive=false;personalActive=true;root.classList.remove('bmn-community-app','bmn-starting');document.body.classList.remove('community-mode','bmn-friends-mode');
  const overlay=$('#lgtt');if(overlay){safe(()=>window.LGTT?.close());overlay.classList.remove('is-open');overlay.hidden=true;overlay.style.setProperty('display','none','important');overlay.setAttribute('aria-hidden','true')}
- showPersonal();
- let b=$('#bmnReturnCommunityV17');if(!b){const top=$('.topbar'),actions=top&&($('.top-actions',top)||top);if(actions){b=document.createElement('button');b.id='bmnReturnCommunityV17';b.type='button';b.className='icon-btn';b.textContent='◉';b.title='Open BMN Community';b.setAttribute('aria-label','Open BMN Community');actions.insertBefore(b,actions.firstChild);b.addEventListener('click',enterCommunity)}}
+ const restorePersonal=()=>{if(!personalActive)return;root.classList.remove('bmn-community-app','bmn-starting');document.body.classList.remove('community-mode','bmn-friends-mode');showPersonal();const top=$('.topbar');if(top){top.style.setProperty('display','flex','important');top.style.setProperty('visibility','visible','important');top.style.setProperty('opacity','1','important');top.removeAttribute('aria-hidden')}const main=$('main.wrap');if(main){main.style.setProperty('display','block','important');main.style.setProperty('visibility','visible','important');main.style.setProperty('opacity','1','important');main.removeAttribute('aria-hidden')}};
+ restorePersonal();
+ // Legacy routing code can finish a delayed close transition. Reassert BMN mode after it settles,
+ // but cancel the delayed correction if the user has already chosen Community again.
+ requestAnimationFrame(restorePersonal);setTimeout(restorePersonal,500);
+ // The existing header's Community switch is the single route back into the immersive feed.
+ $('#bmnReturnCommunityV17')?.remove();
  safe(()=>history.replaceState({bmnPersonal:true},'','#home'));
 }
 function bindRouting(){document.addEventListener('click',e=>{
  const b=e.target.closest('#lgtt [data-act="bmn-home"]');if(b){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterPersonal();return}
- const c=e.target.closest('#bmnReturnCommunityV17,[data-view="community"],a[href="#community"],a[href="#community-page"],#communityNav,#bmnCommunityButton');if(c&&!c.closest('#lgtt')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterCommunity()}
+ const c=e.target.closest('[data-view="community"],a[href="#community"],a[href="#community-page"],#communityNav,#bmnCommunityButton');if(c&&!c.closest('#lgtt')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterCommunity()}
 },true)}
 
 /* ---------- Real profile previews ---------- */
@@ -8436,17 +8452,40 @@ function patchProfileTiles(){
  const grid=$('#lgttProfGrid');if(!grid)return;
  const posts=Array.isArray(window.cachedPosts)?window.cachedPosts:[];
  $$('.lgtt-tile[data-id]',grid).forEach(tile=>{
-  const id=String(tile.dataset.id||'').replace(/~.*$/,'');const p=posts.find(x=>String(x.id)===id);if(!p)return;
-  const src=p.media_display_url||p.media_url||p.video_url||'';if(!src)return;
-  const poster=p.thumbnail_display_url||p.thumbnail_url||p.thumbnail||p.poster_url||'';
-  tile.querySelectorAll('.bmn-profile-media-preview,.bmn-profile-view-count').forEach(n=>n.remove());
+  const id=String(tile.dataset.id||'').replace(/~.*$/,'');
+  const p=posts.find(x=>String(x.id)===id);if(!p)return;
+  // Only use resolved URLs; raw private Storage paths are not playable browser URLs.
+  const candidate=p.media_display_url||'';
+  const src=/^(https?:\/\/|blob:|data:)/i.test(String(candidate))?String(candidate):'';
+  if(!src)return;
+  const posterCandidate=p.thumbnail_display_url||p.thumbnail_url||p.thumbnail||p.poster_url||'';
+  const poster=/^(https?:\/\/|blob:|data:)/i.test(String(posterCandidate))?String(posterCandidate):'';
   const isImage=String(p.media_type||'').toLowerCase()==='image'||/\.(png|jpe?g|webp|gif|avif)(?:[?#]|$)/i.test(src);
-  let media;
-  if(isImage){media=document.createElement('img');media.src=src;media.alt='';media.loading='lazy';media.decoding='async'}
-  else{media=document.createElement('video');media.src=src;media.poster=poster;media.muted=true;media.playsInline=true;media.preload='metadata';media.setAttribute('playsinline','');media.setAttribute('webkit-playsinline','');media.addEventListener('loadedmetadata',()=>{try{if(!poster&&media.videoWidth)media.currentTime=.08}catch(_){}} ,{once:true})}
-  media.className='bmn-profile-media-preview';media.setAttribute('aria-hidden','true');tile.prepend(media);
-  if(Number.isFinite(Number(p.views))){const badge=document.createElement('span');badge.className='bmn-profile-view-count';badge.textContent='▶ '+Number(p.views).toLocaleString();tile.appendChild(badge)}
-  const cap=tile.querySelector('.cap .t');if(cap){const caption=String(p.caption||p.content||p.title||'').replace(/\s+/g,' ').trim();cap.textContent=(Number.isFinite(Number(p.views))?Number(p.views).toLocaleString()+' views · ':'')+caption.slice(0,70)}
+  let media=tile.querySelector('.bmn-profile-media-preview');
+  const desiredTag=isImage?'IMG':'VIDEO';
+  const currentSrc=media?(media.getAttribute('src')||media.src||''):'';
+  const same=media&&media.tagName===desiredTag&&currentSrc===src&&(!media.isConnected?false:true);
+  if(!same){
+   media?.remove();
+   media=document.createElement(isImage?'img':'video');
+   media.className='bmn-profile-media-preview';media.setAttribute('aria-hidden','true');
+   if(isImage){media.alt='';media.loading='lazy';media.decoding='async';media.src=src;}
+   else{
+    media.muted=true;media.playsInline=true;media.preload='metadata';media.setAttribute('playsinline','');media.setAttribute('webkit-playsinline','');
+    if(poster)media.poster=poster;
+    media.addEventListener('loadeddata',()=>{if(!poster){try{if(media.currentTime===0&&media.duration>0)media.currentTime=Math.min(.1,media.duration/2)}catch(_){}}},{once:true});
+    media.src=src;
+   }
+   tile.prepend(media);
+  }else if(!isImage&&poster&&media.poster!==poster){media.poster=poster;}
+  let badge=tile.querySelector('.bmn-profile-view-count');
+  const hasViews=p.views!==null&&p.views!==undefined&&p.views!==''&&Number.isFinite(Number(p.views));
+  if(hasViews){
+   if(!badge){badge=document.createElement('span');badge.className='bmn-profile-view-count';tile.appendChild(badge)}
+   const label='▶ '+Number(p.views).toLocaleString();if(badge.textContent!==label)badge.textContent=label;
+  }else if(badge)badge.remove();
+  const cap=tile.querySelector('.cap .t');
+  if(cap){const caption=String(p.caption||p.content||p.title||'').replace(/\s+/g,' ').trim();const label=(hasViews?Number(p.views).toLocaleString()+' views · ':'')+caption.slice(0,70);if(cap.textContent!==label)cap.textContent=label;}
  });
 }
 
@@ -8463,16 +8502,17 @@ document.addEventListener('pointerdown',()=>{if(root.classList.contains('bmn-com
 /* ---------- Chat wallpaper: upload + presets, per conversation ---------- */
 function installWallpaper(){
  const chat=$('#lgttChat'),header=chat?.querySelector('.lgtt-chat-h'),msgs=$('#lgttMsgs');if(!chat||!header||!msgs)return;
- if($('#bmnWallpaperButtonV17'))return;
- const input=document.createElement('input');input.type='file';input.accept='image/*';input.id='bmnWallpaperInputV17';input.hidden=true;header.appendChild(input);
- const button=document.createElement('button');button.id='bmnWallpaperButtonV17';button.type='button';button.className='lgtt-btn lgtt-round lgtt-sm';button.textContent='▧';button.title='Message background';button.setAttribute('aria-label','Choose message background');header.appendChild(button);
- const preset=document.createElement('button');preset.type='button';preset.className='lgtt-btn lgtt-round lgtt-sm';preset.textContent='✦';preset.title='Message background presets';preset.setAttribute('aria-label','Message background presets');header.appendChild(preset);
  const key=()=>{const n=($('#lgttChatName')?.textContent||'conversation').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-').slice(0,64)||'conversation';return 'bmn-chat-wallpaper-v17:'+n};
- const apply=data=>{if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const bg=String(data).startsWith('gradient:')?String(data).slice(9):String(data);msgs.style.backgroundImage=bg.startsWith('linear-gradient')||bg.startsWith('radial-gradient')?bg:'linear-gradient(rgba(5,7,14,.20),rgba(5,7,14,.20)),url("'+bg.replace(/"/g,'\\"')+'")';msgs.classList.add('bmn-custom-wallpaper')};
- const restore=()=>safe(()=>apply(localStorage.getItem(key())||''));restore();
+ const apply=data=>{if(!data){msgs.style.backgroundImage='';msgs.classList.remove('bmn-custom-wallpaper');return}const value=String(data);msgs.style.backgroundImage=value.startsWith('gradient:')?value.slice(9):(value.startsWith('linear-gradient')||value.startsWith('radial-gradient')?value:'linear-gradient(rgba(5,7,14,.20),rgba(5,7,14,.20)),url("'+value.replace(/"/g,'\\"')+'")');msgs.classList.add('bmn-custom-wallpaper')};
+ let input=$('#bmnWallpaperInputV17'),button=$('#bmnWallpaperButtonV17'),preset=header.querySelector('[data-bmn-wallpaper-preset-v18]');
+ if(button){const nextKey=key();if(button.dataset.bmnWallpaperKey!==nextKey){button.dataset.bmnWallpaperKey=nextKey;safe(()=>apply(localStorage.getItem(nextKey)||''))}return;}
+ input=document.createElement('input');input.type='file';input.accept='image/*';input.id='bmnWallpaperInputV17';input.hidden=true;header.appendChild(input);
+ button=document.createElement('button');button.id='bmnWallpaperButtonV17';button.type='button';button.className='lgtt-btn lgtt-round lgtt-sm';button.textContent='▧';button.title='Message background';button.setAttribute('aria-label','Choose message background');header.appendChild(button);
+ preset=document.createElement('button');preset.type='button';preset.dataset.bmnWallpaperPresetV18='1';preset.className='lgtt-btn lgtt-round lgtt-sm';preset.textContent='✦';preset.title='Message background presets';preset.setAttribute('aria-label','Message background presets');header.appendChild(preset);
  button.addEventListener('click',()=>input.click());
- input.addEventListener('change',()=>{const f=input.files?.[0];if(!f||!f.type.startsWith('image/'))return;if(f.size>1500000){alert('Choose a message background image under 1.5 MB.');return}const r=new FileReader();r.onload=()=>{const d=String(r.result||'');safe(()=>localStorage.setItem(key(),d));apply(d)};r.readAsDataURL(f)});
- preset.addEventListener('click',()=>{const choices=['linear-gradient(135deg,rgba(38,58,100,.95),rgba(117,72,150,.88))','linear-gradient(135deg,rgba(8,50,70,.96),rgba(38,115,125,.88))','linear-gradient(135deg,rgba(35,26,56,.96),rgba(112,50,89,.88))'];const cur=localStorage.getItem(key())||'';const idx=Math.max(0,choices.indexOf(cur));const next=choices[(idx+1)%choices.length];safe(()=>localStorage.setItem(key(),'gradient:'+next));apply('gradient:'+next)});
+ input.addEventListener('change',()=>{const f=input.files?.[0];if(!f||!f.type.startsWith('image/'))return;if(f.size>1500000){alert('Choose a message background image under 1.5 MB.');return}const r=new FileReader();r.onload=()=>{const d=String(r.result||'');safe(()=>localStorage.setItem(key(),d));apply(d);button.dataset.bmnWallpaperKey=key()};r.readAsDataURL(f)});
+ preset.addEventListener('click',()=>{const choices=['linear-gradient(135deg,rgba(38,58,100,.95),rgba(117,72,150,.88))','linear-gradient(135deg,rgba(8,50,70,.96),rgba(38,115,125,.88))','linear-gradient(135deg,rgba(35,26,56,.96),rgba(112,50,89,.88))'];const cur=localStorage.getItem(key())||'';const idx=Math.max(0,choices.indexOf(cur.startsWith('gradient:')?cur.slice(9):cur));const next='gradient:'+choices[(idx+1)%choices.length];safe(()=>localStorage.setItem(key(),next));apply(next);button.dataset.bmnWallpaperKey=key()});
+ button.dataset.bmnWallpaperKey=key();safe(()=>apply(localStorage.getItem(key())||''));
 }
 
 /* ---------- Create bridge: use existing Supabase upload pipeline ---------- */
@@ -8485,7 +8525,7 @@ function installCreateBridge(){
 }
 
 /* ---------- Friends: keep existing real-data implementation, relabel Discover as Friends ---------- */
-function relabelFriends(){const d=$('#lgttDock [data-dock="discover"]');if(d){d.querySelector('span')&&(d.querySelector('span').textContent='Friends');const use=d.querySelector('use');if(use)use.setAttribute('href','#lgi-users')}const title=$('#lgttDiscScroll .lgtt-page-h h2');if(title)title.textContent='Friends'}
+function relabelFriends(){const d=$('#lgttDock [data-dock="discover"]');if(d){const label=d.querySelector('span');if(label&&label.textContent!=='Friends')label.textContent='Friends';const use=d.querySelector('use');if(use&&use.getAttribute('href')!=='#lgi-users')use.setAttribute('href','#lgi-users')}const title=$('#lgttDiscScroll .lgtt-page-h h2');if(title&&title.textContent!=='Friends')title.textContent='Friends'}
 let friendsViewBound=false, friendsTab='posts';
 function renderFriendsV17(){
  const host=$('#lgttDiscScroll');if(!host)return;relabelFriends();
@@ -8527,22 +8567,40 @@ function finishCommunityStartup(){
    try{const overlay=$('#lgtt');if(overlay){overlay.hidden=false;overlay.style.removeProperty('display');overlay.style.setProperty('visibility','visible','important');overlay.classList.add('is-open');}}catch(_){}
  }
  try{const splash=$('#bmnSplash');if(splash){splash.classList.add('bmn-splash-exit');setTimeout(()=>splash.remove(),340)}}catch(_){}
- try{window.__BMN_RELEASE_STARTUP&&window.__BMN_RELEASE_STARTUP();}catch(_){}
 }
 function startAdaptiveSplash(){
- const splash=$('#bmnSplash');root.classList.add('bmn-starting');if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1'}
- const started=performance.now();let raf=0;
+ const splash=$('#bmnSplash');root.classList.add('bmn-starting');
+ if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1'}
+ const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ const cores=Number(navigator.hardwareConcurrency||4);
+ const memory=Number(navigator.deviceMemory||4);
+ // The animation gets a brief minimum to be visible, then waits for the actual app shell.
+ // Lower-capability devices get a little more visual time; slow startup is never cut off by this minimum.
+ const minVisible=reduced?120:((cores<=4||memory<=4)?1050:760);
+ const started=performance.now();let raf=0,done=false;
  const poll=()=>{
-   try{
-     if(appReady()){safe(()=>window.bmnSyncLGTTRealData?.());finishCommunityStartup();return}
-   }catch(_){}
-   // Readiness decides the normal handoff; the emergency guard is only a final escape hatch.
-   if(performance.now()-started>2100){finishCommunityStartup();return}
+   if(done)return;
+   let ready=false;try{ready=appReady()}catch(_){}
+   const elapsed=performance.now()-started;
+   if(ready&&elapsed>=minVisible){done=true;finishCommunityStartup();return}
    raf=requestAnimationFrame(poll);
  };
+ // If the core shell genuinely fails to initialize, release into a visible retry/error state rather than
+ // removing the splash before the document has parsed or creating a second startup controller.
+ const failSafe=setTimeout(()=>{
+   if(done)return;
+   let ready=false;try{ready=!!$('#lgtt')&&!!$('#lgttTrack')}catch(_){}
+   if(ready){done=true;finishCommunityStartup();}
+   else{
+    done=true;root.classList.remove('bmn-starting');
+    const tag=$('#bmnSplash .sp-tag');if(tag)tag.textContent='BMN COMMUNITY · RELOADING';
+    if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';}
+   }
+ },12000);
+ const finish=()=>{if(done)return;};
  if(document.fonts?.ready)document.fonts.ready.then(()=>{}).catch(()=>{});
  raf=requestAnimationFrame(poll);
- setTimeout(()=>cancelAnimationFrame(raf),2300);
+ window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);clearTimeout(failSafe)},{once:true});
 }
 
 function observe(){
@@ -8558,7 +8616,8 @@ function boot(){
  try{startAdaptiveSplash();}catch(_){try{root.classList.remove('bmn-starting');}catch(e){}}
  safe(()=>{const saved=safe(()=>localStorage.getItem('bmn-theme-mode'))||'system';applyAppearance(saved,false);watchSystem();bindRouting();observe();});
  safe(()=>document.addEventListener('click',()=>setTimeout(()=>{safe(observe);safe(installCreateBridge);},0),true));
- safe(()=>new MutationObserver(()=>{safe(observe);safe(installCreateBridge)}).observe(document.body,{childList:true,subtree:true}));
+ // Avoid a document-wide child-list observer here: appearance/label updates can mutate the same tree and loop.
+ // Feed, profile-grid, chat, delegated clicks, and the initial boot handle their own targeted refreshes.
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
