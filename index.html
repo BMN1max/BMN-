@@ -8830,6 +8830,19 @@ html.bmn-community-app #lgtt .lgtt-dock-lens{transition:transform .6s cubic-bezi
 .bmn-ri-chat .bmn-ri-note{position:absolute;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom,0px) + var(--bmn-kb,0px));z-index:4;text-align:center}
 </style>
 
+<style id="bmn-true-fullscreen-css">
+/* Kill every dvh/vh-based sizing inside Community: on iPhone those values stop ~47pt short of the real screen edge.
+   The overlay is pinned to the four screen edges and everything inside sizes in percentages. */
+html.bmn-community-app body.bmn-community-app #lgtt,html.bmn-community-app #lgtt{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;padding:0!important;margin:0!important}
+html.bmn-community-app body.bmn-community-app #lgtt .lgtt-stage{width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;border:0!important}
+html.bmn-community-app body.bmn-community-app #lgtt .lgtt-slide{height:100%!important;min-height:0!important}
+html.bmn-community-app body.bmn-community-app #lgtt .lgtt-feed,html.bmn-community-app body.bmn-community-app #lgtt .lgtt-track{height:100%!important;min-height:0!important}
+@media(min-width:900px) and (min-aspect-ratio:1/1){html.bmn-community-app body.bmn-community-app #lgtt .lgtt-stage{width:min(100vw,calc(100vh * .5625))!important}}
+/* Dock: low, just clear of the Home Indicator */
+html.bmn-community-app body #lgtt .lgtt-dock{bottom:max(8px,calc(env(safe-area-inset-bottom,0px) - 14px))!important}
+html.bmn-community-app,html.bmn-community-app body{background:#000!important}
+</style>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
