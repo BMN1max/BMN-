@@ -28,6 +28,7 @@ html.bmn-community-app body{overflow:hidden!important;background:#05070d!importa
 <meta name="description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
 <meta name="color-scheme" content="dark light">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 <link rel="preconnect" href="https://dyjqewjynbsvedqwkegk.supabase.co" crossorigin>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="BMN®">
@@ -2028,6 +2029,7 @@ html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.b
 <div class="wake-screen" id="wakeScreen"><div><span class="kicker">BMN® · REST MODE</span><h2 style="font-size:clamp(34px,8vw,60px)">Taking a quiet moment.</h2><p style="color:#b5bdcb;max-width:320px;line-height:1.6">The page is dimmed. Your device is not asleep.</p><button id="wakeButton">Wake BMN</button></div></div>
 <div class="scrim" id="installScrim" role="dialog" aria-modal="true" aria-labelledby="installTitle"><div class="sheet glass"><div class="sheet-top"><div><span class="kicker">QUICK ACCESS</span><h2 id="installTitle">Add BMN to Home Screen.</h2></div><button class="close-btn" id="installClose" aria-label="Close instructions">×</button></div><p class="sheet-copy"><strong style="color:var(--fg)">iPhone (Safari)</strong><br>1. Open BMN in Safari (not inside another app).<br>2. Tap the Share icon.<br>3. Scroll and choose “Add to Home Screen”. If missing, tap Edit Actions.<br>4. Turn on “Open as Web App” if shown, then tap Add.</p><p class="sheet-copy"><strong style="color:var(--fg)">Android (Chrome)</strong><br>Tap the button below to install if Chrome offers it. Otherwise open ⋮ and choose “Install app” or “Add to Home screen”.</p><button class="backend-btn primary" id="installAction" type="button" style="width:100%;margin-top:8px">Try install BMN app ↗</button><p class="sheet-copy modal-note">Browsers control the final installation step. iPhone Safari does not allow a website button to add itself automatically; use Share → Add to Home Screen.</p></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')</script>
 <script defer src="https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js"></script>
 <script>
 (()=>{'use strict';
@@ -6952,7 +6954,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       if (s.vid) { try { s.vid.pause(); s.vid.currentTime = 0; } catch (e) {} }
       paint(s, 0, (s._post && s._post.dur) || 15);
     }
-    const isBlocked = () => !ST.open || ST.view !== 'feed' || stack.some(l => l.kind === 'over' || l.el === R.Story || l.el === R.Live) || document.hidden;
+    const isBlocked = () => !ST.open || (R.stage && R.stage.classList.contains('bmn-inbox-open')) || ST.view !== 'feed' || stack.some(l => l.kind === 'over' || l.el === R.Story || l.el === R.Live) || document.hidden;
     function applyPlayback() {
       blocked = isBlocked();
       const s = slides[idx]; if (!s) return;
@@ -6961,7 +6963,18 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       if (s.vid) {
         s.vid.muted = !S.settings.sound;
         s.vid.preload = 'auto';
-        if (stopped) s.vid.pause(); else { const pr = s.vid.play(); if (pr && pr.catch) pr.catch(() => {}); }
+        if (stopped) s.vid.pause(); else {
+          const v = s.vid, giveUp = () => { s._paused = true; s.classList.add('is-paused'); };
+          const pr = v.play();
+          if (pr && pr.catch) pr.catch(() => {
+            if (v !== (slides[idx] && slides[idx].vid)) return;
+            if (!v.muted) {                       /* iOS blocks autoplay with sound: retry muted, unmute on the first touch */
+              v.muted = true;
+              const p2 = v.play(); if (p2 && p2.catch) p2.catch(giveUp);
+              if (!window.__bmnUnmuteArmed) { window.__bmnUnmuteArmed = 1; const h = () => { document.removeEventListener('pointerdown', h, true); window.__bmnUnmuteArmed = 0; try { const cur = slides[idx]; if (cur && cur.vid && S.settings.sound) cur.vid.muted = false; } catch (_) {} }; document.addEventListener('pointerdown', h, true); }
+            } else giveUp();
+          });
+        }
       }
       // Only warm the next slide's metadata; do not make every feed video compete for bandwidth.
       const next = slides[idx + 1]; if (next && next.vid) next.vid.preload = 'metadata';
@@ -7892,7 +7905,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         // No simulated incoming messages: Inbox must reflect real backend records only.
         try { R.Feed.focus({ preventScroll: true }); } catch (e) {}
       }
-      if (o.view === 'inbox') setTimeout(Dm.open, 120);
+      if (ST.open && o.view && o.view !== 'inbox' && (o.view !== ST.view || (o.view === 'profile' && o.uid && o.uid !== Profile.id()))) Views.set(o.view, o.uid);
+      if (o.view === 'inbox') { if (window.BMNRealInbox) window.BMNRealInbox.open(); else setTimeout(Dm.open, 120); }
       if (o.story) setTimeout(() => Stories.openUser(o.story), 350);
     },
     close(fromPop) {
@@ -8103,6 +8117,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     refreshProfile() { if (ST.view === 'profile') Profile.render(Profile.id()); },
     patchCounts() { Feed.refreshAll(); },
     profileId: () => Profile.id(),
+    setView: (v, u) => Views.set(v, u),
+    resume: () => Feed.applyPlayback(),
     haptic: k => haptic(k), toast
   };
 
@@ -8691,8 +8707,8 @@ function avatar(id){const p=profile(id),av=p.avatar_display_url||p.avatar_url||p
 async function ensureProfiles(ids){const s=sb();if(!s||!ids.length)return;if(!window.bmnProfiles)window.bmnProfiles={};const missing=ids.filter(id=>id&&!window.bmnProfiles[id]);if(!missing.length)return;try{const {data,error}=await s.from('profiles').select('*').in('id',missing);if(!error)(data||[]).forEach(p=>window.bmnProfiles[p.id]={...(window.bmnProfiles[p.id]||{}),...p});}catch(_){} }
 function shell(){if(overlay)return;overlay=document.createElement('section');overlay.id='bmnRealInbox';overlay.setAttribute('aria-label','BMN Inbox');overlay.innerHTML=`<header class="bmn-ri-head"><button class="bmn-ri-btn" id="bmnRiClose" aria-label="Back">‹</button><strong>Inbox</strong><button class="bmn-ri-btn" id="bmnRiSelf" aria-label="Open self chat">◎</button></header><input class="bmn-ri-search" id="bmnRiSearch" type="search" placeholder="Search messages" aria-label="Search messages"><div class="bmn-ri-list" id="bmnRiList"></div><section class="bmn-ri-chat" id="bmnRiChat" aria-label="Conversation"><header class="bmn-ri-chat-head"><button class="bmn-ri-btn" id="bmnRiChatBack" aria-label="Back to inbox">‹</button><div class="who" id="bmnRiWho"></div><button class="bmn-ri-btn" id="bmnRiClear" aria-label="Clear conversation">⌫</button></header><div class="bmn-ri-messages" id="bmnRiMessages"></div><div class="bmn-ri-note" id="bmnRiNote"></div><form class="bmn-ri-compose" id="bmnRiForm"><div class="bmn-ri-composer-shell"><button type="button" class="bmn-ri-attach" id="bmnRiAttach" aria-label="Attachment">＋</button><textarea id="bmnRiInput" rows="1" maxlength="5000" placeholder="Message…" aria-label="Message"></textarea><button class="bmn-ri-send" id="bmnRiSend" type="submit" disabled aria-label="Send">➤</button></div></form><input id="bmnRiFile" type="file" accept="image/*,video/*" hidden></section>`;(document.getElementById('lgttStage')||document.body).appendChild(overlay);list=$('#bmnRiList');search=$('#bmnRiSearch');chat=$('#bmnRiChat');chatList=$('#bmnRiMessages');composer=$('#bmnRiInput');send=$('#bmnRiSend');
 $('#bmnRiClose').onclick=close;$('#bmnRiChatBack').onclick=()=>{chat.classList.remove('open');peerId=null;currentPeer=null;loadList()};$('#bmnRiSelf').onclick=()=>openChat(session()?.id);$('#bmnRiClear').onclick=clearConversation;search.oninput=()=>loadList(search.value.trim().toLowerCase());composer.oninput=()=>{send.disabled=!composer.value.trim();composer.style.height='auto';composer.style.height=Math.min(composer.scrollHeight,130)+'px'};$('#bmnRiForm').onsubmit=e=>{e.preventDefault();sendMessage()};$('#bmnRiAttach').onclick=()=>$('#bmnRiFile').click();$('#bmnRiFile').onchange=()=>{if($('#bmnRiFile').files?.[0])$('#bmnRiNote').textContent='Attachments are not stored in the current messages schema, so no file was sent.'};}
-function open(){shell();{const st=document.getElementById('lgttStage');if(st&&overlay.parentNode!==st)st.appendChild(overlay)}overlay.classList.add('open');document.body.classList.add('bmn-real-inbox-open');chat.classList.remove('open');peerId=null;currentPeer=null;loadList();subscribe();}
-function close(a){const quiet=a===true;overlay?.classList.remove('open');document.body.classList.remove('bmn-real-inbox-open');chat?.classList.remove('open');peerId=null;channel?.unsubscribe?.();channel=null;if(!quiet)try{setDock(currentLgttView())}catch(_){}}
+function open(){shell();{const st=document.getElementById('lgttStage');if(st&&overlay.parentNode!==st)st.appendChild(overlay)}overlay.classList.add('open');document.getElementById('lgttStage')?.classList.add('bmn-inbox-open');try{window.LGTT?.resume?.()}catch(_){}document.body.classList.add('bmn-real-inbox-open');chat.classList.remove('open');peerId=null;currentPeer=null;loadList();subscribe();}
+function close(a){const quiet=a===true;overlay?.classList.remove('open');document.getElementById('lgttStage')?.classList.remove('bmn-inbox-open');try{window.LGTT?.resume?.()}catch(_){}document.body.classList.remove('bmn-real-inbox-open');chat?.classList.remove('open');peerId=null;channel?.unsubscribe?.();channel=null;if(!quiet)try{setDock(currentLgttView())}catch(_){}}
 async function msgSelect(build){const s=sb();const tiers=['id,sender_id,recipient_id,content,created_at,read_at,deleted_by_sender,deleted_by_recipient','id,sender_id,recipient_id,content,created_at,read_at','id,sender_id,recipient_id,content,created_at'];let r=null;for(const cols of tiers){r=await build(s.from('messages').select(cols));if(!r.error)return r;if(!/column|schema cache|deleted_by|read_at/i.test(String(r.error.message||'')))return r}return r}
 const riNote=(t,err)=>{const n=$('#bmnRiNote');if(n){n.textContent=t||'';n.classList.toggle('err',!!err)}};
 async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await msgSelect(b=>b.or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500));if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(name(id))}</strong><small>${esc(m.content||'')}</small></span><time class="bmn-ri-time">${fmtDate(m.created_at)}</time></button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
@@ -8707,9 +8723,9 @@ function setDock(name){const dk=$('#lgttDock'),lens=$('#lgttLens'),i=LENS[name];
 window.bmnSetDock=setDock;
 function patchDock(){const dock=$('#lgttDock');if(!dock||dock.dataset.bmnFinalBound)return;dock.dataset.bmnFinalBound='1';dock.addEventListener('click',e=>{const b=e.target.closest('[data-dock]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();const type=b.dataset.dock;
  if(type==='inbox'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}setDock('inbox');open();return}
- if(type==='profile'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('profile');return}close(true);setDock('profile');window.LGTT?.open({view:'profile'});return}
- if(type==='feed'){chat?.classList.remove('open');close(true);setDock('feed');window.LGTT?.open({view:'feed'});return}
- if(type==='discover'){close(true);setDock('discover');window.LGTT?.open({view:'discover'});return}
+ if(type==='profile'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('profile');return}close(true);setDock('profile');window.LGTT?.setView('profile');return}
+ if(type==='feed'){chat?.classList.remove('open');close(true);setDock('feed');window.LGTT?.setView('feed');return}
+ if(type==='discover'){close(true);setDock('discover');window.LGTT?.setView('discover');return}
  if(type==='create'){const b2=$('#openCreateTop')||$('#createEditBtn');b2?.click();return}},true)}
 function patchProfileMessage(){document.addEventListener('click',e=>{const b=e.target.closest('[data-act="message"],[data-act="profile-message"],#bmnProfileMessage');if(!b)return;e.preventDefault();e.stopImmediatePropagation();let id=b.dataset.u||b.dataset.userId||b.dataset.profileId||'';if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(id==='bmn')id=session().id;setDock('inbox');open();if(id)setTimeout(()=>openChat(id),60)},true)}
 function boot(){shell();patchDock();patchProfileMessage();}
@@ -8740,7 +8756,7 @@ const key=id=>'bmn-chat-wp:'+id;
 const get=id=>{try{return localStorage.getItem(key(id))||''}catch(_){return ''}};
 const set=(id,v)=>{try{v?localStorage.setItem(key(id),v):localStorage.removeItem(key(id));return true}catch(_){return false}};
 const note=t=>{const n=document.getElementById('bmnRiNote');if(n)n.textContent=t};
-function apply(){const m=document.getElementById('bmnRiMessages');if(!m)return;const v=peer?get(peer):'';m.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');}
+function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;const v=peer?get(peer):'';m.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');}
 function mark(){if(!panel)return;const v=get(peer);panel.querySelectorAll('.bmn-ri-wp-grid button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v||'')===v)))}
 function build(){
   const chat=document.getElementById('bmnRiChat');if(!chat||panel)return;
@@ -8763,6 +8779,7 @@ function build(){
   chat.appendChild(panel);
   btn.onclick=e=>{e.stopPropagation();const o=panel.classList.toggle('open');btn.setAttribute('aria-expanded',String(o));mark()};
   document.addEventListener('click',e=>{if(panel.classList.contains('open')&&!panel.contains(e.target)&&e.target!==btn)panel.classList.remove('open')});
+  try{const st=document.getElementById('lgttStage');if(st&&!chat._bmnObs){chat._bmnObs=new MutationObserver(()=>st.classList.toggle('bmn-chat-open',chat.classList.contains('open')));chat._bmnObs.observe(chat,{attributes:true,attributeFilter:['class']})}}catch(_){}
   const inp=document.getElementById('bmnRiInput');
   if(inp)inp.addEventListener('focus',()=>setTimeout(()=>{const m=document.getElementById('bmnRiMessages');if(m)m.scrollTop=m.scrollHeight},300));
 }
@@ -8775,11 +8792,12 @@ if(window.visualViewport){const vv=window.visualViewport,upd=()=>{const kb=Math.
 <style id="bmn-fullscreen-dock-css">
 /* Full-bleed app: no floating card on tablets/desktop, edge-to-edge on phones */
 html.bmn-community-app,html.bmn-community-app body{height:100%;background:#05070d!important}
-html.bmn-community-app #lgtt{position:fixed!important;inset:0!important;height:100dvh!important}
-@media(min-width:600px){html.bmn-community-app #lgtt .lgtt-stage{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;box-shadow:none!important;border:0!important}}
+html.bmn-community-app #lgtt{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important}
+html.bmn-community-app #lgtt .lgtt-stage{width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;border:0!important}
 @media(min-width:900px) and (min-aspect-ratio:1/1){html.bmn-community-app #lgtt .lgtt-stage{width:min(100vw,calc(100dvh * .5625))!important}}
 /* Dock sits low, just above the Home Indicator */
-html.bmn-community-app #lgtt .lgtt-dock{bottom:calc(env(safe-area-inset-bottom,0px) * .4 + 6px)!important}
+html.bmn-community-app #lgtt .lgtt-dock{bottom:max(10px,calc(env(safe-area-inset-bottom,0px) + 2px))!important}
+.lgtt-stage.bmn-chat-open .lgtt-dock{transform:translateY(170%)!important;opacity:0!important;pointer-events:none!important}
 html.bmn-community-app #lgtt .lgtt-dk{touch-action:manipulation;transition:color .3s,scale .35s cubic-bezier(.34,1.56,.64,1)}
 html.bmn-community-app #lgtt .lgtt-dk:active{scale:.88}
 html.bmn-community-app #lgtt .lgtt-dock-lens{transition:transform .6s cubic-bezier(.34,1.45,.52,1),opacity .25s}
@@ -8798,6 +8816,18 @@ html.bmn-community-app #lgtt .lgtt-dock-lens{transition:transform .6s cubic-bezi
 #lgttStage>#bmnRealInbox .bmn-ri-chat{z-index:40}
 .bmn-ri-note{font-size:13px!important;padding:2px 16px 8px!important;color:rgba(235,241,255,.7)!important}
 .bmn-ri-note.err{color:#fca5a5!important}.bmn-ri-note:empty{display:none}
+</style>
+
+<style id="bmn-inbox-fullbleed-css">
+/* Inbox: one opaque BMN base (so the feed video never shows through), wallpaper fills the whole conversation */
+#lgttStage>#bmnRealInbox{padding:0!important;background:radial-gradient(80% 50% at 12% 0%,rgba(55,170,255,.16),transparent 60%),radial-gradient(70% 50% at 100% 35%,rgba(145,90,255,.15),transparent 60%),#070a14!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#lgttStage>#bmnRealInbox .bmn-ri-chat{background-color:#070a14!important;background-size:cover!important;background-position:center!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#lgttStage>#bmnRealInbox .bmn-ri-messages{background:transparent!important;padding-top:calc(86px + env(safe-area-inset-top,0px))!important;padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))!important}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head{position:absolute;left:0;right:0;top:0;z-index:3;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 10px;background:linear-gradient(180deg,rgba(7,10,20,.7),rgba(7,10,20,.35));-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%)}
+#lgttStage>#bmnRealInbox .bmn-ri-compose{position:absolute;left:0;right:0;bottom:var(--bmn-kb,0px);z-index:3;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(7,10,20,.7),rgba(7,10,20,.3));-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%)}
+#lgttStage>#bmnRealInbox .bmn-ri-chat{bottom:0!important}
+#lgttStage>#bmnRealInbox .bmn-ri-head{padding-top:calc(env(safe-area-inset-top,0px) + 8px)!important}
+.bmn-ri-chat .bmn-ri-note{position:absolute;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom,0px) + var(--bmn-kb,0px));z-index:4;text-align:center}
 </style>
 
 <style id="bmn-actions-bridge-css">
