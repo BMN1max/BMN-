@@ -2778,6 +2778,7 @@ window.addEventListener('online',()=>{if(typeof setBackendStatus==='function')se
   def('cachedPosts',()=>cachedPosts,v=>{cachedPosts=v});
   def('cachedLikes',()=>cachedLikes,v=>{cachedLikes=v});
   def('cachedMyLikes',()=>cachedMyLikes,v=>{cachedMyLikes=v});
+  def('cachedComments',()=>cachedComments,v=>{cachedComments=v});
   def('renderCommunityPosts',()=>renderCommunityPosts,v=>{if(typeof v==='function')renderCommunityPosts=v});
   def('loadCommunityPosts',()=>loadCommunityPosts,v=>{if(typeof v==='function')loadCommunityPosts=v});
   def('setBackendStatus',()=>setBackendStatus,v=>{if(typeof v==='function')setBackendStatus=v});
@@ -6814,12 +6815,12 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       '<div class="tc"><i></i><span data-tc>00:00:00</span></div>' + (extra || '') + '</div>';
   }
   const capHTML = c => esc(c).replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, '$1<button type="button" class="tag" data-act="tag" data-tag="$2">#$2</button>');
+  const isLiked = b => !!(window.cachedMyLikes && typeof window.cachedMyLikes.has === 'function' && window.bmnSession && window.cachedMyLikes.has(b));
   const countOf = (p, key) => {
     const b = baseId(p.id);
-    if (key === 'likes') return p.likes == null ? (S.liked[b] ? 1 : null) : Number(p.likes) + (S.liked[b] ? 1 : 0);
-    if (key === 'saves') return p.saves == null ? (S.saved[b] ? 1 : null) : Number(p.saves) + (S.saved[b] ? 1 : 0);
-    if (key === 'shares') { const extra=((S.sharedN||{})[b]||0)+(S.reposted[b]?1:0); return p.shares == null ? (extra ? extra : null) : Number(p.shares)+extra; }
-    if (key === 'comments') { const extra=(S.extraComments[b]||[]).length; return p.comments == null ? (extra ? extra : null) : Number(p.comments)+extra; }
+    if (key === 'likes') return p.likes == null ? null : Number(p.likes);
+    if (key === 'saves' || key === 'shares') return null; /* no real backend counter: never show a local number */
+    if (key === 'comments') return p.comments == null ? null : Number(p.comments);
     return 0;
   };
 
@@ -6835,10 +6836,18 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     };
     const userOf = p => U[p.u] || { id: p.u, name: p.u, handle: p.u, hue: 200 };
     const slideOfBase = b => slides.filter(s => s._post && baseId(s._post.id) === b);
+    function refreshCounts(b) {
+      const L = window.cachedLikes || {}, C = window.cachedComments || {};
+      const lk = Number(L[b]) || null, cm = Array.isArray(C[b]) && C[b].length ? C[b].length : null;
+      POSTS.forEach(x => { if (baseId(x.id) === b) { x.likes = lk; x.comments = cm; } });
+      slides.forEach(s => { if (s._post && baseId(s._post.id) === b) { s._post.likes = lk; s._post.comments = cm; } });
+      syncPost(b);
+    }
+    function refreshAll() { new Set(POSTS.map(p => baseId(p.id))).forEach(refreshCounts); }
 
     /* ---- markup for one slide ---- */
     function slideEl(p) {
-      const u = userOf(p), b = baseId(p.id), following = !!S.follows[u.id], liked = !!S.liked[b], saved = !!S.saved[b];
+      const u = userOf(p), b = baseId(p.id), following = !!S.follows[u.id], liked = isLiked(b), saved = !!S.saved[b];
       const s = el('article', 'lgtt-slide');
       s.dataset.id = p.id; s._post = p; s._t = 0; s._paused = false;
       const media = p.src
@@ -6875,7 +6884,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     /** Refresh counters/state of every slide that shows this post (clones share state). */
     function syncPost(b) {
       slideOfBase(b).forEach(s => {
-        const p = s._post, liked = !!S.liked[b], saved = !!S.saved[b];
+        const p = s._post, liked = isLiked(b), saved = !!S.saved[b];
         const set = (name, val) => { const n = $('[data-n="' + name + '"]', s); if (n && n.textContent !== fmt(val)) { n.textContent = fmt(val); n.classList.remove('tick'); void n.offsetWidth; n.classList.add('tick'); } };
         set('like', countOf(p, 'likes')); set('comment', countOf(p, 'comments')); set('save', countOf(p, 'saves')); set('share', countOf(p, 'shares'));
         const lb = $('[data-act="like"]', s), sb = $('[data-act="save"]', s);
@@ -7066,17 +7075,18 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 
     /* ---- actions ---- */
     function setLike(p, on, fromDouble) {
-      const b = baseId(p.id), was = !!S.liked[b];
+      const b = baseId(p.id), was = isLiked(b);
       if (on === was) { if (on && fromDouble) haptic('like'); return; }
-      if (on) S.liked[b] = 1; else delete S.liked[b];
-      save(); syncPost(b);
+      if (!window.bmnSession) { haptic('tap'); if (window.requestCommunityAuth) window.requestCommunityAuth('like'); return; }
+      const pr = window.bmnLikeReal(b, on); refreshCounts(b);
+      pr.then(ok => { if (!ok) { refreshCounts(b); haptic('tap'); } });
       haptic(on ? 'like' : 'tap');
       slideOfBase(b).forEach(s => { const btn = $('[data-act="like"]', s); btn.classList.remove('lgtt-pop'); void btn.offsetWidth; btn.classList.add('lgtt-pop'); wobble(btn, { amp: on ? 1.5 : 0.8, rot: on ? 6 : 2, dur: 700 }); });
       if (Views.cur() === 'profile') Views.refreshProfile();
     }
     function toggleSave(p) {
       const b = baseId(p.id); S.saved[b] ? delete S.saved[b] : (S.saved[b] = 1); save(); syncPost(b);
-      haptic(S.saved[b] ? 'success' : 'tap'); toast(S.saved[b] ? 'Added to Favourites' : 'Removed from Favourites', 'bookmark');
+      haptic(S.saved[b] ? 'success' : 'tap'); toast(S.saved[b] ? 'Saved on this device' : 'Removed from this device', 'bookmark');
       slideOfBase(b).forEach(s => wobble($('[data-act="save"]', s), { amp: 1.3, rot: 4 }));
     }
     function follow(uid) {
@@ -7148,7 +7158,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     }
 
     return {
-      bind, build, setMode, go, jump, startClock, stopClock, applyPlayback, togglePlay, setLike, toggleSave, follow, notInterested, syncPost,
+      bind, build, setMode, go, jump, startClock, stopClock, applyPlayback, togglePlay, setLike, toggleSave, follow, notInterested, syncPost, refreshCounts, refreshAll,
       mode: () => mode, idx: () => idx, cur: () => slides[idx] || null, slideOfBase,
       onLayersChanged() { applyPlayback(); },
       layout, relayout() { H = R.Feed.clientHeight || H; layout(); },
@@ -7163,18 +7173,24 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   S.extraReplies = S.extraReplies || {}; S.sharedN = S.sharedN || {};
   const THREADS = {};                                          // generated once per post
   function thread(b) {
-    if (THREADS[b]) return THREADS[b];
-    // No synthetic comments or engagement. Real comments must be loaded from the BMN backend.
-    return (THREADS[b] = []);
+    const rows = (window.cachedComments || {})[b] || [];
+    return rows.map(r => ({ id: String(r.id), u: String(r.user_id || ''), text: String(r.content != null ? r.content : (r.body || '')), likes: 0,
+      mins: Math.max(0, (Date.now() - new Date(r.created_at).getTime()) / 60000) || 0, replies: [] }));
   }
-  const userFor = id => U[id] || { id: id, name: id, handle: id, hue: 210 };
+  const userFor = id => {
+    if (U[id]) return U[id];
+    const p = (window.bmnProfiles || {})[id];
+    const short = 'member-' + String(id).slice(0, 8);
+    if (p) return { id: id, name: p.display_name || p.full_name || p.username || 'BMN member', handle: p.username || short, hue: 210, avatar: p.avatar_display_url || p.avatar_url || '' };
+    return { id: id, name: 'BMN member', handle: short, hue: 210 };
+  };
 
   const Comments = (() => {
     let cb = null, post = null, sort = 'top', replyTo = null; const expanded = new Set(); let tokens = [];
     const emojis = ['😂', '😍', '🔥', '👏', '😮', '💯', '🙌', '❤️', '😭', '🇳🇬'];
     const all = b => {
       const base = thread(b).map(c => Object.assign({}, c, { replies: c.replies.concat(S.extraReplies[c.id] || []) }));
-      const mine = (S.extraComments[b] || []).map(c => Object.assign({}, c, { replies: S.extraReplies[c.id] || [] }));
+      const mine = []; /* only real, server-backed comments are shown */
       return mine.concat(base);
     };
     const filtered = t => { const n = normalize(t.text); return (S.filterWords || []).some(w => w && n.includes(normalize(w))); };
@@ -7226,18 +7242,24 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       R.ReplyChip.hidden = true; R.CmtInput.placeholder = 'Add comment…';
       R.CmtMe.outerHTML = avatar(ME, 'lgtt-xs').replace('class="', 'id="lgttCmtMe" class="'); R.CmtMe = $('#lgttCmtMe');
       render(); R.CmtList.scrollTop = 0; openLayer(R.Comments, { kind: 'sheet' });
+      if (window.bmnEnsureCommentProfiles) window.bmnEnsureCommentProfiles(cb).then(() => render(true));
       requestAnimationFrame(() => moveInd($('#lgttCmtSort')));
     }
-    function submit() {
-      const text = R.CmtInput.value.trim(); if (!text || !cb) return;
+    let sendingCm = false;
+    async function submit() {
+      let text = R.CmtInput.value.trim(); if (!text || !cb || sendingCm) return;
+      if (!window.bmnSession) { if (window.requestCommunityAuth) window.requestCommunityAuth('comment'); return; }
       if (S.settings.whoComment === 'none') { toast('Comments are turned off in your privacy settings', 'lock'); return; }
-      const c = { id: cb + '-m' + Date.now(), u: ME.id, text, likes: 0, mins: 0 };
-      if (replyTo) { const rid = replyTo.root; (S.extraReplies[rid] = S.extraReplies[rid] || []).push(c); expanded.add(rid); }
-      else { (S.extraComments[cb] = S.extraComments[cb] || []).unshift(c); }
-      save(); R.CmtInput.value = ''; R.CmtForm.querySelector('.lgtt-send').disabled = true; cancelReply();
-      R.CmtSearch.value = ''; sort = 'new';
-      $$('#lgttCmtSort button', R.root).forEach(b => { const on = b.dataset.sort === 'new'; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); moveInd($('#lgttCmtSort'));
-      render(); R.CmtList.scrollTop = 0; haptic('send'); Feed.syncPost(cb); wobble(R.Comments, { amp: 0.7, rot: 0.15 });
+      if (replyTo) { const rc = $('[data-cid="' + replyTo.id + '"] .lgtt-cm-user', R.CmtList); const who = rc ? rc.textContent.replace(/Creator|Pinned/g, '').trim() : ''; if (who && !text.startsWith(who)) text = who + ' ' + text; }
+      const btn = R.CmtForm.querySelector('.lgtt-send'); sendingCm = true; btn.disabled = true;
+      try {
+        await window.bmnCommentReal(cb, text);
+        R.CmtInput.value = ''; cancelReply(); R.CmtSearch.value = ''; sort = 'new';
+        $$('#lgttCmtSort button', R.root).forEach(b => { const on = b.dataset.sort === 'new'; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); moveInd($('#lgttCmtSort'));
+        Feed.refreshCounts(cb); render(); R.CmtList.scrollTop = 0; haptic('send'); wobble(R.Comments, { amp: 0.7, rot: 0.15 });
+      } catch (e) {
+        toast('Comment not posted: ' + (e && e.message ? e.message : 'try again'), 'lock'); /* typed text is kept for retry */
+      } finally { sendingCm = false; btn.disabled = !R.CmtInput.value.trim(); }
     }
     function cancelReply() { replyTo = null; R.ReplyChip.hidden = true; R.CmtInput.placeholder = 'Add comment…'; }
     function click(e) {
@@ -7311,9 +7333,9 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       R.ShareActions.addEventListener('click', e => {
         const b = e.target.closest('[data-sa]'); if (!b) return; const a = b.dataset.sa, base = baseId(post.id);
         if (a === 'save') { Feed.toggleSave(post); render(); }
-        else if (a === 'repost') { S.reposted[base] ? delete S.reposted[base] : (S.reposted[base] = 1); save(); Feed.syncPost(base); haptic('success'); toast(S.reposted[base] ? 'Reposted to your profile' : 'Repost removed', 'repeat'); render(); }
+        else if (a === 'repost') { if (!window.bmnSession) { closeLayer(R.Share); if (window.requestCommunityAuth) window.requestCommunityAuth('repost'); return; } window.bmnRepostReal(base).then(ok => { if (ok) { S.reposted[base] = 1; save(); haptic('success'); render(); } }); }
         else if (a === 'ni') { closeLayer(R.Share); Feed.notInterested(Feed.cur()); }
-        else if (a === 'report') { closeLayer(R.Share); Confirm.ask('Report this video?', 'We will review it against the community guidelines. You will not be identified.', 'Report', () => { haptic('success'); toast('Thanks — report submitted', 'flag'); }, true); }
+        else if (a === 'report') { closeLayer(R.Share); Confirm.ask('Report this video?', 'We will review it against the community guidelines. You will not be identified.', 'Report', () => window.bmnReportReal(base), true); }
       });
     }
     function send() {
@@ -7671,7 +7693,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       if (tab === 'posts') return POSTS.filter(p => p.u === u.id);
       if (!u.me) return [];
       if (tab === 'reposts') return POSTS.filter(p => S.reposted[baseId(p.id)]);
-      if (tab === 'liked') return POSTS.filter(p => S.liked[baseId(p.id)]);
+      if (tab === 'liked') return POSTS.filter(p => isLiked(baseId(p.id)));
       if (tab === 'saved') return POSTS.filter(p => S.saved[baseId(p.id)]);
       return [];
     };
@@ -7933,7 +7955,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         case 'close-layer': { const L = a.closest('[data-layer]'); if (L) closeLayer(L); break; }
         case 'goto-discover': Views.set('discover'); break;
         case 'mute': S.settings.sound = !S.settings.sound; save(); applySettings(); wobble(R.Mute, { amp: 1.5, rot: 6 }); toast(S.settings.sound ? 'Sound on' : 'Sound off', S.settings.sound ? 'vol' : 'mute'); break;
-        case 'like': post && Feed.setLike(post, !S.liked[baseId(post.id)]); break;
+        case 'like': post && Feed.setLike(post, !isLiked(baseId(post.id))); break;
         case 'comment': post && Comments.open(post); break;
         case 'save': post && Feed.toggleSave(post); break;
         case 'share': post && Share.open(post); break;
@@ -8023,7 +8045,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         case 'ArrowDown': case 'j': case 'J': Feed.go(1); break;
         case 'ArrowUp': case 'k': case 'K': Feed.go(-1); break;
         case ' ': Feed.togglePlay(true); break;
-        case 'l': case 'L': p && Feed.setLike(p, !S.liked[baseId(p.id)]); break;
+        case 'l': case 'L': p && Feed.setLike(p, !isLiked(baseId(p.id))); break;
         case 'b': case 'B': p && Feed.toggleSave(p); break;
         case 'c': case 'C': p && Comments.open(p); break;
         case 's': case 'S': p && Share.open(p); break;
@@ -8079,6 +8101,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     /** Add / update a creator: LGTT.setUser({id:'abc',name:'Abc',handle:'abc',hue:200,followers:10}) */
     setUser(u) { if (u && u.id) U[u.id] = Object.assign({ hue: 210, followers: null, following: null, likes: null }, U[u.id] || {}, u); },
     refreshProfile() { if (ST.view === 'profile') Profile.render(Profile.id()); },
+    patchCounts() { Feed.refreshAll(); },
     haptic: k => haptic(k), toast
   };
 
@@ -8186,7 +8209,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 (()=>{
  'use strict';
  const escText=v=>String(v??'');
- let lastSignature='',statsSignature='',statsRequest=0;
+ let lastSignature='',lastStruct='',statsSignature='',statsRequest=0;
  async function refreshRealProfileStats(me,posts){
    const sb=window.bmnSupabase;if(!sb||!me)return;
    const owned=posts.filter(p=>String(p.user_id||'')===String(me)&&(!p.status||String(p.status).toLowerCase()==='published'));
@@ -8225,7 +8248,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      return {id,u:(currentId&&String(p.user_id||'')===currentId)?'bmn':String(p.user_id||''),cap,music:'',dur:null,likes,comments,saves:null,shares:null,src:video?raw:'',poster:/^(https?:\/\/|blob:|data:)/i.test(String(p.thumbnail_display_url||''))?String(p.thumbnail_display_url):'',scene:{k:'aurora',a:'#111827',b:'#24324a',c:'#5a8dd8',g:'',kin:[]},created_at:p.created_at,realMediaType:mediaType,authorName:author.display_name||author.username||'BMN Community member'};
    }).filter(p=>p.src);
    const sig=JSON.stringify(mapped.map(p=>[p.id,p.src,p.likes,p.comments,p.saves,p.shares,p.cap]));
-   if(sig!==lastSignature){lastSignature=sig;app.setPosts(mapped);}
+   const struct=JSON.stringify(mapped.map(p=>[p.id,p.src,p.cap,p.poster]));
+   if(sig!==lastSignature){lastSignature=sig;if(struct===lastStruct&&typeof app.patchCounts==='function'){app.patchCounts();}else{lastStruct=struct;app.setPosts(mapped);}}
    // Profile counters are explicitly unknown until the real profile stats query is available.
    if(window.bmnSession?.user?.id){
      const me=String(window.bmnSession.user.id),profile=profiles[me]||{};
@@ -8245,15 +8269,16 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
  }
  function ensureOwnerShortcut(){ /* Owner moderation is placed inside the signed-in owner's overlay profile. */ }
 
+ let rtTimer=0;const refreshSoon=()=>{clearTimeout(rtTimer);rtTimer=setTimeout(()=>{if(!document.hidden&&navigator.onLine&&window.loadCommunityPosts)window.loadCommunityPosts()},2500)};
  function connectRealtime(){
    const sb=window.bmnSupabase;
    if(!sb||realtimeChannel||typeof sb.channel!=='function')return;
    try{
      realtimeChannel=sb.channel('bmn-community-live-refresh')
-       .on('postgres_changes',{event:'*',schema:'public',table:'posts'},()=>window.loadCommunityPosts&&window.loadCommunityPosts())
-       .on('postgres_changes',{event:'*',schema:'public',table:'likes'},()=>window.loadCommunityPosts&&window.loadCommunityPosts())
-       .on('postgres_changes',{event:'*',schema:'public',table:'comments'},()=>window.loadCommunityPosts&&window.loadCommunityPosts())
-       .on('postgres_changes',{event:'*',schema:'public',table:'follows'},()=>window.loadCommunityPosts&&window.loadCommunityPosts())
+       .on('postgres_changes',{event:'*',schema:'public',table:'posts'},refreshSoon)
+       .on('postgres_changes',{event:'*',schema:'public',table:'likes'},refreshSoon)
+       .on('postgres_changes',{event:'*',schema:'public',table:'comments'},refreshSoon)
+       .on('postgres_changes',{event:'*',schema:'public',table:'follows'},refreshSoon)
        .subscribe();
    }catch(_){realtimeChannel=null;}
  }
@@ -8668,9 +8693,9 @@ $('#bmnRiClose').onclick=close;$('#bmnRiChatBack').onclick=()=>{chat.classList.r
 function open(){shell();overlay.classList.add('open');document.body.classList.add('bmn-real-inbox-open');chat.classList.remove('open');peerId=null;currentPeer=null;loadList();subscribe();}
 function close(){overlay?.classList.remove('open');document.body.classList.remove('bmn-real-inbox-open');chat?.classList.remove('open');peerId=null;channel?.unsubscribe?.();channel=null;}
 async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await s.from('messages').select('id,sender_id,recipient_id,content,created_at,read_at,deleted_by_sender,deleted_by_recipient').or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500);if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(name(id))}</strong><small>${esc(m.content||'')}</small></span><time class="bmn-ri-time">${fmtDate(m.created_at)}</time></button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
-async function openChat(id){const u=session();if(!u){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('inbox');else alert('Please sign in to use Inbox.');return}peerId=id||u.id;await ensureProfiles([peerId]);currentPeer=peerId;chat.classList.add('open');$('#bmnRiWho').innerHTML=`${avatar(peerId)}<div><strong>${esc(peerId===u.id?'Yourself':name(peerId))}</strong><small>${esc(handle(peerId)||'BMN Community')}</small></div>`;$('#bmnRiNote').textContent='';await loadMessages();}
+async function openChat(id){const u=session();if(!u){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('inbox');else alert('Please sign in to use Inbox.');return}peerId=id||u.id;await ensureProfiles([peerId]);currentPeer=peerId;try{window.__bmnRiPeer&&window.__bmnRiPeer(peerId)}catch(_){}chat.classList.add('open');$('#bmnRiWho').innerHTML=`${avatar(peerId)}<div><strong>${esc(peerId===u.id?'Yourself':name(peerId))}</strong><small>${esc(handle(peerId)||'BMN Community')}</small></div>`;$('#bmnRiNote').textContent='';await loadMessages();}
 async function loadMessages(){const s=sb(),u=session();if(!s||!u||!peerId)return;chatList.innerHTML='<div class="bmn-ri-empty">Loading…</div>';try{let req=s.from('messages').select('id,sender_id,recipient_id,content,created_at,read_at,deleted_by_sender,deleted_by_recipient').order('created_at',{ascending:true});if(peerId===u.id)req=req.eq('sender_id',u.id).eq('recipient_id',u.id);else req=req.or(`and(sender_id.eq.${u.id},recipient_id.eq.${peerId}),and(sender_id.eq.${peerId},recipient_id.eq.${u.id})`);const {data,error}=await req.limit(1000);if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);chatList.innerHTML=rows.length?rows.map(m=>{const mine=m.sender_id===u.id;return `<div class="bmn-ri-msg ${mine?'mine':''}">${esc(m.content||'')}<div class="bmn-ri-stamp">${fmtTime(m.created_at)}${mine&&m.read_at?' · Read':''}</div></div>`}).join(''):'<div class="bmn-ri-empty">No messages yet. Say hello.</div>';chatList.scrollTop=chatList.scrollHeight;if(peerId!==u.id){const unread=rows.filter(m=>m.recipient_id===u.id&&!m.read_at).map(m=>m.id);if(unread.length){try{await s.from('messages').update({read_at:new Date().toISOString()}).in('id',unread)}catch(_) {}}}}catch(e){chatList.innerHTML=`<div class="bmn-ri-empty">Could not load this conversation.<br><small>${esc(e.message||'')}</small></div>`}}
-async function sendMessage(){const s=sb(),u=session(),text=composer.value.trim();if(!s||!u||!peerId||!text)return;send.disabled=true;const old=text;try{const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:text});if(error)throw error;composer.value='';composer.style.height='auto';await loadMessages();await loadList(search.value.trim().toLowerCase());}catch(e){composer.value=old;composer.dispatchEvent(new Event('input'));$('#bmnRiNote').textContent='Message could not be sent: '+(e.message||'Check permissions.')}finally{send.disabled=!composer.value.trim()}}
+let bmnRiSending=false;async function sendMessage(){const s=sb(),u=session(),text=composer.value.trim();if(bmnRiSending||!s||!u||!peerId||!text)return;bmnRiSending=true;send.disabled=true;const old=text;try{const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:text});if(error)throw error;composer.value='';composer.style.height='auto';await loadMessages();await loadList(search.value.trim().toLowerCase());}catch(e){composer.value=old;composer.dispatchEvent(new Event('input'));$('#bmnRiNote').textContent='Message could not be sent: '+(e.message||'Check permissions.')}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
 async function clearConversation(){const s=sb(),u=session();if(!s||!u||!peerId)return;try{const {error}=await s.rpc('bmn_clear_conversation',{p_peer:peerId});if(error)throw error;await loadMessages();await loadList(search.value.trim().toLowerCase());}catch(e){$('#bmnRiNote').textContent='Could not clear conversation: '+(e.message||'') }}
 function subscribe(){const s=sb(),u=session();if(!s||!u||!s.channel)return;channel?.unsubscribe?.();channel=s.channel('bmn-real-messages-'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`sender_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages()}}).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`recipient_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages()}}).subscribe();}
 function patchDock(){const dock=$('#lgttDock');if(!dock||dock.dataset.bmnFinalBound)return;dock.dataset.bmnFinalBound='1';dock.addEventListener('click',e=>{const b=e.target.closest('[data-dock]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();const type=b.dataset.dock;if(type==='inbox'){open();return}if(type==='profile'){if(!session()){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('profile');else window.LGTT?.open({view:'profile'});return}window.LGTT?.open({view:'profile',uid:session().id});return}if(type==='feed'){chat?.classList.remove('open');close();window.LGTT?.open({view:'feed'});return}if(type==='discover'){window.LGTT?.open({view:'discover'});return}if(type==='create'){const b2=$('#openCreateTop')||$('#createEditBtn');b2?.click();return}},true)}
@@ -8678,6 +8703,233 @@ function patchProfileMessage(){document.addEventListener('click',e=>{const b=e.t
 function boot(){shell();patchDock();patchProfileMessage();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.BMNRealInbox={open,close,openChat,refresh:loadList};
+})();
+</script>
+
+<style id="bmn-inbox-wallpaper-keyboard-css">
+#bmnRealInbox{height:100dvh}
+.bmn-ri-chat{bottom:var(--bmn-kb,0px)}
+.bmn-ri-messages{background-size:cover;background-position:center}
+.bmn-ri-wp-panel{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:5;width:min(280px,calc(100% - 20px));padding:12px;border-radius:22px;border:1px solid rgba(255,255,255,.2);background:rgba(10,14,26,.55);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 18px 50px rgba(0,0,0,.35);color:#f7f9ff;display:none}
+.bmn-ri-wp-panel.open{display:block}
+.bmn-ri-wp-panel p{margin:0 0 8px;font-size:12px;opacity:.75;line-height:1.35}
+.bmn-ri-wp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.bmn-ri-wp-grid button{aspect-ratio:1;border-radius:14px;border:2px solid rgba(255,255,255,.2);cursor:pointer;padding:0}
+.bmn-ri-wp-grid button[aria-pressed="true"]{border-color:#7dd3fc}
+.bmn-ri-wp-row{display:flex;gap:8px}
+.bmn-ri-wp-row button{flex:1;min-height:40px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:inherit;font:inherit;font-size:13px;cursor:pointer}
+.bmn-ri-btn:focus-visible,.bmn-ri-wp-panel button:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+</style>
+<script id="bmn-inbox-wallpaper-keyboard-js">
+(()=>{'use strict';
+const PRESETS=[['Default',''],['Midnight','linear-gradient(160deg,#0b1020,#1a2347)'],['Storm','linear-gradient(160deg,#1c2b4a,#3b5b8f)'],['Violet','linear-gradient(160deg,#1b1038,#5b3a9e)'],['Cyan','linear-gradient(160deg,#06222e,#0e7490)'],['Pearl','linear-gradient(160deg,#e8edf7,#b9c4dc)'],['Ember','linear-gradient(160deg,#2a0f1a,#8a3b4f)'],['Forest','linear-gradient(160deg,#08201a,#1f6b53)']];
+let peer=null,panel=null;
+const key=id=>'bmn-chat-wp:'+id;
+const get=id=>{try{return localStorage.getItem(key(id))||''}catch(_){return ''}};
+const set=(id,v)=>{try{v?localStorage.setItem(key(id),v):localStorage.removeItem(key(id));return true}catch(_){return false}};
+const note=t=>{const n=document.getElementById('bmnRiNote');if(n)n.textContent=t};
+function apply(){const m=document.getElementById('bmnRiMessages');if(!m)return;const v=peer?get(peer):'';m.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');}
+function mark(){if(!panel)return;const v=get(peer);panel.querySelectorAll('.bmn-ri-wp-grid button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v||'')===v)))}
+function build(){
+  const chat=document.getElementById('bmnRiChat');if(!chat||panel)return;
+  const head=chat.querySelector('.bmn-ri-chat-head'),clear=document.getElementById('bmnRiClear');if(!head||!clear)return;
+  const btn=document.createElement('button');btn.type='button';btn.className='bmn-ri-btn';btn.id='bmnRiWallpaper';btn.setAttribute('aria-label','Chat wallpaper');btn.setAttribute('aria-haspopup','true');btn.textContent='\u25D0';
+  head.insertBefore(btn,clear);
+  panel=document.createElement('div');panel.className='bmn-ri-wp-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Chat wallpaper');
+  panel.innerHTML='<p>Wallpaper for this conversation. Saved on this device only, it is not synced to your account.</p><div class="bmn-ri-wp-grid"></div><div class="bmn-ri-wp-row"><button type="button" data-up>Upload image</button><button type="button" data-reset>Reset</button></div><input type="file" accept="image/*" hidden>';
+  const grid=panel.querySelector('.bmn-ri-wp-grid');
+  PRESETS.forEach(([n,v])=>{const b=document.createElement('button');b.type='button';b.dataset.v=v;b.title=n;b.setAttribute('aria-label',n+' wallpaper');b.style.background=v||'rgba(255,255,255,.12)';b.onclick=()=>{if(!set(peer,v))note('Wallpaper could not be saved on this device.');apply();mark()};grid.appendChild(b)});
+  const file=panel.querySelector('input');
+  panel.querySelector('[data-up]').onclick=()=>file.click();
+  panel.querySelector('[data-reset]').onclick=()=>{set(peer,'');apply();mark()};
+  file.onchange=()=>{const f=file.files&&file.files[0];file.value='';if(!f)return;if(!/^image\//.test(f.type)){note('Please choose an image file.');return}
+    const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{const sc=Math.min(1,1100/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+      let out='';try{out=c.toDataURL('image/jpeg',.72)}catch(_){}
+      if(!out||!set(peer,out)){note('That image is too large to save as a wallpaper on this device.');return}apply();mark();note('')};
+    img.onerror=()=>{URL.revokeObjectURL(url);note('That image could not be read.')};img.src=url};
+  chat.appendChild(panel);
+  btn.onclick=e=>{e.stopPropagation();const o=panel.classList.toggle('open');btn.setAttribute('aria-expanded',String(o));mark()};
+  document.addEventListener('click',e=>{if(panel.classList.contains('open')&&!panel.contains(e.target)&&e.target!==btn)panel.classList.remove('open')});
+  const inp=document.getElementById('bmnRiInput');
+  if(inp)inp.addEventListener('focus',()=>setTimeout(()=>{const m=document.getElementById('bmnRiMessages');if(m)m.scrollTop=m.scrollHeight},300));
+}
+window.__bmnRiPeer=id=>{peer=id;build();apply();mark();if(panel)panel.classList.remove('open')};
+// keyboard-safe composer: lift the conversation by the on-screen keyboard height
+if(window.visualViewport){const vv=window.visualViewport,upd=()=>{const kb=Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));document.documentElement.style.setProperty('--bmn-kb',kb>80?kb+'px':'0px');if(kb>80){const m=document.getElementById('bmnRiMessages');if(m)m.scrollTop=m.scrollHeight}};vv.addEventListener('resize',upd);vv.addEventListener('scroll',upd)}
+})();
+</script>
+
+<style id="bmn-actions-bridge-css">
+/* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
+html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
+html.bmn-community-app body>#bmnSheetHost:not(#x1):not(#x2){display:block!important;visibility:visible!important;pointer-events:auto!important}
+#bmnSheetHost{position:fixed;inset:0;z-index:2147483000;display:none}
+#bmnSheetHost[data-open="1"]{display:block}
+.bmn-sh-scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.bmn-sh{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(440px,100%);max-height:88dvh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));border-radius:28px 28px 0 0;border:1px solid rgba(255,255,255,.2);border-bottom:0;background:linear-gradient(160deg,rgba(24,30,52,.62),rgba(10,14,26,.72));backdrop-filter:blur(34px) saturate(170%);-webkit-backdrop-filter:blur(34px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 -20px 60px rgba(0,0,0,.4);color:#f7f9ff;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html.bmn-android .bmn-sh{background:#14171f;backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-bmn-theme="light"] .bmn-sh{background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(232,237,247,.86));color:#10131c;border-color:rgba(0,0,0,.1)}
+.bmn-sh h2{margin:0 0 4px;font-size:20px}.bmn-sh p{margin:0 0 12px;opacity:.72;font-size:13px}
+.bmn-sh input,.bmn-sh select,.bmn-sh textarea{width:100%;margin:0 0 10px;padding:13px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-size:16px}
+html[data-bmn-theme="light"] .bmn-sh input,html[data-bmn-theme="light"] .bmn-sh select,html[data-bmn-theme="light"] .bmn-sh textarea{border-color:rgba(0,0,0,.15);background:rgba(0,0,0,.04)}
+.bmn-sh button{min-height:46px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:inherit;font:inherit;font-weight:600;cursor:pointer;padding:0 14px}
+.bmn-sh button.pri{background:linear-gradient(135deg,#3b82f6,#7c3aed);border-color:transparent;color:#fff}
+.bmn-sh .row{display:flex;gap:8px;margin-bottom:10px}.bmn-sh .row>button{flex:1}
+.bmn-sh .link{background:none;border:0;min-height:36px;font-weight:500;opacity:.8;text-decoration:underline}
+.bmn-sh .note{min-height:20px;font-size:13px;margin:2px 0 8px;color:#fca5a5}.bmn-sh .note.ok{color:#86efac}
+.bmn-sh button:disabled{opacity:.55}.bmn-sh button:focus-visible,.bmn-sh input:focus-visible,.bmn-sh select:focus-visible,.bmn-sh textarea:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+</style>
+<script id="bmn-actions-bridge-js">
+(()=>{'use strict';
+const sb=()=>window.bmnSupabase||null,me=()=>window.bmnSession?.user?.id||null;
+const toast=(m,i)=>{try{window.LGTT&&window.LGTT.toast?window.LGTT.toast(m,i):0}catch(_){}};
+const errMsg=e=>String(e&&e.message||e||'Unknown error');
+const bg=fn=>{try{Promise.resolve(fn()).catch(()=>{})}catch(_){}};
+
+/* ---------- generic sheet host (one place for sign-in + report) ---------- */
+let host=null,lastFocus=null;
+function sheet(html,onMount){
+  if(!host){host=document.createElement('div');host.id='bmnSheetHost';host.innerHTML='<div class="bmn-sh-scrim" data-close></div><div class="bmn-sh" role="dialog" aria-modal="true"></div>';document.body.appendChild(host);
+    host.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeSheet()});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1')closeSheet()})}
+  const box=host.querySelector('.bmn-sh');box.innerHTML=html;host.dataset.open='1';lastFocus=document.activeElement;
+  try{onMount&&onMount(box)}catch(e){console.warn(e)}
+  const f=box.querySelector('input,select,textarea,button');if(f)setTimeout(()=>f.focus({preventScroll:true}),60);return box;
+}
+function closeSheet(){if(host){host.dataset.open='0';host.removeAttribute('data-open')}try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(_){}}
+
+/* ---------- ONE auth prompt that reuses the existing Supabase client/session ---------- */
+const PEND='bmn-pending-auth';
+const setPending=r=>{try{sessionStorage.setItem(PEND,JSON.stringify({r,t:Date.now()}))}catch(_){}};
+function replay(r){
+  closeSheet();
+  if(r==='inbox'){window.BMNRealInbox&&window.BMNRealInbox.open();return}
+  if(r==='profile'){window.LGTT&&window.LGTT.open({view:'profile'});return}
+  toast('Signed in. Tap again to continue.');
+}
+async function afterSignIn(reason){
+  for(let i=0;i<30&&!me();i++)await new Promise(r=>setTimeout(r,100));
+  try{window.loadCommunityPosts&&await window.loadCommunityPosts()}catch(_){}
+  try{window.LGTT&&window.LGTT.patchCounts&&window.LGTT.patchCounts()}catch(_){}
+  replay(reason);
+}
+window.requestCommunityAuth=function(reason){
+  if(me())return true;
+  reason=reason||'';setPending(reason);
+  sheet('<h2>Sign in to BMN</h2><p>Browsing is open to everyone. Signing in lets you like, comment, follow, message and post.</p>'+
+   '<input id="bmnShEmail" type="email" autocomplete="email" inputmode="email" placeholder="Email" aria-label="Email">'+
+   '<input id="bmnShPass" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">'+
+   '<div class="note" id="bmnShNote" role="status" aria-live="polite"></div>'+
+   '<div class="row"><button class="pri" data-a="in" type="button">Sign in</button><button data-a="up" type="button">Create account</button></div>'+
+   '<div class="row"><button data-a="g" type="button">Continue with Google</button></div>'+
+   '<div class="row"><button class="link" data-a="forgot" type="button">Forgot password?</button><button class="link" data-close type="button">Not now</button></div>',
+  box=>{
+    const note=(t,ok)=>{const n=box.querySelector('#bmnShNote');n.textContent=t||'';n.classList.toggle('ok',!!ok)};
+    const email=()=>box.querySelector('#bmnShEmail').value.trim(),pass=()=>box.querySelector('#bmnShPass').value;
+    let busy=false;
+    box.addEventListener('click',async e=>{
+      const b=e.target.closest('[data-a]');if(!b||busy)return;const a=b.dataset.a,c=sb();
+      if(!c){note('BMN is still connecting. Try again in a moment.');return}
+      busy=true;box.querySelectorAll('button').forEach(x=>x.disabled=true);
+      try{
+        if(a==='g'){const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#community-page'}});if(error)throw error;return}
+        if(a==='forgot'){if(!email()){note('Enter your email first.');return}const {error}=await c.auth.resetPasswordForEmail(email(),{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;note('If that email has an account, a reset link is on its way.',true);return}
+        if(!email()||!pass()){note('Enter your email and password.');return}
+        if(a==='in'){const {data,error}=await c.auth.signInWithPassword({email:email(),password:pass()});if(error)throw error;window.bmnSession=data.session;try{sessionStorage.removeItem(PEND)}catch(_){}await afterSignIn(reason);return}
+        if(a==='up'){if(pass().length<6){note('Use a password with at least 6 characters.');return}const un=email().split('@')[0];const {data,error}=await c.auth.signUp({email:email(),password:pass(),options:{data:{username:un,display_name:un},emailRedirectTo:location.origin+location.pathname+'#community-page'}});if(error)throw error;
+          if(data.session){window.bmnSession=data.session;try{sessionStorage.removeItem(PEND)}catch(_){}await afterSignIn(reason)}else note('Check your email to verify your account, then sign in.',true)}
+      }catch(err){note(errMsg(err))}
+      finally{busy=false;box.querySelectorAll('button').forEach(x=>x.disabled=false)}
+    });
+  });
+  return false;
+};
+// returning from Google / email verification: resume what the person asked for
+(function resume(){let raw=null;try{raw=sessionStorage.getItem(PEND)}catch(_){}if(!raw)return;let p;try{p=JSON.parse(raw)}catch(_){return}
+  if(!p||Date.now()-p.t>15*60*1000){try{sessionStorage.removeItem(PEND)}catch(_){}return}
+  let n=0;const t=setInterval(()=>{if(me()&&window.LGTT){clearInterval(t);try{sessionStorage.removeItem(PEND)}catch(_){}replay(p.r)}else if(++n>60)clearInterval(t)},500)})();
+
+/* ---------- LIKE (real: public.likes) ---------- */
+const likePending=new Set();
+window.bmnLikeReal=async function(id,on){
+  const c=sb(),uid=me();
+  if(!c||!uid){window.requestCommunityAuth('like');return false}
+  if(likePending.has(id))return false;likePending.add(id);
+  const L=window.cachedLikes||(window.cachedLikes={}),M=window.cachedMyLikes;
+  if(!M||typeof M.has!=='function'){likePending.delete(id);return false}
+  const prev=Number(L[id]||0),had=M.has(id);
+  if(on&&!had){M.add(id);L[id]=prev+1}else if(!on&&had){M.delete(id);L[id]=Math.max(0,prev-1)}
+  try{
+    if(on){const {error}=await c.from('likes').insert({post_id:id,user_id:uid});if(error&&error.code!=='23505')throw error;
+      const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(id));
+      if(!error&&post&&post.user_id&&post.user_id!==uid)bg(()=>c.from('notifications').insert({user_id:post.user_id,actor_id:uid,post_id:id,type:'like',message:'liked your post'}))}
+    else{const {error}=await c.from('likes').delete().eq('post_id',id).eq('user_id',uid);if(error)throw error}
+    return true;
+  }catch(e){had?M.add(id):M.delete(id);L[id]=prev;toast('Like not saved: '+errMsg(e),'lock');return false}
+  finally{likePending.delete(id)}
+};
+
+/* ---------- COMMENT (real: public.comments, content/body compatible) ---------- */
+let commenting=false;
+window.bmnCommentReal=async function(postId,text){
+  const c=sb(),uid=me();if(!c||!uid)throw new Error('Sign in to comment.');
+  if(commenting)throw new Error('Your previous comment is still sending.');commenting=true;
+  try{
+    const base={post_id:postId,user_id:uid};
+    const tries=[{...base,content:text,body:text},{...base,content:text},{...base,body:text}];
+    let last=null,row=null;
+    for(const r of tries){const res=await c.from('comments').insert(r).select('*');
+      if(!res.error){row=(res.data&&res.data[0])||{id:'c-'+Date.now(),post_id:postId,user_id:uid,content:text,created_at:new Date().toISOString()};last=null;break}
+      last=res.error;const m=String(res.error.message||'').toLowerCase();if(!(m.includes('column')||m.includes('schema cache')||m.includes('null value in column')))break}
+    if(last)throw last;
+    const C=window.cachedComments||(window.cachedComments={});(C[postId]=C[postId]||[]).push(row);
+    const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(postId));
+    if(post&&post.user_id&&post.user_id!==uid)bg(()=>c.from('notifications').insert({user_id:post.user_id,actor_id:uid,post_id:postId,type:'comment',message:'commented on your post'}));
+    return row;
+  }finally{commenting=false}
+};
+window.bmnEnsureCommentProfiles=async function(postId){
+  const c=sb();if(!c)return;const P=window.bmnProfiles||(window.bmnProfiles={});
+  const ids=[...new Set(((window.cachedComments||{})[postId]||[]).map(r=>r.user_id).filter(id=>id&&!P[id]))];if(!ids.length)return;
+  try{const {data,error}=await c.from('profiles').select('*').in('id',ids);if(!error)(data||[]).forEach(p=>{P[p.id]={...(P[p.id]||{}),...p}})}catch(_){}
+};
+
+/* ---------- REPOST (real: public.reposts) ---------- */
+const repostPending=new Set();
+window.bmnRepostReal=async function(id){
+  const c=sb(),uid=me();if(!c||!uid){window.requestCommunityAuth('repost');return false}
+  const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(id));
+  if(post&&post.user_id===uid){toast("You can't repost your own video.");return false}
+  if(repostPending.has(id))return false;repostPending.add(id);
+  try{
+    const {error}=await c.from('reposts').insert({user_id:uid,post_id:id});
+    if(error){
+      if(error.code==='23505'){toast('You already reposted this video.');return true}
+      if(/reposts|schema cache|PGRST205|42P01|does not exist/i.test(String(error.message||'')+String(error.code||''))){toast('Reposts are not switched on for this server yet.');return false}
+      throw error}
+    if(post&&post.user_id)bg(()=>c.from('notifications').insert({user_id:post.user_id,actor_id:uid,post_id:id,type:'repost',message:'reposted your post'}));
+    toast('Reposted to your profile','repeat');return true;
+  }catch(e){toast('Repost failed: '+errMsg(e),'lock');return false}
+  finally{repostPending.delete(id)}
+};
+
+/* ---------- REPORT (real: public.content_reports) ---------- */
+const REASONS=[['spam','Spam'],['harassment','Harassment or bullying'],['hate','Hate or hateful conduct'],['violence','Violence'],['nudity','Nudity'],['sexual_content','Sexual content'],['scam','Scam or misleading content'],['copyright','Copyright'],['other','Other']];
+window.bmnReportReal=function(postId){
+  if(!me()){window.requestCommunityAuth('report');return}
+  const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(postId));
+  if(!post){toast('This post is no longer available. Refresh and try again.');return}
+  sheet('<h2>Report this video</h2><p>Reports go to BMN moderation. You will not be identified to the creator.</p>'+
+    '<select id="bmnRpReason" aria-label="Reason">'+REASONS.map(r=>'<option value="'+r[0]+'">'+r[1]+'</option>').join('')+'</select>'+
+    '<textarea id="bmnRpDetails" rows="3" maxlength="2000" placeholder="Details (optional). Do not include private information." aria-label="Details"></textarea>'+
+    '<div class="note" id="bmnRpNote" role="status" aria-live="polite"></div>'+
+    '<div class="row"><button class="pri" data-go type="button">Submit report</button><button data-close type="button">Cancel</button></div>',
+  box=>{let busy=false;box.querySelector('[data-go]').onclick=async e=>{if(busy)return;busy=true;const btn=e.currentTarget;btn.disabled=true;const n=box.querySelector('#bmnRpNote');
+    try{const {error}=await sb().from('content_reports').insert({reporter_id:me(),post_id:postId,reported_user_id:post.user_id,reason:box.querySelector('#bmnRpReason').value,details:box.querySelector('#bmnRpDetails').value.trim().slice(0,2000)||null});
+      if(error)throw error;closeSheet();toast('Report submitted to BMN moderation','flag')}
+    catch(err){n.textContent='Report was not saved: '+errMsg(err);btn.disabled=false;busy=false}}});
+};
 })();
 </script>
 
