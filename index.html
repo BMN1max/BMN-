@@ -8721,17 +8721,29 @@ async function sendImage(input){const f=input.files&&input.files[0];input.value=
  if(!/^image\//.test(f.type)){riNote('Please choose a photo.',true);return}if(f.size>25*1024*1024){riNote('That photo is larger than 25 MB. Choose a smaller one.',true);return}
  if(navigator.onLine===false){riNote('You are offline. Reconnect to send photos.',true);return}
  bmnRiSending=true;send.disabled=true;riNote('Sending photo\u2026');
- try{const blob=await new Promise((res,rej)=>{const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?res(b):rej(new Error('Could not process this photo')),'image/jpeg',.82)};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('This photo format is not supported'))};im.src=url});
-  const path=u.id+'/messages/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+ try{const v=await verifiedUser();if(v.expired)throw{bmnExpired:true};if(v.err)throw{bmnErr:v.err};const uid=v.user.id;const blob=await new Promise((res,rej)=>{const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?res(b):rej(new Error('Could not process this photo')),'image/jpeg',.82)};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('This photo format is not supported'))};im.src=url});
+  const path=uid+'/messages/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
   const up=await s.storage.from('community-media').upload(path,blob,{cacheControl:'3600',upsert:false,contentType:'image/jpeg'});if(up.error)throw up.error;
-  const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:IMGP+path});
+  const {error}=await s.from('messages').insert({sender_id:uid,recipient_id:peerId,content:IMGP+path});
   if(error){try{await s.storage.from('community-media').remove([path])}catch(_){}throw error}
   riNote('');const empty=chatList.querySelector('.bmn-ri-empty');if(empty)chatList.innerHTML='';const d=document.createElement('div');d.className='bmn-ri-msg mine bmn-ri-pop';d.innerHTML='<img class="bmn-ri-img" alt="Photo"><div class="bmn-ri-stamp">'+fmtTime(new Date().toISOString())+'</div>';const o=URL.createObjectURL(blob);d.querySelector('img').src=o;d.querySelector('img').onclick=()=>lightbox(o);chatList.appendChild(d);chatList.scrollTop=chatList.scrollHeight;loadList(search.value.trim().toLowerCase());
- }catch(e){riNote('Photo not sent: '+(e.message||'check permissions for the community-media bucket'),true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
+ }catch(e){riNote(e&&(e.bmnExpired||e.bmnErr)?friendlySendError(e,peerId):'Photo not sent: '+(e.message||'check permissions for the community-media bucket'),true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
+async function verifiedUser(){const c=sb();if(!c)return{err:'Messaging is still connecting. Your text is kept. Try again in a moment.'};
+ try{const {data,error}=await c.auth.getUser();
+  if(error||!data||!data.user){const st=error&&error.status,m=String(error&&error.message||'');if(!error||st===401||st===403||/session|jwt|token|not authenticated/i.test(m))return{expired:true};return{err:'Could not verify your sign-in (check your connection). Your text is kept.'}}
+  return{user:data.user}}catch(e){return{err:'Could not verify your sign-in (check your connection). Your text is kept.'}}}
+function friendlySendError(e,peer){
+ if(e&&e.bmnExpired){setTimeout(()=>{try{window.requestCommunityAuth&&window.requestCommunityAuth('inbox')}catch(_){}},150);return'Your session has expired. Please sign in again. Your text is kept.'}
+ if(e&&e.bmnErr)return e.bmnErr;
+ const msg=String(e&&e.message||''),self=peer&&window.bmnSession&&window.bmnSession.user&&peer===window.bmnSession.user.id;
+ if((e&&e.code==='42501')||/row-level security|violates/i.test(msg)){
+  return self?'Messaging yourself is blocked by the current database rule on the messages table (sender_id <> recipient_id). Your sign-in is fine. To allow self-chat, run messages-self-chat.sql in the Supabase SQL editor, or message another account.'
+             :'The database rejected this message (security policy). Sign out and sign in again, then retry. Your text is kept.'}
+ return'Message not sent: '+(msg||'check your connection')+'. Your text is kept, tap send to retry.'}
 async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await msgSelect(b=>b.or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500));if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(name(id))}</strong><small>${esc(previewText(m.content))}</small></span><time class="bmn-ri-time">${fmtDate(m.created_at)}</time></button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
 async function openChat(id){const u=session();if(!u){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('inbox');else alert('Please sign in to use Inbox.');return}peerId=id||u.id;await ensureProfiles([peerId]);currentPeer=peerId;try{window.__bmnRiPeer&&window.__bmnRiPeer(peerId)}catch(_){}chat.classList.add('open');$('#bmnRiWho').innerHTML=`${avatar(peerId)}<div><strong>${esc(peerId===u.id?'Yourself':name(peerId))}</strong><small>${esc(handle(peerId)||'BMN Community')}</small></div>`;$('#bmnRiNote').textContent='';await loadMessages();}
 async function loadMessages(silent){const s=sb(),u=session();if(!s||!u||!peerId)return;const forPeer=peerId;if(!silent)chatList.innerHTML='<div class="bmn-ri-empty">Loading…</div>';try{const {data,error}=await msgSelect(b=>{let r=b.order('created_at',{ascending:true});r=forPeer===u.id?r.eq('sender_id',u.id).eq('recipient_id',u.id):r.or(`and(sender_id.eq.${u.id},recipient_id.eq.${forPeer}),and(sender_id.eq.${forPeer},recipient_id.eq.${u.id})`);return r.limit(1000)});if(error)throw error;if(forPeer!==peerId)return;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const near=chatList.scrollHeight-chatList.scrollTop-chatList.clientHeight<140;chatList.innerHTML=rows.length?rows.map(m=>{const mine=m.sender_id===u.id;return `<div class="bmn-ri-msg ${mine?'mine':''}">${bubbleBody(m.content)}<div class="bmn-ri-stamp">${fmtTime(m.created_at)}${mine&&m.read_at?' · Read':''}</div></div>`}).join(''):'<div class="bmn-ri-empty">No messages yet. Say hello.</div>';hydrateImgs();if(!silent||near)chatList.scrollTop=chatList.scrollHeight;if(forPeer!==u.id){const unread=rows.filter(m=>m.recipient_id===u.id&&!m.read_at).map(m=>m.id);if(unread.length){try{await s.from('messages').update({read_at:new Date().toISOString()}).in('id',unread)}catch(_){}}}}catch(e){if(silent){riNote('Could not refresh this conversation: '+(e.message||''),true)}else chatList.innerHTML=`<div class="bmn-ri-empty">Could not load this conversation.<br><small>${esc(e.message||'')}</small></div>`}}
-let bmnRiSending=false;async function sendMessage(){const s=sb(),u=session(),text=composer.value.trim();if(bmnRiSending)return;if(!u){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(!s||!peerId||!text)return;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(peerId))){riNote('This conversation has no valid recipient. Go back and open it again.',true);return}if(navigator.onLine===false){riNote('You are offline. Your message is still in the box, send it when you reconnect.',true);return}bmnRiSending=true;send.disabled=true;riNote('');const old=text;try{const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:text});if(error)throw error;composer.value='';composer.style.height='auto';const empty=chatList.querySelector('.bmn-ri-empty');if(empty)chatList.innerHTML='';const d=document.createElement('div');d.className='bmn-ri-msg mine bmn-ri-pop';d.innerHTML=esc(text)+'<div class="bmn-ri-stamp">'+fmtTime(new Date().toISOString())+'</div>';chatList.appendChild(d);chatList.scrollTop=chatList.scrollHeight;try{window.LGTT?.haptic?.('send')}catch(_){}if(peerId!==u.id)s.from('notifications').insert({user_id:peerId,actor_id:u.id,type:'message',message:'sent you a message'}).then(()=>{},()=>{});loadMessages(true);loadList(search.value.trim().toLowerCase())}catch(e){composer.value=old;composer.dispatchEvent(new Event('input'));riNote('Message not sent: '+(e.message||'check your connection and permissions')+'. Your text is kept, tap send to retry.',true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
+let bmnRiSending=false;async function sendMessage(){const s=sb(),u=session(),text=composer.value.trim();if(bmnRiSending)return;if(!u){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(!s||!peerId||!text)return;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(peerId))){riNote('This conversation has no valid recipient. Go back and open it again.',true);return}if(navigator.onLine===false){riNote('You are offline. Your message is still in the box, send it when you reconnect.',true);return}bmnRiSending=true;send.disabled=true;riNote('');const old=text;try{const v=await verifiedUser();if(v.expired)throw{bmnExpired:true};if(v.err)throw{bmnErr:v.err};const uid=v.user.id;const {error}=await s.from('messages').insert({sender_id:uid,recipient_id:peerId,content:text});if(error)throw error;composer.value='';composer.style.height='auto';const empty=chatList.querySelector('.bmn-ri-empty');if(empty)chatList.innerHTML='';const d=document.createElement('div');d.className='bmn-ri-msg mine bmn-ri-pop';d.innerHTML=esc(text)+'<div class="bmn-ri-stamp">'+fmtTime(new Date().toISOString())+'</div>';chatList.appendChild(d);chatList.scrollTop=chatList.scrollHeight;try{window.LGTT?.haptic?.('send')}catch(_){}if(peerId!==u.id)s.from('notifications').insert({user_id:peerId,actor_id:u.id,type:'message',message:'sent you a message'}).then(()=>{},()=>{});loadMessages(true);loadList(search.value.trim().toLowerCase())}catch(e){composer.value=old;composer.dispatchEvent(new Event('input'));riNote(friendlySendError(e,peerId),true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
 async function clearConversation(){const s=sb(),u=session();if(!s||!u||!peerId)return;try{const {error}=await s.rpc('bmn_clear_conversation',{p_peer:peerId});if(error)throw error;await loadMessages();await loadList(search.value.trim().toLowerCase());}catch(e){$('#bmnRiNote').textContent='Could not clear conversation: '+(e.message||'') }}
 function subscribe(){const s=sb(),u=session();if(!s||!u||!s.channel)return;channel?.unsubscribe?.();channel=s.channel('bmn-real-messages-'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`sender_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages(true)}}).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`recipient_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages(true)}}).subscribe();}
 const LENS={feed:0,discover:1,inbox:3,profile:4};
@@ -8877,6 +8889,27 @@ html.bmn-community-app #lgtt{-webkit-user-select:none;user-select:none;-webkit-t
 html.bmn-community-app #lgtt input,html.bmn-community-app #lgtt textarea,html.bmn-community-app #bmnRealInbox input,html.bmn-community-app #bmnRealInbox textarea,html.bmn-community-app .bmn-ri-msg{-webkit-user-select:text;user-select:text}
 html.bmn-community-app #lgtt button,html.bmn-community-app #bmnRealInbox button{touch-action:manipulation}
 html.bmn-community-app #lgtt img,html.bmn-community-app #lgtt video{-webkit-user-drag:none;-webkit-touch-callout:none}
+</style>
+
+<style id="bmn-fit-css">
+html.bmn-community-app body.bmn-community-app #lgtt,html.bmn-community-app #lgtt{bottom:calc(0px - var(--bmn-ext,0px))!important}
+#bmnLayoutDebug{position:fixed;left:8px;top:90px;z-index:2147483647;max-width:70vw;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.8);color:#9fe;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap;pointer-events:none}
+/* Android: conventional solid TikTok-style surfaces; Liquid Glass stays on iPhone */
+html.bmn-android #lgtt *,html.bmn-android #bmnRealInbox *,html.bmn-android #bmnSheetHost *,html.bmn-android #bmnInstallChip{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.bmn-android #lgtt .lgtt-dock{background:#14171f!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 6px 20px rgba(0,0,0,.45)!important}
+html.bmn-android #lgtt .lgtt-dock-lens{background:rgba(255,255,255,.14)!important;box-shadow:none!important}
+html.bmn-android #lgtt .lgtt-glass{background:rgba(24,26,34,.86)!important;box-shadow:none!important}
+html.bmn-android .bmn-ri-chat-head,html.bmn-android .bmn-ri-compose,html.bmn-android #lgttStage>#bmnRealInbox .bmn-ri-chat-head,html.bmn-android #lgttStage>#bmnRealInbox .bmn-ri-compose{background:rgba(9,12,20,.94)!important}
+html.bmn-android .bmn-sh{background:#14171f!important}
+/* in-app camera */
+#bmnCam{position:absolute;inset:0;z-index:95;background:#000;display:flex;align-items:flex-end;justify-content:center}
+#bmnCam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#bmnCam .bmn-cam-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;color:#fff;font:600 15px system-ui}
+#bmnCam button{border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);color:#fff;width:44px;height:44px;border-radius:50%;font-size:18px;touch-action:manipulation}
+#bmnCam .bmn-cam-bot{position:relative;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 28px)}
+#bmnCam .bmn-cam-rec{width:76px;height:76px;border:4px solid #fff;background:#ff2d55;box-shadow:inset 0 0 0 5px #000;transition:border-radius .2s}
+#bmnCam.rec .bmn-cam-rec{border-radius:20px}
+#bmnCam .bmn-cam-msg{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 130px);text-align:center;color:#fca5a5;font:14px/1.4 system-ui}
 </style>
 
 <style id="bmn-actions-bridge-css">
@@ -9133,15 +9166,42 @@ let tries=0;const t=setInterval(()=>{if(standalone()){clearInterval(t);return}
 const $=s=>document.querySelector(s);
 const toast=(m,i)=>{try{window.LGTT&&window.LGTT.toast&&window.LGTT.toast(m,i)}catch(_){}};
 /* ---- Create sheet: camera capture, 50 MB guard, status mirroring, duplicate-publish guard ---- */
+function openCamera(onFile){
+  const st=document.getElementById('lgttStage')||document.body;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){toast('Live camera is not supported in this browser. Use Record video instead.','info');return}
+  const d=document.createElement('div');d.id='bmnCam';
+  d.innerHTML='<video playsinline muted autoplay></video><div class="bmn-cam-top"><button type="button" data-x aria-label="Close camera">\u2715</button><span class="bmn-cam-t">0:00</span><button type="button" data-f aria-label="Flip camera">\u21BB</button></div><div class="bmn-cam-msg" role="status" aria-live="polite"></div><div class="bmn-cam-bot"><button type="button" class="bmn-cam-rec" data-r aria-label="Start recording"></button></div>';
+  st.appendChild(d);
+  const video=d.querySelector('video'),T=d.querySelector('.bmn-cam-t'),M=d.querySelector('.bmn-cam-msg');
+  let stream=null,rec=null,chunks=[],timer=0,t0=0,facing='user';
+  const msg=t=>{M.textContent=t||''};
+  const stop=()=>{try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(_){}stream=null};
+  const close=()=>{clearInterval(timer);stop();d.remove()};
+  async function start(){stop();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1080},height:{ideal:1920}},audio:true});video.srcObject=stream;video.style.transform=facing==='user'?'scaleX(-1)':'none';msg('')}catch(e){msg(e&&e.name==='NotAllowedError'?'Camera or microphone permission was denied. Allow them in your phone settings, then try again.':'Could not open the camera: '+(e&&e.message||''))}}
+  const pick=()=>{for(const t of ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))return t}return''};
+  function begin(){if(!stream)return;chunks=[];const type=pick();const opts={videoBitsPerSecond:4e6};if(type)opts.mimeType=type;
+    try{rec=new MediaRecorder(stream,opts)}catch(e){try{rec=new MediaRecorder(stream)}catch(e2){msg('Recording is not supported on this device.');return}}
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    rec.onstop=()=>{const mt=String(rec.mimeType||type||'video/mp4').split(';')[0],ext=mt.indexOf('mp4')>-1?'mp4':'webm';const f=new File(chunks,'bmn-recording-'+Date.now()+'.'+ext,{type:mt});close();if(f.size>0)onFile(f);else toast('Nothing was recorded.','info')};
+    rec.start(500);d.classList.add('rec');d.querySelector('[data-r]').setAttribute('aria-label','Stop recording');t0=Date.now();
+    timer=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);T.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');if(s>=60)end()},250)}
+  function end(){clearInterval(timer);if(rec&&rec.state!=='inactive')rec.stop()}
+  d.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if('x' in b.dataset){if(rec&&rec.state==='recording'){rec.onstop=null;try{rec.stop()}catch(_){}}close()}
+    else if('f' in b.dataset){if(rec&&rec.state==='recording')return;facing=facing==='user'?'environment':'user';start()}
+    else if('r' in b.dataset){rec&&rec.state==='recording'?end():begin()}});
+  start();
+}
 function enhanceCreate(){
   const host=$('#lgttCreateBody'),file=$('#bmnOverlayFileV17');if(!host||!file||$('#bmnCamV17'))return;
   const pub=$('#bmnOverlayPublishV17'),status=$('#bmnOverlayStatusV17');
   const row=document.createElement('div');row.id='bmnCamV17';
-  row.innerHTML='<label for="bmnCamVideoV17" class="lgtt-btn lgtt-pill">Record video</label><input id="bmnCamVideoV17" type="file" accept="video/*" capture="environment" hidden><label for="bmnCamPhotoV17" class="lgtt-btn lgtt-pill">Take photo</label><input id="bmnCamPhotoV17" type="file" accept="image/*" capture="environment" hidden>';
+  row.innerHTML='<label for="bmnCamVideoV17" class="lgtt-btn lgtt-pill">Record video</label><input id="bmnCamVideoV17" type="file" accept="video/*" capture="environment" hidden><label for="bmnCamPhotoV17" class="lgtt-btn lgtt-pill">Take photo</label><input id="bmnCamPhotoV17" type="file" accept="image/*" capture="environment" hidden><button type="button" id="bmnCamLiveV17" class="lgtt-btn lgtt-pill" style="grid-column:1/-1">Open in-app camera</button>';
   file.parentElement.insertBefore(row,file.previousElementSibling&&file.previousElementSibling.tagName==='LABEL'?file.previousElementSibling.nextSibling:file);
   const feed=src=>{const f=src.files&&src.files[0];src.value='';if(!f)return;useFile(f)};
   const useFile=f=>{if(f.size>50*1024*1024){if(status)status.textContent='That file is '+(f.size/1048576).toFixed(0)+' MB. The limit is 50 MB. Choose a shorter clip.';return}
     try{const dt=new DataTransfer();dt.items.add(f);file.files=dt.files;file.dispatchEvent(new Event('change',{bubbles:true}))}catch(_){if(status)status.textContent='This browser cannot attach that file.'}};
+  $('#bmnCamLiveV17').addEventListener('click',()=>openCamera(useFile));
   $('#bmnCamVideoV17').addEventListener('change',e=>feed(e.target));
   $('#bmnCamPhotoV17').addEventListener('change',e=>feed(e.target));
   file.addEventListener('change',()=>{const f=file.files&&file.files[0];if(f&&f.size>50*1024*1024){file.value='';if(status)status.textContent='That file is larger than 50 MB. Choose a shorter clip.';const p=$('#bmnOverlayPreviewV17');if(p){p.replaceChildren();p.style.display='none'}}},true);
@@ -9165,6 +9225,32 @@ window.bmnSaveVideo=async function(src,id){
   window.bmnSheet('<h2>Save video</h2><p>Your video is ready. Tap below, then choose <b>Save Video</b> to add it to your Photos.</p><div class="row"><button class="pri" data-s type="button">Save to Photos</button><button data-close type="button">Cancel</button></div><div class="note" id="bmnSaveNote" role="status" aria-live="polite"></div>',box=>{
     box.querySelector('[data-s]').addEventListener('click',async()=>{try{await navigator.share({files:[file],title:'BMN video'});window.bmnCloseSheet()}catch(e){if(e&&e.name==='AbortError')return;const n=box.querySelector('#bmnSaveNote');if(n)n.textContent='Could not open the share sheet: '+(e.message||'')}})});
 };
+})();
+</script>
+
+<script id="bmn-fit-js">
+(()=>{'use strict';
+const root=document.documentElement;
+const standalone=()=>!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+let dbg=null,raf=0;
+function fit(){
+  if(!document.body)return;
+  const p=document.createElement('div');p.style.cssText='position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(p);
+  const h=Math.round(p.getBoundingClientRect().height);p.remove();
+  const portrait=window.innerHeight>=window.innerWidth,long=Math.max(screen.width,screen.height),short=Math.min(screen.width,screen.height),full=portrait?long:short;
+  /* Only the installed app can paint below the layout viewport. In a browser tab the toolbar owns that space. */
+  let ext=standalone()?Math.max(0,Math.round(full-h)):0;if(ext>120)ext=0;
+  root.style.setProperty('--bmn-ext',ext+'px');
+  if(/[?&]layout=1/.test(location.search)){
+    if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
+    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a')].join('\n');
+  }
+}
+const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)};
+['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,sched));
+if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sched);else sched();
+[300,1200,3000].forEach(t=>setTimeout(sched,t));
 })();
 </script>
 
