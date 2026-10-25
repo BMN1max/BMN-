@@ -7381,7 +7381,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         { label: 'Playback speed · 0.5×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 0.5; v.play().catch(() => {}); toast('Playback speed 0.5×', 'play'); } } },
         { label: 'Playback speed · 1×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 1; v.play().catch(() => {}); toast('Playback speed 1×', 'play'); } } },
         { label: 'Playback speed · 2×', icon: 'play', fn: () => { const v = slide.querySelector('video'); if (v) { v.playbackRate = 2; v.play().catch(() => {}); toast('Playback speed 2×', 'play'); } } },
-        { label: 'Download video / Save to Photos', icon: 'download', fn: async () => { if (!p.src) return toast('No video file is available to download', 'info'); const filename='bmn-video-'+String(p.id||'video').replace(/[^a-z0-9_-]/gi,'')+'.mp4'; try { const response=await fetch(p.src,{mode:'cors'}); if(!response.ok)throw new Error('download unavailable'); const blob=await response.blob(); const file=new File([blob],filename,{type:blob.type||'video/mp4'}); if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'BMN video'});return;} const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);toast('Video download started. On iPhone, use Share → Save Video if offered.','download'); } catch(err) { const a=document.createElement('a');a.href=p.src;a.download=filename;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();toast('Opened the video for download. If iOS does not save to Photos directly, use Share → Save Video.','download'); } } },
+        { label: 'Download video / Save to Photos', icon: 'download', fn: () => { if (!p.src) return toast('No video file is available to download', 'info'); if (window.bmnSaveVideo) window.bmnSaveVideo(p.src, p.id); } },
         { label: 'Copy link', icon: 'link', fn: () => copyText(postUrl(p)).then(() => toast('Link copied', 'link')) },
         { label: 'Share…', icon: 'share', fn: () => Share.open(p) },
         '-',
@@ -8118,6 +8118,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     patchCounts() { Feed.refreshAll(); },
     profileId: () => Profile.id(),
     setView: (v, u) => Views.set(v, u),
+    openCreate: () => Create.open(),
     resume: () => Feed.applyPlayback(),
     haptic: k => haptic(k), toast
   };
@@ -8705,15 +8706,31 @@ function name(id){const p=profile(id);return p.display_name||p.full_name||p.user
 function handle(id){const p=profile(id);return p.username?'@'+p.username:'';}
 function avatar(id){const p=profile(id),av=p.avatar_display_url||p.avatar_url||p.avatar||'';return av?`<span class="bmn-ri-avatar"><img src="${esc(av)}" alt=""></span>`:`<span class="bmn-ri-avatar">${esc((name(id)[0]||'B').toUpperCase())}</span>`}
 async function ensureProfiles(ids){const s=sb();if(!s||!ids.length)return;if(!window.bmnProfiles)window.bmnProfiles={};const missing=ids.filter(id=>id&&!window.bmnProfiles[id]);if(!missing.length)return;try{const {data,error}=await s.from('profiles').select('*').in('id',missing);if(!error)(data||[]).forEach(p=>window.bmnProfiles[p.id]={...(window.bmnProfiles[p.id]||{}),...p});}catch(_){} }
-function shell(){if(overlay)return;overlay=document.createElement('section');overlay.id='bmnRealInbox';overlay.setAttribute('aria-label','BMN Inbox');overlay.innerHTML=`<header class="bmn-ri-head"><button class="bmn-ri-btn" id="bmnRiClose" aria-label="Back">‹</button><strong>Inbox</strong><button class="bmn-ri-btn" id="bmnRiSelf" aria-label="Open self chat">◎</button></header><input class="bmn-ri-search" id="bmnRiSearch" type="search" placeholder="Search messages" aria-label="Search messages"><div class="bmn-ri-list" id="bmnRiList"></div><section class="bmn-ri-chat" id="bmnRiChat" aria-label="Conversation"><header class="bmn-ri-chat-head"><button class="bmn-ri-btn" id="bmnRiChatBack" aria-label="Back to inbox">‹</button><div class="who" id="bmnRiWho"></div><button class="bmn-ri-btn" id="bmnRiClear" aria-label="Clear conversation">⌫</button></header><div class="bmn-ri-messages" id="bmnRiMessages"></div><div class="bmn-ri-note" id="bmnRiNote"></div><form class="bmn-ri-compose" id="bmnRiForm"><div class="bmn-ri-composer-shell"><button type="button" class="bmn-ri-attach" id="bmnRiAttach" aria-label="Attachment">＋</button><textarea id="bmnRiInput" rows="1" maxlength="5000" placeholder="Message…" aria-label="Message"></textarea><button class="bmn-ri-send" id="bmnRiSend" type="submit" disabled aria-label="Send">➤</button></div></form><input id="bmnRiFile" type="file" accept="image/*,video/*" hidden></section>`;(document.getElementById('lgttStage')||document.body).appendChild(overlay);list=$('#bmnRiList');search=$('#bmnRiSearch');chat=$('#bmnRiChat');chatList=$('#bmnRiMessages');composer=$('#bmnRiInput');send=$('#bmnRiSend');
-$('#bmnRiClose').onclick=close;$('#bmnRiChatBack').onclick=()=>{chat.classList.remove('open');peerId=null;currentPeer=null;loadList()};$('#bmnRiSelf').onclick=()=>openChat(session()?.id);$('#bmnRiClear').onclick=clearConversation;search.oninput=()=>loadList(search.value.trim().toLowerCase());composer.oninput=()=>{send.disabled=!composer.value.trim();composer.style.height='auto';composer.style.height=Math.min(composer.scrollHeight,130)+'px'};$('#bmnRiForm').onsubmit=e=>{e.preventDefault();sendMessage()};$('#bmnRiAttach').onclick=()=>$('#bmnRiFile').click();$('#bmnRiFile').onchange=()=>{if($('#bmnRiFile').files?.[0])$('#bmnRiNote').textContent='Attachments are not stored in the current messages schema, so no file was sent.'};}
+function shell(){if(overlay)return;overlay=document.createElement('section');overlay.id='bmnRealInbox';overlay.setAttribute('aria-label','BMN Inbox');overlay.innerHTML=`<header class="bmn-ri-head"><button class="bmn-ri-btn" id="bmnRiClose" aria-label="Back">‹</button><strong>Inbox</strong><button class="bmn-ri-btn" id="bmnRiSelf" aria-label="Open self chat">◎</button></header><input class="bmn-ri-search" id="bmnRiSearch" type="search" placeholder="Search messages" aria-label="Search messages"><div class="bmn-ri-list" id="bmnRiList"></div><section class="bmn-ri-chat" id="bmnRiChat" aria-label="Conversation"><header class="bmn-ri-chat-head"><button class="bmn-ri-btn" id="bmnRiChatBack" aria-label="Back to inbox">‹</button><div class="who" id="bmnRiWho"></div><button class="bmn-ri-btn" id="bmnRiClear" aria-label="Clear conversation">⌫</button></header><div class="bmn-ri-messages" id="bmnRiMessages"></div><div class="bmn-ri-note" id="bmnRiNote"></div><form class="bmn-ri-compose" id="bmnRiForm"><div class="bmn-ri-composer-shell"><button type="button" class="bmn-ri-attach" id="bmnRiAttach" aria-label="Attachment">＋</button><textarea id="bmnRiInput" rows="1" maxlength="5000" placeholder="Message…" aria-label="Message"></textarea><button class="bmn-ri-send" id="bmnRiSend" type="submit" disabled aria-label="Send">➤</button></div></form><input id="bmnRiFile" type="file" accept="image/*" hidden></section>`;(document.getElementById('lgttStage')||document.body).appendChild(overlay);list=$('#bmnRiList');search=$('#bmnRiSearch');chat=$('#bmnRiChat');chatList=$('#bmnRiMessages');composer=$('#bmnRiInput');send=$('#bmnRiSend');
+$('#bmnRiClose').onclick=close;$('#bmnRiChatBack').onclick=()=>{chat.classList.remove('open');peerId=null;currentPeer=null;loadList()};$('#bmnRiSelf').onclick=()=>openChat(session()?.id);$('#bmnRiClear').onclick=clearConversation;search.oninput=()=>loadList(search.value.trim().toLowerCase());composer.oninput=()=>{send.disabled=!composer.value.trim();composer.style.height='auto';composer.style.height=Math.min(composer.scrollHeight,130)+'px'};$('#bmnRiForm').onsubmit=e=>{e.preventDefault();sendMessage()};$('#bmnRiAttach').onclick=()=>$('#bmnRiFile').click();$('#bmnRiFile').onchange=()=>sendImage($('#bmnRiFile'));}
 function open(){shell();{const st=document.getElementById('lgttStage');if(st&&overlay.parentNode!==st)st.appendChild(overlay)}overlay.classList.add('open');document.getElementById('lgttStage')?.classList.add('bmn-inbox-open');try{window.LGTT?.resume?.()}catch(_){}document.body.classList.add('bmn-real-inbox-open');chat.classList.remove('open');peerId=null;currentPeer=null;loadList();subscribe();}
 function close(a){const quiet=a===true;overlay?.classList.remove('open');document.getElementById('lgttStage')?.classList.remove('bmn-inbox-open');try{window.LGTT?.resume?.()}catch(_){}document.body.classList.remove('bmn-real-inbox-open');chat?.classList.remove('open');peerId=null;channel?.unsubscribe?.();channel=null;if(!quiet)try{setDock(currentLgttView())}catch(_){}}
 async function msgSelect(build){const s=sb();const tiers=['id,sender_id,recipient_id,content,created_at,read_at,deleted_by_sender,deleted_by_recipient','id,sender_id,recipient_id,content,created_at,read_at','id,sender_id,recipient_id,content,created_at'];let r=null;for(const cols of tiers){r=await build(s.from('messages').select(cols));if(!r.error)return r;if(!/column|schema cache|deleted_by|read_at/i.test(String(r.error.message||'')))return r}return r}
 const riNote=(t,err)=>{const n=$('#bmnRiNote');if(n){n.textContent=t||'';n.classList.toggle('err',!!err)}};
-async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await msgSelect(b=>b.or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500));if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(name(id))}</strong><small>${esc(m.content||'')}</small></span><time class="bmn-ri-time">${fmtDate(m.created_at)}</time></button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
+const IMGP='bmn-img:';
+const bubbleBody=c=>c&&String(c).startsWith(IMGP)?'<img class="bmn-ri-img" data-p="'+esc(String(c).slice(IMGP.length))+'" alt="Photo">':esc(c||'');
+const previewText=c=>c&&String(c).startsWith(IMGP)?'\u{1F4F7} Photo':(c||'');
+async function hydrateImgs(){const imgs=$$('img.bmn-ri-img[data-p]:not([src])',chatList);if(!imgs.length)return;const s=sb();if(!s)return;try{const paths=[...new Set(imgs.map(i=>i.dataset.p))];const {data,error}=await s.storage.from('community-media').createSignedUrls(paths,3600);if(error)throw error;const m=new Map((data||[]).map(x=>[x.path,x.signedUrl]));imgs.forEach(i=>{const u=m.get(i.dataset.p);if(u){i.src=u;i.onclick=()=>lightbox(u)}else i.alt='Photo unavailable'})}catch(e){imgs.forEach(i=>{i.alt='Photo unavailable'});riNote('Could not load a photo: '+(e.message||''),true)}}
+function lightbox(url){const d=document.createElement('div');d.className='bmn-ri-lightbox';d.innerHTML='<img alt="Photo"><button type="button" aria-label="Close photo">\u2715</button>';d.querySelector('img').src=url;const x=()=>d.remove();d.onclick=x;overlay.appendChild(d)}
+async function sendImage(input){const f=input.files&&input.files[0];input.value='';if(!f)return;const s=sb(),u=session();if(!u){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(!s||!peerId||bmnRiSending)return;
+ if(!/^image\//.test(f.type)){riNote('Please choose a photo.',true);return}if(f.size>25*1024*1024){riNote('That photo is larger than 25 MB. Choose a smaller one.',true);return}
+ if(navigator.onLine===false){riNote('You are offline. Reconnect to send photos.',true);return}
+ bmnRiSending=true;send.disabled=true;riNote('Sending photo\u2026');
+ try{const blob=await new Promise((res,rej)=>{const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?res(b):rej(new Error('Could not process this photo')),'image/jpeg',.82)};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('This photo format is not supported'))};im.src=url});
+  const path=u.id+'/messages/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+  const up=await s.storage.from('community-media').upload(path,blob,{cacheControl:'3600',upsert:false,contentType:'image/jpeg'});if(up.error)throw up.error;
+  const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:IMGP+path});
+  if(error){try{await s.storage.from('community-media').remove([path])}catch(_){}throw error}
+  riNote('');const empty=chatList.querySelector('.bmn-ri-empty');if(empty)chatList.innerHTML='';const d=document.createElement('div');d.className='bmn-ri-msg mine bmn-ri-pop';d.innerHTML='<img class="bmn-ri-img" alt="Photo"><div class="bmn-ri-stamp">'+fmtTime(new Date().toISOString())+'</div>';const o=URL.createObjectURL(blob);d.querySelector('img').src=o;d.querySelector('img').onclick=()=>lightbox(o);chatList.appendChild(d);chatList.scrollTop=chatList.scrollHeight;loadList(search.value.trim().toLowerCase());
+ }catch(e){riNote('Photo not sent: '+(e.message||'check permissions for the community-media bucket'),true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
+async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await msgSelect(b=>b.or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500));if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(name(id))}</strong><small>${esc(previewText(m.content))}</small></span><time class="bmn-ri-time">${fmtDate(m.created_at)}</time></button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
 async function openChat(id){const u=session();if(!u){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('inbox');else alert('Please sign in to use Inbox.');return}peerId=id||u.id;await ensureProfiles([peerId]);currentPeer=peerId;try{window.__bmnRiPeer&&window.__bmnRiPeer(peerId)}catch(_){}chat.classList.add('open');$('#bmnRiWho').innerHTML=`${avatar(peerId)}<div><strong>${esc(peerId===u.id?'Yourself':name(peerId))}</strong><small>${esc(handle(peerId)||'BMN Community')}</small></div>`;$('#bmnRiNote').textContent='';await loadMessages();}
-async function loadMessages(silent){const s=sb(),u=session();if(!s||!u||!peerId)return;const forPeer=peerId;if(!silent)chatList.innerHTML='<div class="bmn-ri-empty">Loading…</div>';try{const {data,error}=await msgSelect(b=>{let r=b.order('created_at',{ascending:true});r=forPeer===u.id?r.eq('sender_id',u.id).eq('recipient_id',u.id):r.or(`and(sender_id.eq.${u.id},recipient_id.eq.${forPeer}),and(sender_id.eq.${forPeer},recipient_id.eq.${u.id})`);return r.limit(1000)});if(error)throw error;if(forPeer!==peerId)return;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const near=chatList.scrollHeight-chatList.scrollTop-chatList.clientHeight<140;chatList.innerHTML=rows.length?rows.map(m=>{const mine=m.sender_id===u.id;return `<div class="bmn-ri-msg ${mine?'mine':''}">${esc(m.content||'')}<div class="bmn-ri-stamp">${fmtTime(m.created_at)}${mine&&m.read_at?' · Read':''}</div></div>`}).join(''):'<div class="bmn-ri-empty">No messages yet. Say hello.</div>';if(!silent||near)chatList.scrollTop=chatList.scrollHeight;if(forPeer!==u.id){const unread=rows.filter(m=>m.recipient_id===u.id&&!m.read_at).map(m=>m.id);if(unread.length){try{await s.from('messages').update({read_at:new Date().toISOString()}).in('id',unread)}catch(_){}}}}catch(e){if(silent){riNote('Could not refresh this conversation: '+(e.message||''),true)}else chatList.innerHTML=`<div class="bmn-ri-empty">Could not load this conversation.<br><small>${esc(e.message||'')}</small></div>`}}
+async function loadMessages(silent){const s=sb(),u=session();if(!s||!u||!peerId)return;const forPeer=peerId;if(!silent)chatList.innerHTML='<div class="bmn-ri-empty">Loading…</div>';try{const {data,error}=await msgSelect(b=>{let r=b.order('created_at',{ascending:true});r=forPeer===u.id?r.eq('sender_id',u.id).eq('recipient_id',u.id):r.or(`and(sender_id.eq.${u.id},recipient_id.eq.${forPeer}),and(sender_id.eq.${forPeer},recipient_id.eq.${u.id})`);return r.limit(1000)});if(error)throw error;if(forPeer!==peerId)return;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const near=chatList.scrollHeight-chatList.scrollTop-chatList.clientHeight<140;chatList.innerHTML=rows.length?rows.map(m=>{const mine=m.sender_id===u.id;return `<div class="bmn-ri-msg ${mine?'mine':''}">${bubbleBody(m.content)}<div class="bmn-ri-stamp">${fmtTime(m.created_at)}${mine&&m.read_at?' · Read':''}</div></div>`}).join(''):'<div class="bmn-ri-empty">No messages yet. Say hello.</div>';hydrateImgs();if(!silent||near)chatList.scrollTop=chatList.scrollHeight;if(forPeer!==u.id){const unread=rows.filter(m=>m.recipient_id===u.id&&!m.read_at).map(m=>m.id);if(unread.length){try{await s.from('messages').update({read_at:new Date().toISOString()}).in('id',unread)}catch(_){}}}}catch(e){if(silent){riNote('Could not refresh this conversation: '+(e.message||''),true)}else chatList.innerHTML=`<div class="bmn-ri-empty">Could not load this conversation.<br><small>${esc(e.message||'')}</small></div>`}}
 let bmnRiSending=false;async function sendMessage(){const s=sb(),u=session(),text=composer.value.trim();if(bmnRiSending)return;if(!u){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(!s||!peerId||!text)return;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(peerId))){riNote('This conversation has no valid recipient. Go back and open it again.',true);return}if(navigator.onLine===false){riNote('You are offline. Your message is still in the box, send it when you reconnect.',true);return}bmnRiSending=true;send.disabled=true;riNote('');const old=text;try{const {error}=await s.from('messages').insert({sender_id:u.id,recipient_id:peerId,content:text});if(error)throw error;composer.value='';composer.style.height='auto';const empty=chatList.querySelector('.bmn-ri-empty');if(empty)chatList.innerHTML='';const d=document.createElement('div');d.className='bmn-ri-msg mine bmn-ri-pop';d.innerHTML=esc(text)+'<div class="bmn-ri-stamp">'+fmtTime(new Date().toISOString())+'</div>';chatList.appendChild(d);chatList.scrollTop=chatList.scrollHeight;try{window.LGTT?.haptic?.('send')}catch(_){}if(peerId!==u.id)s.from('notifications').insert({user_id:peerId,actor_id:u.id,type:'message',message:'sent you a message'}).then(()=>{},()=>{});loadMessages(true);loadList(search.value.trim().toLowerCase())}catch(e){composer.value=old;composer.dispatchEvent(new Event('input'));riNote('Message not sent: '+(e.message||'check your connection and permissions')+'. Your text is kept, tap send to retry.',true)}finally{bmnRiSending=false;send.disabled=!composer.value.trim()}}
 async function clearConversation(){const s=sb(),u=session();if(!s||!u||!peerId)return;try{const {error}=await s.rpc('bmn_clear_conversation',{p_peer:peerId});if(error)throw error;await loadMessages();await loadList(search.value.trim().toLowerCase());}catch(e){$('#bmnRiNote').textContent='Could not clear conversation: '+(e.message||'') }}
 function subscribe(){const s=sb(),u=session();if(!s||!u||!s.channel)return;channel?.unsubscribe?.();channel=s.channel('bmn-real-messages-'+u.id).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`sender_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages(true)}}).on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`recipient_id=eq.${u.id}`},()=>{if(overlay?.classList.contains('open')){loadList(search.value.trim().toLowerCase());if(chat.classList.contains('open'))loadMessages(true)}}).subscribe();}
@@ -8726,7 +8743,7 @@ function patchDock(){const dock=$('#lgttDock');if(!dock||dock.dataset.bmnFinalBo
  if(type==='profile'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('profile');return}close(true);setDock('profile');window.LGTT?.setView('profile');return}
  if(type==='feed'){chat?.classList.remove('open');close(true);setDock('feed');window.LGTT?.setView('feed');return}
  if(type==='discover'){close(true);setDock('discover');window.LGTT?.setView('discover');return}
- if(type==='create'){const b2=$('#openCreateTop')||$('#createEditBtn');b2?.click();return}},true)}
+ if(type==='create'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('create');return}window.LGTT?.openCreate();return}},true)}
 function patchProfileMessage(){document.addEventListener('click',e=>{const b=e.target.closest('[data-act="message"],[data-act="profile-message"],#bmnProfileMessage');if(!b)return;e.preventDefault();e.stopImmediatePropagation();let id=b.dataset.u||b.dataset.userId||b.dataset.profileId||'';if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(id==='bmn')id=session().id;setDock('inbox');open();if(id)setTimeout(()=>openChat(id),60)},true)}
 function boot(){shell();patchDock();patchProfileMessage();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
@@ -8843,6 +8860,25 @@ html.bmn-community-app body #lgtt .lgtt-dock{bottom:max(8px,calc(env(safe-area-i
 html.bmn-community-app,html.bmn-community-app body{background:#000!important}
 </style>
 
+<style id="bmn-inbox-media-css">
+.bmn-ri-img{display:block;width:min(240px,62vw);max-height:320px;min-height:120px;border-radius:14px;object-fit:cover;background:rgba(255,255,255,.08);cursor:zoom-in}
+.bmn-ri-msg:has(.bmn-ri-img){padding:4px}
+.bmn-ri-lightbox{position:absolute;inset:0;z-index:60;display:grid;place-items:center;background:rgba(0,0,0,.92);cursor:zoom-out}
+.bmn-ri-lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+.bmn-ri-lightbox button{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:18px}
+#bmnCamV17{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#bmnCamV17 label{justify-content:center;cursor:pointer;text-align:center}
+</style>
+
+<style id="bmn-app-feel-css">
+/* Native-app feel while running as the installed app or inside Community */
+html.bmn-community-app,html.bmn-community-app body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html.bmn-community-app #lgtt{-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
+html.bmn-community-app #lgtt input,html.bmn-community-app #lgtt textarea,html.bmn-community-app #bmnRealInbox input,html.bmn-community-app #bmnRealInbox textarea,html.bmn-community-app .bmn-ri-msg{-webkit-user-select:text;user-select:text}
+html.bmn-community-app #lgtt button,html.bmn-community-app #bmnRealInbox button{touch-action:manipulation}
+html.bmn-community-app #lgtt img,html.bmn-community-app #lgtt video{-webkit-user-drag:none;-webkit-touch-callout:none}
+</style>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
@@ -8889,6 +8925,7 @@ function replay(r){
   closeSheet();
   if(r==='inbox'){window.BMNRealInbox&&window.BMNRealInbox.open();return}
   if(r==='profile'){window.LGTT&&window.LGTT.open({view:'profile'});return}
+  if(r==='create'){window.LGTT&&window.LGTT.openCreate&&window.LGTT.openCreate();return}
   toast('Signed in. Tap again to continue.');
 }
 async function afterSignIn(reason){
@@ -8897,6 +8934,7 @@ async function afterSignIn(reason){
   try{window.LGTT&&window.LGTT.patchCounts&&window.LGTT.patchCounts()}catch(_){}
   replay(reason);
 }
+window.bmnSheet=sheet;window.bmnCloseSheet=closeSheet;
 window.requestCommunityAuth=function(reason){
   if(me())return true;
   reason=reason||'';setPending(reason);
@@ -9012,6 +9050,120 @@ window.bmnReportReal=function(postId){
     try{const {error}=await sb().from('content_reports').insert({reporter_id:me(),post_id:postId,reported_user_id:post.user_id,reason:box.querySelector('#bmnRpReason').value,details:box.querySelector('#bmnRpDetails').value.trim().slice(0,2000)||null});
       if(error)throw error;closeSheet();toast('Report submitted to BMN moderation','flag')}
     catch(err){n.textContent='Report was not saved: '+errMsg(err);btn.disabled=false;busy=false}}});
+};
+})();
+</script>
+
+<style id="bmn-install-css">
+#bmnInstallChip{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 72px);z-index:26;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(10,14,26,.45);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);color:#fff;font:600 12px/1 system-ui,-apple-system,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer;touch-action:manipulation}
+#bmnInstallChip:active{scale:.94}html.bmn-standalone #bmnInstallChip{display:none}
+.bmn-sh ol.bmn-steps{margin:0 0 12px;padding:0;list-style:none;counter-reset:s}
+.bmn-sh ol.bmn-steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:10px 0;font-size:15px;line-height:1.35;border-bottom:1px solid rgba(255,255,255,.1)}
+.bmn-sh ol.bmn-steps li:last-child{border-bottom:0}
+.bmn-sh ol.bmn-steps li::before{content:counter(s);flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff}
+.bmn-sh .bmn-kbd{display:inline-block;padding:1px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);font-weight:600}
+</style>
+<script id="bmn-install-js">
+(()=>{'use strict';
+const KEY='bmn-install-dismissed',DAY=864e5;
+const standalone=()=>!!(window.navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+const ua=navigator.userAgent||'';
+const isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isSafari=isIOS&&/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+const root=document.documentElement;
+const mark=()=>{root.classList.toggle('bmn-standalone',standalone());root.classList.toggle('bmn-browser',!standalone())};
+mark();try{matchMedia('(display-mode: standalone)').addEventListener('change',mark)}catch(_){}
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+window.addEventListener('appinstalled',()=>{deferred=null;try{localStorage.setItem(KEY,String(Date.now()+3650*DAY))}catch(_){}try{window.bmnCloseSheet&&window.bmnCloseSheet()}catch(_){}});
+const dismissed=()=>{try{return Number(localStorage.getItem(KEY)||0)>Date.now()}catch(_){return false}};
+const snooze=d=>{try{localStorage.setItem(KEY,String(Date.now()+d*DAY))}catch(_){}};
+function show(force){
+  if(standalone()||!window.bmnSheet)return;
+  if(!force&&dismissed())return;
+  let body,primary='';
+  if(deferred){
+    body='<p>Install BMN to run it full screen like a normal app, with no browser bars.</p>';primary='<button class="pri" data-i="install" type="button">Install app</button>';
+  }else if(isIOS&&isSafari){
+    body='<p>On iPhone, BMN runs full screen only when added to your Home Screen.</p><ol class="bmn-steps"><li>Tap the <span class="bmn-kbd">Share</span> button (square with an arrow) in Safari.</li><li>Scroll down and tap <span class="bmn-kbd">Add to Home Screen</span>.</li><li>Tap <span class="bmn-kbd">Add</span>, then open <b>BMN</b> from your Home Screen.</li></ol>';
+  }else if(isIOS){
+    body='<p>To install BMN on iPhone, open this page in <b>Safari</b>, tap <span class="bmn-kbd">Share</span>, then <span class="bmn-kbd">Add to Home Screen</span>.</p>';
+  }else{
+    body='<p>Open your browser menu and choose <span class="bmn-kbd">Install app</span> or <span class="bmn-kbd">Add to Home screen</span> to run BMN full screen.</p>';
+  }
+  window.bmnSheet('<h2>Get the BMN app</h2>'+body+'<div class="row">'+primary+'<button data-i="later" type="button">Not now</button></div><div class="row"><button class="link" data-i="never" type="button">Don\u2019t show again</button></div>',box=>{
+    box.addEventListener('click',async e=>{const b=e.target.closest('[data-i]');if(!b)return;const a=b.dataset.i;
+      if(a==='install'&&deferred){const d=deferred;deferred=null;try{d.prompt();await d.userChoice}catch(_){}window.bmnCloseSheet();return}
+      if(a==='later')snooze(3);if(a==='never')snooze(3650);window.bmnCloseSheet()});
+  });
+}
+window.bmnInstallApp=()=>show(true);
+function chip(){const st=document.getElementById('lgttStage');if(!st||standalone()||document.getElementById('bmnInstallChip'))return;
+  const c=document.createElement('button');c.id='bmnInstallChip';c.type='button';c.textContent='Add to Home Screen';c.setAttribute('aria-label','Add BMN to your Home Screen as an app');c.onclick=()=>show(true);st.appendChild(c)}
+const ct=setInterval(()=>{if(standalone()){clearInterval(ct);return}if(document.getElementById('lgttStage')){chip();clearInterval(ct)}},800);
+/* ---- Settings entries (Community "App" tab + personal-page settings sheet) ---- */
+const ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
+const state=()=>standalone()?'Installed':'Not installed';
+function addCommunityRow(){
+  const body=document.getElementById('lgttSetBody');if(!body||document.getElementById('bmnSetInstall'))return;
+  const tab=document.querySelector('#lgttSetTabs .on');if(!tab||tab.dataset.stab!=='app'||!body.firstElementChild)return;
+  const g=document.createElement('div');g.className='lgtt-set-group';g.style.setProperty('--n','9');
+  g.innerHTML='<h4>Install</h4><div class="lgtt-set-card lgtt-glass"><button type="button" class="lgtt-set-row" id="bmnSetInstall"><span class="lgtt-set-ic" style="--c1:#3b82f6;--c2:#7c3aed">'+ICON+'</span><span class="lgtt-set-txt"><strong>Add to Home Screen</strong><small>Run BMN full screen like a normal app.</small></span><span class="lgtt-set-val">'+state()+'</span></button></div>';
+  g.querySelector('button').addEventListener('click',()=>{if(standalone()){try{window.LGTT&&LGTT.toast&&LGTT.toast('BMN is already running as an app')}catch(_){}}else show(true)});
+  body.insertBefore(g,body.firstElementChild);
+}
+function watchSettings(){const body=document.getElementById('lgttSetBody');if(!body){return false}
+  let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;try{addCommunityRow()}catch(_){}})}).observe(body,{childList:true});addCommunityRow();return true}
+let wt=0;const wi=setInterval(()=>{if(watchSettings()||++wt>40)clearInterval(wi)},700);
+function addPersonalRow(){
+  const t=document.getElementById('themeSetting');const row=t&&t.closest('.setting-row');if(!row||document.getElementById('bmnSetInstallP'))return false;
+  const r=document.createElement('div');r.className='setting-row';
+  r.innerHTML='<div><strong>Add to Home Screen</strong><small>Install BMN to run full screen like a normal app.</small></div><button class="pill" id="bmnSetInstallP" type="button">'+(standalone()?'Installed':'Install')+'</button>';
+  r.querySelector('button').addEventListener('click',()=>{if(!standalone())show(true)});row.after(r);return true}
+let pt=0;const pi=setInterval(()=>{if(addPersonalRow()||++pt>20)clearInterval(pi)},500);
+// offer once the Community screen is on, never while a video is the first thing you see
+let tries=0;const t=setInterval(()=>{if(standalone()){clearInterval(t);return}
+  if(++tries>40){clearInterval(t);return}
+  if(root.classList.contains('bmn-community-app')&&window.LGTT&&window.bmnSheet){clearInterval(t);setTimeout(()=>show(false),5000)}},750);
+})();
+</script>
+
+<script id="bmn-create-save-js">
+(()=>{'use strict';
+const $=s=>document.querySelector(s);
+const toast=(m,i)=>{try{window.LGTT&&window.LGTT.toast&&window.LGTT.toast(m,i)}catch(_){}};
+/* ---- Create sheet: camera capture, 50 MB guard, status mirroring, duplicate-publish guard ---- */
+function enhanceCreate(){
+  const host=$('#lgttCreateBody'),file=$('#bmnOverlayFileV17');if(!host||!file||$('#bmnCamV17'))return;
+  const pub=$('#bmnOverlayPublishV17'),status=$('#bmnOverlayStatusV17');
+  const row=document.createElement('div');row.id='bmnCamV17';
+  row.innerHTML='<label for="bmnCamVideoV17" class="lgtt-btn lgtt-pill">Record video</label><input id="bmnCamVideoV17" type="file" accept="video/*" capture="environment" hidden><label for="bmnCamPhotoV17" class="lgtt-btn lgtt-pill">Take photo</label><input id="bmnCamPhotoV17" type="file" accept="image/*" capture="environment" hidden>';
+  file.parentElement.insertBefore(row,file.previousElementSibling&&file.previousElementSibling.tagName==='LABEL'?file.previousElementSibling.nextSibling:file);
+  const feed=src=>{const f=src.files&&src.files[0];src.value='';if(!f)return;useFile(f)};
+  const useFile=f=>{if(f.size>50*1024*1024){if(status)status.textContent='That file is '+(f.size/1048576).toFixed(0)+' MB. The limit is 50 MB. Choose a shorter clip.';return}
+    try{const dt=new DataTransfer();dt.items.add(f);file.files=dt.files;file.dispatchEvent(new Event('change',{bubbles:true}))}catch(_){if(status)status.textContent='This browser cannot attach that file.'}};
+  $('#bmnCamVideoV17').addEventListener('change',e=>feed(e.target));
+  $('#bmnCamPhotoV17').addEventListener('change',e=>feed(e.target));
+  file.addEventListener('change',()=>{const f=file.files&&file.files[0];if(f&&f.size>50*1024*1024){file.value='';if(status)status.textContent='That file is larger than 50 MB. Choose a shorter clip.';const p=$('#bmnOverlayPreviewV17');if(p){p.replaceChildren();p.style.display='none'}}},true);
+  const src=$('#bmnPostStatus');if(src&&status&&!src._mirror){src._mirror=1;new MutationObserver(()=>{const t=(src.textContent||'').trim();if(t)status.textContent=t}).observe(src,{childList:true,characterData:true,subtree:true})}
+  if(pub){pub.addEventListener('click',()=>{if(pub.disabled)return;pub.disabled=true;setTimeout(()=>{pub.disabled=false},8000)},true)}
+}
+new MutationObserver(()=>enhanceCreate()).observe(document.documentElement,{childList:true,subtree:true});
+
+/* ---- Save video to Photos/Gallery ---- */
+let busy=false;
+window.bmnSaveVideo=async function(src,id){
+  if(busy)return;busy=true;
+  const name='bmn-video-'+String(id||'video').replace(/[^a-z0-9_-]/gi,'')+'.mp4';
+  toast('Preparing your video\u2026','download');
+  let file=null;
+  try{const r=await fetch(src,{mode:'cors'});if(!r.ok)throw new Error('http '+r.status);const b=await r.blob();file=new File([b],name,{type:b.type||'video/mp4'})}
+  catch(e){busy=false;toast('This video can\u2019t be saved from here right now. Try again on a stronger connection.','info');return}
+  busy=false;
+  const canShare=!!(navigator.canShare&&navigator.share&&navigator.canShare({files:[file]}));
+  if(!canShare||!window.bmnSheet){const u=URL.createObjectURL(file),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);toast('Video saved to your Downloads.','download');return}
+  window.bmnSheet('<h2>Save video</h2><p>Your video is ready. Tap below, then choose <b>Save Video</b> to add it to your Photos.</p><div class="row"><button class="pri" data-s type="button">Save to Photos</button><button data-close type="button">Cancel</button></div><div class="note" id="bmnSaveNote" role="status" aria-live="polite"></div>',box=>{
+    box.querySelector('[data-s]').addEventListener('click',async()=>{try{await navigator.share({files:[file],title:'BMN video'});window.bmnCloseSheet()}catch(e){if(e&&e.name==='AbortError')return;const n=box.querySelector('#bmnSaveNote');if(n)n.textContent='Could not open the share sheet: '+(e.message||'')}})});
 };
 })();
 </script>
