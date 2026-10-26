@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" class="bmn-starting">
 <head>
+<script>window.__bmnBootURL=location.href;</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
 <style id="bmn-first-paint-guard">
@@ -2635,8 +2636,8 @@ function bmnAddOAuthControls(){
  const controls=$('#bmnAuthControls');if(!controls||$('#bmnOAuthControls'))return;
  const wrap=document.createElement('div');wrap.id='bmnOAuthControls';wrap.innerHTML='<div class="bmn-auth-divider">OR CONTINUE WITH</div><div class="bmn-oauth-wrap"><button type="button" class="bmn-oauth-button" data-oauth-provider="google"><span aria-hidden="true">G</span> Google</button><button type="button" class="bmn-oauth-button" data-oauth-provider="apple"><span aria-hidden="true">●</span> Apple</button><button type="button" class="bmn-oauth-button" data-oauth-provider="github"><span aria-hidden="true">⌘</span> GitHub</button><button type="button" class="bmn-oauth-button" data-oauth-provider="discord"><span aria-hidden="true">◈</span> Discord</button></div><button type="button" class="bmn-forgot-password" id="bmnForgotPassword">Forgot password?</button><p class="composer-hint" style="margin:8px 0 0">Google, Apple, GitHub and Discord sign-in work after their providers and redirect URLs are enabled in Supabase.</p>';
  controls.appendChild(wrap);
- wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=location.origin+location.pathname+'#community-page';const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
- $('#bmnForgotPassword')?.addEventListener('click',async()=>{const email=$('#bmnEmail')?.value.trim();if(!email){setBackendStatus('Enter your email address first, then tap Forgot password.',true);$('#bmnEmail')?.focus();return}try{const {error}=await bmnSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;setBackendStatus('If this email belongs to an account, a password reset link has been sent.')}catch(err){setBackendStatus(err.message||'Could not send password reset email.',true)}})
+ wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-oauth-provider]');if(!b)return;if(!bmnSupabase){setBackendStatus('Supabase is still connecting. Try again in a moment.',true);return}const provider=b.dataset.oauthProvider;b.disabled=true;setBackendStatus('Opening '+provider+' sign-in…');try{const redirectTo=location.origin+location.pathname;try{localStorage.setItem('bmn-auth-intent','community')}catch(_){}const {error}=await bmnSupabase.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(err){setBackendStatus((err.message||'Could not start sign-in')+' — check that this provider is enabled in Supabase Auth.',true);b.disabled=false}});
+ $('#bmnForgotPassword')?.addEventListener('click',async()=>{const email=$('#bmnEmail')?.value.trim();if(!email){setBackendStatus('Enter your email address first, then tap Forgot password.',true);$('#bmnEmail')?.focus();return}try{const {error}=await bmnSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;setBackendStatus('If this email belongs to an account, a password reset link has been sent.')}catch(err){setBackendStatus(err.message||'Could not send password reset email.',true)}})
 }
 bmnAddOAuthControls();
 const bmnAuthObserver=new MutationObserver(()=>bmnAddOAuthControls());
@@ -8620,7 +8621,7 @@ function startAdaptiveSplash(){
  const memory=Number(navigator.deviceMemory||4);
  // The animation gets a brief minimum to be visible, then waits for the actual app shell.
  // Lower-capability devices get a little more visual time; slow startup is never cut off by this minimum.
- const minVisible=reduced?120:((cores<=4||memory<=4)?1050:760);
+ const minVisible=reduced?0:320;
  const started=performance.now();let raf=0,done=false;
  const poll=()=>{
    if(done)return;
@@ -8641,6 +8642,7 @@ function startAdaptiveSplash(){
     if(splash){splash.style.display='flex';splash.style.visibility='visible';splash.style.opacity='1';}
    }
  },12000);
+ setTimeout(()=>{if(done)return;let ok=false;try{ok=!!$('#lgtt')&&!!$('#lgttTrack')}catch(_){}if(ok){done=true;finishCommunityStartup()}},1400);
  const finish=()=>{if(done)return;};
  if(document.fonts?.ready)document.fonts.ready.then(()=>{}).catch(()=>{});
  raf=requestAnimationFrame(poll);
@@ -8789,7 +8791,7 @@ const key=id=>'bmn-chat-wp:'+id;
 const get=id=>{try{return localStorage.getItem(key(id))||''}catch(_){return ''}};
 const set=(id,v)=>{try{v?localStorage.setItem(key(id),v):localStorage.removeItem(key(id));return true}catch(_){return false}};
 const note=t=>{const n=document.getElementById('bmnRiNote');if(n)n.textContent=t};
-function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;const v=peer?get(peer):'';m.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');}
+function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;let w=m.querySelector(':scope>.bmn-ri-wall');if(!w){w=document.createElement('div');w.className='bmn-ri-wall';w.setAttribute('aria-hidden','true');m.insertBefore(w,m.firstChild)}const v=peer?get(peer):'';w.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'')}
 function mark(){if(!panel)return;const v=get(peer);panel.querySelectorAll('.bmn-ri-wp-grid button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v||'')===v)))}
 function build(){
   const chat=document.getElementById('bmnRiChat');if(!chat||panel)return;
@@ -8905,15 +8907,7 @@ html.bmn-android #lgtt .lgtt-dock-lens{background:rgba(255,255,255,.14)!importan
 html.bmn-android #lgtt .lgtt-glass{background:rgba(24,26,34,.86)!important;box-shadow:none!important}
 html.bmn-android .bmn-ri-chat-head,html.bmn-android .bmn-ri-compose,html.bmn-android #lgttStage>#bmnRealInbox .bmn-ri-chat-head,html.bmn-android #lgttStage>#bmnRealInbox .bmn-ri-compose{background:rgba(9,12,20,.94)!important}
 html.bmn-android .bmn-sh{background:#14171f!important}
-/* in-app camera */
-#bmnCam{position:absolute;inset:0;z-index:95;background:#000;display:flex;align-items:flex-end;justify-content:center}
-#bmnCam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#bmnCam .bmn-cam-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;color:#fff;font:600 15px system-ui}
-#bmnCam button{border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);color:#fff;width:44px;height:44px;border-radius:50%;font-size:18px;touch-action:manipulation}
-#bmnCam .bmn-cam-bot{position:relative;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 28px)}
-#bmnCam .bmn-cam-rec{width:76px;height:76px;border:4px solid #fff;background:#ff2d55;box-shadow:inset 0 0 0 5px #000;transition:border-radius .2s}
-#bmnCam.rec .bmn-cam-rec{border-radius:20px}
-#bmnCam .bmn-cam-msg{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 130px);text-align:center;color:#fca5a5;font:14px/1.4 system-ui}
+
 </style>
 
 <style id="bmn-inbox-redesign-css">
@@ -8994,6 +8988,79 @@ html.bmn-android .bmn-sh{background:#14171f!important}
 html.bmn-ext.bmn-community-app #lgtt{bottom:auto!important;height:var(--bmn-full,100%)!important}
 </style>
 
+<style id="bmn-theme-platform-css">
+/* ===== Chat wallpaper layer + theme-aware Inbox (light and dark) ===== */
+.bmn-ri-wall{position:absolute;inset:0;z-index:0;background:#000 center/cover no-repeat;pointer-events:none}
+#bmnRealInbox .bmn-ri-chat{overflow:hidden}
+#bmnRealInbox .bmn-ri-messages{position:relative;z-index:1}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox{background:#fff!important;color:#11141c}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-head{background:#fff}
+html[data-bmn-theme="light"] #bmnRealInbox .bmn-ri-btn,html[data-bmn-theme="light"] #bmnRealInbox .bmn-ri-attach{color:#11141c}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-meta strong,html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-chat-head .who strong,html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-head strong{color:#11141c}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-meta small,html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-chat-head .who small,html[data-bmn-theme="light"] .bmn-ri-sep{color:rgba(17,20,28,.55)}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-search,html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-composer-shell,html[data-bmn-theme="light"] .bmn-ri-quick button{background:#eef0f4;color:#11141c}
+html[data-bmn-theme="light"] #bmnRiInput{color:#11141c}
+html[data-bmn-theme="light"] #bmnRiInput::placeholder,html[data-bmn-theme="light"] .bmn-ri-search::placeholder{color:rgba(17,20,28,.45)}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-chat{background-color:#fff!important}
+html[data-bmn-theme="light"] .bmn-ri-wall{background-color:#fff}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-chat-head{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.6))}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-compose{background:linear-gradient(0deg,#fff 40%,rgba(255,255,255,0))}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-msg{background:#eceef3;color:#11141c}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-msg.mine{background:linear-gradient(135deg,#2f8bff,#7c4dff);color:#fff}
+html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-msg.emoji,html[data-bmn-theme="light"] #lgttStage>#bmnRealInbox .bmn-ri-msg.emoji.mine{background:transparent;color:inherit}
+
+/* ===== iPhone: clean, neutral Liquid Glass that shows what is beneath (no colour tints) ===== */
+html.bmn-ios #lgtt .lgtt-dock,html.bmn-ios #lgtt .lgtt-tabs{background:rgba(28,30,42,.30)!important;-webkit-backdrop-filter:blur(26px) saturate(1.7) brightness(1.05)!important;backdrop-filter:blur(26px) saturate(1.7) brightness(1.05)!important;border:1px solid rgba(255,255,255,.24)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 10px 30px rgba(0,0,0,.22)!important;background-image:none!important}
+html.bmn-ios #lgtt .lgtt-act-btn,html.bmn-ios #lgtt .lgtt-top .lgtt-btn{background:rgba(255,255,255,.16)!important;-webkit-backdrop-filter:blur(20px) saturate(1.6)!important;backdrop-filter:blur(20px) saturate(1.6)!important;border:1px solid rgba(255,255,255,.26)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.2)!important;background-image:none!important;color:#fff}
+html.bmn-ios #lgtt .lgtt-act-btn::before,html.bmn-ios #lgtt .lgtt-act-btn::after{background:none!important;box-shadow:none!important;filter:none!important}
+html.bmn-ios[data-bmn-theme="light"] #lgtt .lgtt-dock{background:rgba(255,255,255,.46)!important;border-color:rgba(255,255,255,.75)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 10px 30px rgba(0,0,0,.14)!important}
+html.bmn-ios[data-bmn-theme="light"] #lgtt .lgtt-dock .lgtt-dk{color:rgba(17,20,28,.72)}
+html.bmn-ios[data-bmn-theme="light"] #lgtt .lgtt-dock .lgtt-dk.on{color:#11141c}
+html.bmn-ios[data-bmn-theme="light"] #lgtt .lgtt-dock-lens{background:rgba(255,255,255,.55)!important;box-shadow:inset 0 1px 0 #fff,0 2px 8px rgba(0,0,0,.1)!important}
+
+/* ===== Android: no Liquid Glass anywhere (keeps wobble/motion); solid, theme-correct surfaces ===== */
+html.bmn-android{--bmn-a-surface:#1a1c24;--bmn-a-surface2:#262833;--bmn-a-text:#ffffff;--bmn-a-sub:rgba(255,255,255,.62);--bmn-a-line:rgba(255,255,255,.1)}
+html.bmn-android[data-bmn-theme="light"]{--bmn-a-surface:#ffffff;--bmn-a-surface2:#f1f2f6;--bmn-a-text:#11141c;--bmn-a-sub:rgba(17,20,28,.62);--bmn-a-line:rgba(0,0,0,.1)}
+html.bmn-android *,html.bmn-android *::before,html.bmn-android *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.bmn-android .glass::after,html.bmn-android .apple-clear-glass::after,html.bmn-android .apple-liquid-glass::after,html.bmn-android .glass::before,html.bmn-android .apple-clear-glass::before,html.bmn-android .apple-liquid-glass::before,html.bmn-android .glass-lens{display:none!important}
+html.bmn-android .glass,html.bmn-android .apple-clear-glass,html.bmn-android .apple-liquid-glass{background:var(--bmn-a-surface)!important;background-image:none!important;box-shadow:none!important;border:1px solid var(--bmn-a-line)!important;color:var(--bmn-a-text)!important}
+html.bmn-android #lgtt .lgtt-sheet,html.bmn-android #lgtt .lgtt-glass,html.bmn-android #lgtt .lgtt-glass-strong,html.bmn-android #lgtt .lgtt-comments,html.bmn-android #lgtt .lgtt-compose-pill,html.bmn-android #lgtt .lgtt-over{background:var(--bmn-a-surface)!important;background-image:none!important;color:var(--bmn-a-text)!important;border-color:var(--bmn-a-line)!important;box-shadow:none!important}
+html.bmn-android #lgtt .lgtt-sheet *,html.bmn-android #lgtt .lgtt-glass *,html.bmn-android #lgtt .lgtt-glass-strong *,html.bmn-android #lgtt .lgtt-comments *,html.bmn-android #lgtt .lgtt-over *{color:var(--bmn-a-text)!important}
+html.bmn-android #lgtt .lgtt-sheet small,html.bmn-android #lgtt .lgtt-glass small,html.bmn-android #lgtt .lgtt-glass-strong small,html.bmn-android #lgtt .lgtt-comments small{color:var(--bmn-a-sub)!important}
+html.bmn-android #lgtt .lgtt-primary,html.bmn-android #lgtt .lgtt-primary *{color:#fff!important}
+html.bmn-android #lgtt .lgtt-dock{background:var(--bmn-a-surface)!important;background-image:none!important;border:1px solid var(--bmn-a-line)!important;box-shadow:0 4px 18px rgba(0,0,0,.28)!important}
+html.bmn-android #lgtt .lgtt-dock .lgtt-dk{color:var(--bmn-a-sub)!important}
+html.bmn-android #lgtt .lgtt-dock .lgtt-dk.on{color:var(--bmn-a-text)!important}
+html.bmn-android #lgtt .lgtt-dock-lens{background:rgba(127,127,127,.2)!important;box-shadow:none!important}
+html.bmn-android #lgtt .lgtt-tabs,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-tabs{background:rgba(0,0,0,.38)!important;color:#fff!important;border:0!important;box-shadow:none!important}
+html.bmn-android #lgtt .lgtt-tabs *,html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-tabs *{color:#fff!important}
+html.bmn-android #lgtt .lgtt-act-btn,html.bmn-android #lgtt .lgtt-top .lgtt-btn{background:rgba(0,0,0,.36)!important;background-image:none!important;border:0!important;box-shadow:none!important;color:#fff!important}
+html.bmn-android #lgtt .lgtt-act-btn::before,html.bmn-android #lgtt .lgtt-act-btn::after{display:none!important}
+html.bmn-android .bmn-sh{background:var(--bmn-a-surface)!important;color:var(--bmn-a-text)!important;box-shadow:none!important}
+html.bmn-android .bmn-sh *{color:inherit}
+html.bmn-android .bmn-sh .pri{color:#fff!important}
+html.bmn-android #bmnInstallChip{background:rgba(0,0,0,.55)!important;box-shadow:none!important}
+html.bmn-android .bmn-ri-wall{box-shadow:none}
+
+/* ===== App-like feel: no website behaviours ===== */
+html.bmn-community-app ::-webkit-scrollbar,html.bmn-standalone ::-webkit-scrollbar{display:none}
+html.bmn-community-app,html.bmn-standalone{scrollbar-width:none}
+html.bmn-community-app body,html.bmn-standalone body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html.bmn-community-app input,html.bmn-community-app textarea,html.bmn-standalone input,html.bmn-standalone textarea,html.bmn-community-app .bmn-ri-msg,html.bmn-community-app .lgtt-cm-text{-webkit-user-select:text;user-select:text}
+#lgtt .lgtt-scroll,#bmnRealInbox .bmn-ri-list,#bmnRealInbox .bmn-ri-messages{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.bmn-tap{animation:bmnTap .38s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bmnTap{0%{scale:1}35%{scale:.92}100%{scale:1}}
+@media (prefers-reduced-motion:reduce){.bmn-tap{animation:none}}
+</style>
+<script id="bmn-app-feel-js">
+(()=>{'use strict';
+const sel='button,[role="button"],a,.bmn-ri-row,.lgtt-tile,.lgtt-set-row,.pill,.icon-btn';
+document.addEventListener('pointerdown',e=>{const t=e.target&&e.target.closest&&e.target.closest(sel);if(!t||t.disabled||t.matches('input,textarea,select'))return;t.classList.remove('bmn-tap');void t.offsetWidth;t.classList.add('bmn-tap');setTimeout(()=>t.classList.remove('bmn-tap'),420)},{passive:true,capture:true});
+document.addEventListener('contextmenu',e=>{if(e.target&&e.target.closest&&e.target.closest('input,textarea,.bmn-ri-msg'))return;e.preventDefault()});
+document.addEventListener('dragstart',e=>{if(e.target&&e.target.closest&&e.target.closest('img,video,a'))e.preventDefault()});
+})();
+</script>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
@@ -9069,11 +9136,11 @@ window.requestCommunityAuth=function(reason){
       if(!c){note('BMN is still connecting. Try again in a moment.');return}
       busy=true;box.querySelectorAll('button').forEach(x=>x.disabled=true);
       try{
-        if(a==='g'){const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname+'#community-page'}});if(error)throw error;return}
-        if(a==='forgot'){if(!email()){note('Enter your email first.');return}const {error}=await c.auth.resetPasswordForEmail(email(),{redirectTo:location.origin+location.pathname+'#profile'});if(error)throw error;note('If that email has an account, a reset link is on its way.',true);return}
+        if(a==='g'){try{localStorage.setItem('bmn-auth-intent','community')}catch(_){}const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(error)throw error;return}
+        if(a==='forgot'){if(!email()){note('Enter your email first.');return}const {error}=await c.auth.resetPasswordForEmail(email(),{redirectTo:location.origin+location.pathname});if(error)throw error;note('If that email has an account, a reset link is on its way.',true);return}
         if(!email()||!pass()){note('Enter your email and password.');return}
         if(a==='in'){const {data,error}=await c.auth.signInWithPassword({email:email(),password:pass()});if(error)throw error;window.bmnSession=data.session;try{sessionStorage.removeItem(PEND)}catch(_){}await afterSignIn(reason);return}
-        if(a==='up'){if(pass().length<6){note('Use a password with at least 6 characters.');return}const un=email().split('@')[0];const {data,error}=await c.auth.signUp({email:email(),password:pass(),options:{data:{username:un,display_name:un},emailRedirectTo:location.origin+location.pathname+'#community-page'}});if(error)throw error;
+        if(a==='up'){if(pass().length<6){note('Use a password with at least 6 characters.');return}const un=email().split('@')[0];const {data,error}=await c.auth.signUp({email:email(),password:pass(),options:{data:{username:un,display_name:un},emailRedirectTo:location.origin+location.pathname}});if(error)throw error;
           if(data.session){window.bmnSession=data.session;try{sessionStorage.removeItem(PEND)}catch(_){}await afterSignIn(reason)}else note('Check your email to verify your account, then sign in.',true)}
       }catch(err){note(errMsg(err))}
       finally{busy=false;box.querySelectorAll('button').forEach(x=>x.disabled=false)}
@@ -9193,6 +9260,27 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e}
 window.addEventListener('appinstalled',()=>{deferred=null;try{localStorage.setItem(KEY,String(Date.now()+3650*DAY))}catch(_){}try{window.bmnCloseSheet&&window.bmnCloseSheet()}catch(_){}});
 const dismissed=()=>{try{return Number(localStorage.getItem(KEY)||0)>Date.now()}catch(_){return false}};
 const snooze=d=>{try{localStorage.setItem(KEY,String(Date.now()+d*DAY))}catch(_){}};
+async function runCheck(box){
+  const out=[],add=(ok,t)=>out.push((ok?'\u2705 ':'\u274C ')+t);
+  add(window.isSecureContext,'Secure (https) connection');
+  let man=null,murl='';
+  try{const l=document.querySelector('link[rel="manifest"]');murl=l?l.href:'';
+    if(!murl)add(false,'No manifest link found in the page');
+    else{const r=await fetch(murl,{cache:'no-store'});add(r.ok,'Manifest loads ('+r.status+')');if(r.ok){try{man=await r.json()}catch(e){add(false,'Manifest is not valid JSON')}}}}
+  catch(e){add(false,'Manifest could not be fetched')}
+  if(man){
+    add(['standalone','fullscreen','minimal-ui'].indexOf(man.display)>-1,'display = '+man.display);
+    add(!!(man.name||man.short_name),'App name is set');add(!!man.start_url,'start_url = '+man.start_url);
+    const icons=man.icons||[];
+    for(const ic of icons){try{const u=new URL(ic.src,murl),r=await fetch(u,{cache:'no-store'});add(r.ok,'Icon '+(ic.sizes||'')+' '+ic.src+' ('+r.status+')')}catch(e){add(false,'Icon '+ic.src+' is not reachable')}}
+    const has=sz=>icons.some(i=>String(i.sizes).indexOf(sz)>-1&&/png/.test(i.type||''));
+    add(has('192'),'192px PNG icon declared');add(has('512'),'512px PNG icon declared');
+  }
+  try{const reg=await navigator.serviceWorker.getRegistration();add(!!reg,'Service worker registered');add(!!navigator.serviceWorker.controller,'Service worker controls this page')}catch(e){add(false,'Service worker unavailable')}
+  add(!!deferred,'Browser has offered the install prompt'+(deferred?'':' (not yet)'));
+  let n=box.querySelector('#bmnInstCheck');if(!n){n=document.createElement('div');n.id='bmnInstCheck';box.appendChild(n)}
+  n.style.cssText='font-size:13px;line-height:1.6;margin-top:8px;white-space:pre-wrap';n.textContent=out.join('\n');
+}
 function show(force){
   if(standalone()||!window.bmnSheet)return;
   if(!force&&dismissed())return;
@@ -9206,8 +9294,9 @@ function show(force){
   }else{
     body='<p>Open your browser menu and choose <span class="bmn-kbd">Install app</span> or <span class="bmn-kbd">Add to Home screen</span> to run BMN full screen.</p>';
   }
-  window.bmnSheet('<h2>Get the BMN app</h2>'+body+'<div class="row">'+primary+'<button data-i="later" type="button">Not now</button></div><div class="row"><button class="link" data-i="never" type="button">Don\u2019t show again</button></div>',box=>{
+  window.bmnSheet('<h2>Get the BMN app</h2>'+body+'<div class="row">'+primary+'<button data-i="later" type="button">Not now</button></div><div class="row"><button class="link" data-i="check" type="button">Why can\u2019t I install?</button><button class="link" data-i="never" type="button">Don\u2019t show again</button></div>',box=>{
     box.addEventListener('click',async e=>{const b=e.target.closest('[data-i]');if(!b)return;const a=b.dataset.i;
+      if(a==='check'){runCheck(box);return}
       if(a==='install'&&deferred){const d=deferred;deferred=null;try{d.prompt();await d.userChoice}catch(_){}window.bmnCloseSheet();return}
       if(a==='later')snooze(3);if(a==='never')snooze(3650);window.bmnCloseSheet()});
   });
@@ -9237,7 +9326,7 @@ function addPersonalRow(){
   const t=document.getElementById('themeSetting');const row=t&&t.closest('.setting-row');if(!row||document.getElementById('bmnSetInstallP'))return false;
   const r=document.createElement('div');r.className='setting-row';
   r.innerHTML='<div><strong>Add to Home Screen</strong><small>Install BMN to run full screen like a normal app.</small></div><button class="pill" id="bmnSetInstallP" type="button">'+(standalone()?'Installed':'Install')+'</button>';
-  r.querySelector('button').addEventListener('click',()=>{if(!standalone())show(true)});row.after(r);return true}
+  r.querySelector('button').addEventListener('click',()=>{if(!standalone())show(true)});row.after(r);const r2=document.createElement('div');r2.className='setting-row';r2.innerHTML='<div><strong>Layout check</strong><small>Show screen measurements to help fix display issues.</small></div><button class="pill" id="bmnSetLayoutDbgP" type="button">Toggle</button>';r2.querySelector('button').addEventListener('click',()=>{try{window.bmnToggleLayoutDebug&&window.bmnToggleLayoutDebug()}catch(_){}});r.after(r2);return true}
 let pt=0;const pi=setInterval(()=>{if(addPersonalRow()||++pt>20)clearInterval(pi)},500);
 // offer once the Community screen is on, never while a video is the first thing you see
 let tries=0;const t=setInterval(()=>{if(standalone()){clearInterval(t);return}
@@ -9260,7 +9349,7 @@ function openCamera(onFile){
   const d=document.createElement('div');d.id='bmnCam';d.className='';
   d.innerHTML='<video class="bmn-cam-v" playsinline muted autoplay></video>'
    +'<div class="bmn-cam-top"><button type="button" data-x aria-label="Close camera"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button><span class="bmn-cam-t">0:00</span><span style="width:44px"></span></div>'
-   +'<div class="bmn-cam-rail"><button type="button" data-f aria-label="Flip camera"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg><span>Flip</span></button><button type="button" data-fl hidden aria-label="Flash"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span>Flash</span></button><button type="button" data-tm aria-label="Timer off"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span class="bmn-cam-tml">Off</span></button></div>'
+   +'<div class="bmn-cam-rail"><button type="button" data-f aria-label="Flip camera"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg><span>Flip</span></button><button type="button" data-fl hidden aria-label="Flash"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span>Flash</span></button><button type="button" data-fit aria-label="Switch between full view and fill"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>Fit</span></button><button type="button" data-tm aria-label="Timer off"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span class="bmn-cam-tml">Off</span></button></div>'
    +'<div class="bmn-cam-count" aria-live="assertive"></div><div class="bmn-cam-msg" role="status" aria-live="polite"></div><div class="bmn-cam-zoom" hidden></div>'
    +'<div class="bmn-cam-modes" role="group" aria-label="Capture mode"><button type="button" data-m="15" aria-pressed="false">15s</button><button type="button" data-m="60" aria-pressed="true">60s</button><button type="button" data-m="photo" aria-pressed="false">PHOTO</button></div>'
    +'<div class="bmn-cam-bot"><label class="bmn-cam-gal" aria-label="Choose from your gallery"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="video/*,image/*" hidden></label><button type="button" class="bmn-cam-rec" data-r aria-label="Start recording"></button><span class="bmn-cam-sp"></span></div>'
@@ -9269,13 +9358,15 @@ function openCamera(onFile){
   st.appendChild(d);
   const $=s=>d.querySelector(s),video=$('.bmn-cam-v'),T=$('.bmn-cam-t'),M=$('.bmn-cam-msg'),CNT=$('.bmn-cam-count'),REC=$('.bmn-cam-rec'),ZOOM=$('.bmn-cam-zoom');
   let stream=null,track=null,caps={},rec=null,chunks=[],timer=0,t0=0,facing='environment',mode='60',timerSecs=0,torch=false,result=null,resultURL='',pinch=null,curZoom=1,counting=0,gone=false;
+  let fitMode='auto';
+  function fitVideo(){const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh)return;const b=d.getBoundingClientRect(),ar=vw/vh,br=b.width/b.height;const contain=fitMode==='fit'||(fitMode==='auto'&&ar>br*1.12);video.style.objectFit=contain?'contain':'cover';const l=d.querySelector('[data-fit] span');if(l)l.textContent=contain?'Fit':'Fill';return contain}
   const maxSec=()=>mode==='15'?15:60;
   const msg=(t,html)=>{if(html)M.innerHTML=html;else M.textContent=t||''};
   const stopStream=()=>{try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(_){}stream=null;track=null;caps={}};
   const close=()=>{if(gone)return;gone=true;clearInterval(timer);clearTimeout(counting);stopStream();if(resultURL)URL.revokeObjectURL(resultURL);d.remove();st.classList.remove('bmn-cam-open');try{window.LGTT&&LGTT.resume&&LGTT.resume()}catch(_){}};
   const done=f=>{close();onFile(f)};
   async function getStream(){
-    const v1={facingMode:{ideal:facing},width:{ideal:1080},height:{ideal:1920}};
+    const v1={facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}};
     const tries=[{video:v1,audio:true},{video:{facingMode:{ideal:facing}},audio:true},{video:{facingMode:{ideal:facing}},audio:false}];
     let last=null;for(const c of tries){try{return await navigator.mediaDevices.getUserMedia(c)}catch(e){last=e;if(e&&e.name==='NotAllowedError'||e&&e.name==='SecurityError')break}}throw last}
   async function start(){
@@ -9283,7 +9374,7 @@ function openCamera(onFile){
     try{stream=await getStream()}catch(e){
       const denied=e&&(e.name==='NotAllowedError'||e.name==='SecurityError');
       msg('',(denied?'Camera access is off. Allow camera and microphone for this site in your phone settings.':'The camera could not start ('+(e&&e.name||'error')+').')+'<br><button type="button" data-nat>Use the phone camera instead</button>');return}
-    video.srcObject=stream;video.style.transform=facing==='user'?'scaleX(-1)':'none';
+    video.srcObject=stream;video.onloadedmetadata=fitVideo;setTimeout(fitVideo,400);video.style.transform=facing==='user'?'scaleX(-1)':'none';
     track=stream.getVideoTracks()[0];try{caps=track.getCapabilities?track.getCapabilities():{}}catch(_){caps={}}
     $('[data-fl]').hidden=!caps.torch;torch=false;
     buildZoom();
@@ -9333,6 +9424,7 @@ function openCamera(onFile){
     if('x' in b.dataset){if(counting){clearInterval(counting);counting=0;CNT.textContent='';return}if(rec&&rec.state==='recording'){rec.onstop=null;try{rec.stop()}catch(_){}}close();return}
     if('f' in b.dataset){if(rec&&rec.state==='recording')return;facing=facing==='user'?'environment':'user';start();return}
     if('fl' in b.dataset){torch=!torch;try{track.applyConstraints({advanced:[{torch}]}).catch(()=>{torch=false})}catch(_){}b.style.opacity=torch?'1':'.7';return}
+    if('fit' in b.dataset){const c=fitVideo();fitMode=c?'fill':'fit';fitVideo();return}
     if('tm' in b.dataset){timerSecs=timerSecs===0?3:timerSecs===3?10:0;b.querySelector('.bmn-cam-tml').textContent=timerSecs?timerSecs+'s':'Off';b.setAttribute('aria-label','Timer '+(timerSecs?timerSecs+' seconds':'off'));return}
     if('m' in b.dataset){if(rec&&rec.state==='recording')return;mode=b.dataset.m;d.classList.toggle('photo',mode==='photo');d.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));REC.setAttribute('aria-label',mode==='photo'?'Take photo':'Start recording');return}
     if('z' in b.dataset){setZoom(Number(b.dataset.z));return}
@@ -9374,7 +9466,7 @@ function enhanceCreate(){
   const src=$('#bmnPostStatus');if(src&&status&&!src._mirror){src._mirror=1;new MutationObserver(()=>{const t=(src.textContent||'').trim();if(t)status.textContent=t}).observe(src,{childList:true,characterData:true,subtree:true})}
   if(pub){pub.addEventListener('click',()=>{if(pub.disabled)return;pub.disabled=true;setTimeout(()=>{pub.disabled=false},8000)},true)}
 }
-new MutationObserver(()=>enhanceCreate()).observe(document.documentElement,{childList:true,subtree:true});
+let encRaf=0;new MutationObserver(()=>{if(encRaf)return;encRaf=requestAnimationFrame(()=>{encRaf=0;if(document.getElementById('lgttCreateBody'))enhanceCreate()})}).observe(document.documentElement,{childList:true,subtree:true});
 
 /* ---- Save video to Photos/Gallery ---- */
 let busy=false;
@@ -9401,45 +9493,104 @@ const standalone=()=>!!(navigator.standalone||(window.matchMedia&&matchMedia('(d
 let dbg=null,raf=0;
 function fit(){
   if(!document.body)return;
-  const p=document.createElement('div');p.style.cssText='position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(p);
-  const h=Math.round(p.getBoundingClientRect().height);p.remove();
+  const p=document.createElement('div');p.style.cssText='position:fixed;top:0;bottom:0;left:0;width:1px;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(p);
+  const h=Math.round(p.getBoundingClientRect().height);const cs0=getComputedStyle(p);const sat=cs0.paddingTop,sab=cs0.paddingBottom;p.remove();
   const portrait=window.innerHeight>=window.innerWidth,long=Math.max(screen.width,screen.height),short=Math.min(screen.width,screen.height),full=portrait?long:short;
   /* Only the installed app can paint below the layout viewport. In a browser tab the toolbar owns that space. */
   let ext=standalone()?Math.max(0,Math.round(full-h)):0;if(ext>120)ext=0;
   root.style.setProperty('--bmn-ext',ext+'px');root.style.setProperty('--bmn-full',(h+ext)+'px');root.classList.toggle('bmn-ext',ext>0);window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
   let flag=false;try{flag=localStorage.getItem('bmn-layout-debug')==='1'}catch(_){}
-  if(flag||/[?&]layout=1/.test(location.search)){
+  if(standalone()&&!window.__bmnDiagStart){window.__bmnDiagStart=Date.now()}
+  const auto=window.__bmnDiagStart&&Date.now()-window.__bmnDiagStart<25000;
+  if(flag||auto||/[?&]layout=1/.test(location.search)){
     if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
-    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a')].join('\n');
+    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'(this box hides itself after 25s)'].join('\n');
   }
 }
 const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)};
 ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,sched));
 if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sched);else sched();
-[300,1200,3000].forEach(t=>setTimeout(sched,t));window.bmnFit=sched;window.bmnToggleLayoutDebug=()=>{let on=false;try{on=localStorage.getItem('bmn-layout-debug')==='1';localStorage.setItem('bmn-layout-debug',on?'0':'1')}catch(_){}const d=document.getElementById('bmnLayoutDebug');if(d&&on)d.remove();sched();return !on};
+[300,1200,3000,26000].forEach(t=>setTimeout(()=>{if(t===26000&&!(()=>{try{return localStorage.getItem('bmn-layout-debug')==='1'}catch(_){return false}})()&&!/[?&]layout=1/.test(location.search)){const d=document.getElementById('bmnLayoutDebug');if(d)d.remove();window.__bmnDiagStart=-1e9}sched()},t));window.bmnFit=sched;window.bmnToggleLayoutDebug=()=>{let on=false;try{on=localStorage.getItem('bmn-layout-debug')==='1';localStorage.setItem('bmn-layout-debug',on?'0':'1')}catch(_){}const d=document.getElementById('bmnLayoutDebug');if(d&&on)d.remove();sched();return !on};
 })();
 </script>
 
 <script id="bmn-audio-guard-js">
 (()=>{'use strict';
-const root=document.documentElement;
+const root=document.documentElement,REG=new Set();
+const origPlay=HTMLMediaElement.prototype.play;
+HTMLMediaElement.prototype.play=function(){try{REG.add(this)}catch(_){}return origPlay.apply(this,arguments)};
+const keep=v=>!!(v.closest&&v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17'));
+const isVisibleSlide=sl=>{const r=sl.getBoundingClientRect(),mid=innerHeight/2;return r.top<=mid&&r.bottom>=mid&&r.width>0};
 function guard(){
-  const L=window.LGTT;if(!L||!L.audioState)return;
-  let st;try{st=L.audioState()}catch(_){return}
+  const L=window.LGTT;let blocked=true;try{blocked=!!(L&&L.audioState&&L.audioState().blocked)}catch(_){}
   const communityOn=root.classList.contains('bmn-community-app');
-  document.querySelectorAll('video').forEach(v=>{
-    if(v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17'))return;
-    if(v.closest('.lgtt-slide')){
-      if(st.blocked||v!==st.active){if(!v.paused)v.pause();if(!v.muted)v.muted=true}
-    }else if(communityOn&&!v.controls){ if(!v.paused)v.pause();if(!v.muted)v.muted=true }
+  const all=new Set(document.querySelectorAll('video'));REG.forEach(v=>all.add(v));
+  all.forEach(v=>{
+    if(keep(v))return;
+    if(!v.isConnected){try{v.pause();v.muted=true}catch(_){}REG.delete(v);return}
+    const sl=v.closest('.lgtt-slide');
+    if(sl){ if(blocked||!isVisibleSlide(sl)){if(!v.paused)v.pause();if(!v.muted)v.muted=true} }
+    else if(communityOn&&!v.controls){ if(!v.paused)v.pause();if(!v.muted)v.muted=true }
   });
 }
-setInterval(guard,350);
-const stopAll=()=>{document.querySelectorAll('video').forEach(v=>{if(v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17'))return;try{v.pause();v.muted=true}catch(_){}})};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAll();else guard()});
+setInterval(guard,500);
+const stopAll=()=>{const all=new Set(document.querySelectorAll('video'));REG.forEach(v=>all.add(v));all.forEach(v=>{if(keep(v))return;try{v.pause();v.muted=true}catch(_){}})};
+const resume=()=>{try{window.LGTT&&window.LGTT.resume&&window.LGTT.resume()}catch(_){}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAll();else{guard();setTimeout(resume,150)}});
 window.addEventListener('pagehide',stopAll);
-window.addEventListener('blur',()=>{if(document.hidden)stopAll()});
+window.addEventListener('pageshow',()=>setTimeout(resume,150));
+document.addEventListener('loadeddata',e=>{const v=e.target;if(v&&v.closest&&v.closest('.lgtt-slide'))resume()},true);
+document.addEventListener('canplay',e=>{const v=e.target;if(v&&v.closest&&v.closest('.lgtt-slide')&&v.paused)resume()},true);
+[400,1400,3000].forEach(t=>setTimeout(resume,t));
+})();
+</script>
+
+<script id="bmn-auth-return-js">
+(()=>{'use strict';
+const toast=(m,i)=>{try{window.LGTT&&window.LGTT.toast?window.LGTT.toast(m,i):0}catch(_){}};
+const parse=str=>{const o={};String(str||'').replace(/^[#?]+/,'').split(/[&#]/).forEach(p=>{if(!p)return;const i=p.indexOf('=');if(i<1)return;try{o[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1).replace(/\+/g,' '))}catch(_){}});return o};
+async function ensureProfile(sb,user){
+  try{if(!user||!user.id)return;
+    const {data,error}=await sb.from('profiles').select('id').eq('id',user.id).maybeSingle();if(error||data)return;
+    const m=user.user_metadata||{};
+    const base=String(m.preferred_username||m.user_name||(user.email||'').split('@')[0]||'member').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20)||'member';
+    const display=m.full_name||m.name||base,avatar=m.avatar_url||m.picture||null;
+    for(let i=0;i<4;i++){const username=i?base+String(Math.floor(Math.random()*9000+1000)):base;
+      const r=await sb.from('profiles').insert({id:user.id,username,display_name:display,avatar_url:avatar});
+      if(!r.error)return;if(!/duplicate|unique|23505/i.test(String(r.error.message||'')+String(r.error.code||'')))return}
+  }catch(_){}
+}
+function afterSession(sb,session){
+  window.bmnSession=session;
+  ensureProfile(sb,session.user);
+  try{window.loadCommunityPosts&&window.loadCommunityPosts()}catch(_){}
+  setTimeout(()=>{try{window.LGTT&&window.LGTT.patchCounts&&window.LGTT.patchCounts()}catch(_){}},800);
+}
+let hooked=false;
+function hook(sb){if(hooked)return;hooked=true;try{sb.auth.onAuthStateChange((ev,sess)=>{if(sess&&sess.user&&(ev==='SIGNED_IN'||ev==='INITIAL_SESSION'))setTimeout(()=>ensureProfile(sb,sess.user),0)})}catch(_){}}
+function whenClient(cb){let n=0;const t=setInterval(()=>{if(window.bmnSupabase){clearInterval(t);cb(window.bmnSupabase)}else if(++n>80)clearInterval(t)},125)}
+whenClient(sb=>{hook(sb);try{sb.auth.getSession().then(r=>{if(r&&r.data&&r.data.session)ensureProfile(sb,r.data.session.user)})}catch(_){}});
+/* Returning from Google / email links: finish the session even if another script already rewrote the URL */
+(function finish(){
+  let h={},q={};try{const u=new URL(window.__bmnBootURL||location.href);h=parse(u.hash);q=parse(u.search)}catch(_){}
+  const err=q.error_description||h.error_description||q.error||h.error;
+  const hasTokens=!!(h.access_token&&h.refresh_token),code=q.code;
+  if(!hasTokens&&!code&&!err)return;
+  const clean=()=>{try{history.replaceState(null,'',location.pathname+'#community-page')}catch(_){}};
+  whenClient(async sb=>{
+    try{
+      if(err){clean();setTimeout(()=>toast('Sign-in failed: '+err),1200);return}
+      let session=null;
+      if(hasTokens){const r=await sb.auth.setSession({access_token:h.access_token,refresh_token:h.refresh_token});if(r.error)throw r.error;session=r.data.session}
+      else if(code&&sb.auth.exchangeCodeForSession){const r=await sb.auth.exchangeCodeForSession(code);if(r.error){const g=await sb.auth.getSession();session=g.data&&g.data.session;if(!session)throw r.error}else session=r.data.session}
+      clean();
+      if(session&&session.user){afterSession(sb,session);try{localStorage.removeItem('bmn-auth-intent')}catch(_){}
+        const nm=(session.user.user_metadata&&(session.user.user_metadata.full_name||session.user.user_metadata.name))||session.user.email||'your account';
+        setTimeout(()=>toast('Signed in as '+nm),1300)}
+    }catch(e){clean();setTimeout(()=>toast('Sign-in could not finish: '+(e&&e.message||'try again')),1200)}
+  });
+})();
 })();
 </script>
 
