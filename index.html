@@ -8567,7 +8567,7 @@ function installWallpaper(){
 /* ---------- Create bridge: use existing Supabase upload pipeline ---------- */
 function installCreateBridge(){
  const host=$('#lgttCreateBody');if(!host||host.querySelector('#bmnOverlayFileV17'))return;
- host.innerHTML='<div style="display:grid;gap:12px"><label for="bmnOverlayFileV17" class="lgtt-btn lgtt-pill lgtt-primary" style="justify-content:center;cursor:pointer">＋ Choose photo or video</label><input id="bmnOverlayFileV17" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" hidden><div id="bmnOverlayPreviewV17" style="display:none;border-radius:18px;overflow:hidden"></div><textarea id="bmnOverlayCaptionV17" maxlength="3000" placeholder="Write a caption…" style="width:100%;min-height:100px;box-sizing:border-box"></textarea><p id="bmnOverlayStatusV17" role="status" style="font-size:12px;opacity:.75"></p><button id="bmnOverlayPublishV17" type="button" class="lgtt-btn lgtt-pill lgtt-primary" style="justify-content:center">Publish post</button><small style="opacity:.62">Publishing uses your existing signed-in BMN Community/Supabase upload pipeline.</small></div>';
+ host.innerHTML='<div style="display:grid;gap:12px"><label for="bmnOverlayFileV17" class="lgtt-btn lgtt-pill lgtt-primary" style="justify-content:center;cursor:pointer">Open photo library</label><input id="bmnOverlayFileV17" type="file" accept="image/*,video/*" multiple hidden><div id="bmnOverlayPreviewV17" style="display:none;border-radius:18px;overflow:hidden"></div><textarea id="bmnOverlayCaptionV17" maxlength="3000" placeholder="Write a caption…" style="width:100%;min-height:100px;box-sizing:border-box"></textarea><p id="bmnOverlayStatusV17" role="status" style="font-size:12px;opacity:.75"></p><button id="bmnOverlayPublishV17" type="button" class="lgtt-btn lgtt-pill lgtt-primary" style="justify-content:center">Publish post</button><small style="opacity:.62">Publishing uses your existing signed-in BMN Community/Supabase upload pipeline.</small></div>';
  const file=$('#bmnOverlayFileV17'),preview=$('#bmnOverlayPreviewV17'),status=$('#bmnOverlayStatusV17'),caption=$('#bmnOverlayCaptionV17');
  file.addEventListener('change',()=>{preview.replaceChildren();const f=file.files?.[0];if(!f){preview.style.display='none';return}preview.style.display='block';let n;if(f.type.startsWith('video/')){n=document.createElement('video');n.controls=true;n.muted=true;n.playsInline=true;n.src=URL.createObjectURL(f);n.style.width='100%'}else{n=document.createElement('img');n.src=URL.createObjectURL(f);n.alt='Selected media';n.style.cssText='width:100%;max-height:45vh;object-fit:contain'}preview.appendChild(n);status.textContent=f.name+' selected'});
  $('#bmnOverlayPublishV17').addEventListener('click',()=>{const original=$('#bmnPostFile'),originalCaption=$('#bmnPostContent'),publish=$('#bmnPublishPost');if(!original||!originalCaption||!publish){status.textContent='The upload pipeline is not ready. Close and reopen Create.';return}const f=file.files?.[0];if(!f){status.textContent='Choose a photo or video first.';return}try{const dt=new DataTransfer();dt.items.add(f);original.files=dt.files;original.dispatchEvent(new Event('change',{bubbles:true}));originalCaption.value=caption.value;originalCaption.dispatchEvent(new Event('input',{bubbles:true}));publish.click();status.textContent='Publishing…'}catch(_){status.textContent='Could not attach this file in this browser.'}});
@@ -9090,6 +9090,105 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 })();
 </script>
 
+<style id="bmn-home-redesign-css">
+/* ===== BMN home: app-style scale, spacing and glass cards (does not touch the Community) ===== */
+#bmn-app-scroll{scroll-snap-type:y proximity;scroll-padding-top:8px}
+#bmn-app-scroll .hero,#bmn-app-scroll .personal-section{scroll-snap-align:start}
+#bmn-app-scroll .hero h1{font-size:clamp(38px,11.5vw,76px)!important;line-height:1.02!important;letter-spacing:-.028em!important;margin:14px 0 12px!important}
+#bmn-app-scroll .hero-copy{font-size:clamp(15px,4.2vw,19px)!important;line-height:1.55!important;max-width:34em}
+#bmn-app-scroll .eyebrow{font-size:10.5px!important;letter-spacing:.14em!important;padding:8px 14px!important}
+#bmn-app-scroll .section-head h2,#bmn-app-scroll .contact-box h2{font-size:clamp(26px,8vw,44px)!important;line-height:1.06!important;letter-spacing:-.024em!important}
+#bmn-app-scroll .kicker{font-size:11px!important;letter-spacing:.16em!important}
+#bmn-app-scroll .section-sub{font-size:15px!important;line-height:1.5!important}
+#bmn-app-scroll .card,#bmn-app-scroll .step,#bmn-app-scroll .about-panel,#bmn-app-scroll .contact-box,#bmn-app-scroll .social-grid>a{border-radius:28px!important}
+@media(max-width:700px){
+  #bmn-app-scroll>main.wrap{width:calc(100% - 28px)!important}
+  #bmn-app-scroll .hero{min-height:0!important;padding:14px 0 6px!important}
+  #bmn-app-scroll .personal-section{padding:30px 0 6px!important}
+  #bmn-app-scroll .process,#bmn-app-scroll .about-grid,#bmn-app-scroll .social-grid,#bmn-app-scroll .grid{grid-template-columns:1fr!important;gap:12px!important}
+  #bmn-app-scroll .hero .pill,#bmn-app-scroll .hero a.pill,#bmn-app-scroll .hero button{font-size:15px!important;padding:13px 18px!important}
+}
+/* splash ring */
+#bmnSplash .sp-logo{position:relative;display:grid;place-items:center;width:116px;height:116px}
+#bmnSplash .sp-logo::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid transparent;border-top-color:#fe2c55;border-bottom-color:#25f4ee;animation:bmnSpinRing .9s linear infinite}
+@keyframes bmnSpinRing{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#bmnSplash .sp-logo::before{animation:none}}
+/* Ask BMN */
+#bmnAskFab{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:60;height:48px;padding:0 18px;border-radius:24px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(0,0,0,.25);color:#fff;font:700 14px system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:8px;touch-action:manipulation}
+html.bmn-community-app #bmnAskFab,html.bmn-starting #bmnAskFab{display:none!important}
+html[data-bmn-theme="light"] #bmnAskFab{color:#11141c;background:rgba(255,255,255,.6)}
+html.bmn-android #bmnAskFab{background:#1a1c24;border-color:rgba(255,255,255,.1);box-shadow:0 4px 14px rgba(0,0,0,.3);-webkit-backdrop-filter:none;backdrop-filter:none}
+html.bmn-android[data-bmn-theme="light"] #bmnAskFab{background:#fff;color:#11141c}
+.bmn-ask-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.bmn-ask-chips button{min-height:40px;font-size:14px}
+.bmn-ask-out{font-size:15px;line-height:1.55;white-space:pre-line;margin:0 0 10px;min-height:20px}
+.bmn-ask-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.bmn-ask-links a{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid rgba(255,255,255,.25);color:inherit;text-decoration:none;font-weight:600;font-size:14px;background:rgba(255,255,255,.1)}
+</style>
+<script id="bmn-ask-js">
+(()=>{'use strict';
+const $=s=>document.querySelector(s),clean=t=>String(t||'').replace(/\s+/g,' ').trim();
+const fab=document.createElement('button');fab.id='bmnAskFab';fab.type='button';fab.setAttribute('aria-label','Ask BMN: quick answers from this page');fab.innerHTML='<span aria-hidden="true">\u2726</span> Ask BMN';
+const mount=()=>{if(document.body&&!document.getElementById('bmnAskFab'))document.body.appendChild(fab)};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+const goTo=id=>{const el=document.getElementById(id),sc=document.getElementById('bmn-app-scroll');if(!el||!sc)return;if(window.bmnCloseSheet)window.bmnCloseSheet();sc.scrollTo({top:Math.max(0,el.offsetTop-12),behavior:'smooth'})};
+function answer(key){
+  const out={text:'',links:[]};
+  if(key==='meaning'){const nodes=[...document.querySelectorAll('#about p')].map(p=>clean(p.textContent)).filter(Boolean);
+    out.text='BMN\u00ae stands for Bene Meritum Nomen.\n'+(nodes.slice(1,3).join('\n')||nodes[0]||'')}
+  else if(key==='edit'){const steps=[...document.querySelectorAll('#process .step')].map(el=>clean(el.innerText.replace(/\n+/g,' \u2014 ')));out.text=steps.length?steps.join('\n'):'See the \u201cHow I edit\u201d section.';}
+  else if(key==='follow'){const a=[...document.querySelectorAll('#socials .social-grid a')];out.text=a.length?a.map(x=>clean(x.innerText.replace(/\n+/g,' \u2014 ')).replace(/\s*[\u2197\u2192]\s*$/,'')).join('\n'):'See the social platforms section.';a.forEach(x=>out.links.push([clean(x.innerText.split('\n')[0]),x.href]))}
+  else if(key==='contact'){out.text=clean(($('#contact p')||{}).textContent)||'Message me through my public social profiles.';[...document.querySelectorAll('#contact a')].forEach(x=>out.links.push([clean(x.textContent).replace(/\s*[\u2197\u2192]\s*$/,''),x.href]))}
+  else if(key==='work'){out.text='Opening Selected creative work.';setTimeout(()=>goTo('work'),150)}
+  else if(key==='community'){out.text='Opening the Community.';setTimeout(()=>{try{window.bmnCloseSheet&&window.bmnCloseSheet();const b=document.querySelector('button[data-view="community"]');b&&b.click()}catch(_){}},150)}
+  else out.text='I can answer from this page. Try: What does BMN mean? How do you edit? Where can I follow you? How do I contact you?';
+  return out;
+}
+function route(q){q=String(q||'').toLowerCase();
+  if(/mean|stand|name|bene|about|who/.test(q))return'meaning';
+  if(/edit|step|process|workflow|how/.test(q))return'edit';
+  if(/follow|social|tiktok|youtube|wiki|find|handle/.test(q))return'follow';
+  if(/contact|collab|message|hire|reach|email/.test(q))return'contact';
+  if(/work|show|portfolio|reel/.test(q))return'work';
+  if(/community/.test(q))return'community';return''}
+fab.addEventListener('click',()=>{
+  if(!window.bmnSheet)return;
+  window.bmnSheet('<h2>Ask BMN</h2><p>Quick answers taken straight from this page. This is not an AI.</p>'
+   +'<div class="bmn-ask-chips"><button type="button" data-k="meaning">What does BMN mean?</button><button type="button" data-k="edit">How do you edit?</button><button type="button" data-k="follow">Where can I follow you?</button><button type="button" data-k="contact">Contact</button><button type="button" data-k="work">Show your work</button></div>'
+   +'<div class="bmn-ask-out" id="bmnAskOut" role="status" aria-live="polite"></div><div class="bmn-ask-links" id="bmnAskLinks"></div>'
+   +'<div class="row"><input id="bmnAskIn" type="text" placeholder="Ask about BMN\u2026" aria-label="Ask about BMN" enterkeyhint="send"><button class="pri" data-go type="button" style="flex:0 0 auto">Ask</button></div>'
+   +'<div class="row"><button data-close type="button">Close</button></div>',box=>{
+    const show=k=>{const r=answer(k);box.querySelector('#bmnAskOut').textContent=r.text;const L=box.querySelector('#bmnAskLinks');L.innerHTML='';r.links.forEach(([t,h])=>{const a=document.createElement('a');a.href=h;a.target='_blank';a.rel='noopener noreferrer';a.textContent=t+' \u2197';L.appendChild(a)})};
+    box.addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)show(b.dataset.k);if(e.target.closest('[data-go]')){show(route(box.querySelector('#bmnAskIn').value));}});
+    box.querySelector('#bmnAskIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();show(route(e.target.value))}});
+  });
+});
+})();
+</script>
+
+<script id="bmn-fullscreen-js">
+(()=>{'use strict';
+const root=document.documentElement;
+function apply(){
+  if(!root.classList.contains('bmn-community-app'))return;
+  const lg=document.getElementById('lgtt'),st=document.getElementById('lgttStage');if(!lg||!st)return;
+  const vv=window.visualViewport;
+  const W=Math.round(window.innerWidth||root.clientWidth),H=Math.round(Math.max(window.innerHeight||0,vv?vv.height:0,root.clientHeight||0));
+  if(!W||!H)return;
+  const put=(e,o)=>{for(const k in o)e.style.setProperty(k,o[k],'important')};
+  put(lg,{position:'fixed',top:'0px',left:'0px',right:'auto',bottom:'auto',width:W+'px',height:H+'px','min-height':'0px','max-height':'none',padding:'0px',margin:'0px'});
+  const wide=W>=900&&W>H,sw=wide?Math.min(W,Math.round(H*0.5625)):W;
+  put(st,{position:'absolute',top:'0px',left:Math.round((W-sw)/2)+'px',width:sw+'px',height:H+'px','min-width':'0px','max-width':'none','min-height':'0px','max-height':'none','aspect-ratio':'auto',margin:'0px','border-radius':'0px'});
+}
+let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(apply)};
+['resize','orientationchange','pageshow','focus'].forEach(e=>window.addEventListener(e,sched));
+if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
+new MutationObserver(sched).observe(root,{attributes:true,attributeFilter:['class']});
+let n=0;const t=setInterval(()=>{apply();if(++n>40)clearInterval(t)},250);
+sched();
+})();
+</script>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
@@ -9381,7 +9480,7 @@ function openCamera(onFile){
    +'<div class="bmn-cam-rail"><button type="button" data-f aria-label="Flip camera"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg><span>Flip</span></button><button type="button" data-fl hidden aria-label="Flash"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span>Flash</span></button><button type="button" data-fit aria-label="Switch between full view and fill"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>Fit</span></button><button type="button" data-tm aria-label="Timer off"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span class="bmn-cam-tml">Off</span></button></div>'
    +'<div class="bmn-cam-count" aria-live="assertive"></div><div class="bmn-cam-msg" role="status" aria-live="polite"></div><div class="bmn-cam-zoom" hidden></div>'
    +'<div class="bmn-cam-modes" role="group" aria-label="Capture mode"><button type="button" data-m="15" aria-pressed="false">15s</button><button type="button" data-m="60" aria-pressed="true">60s</button><button type="button" data-m="photo" aria-pressed="false">PHOTO</button></div>'
-   +'<div class="bmn-cam-bot"><label class="bmn-cam-gal" aria-label="Choose from your gallery"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="video/*,image/*" hidden></label><button type="button" class="bmn-cam-rec" data-r aria-label="Start recording"></button><span class="bmn-cam-sp"></span></div>'
+   +'<div class="bmn-cam-bot"><label class="bmn-cam-gal" aria-label="Open your photo library"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*,video/*" multiple hidden></label><button type="button" class="bmn-cam-rec" data-r aria-label="Start recording"></button><span class="bmn-cam-sp"></span></div>'
    +'<div class="bmn-cam-review" hidden><div class="bmn-cam-prev"></div><div class="bmn-cam-rb"><button type="button" data-retake>Retake</button><button type="button" class="pri" data-next>Next</button></div></div>'
    +'<input class="bmn-cam-nat" type="file" accept="video/*" capture="environment" hidden>';
   st.appendChild(d);
@@ -9530,7 +9629,7 @@ function fit(){
   root.style.setProperty('--bmn-ext',ext+'px');root.style.setProperty('--bmn-full',(h+ext)+'px');root.classList.toggle('bmn-ext',ext>0);window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
   let flag=false;try{flag=localStorage.getItem('bmn-layout-debug')==='1'}catch(_){}
   if(standalone()&&!window.__bmnDiagStart){window.__bmnDiagStart=Date.now()}
-  const auto=window.__bmnDiagStart&&Date.now()-window.__bmnDiagStart<25000;
+  const auto=false;
   if(flag||auto||/[?&]layout=1/.test(location.search)){
     if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
     dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'(this box hides itself after 25s)'].join('\n');
