@@ -9209,6 +9209,44 @@ if(window.ResizeObserver&&head)new ResizeObserver(measure).observe(head);
 })();
 </script>
 
+<style id="bmn-fyp-layout-css">
+/* ===== FYP layout: compact rail, safe-edge spacing, smaller lower dock ===== */
+html.bmn-community-app #lgtt{--lg-dock-space:calc(58px + max(8px,calc(var(--lg-safe-b) - 14px)) + 16px)}
+html.bmn-community-app #lgtt .lgtt-dock{height:58px!important;width:min(352px,calc(100% - 40px))!important;margin-left:calc(min(352px,100% - 40px) / -2)!important;padding:5px!important}
+html.bmn-community-app #lgtt .lgtt-dk{font-size:11px!important}
+html.bmn-community-app #lgtt .lgtt-side{right:12px!important;bottom:calc(var(--lg-dock-space) + 8px)!important;gap:8px!important;align-items:center}
+html.bmn-community-app #lgtt .lgtt-avatar-wrap{width:44px!important;height:44px!important;margin:0 0 4px!important;transform:none!important}
+html.bmn-community-app #lgtt .lgtt-avatar-wrap>*{max-width:44px;max-height:44px}
+html.bmn-community-app #lgtt .lgtt-side .lgtt-act-btn{width:42px!important;height:42px!important;min-width:0!important;padding:0!important}
+html.bmn-community-app #lgtt .lgtt-side .lgtt-ico,html.bmn-community-app #lgtt .lgtt-side .lgtt-act-btn svg{width:22px!important;height:22px!important}
+html.bmn-community-app #lgtt .lgtt-act-n{font-size:11px!important;min-width:28px!important;margin-top:1px}
+html.bmn-community-app #lgtt .lgtt-disc{width:32px!important;height:32px!important;margin-top:4px!important}
+html.bmn-community-app #lgtt .lgtt-meta{left:16px!important;right:84px!important;bottom:calc(var(--lg-dock-space) + 6px)!important}
+html.bmn-community-app #lgtt .lgtt-top .lgtt-btn,html.bmn-community-app #lgtt .lgtt-top-row>button{width:40px!important;height:40px!important}
+@media(max-height:700px){html.bmn-community-app #lgtt .lgtt-side{gap:5px!important}html.bmn-community-app #lgtt .lgtt-side .lgtt-act-btn{width:38px!important;height:38px!important}}
+</style>
+<script id="bmn-layout-guard-js">
+(()=>{'use strict';
+window.BMN_BUILD='r16';document.documentElement.setAttribute('data-bmn-build','r16');
+const root=document.documentElement;
+/* If the browser still leaves the overlay short of the screen bottom, measure the gap and close it. */
+function guard(){
+  if(!root.classList.contains('bmn-community-app'))return;
+  const lg=document.getElementById('lgtt'),st=document.getElementById('lgttStage');if(!lg||!st)return;
+  const H=Math.round(window.innerHeight||root.clientHeight);if(!H)return;
+  const a=lg.getBoundingClientRect(),b=st.getBoundingClientRect();
+  const gapStage=Math.round(H-b.bottom),gapLg=Math.round(H-a.bottom);
+  window.__bmnGap={lg:gapLg,stage:gapStage};
+  if(gapLg>2&&gapLg<160){lg.style.setProperty('height',Math.round(a.height+gapLg)+'px','important')}
+  if(gapStage>2&&gapStage<160){st.style.setProperty('height',Math.round(b.height+gapStage)+'px','important')}
+}
+let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>setTimeout(guard,60))};
+['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,sched));
+let n=0;const t=setInterval(()=>{guard();if(++n>30)clearInterval(t)},400);
+new MutationObserver(sched).observe(root,{attributes:true,attributeFilter:['class']});
+})();
+</script>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
@@ -9649,10 +9687,10 @@ function fit(){
   root.style.setProperty('--bmn-ext',ext+'px');root.style.setProperty('--bmn-full',(h+ext)+'px');root.classList.toggle('bmn-ext',ext>0);window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
   let flag=false;try{flag=localStorage.getItem('bmn-layout-debug')==='1'}catch(_){}
   if(standalone()&&!window.__bmnDiagStart){window.__bmnDiagStart=Date.now()}
-  const auto=false;
+  const auto=(function(){try{if(localStorage.getItem('bmn-diag-r16'))return false;if(!window.__bmnDiagT0)window.__bmnDiagT0=Date.now();if(Date.now()-window.__bmnDiagT0>20000){localStorage.setItem('bmn-diag-r16','1');return false}return true}catch(_){return false}})();
   if(flag||auto||/[?&]layout=1/.test(location.search)){
     if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
-    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'overlay: '+(function(){try{const a=document.getElementById('lgtt'),b=document.getElementById('lgttStage');if(!a||!b)return'n/a';const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.round(x.top)+'/'+Math.round(x.height)+'  stage '+Math.round(y.top)+'/'+Math.round(y.height)}catch(e){return'err'}})(),'bmn scroll: '+(function(){try{const c=document.getElementById('bmn-app-scroll').getBoundingClientRect();return Math.round(c.top)+'/'+Math.round(c.height)}catch(e){return'n/a'}})()].join('\n');
+    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'overlay: '+(function(){try{const a=document.getElementById('lgtt'),b=document.getElementById('lgttStage');if(!a||!b)return'n/a';const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.round(x.top)+'/'+Math.round(x.height)+'  stage '+Math.round(y.top)+'/'+Math.round(y.height)}catch(e){return'err'}})(),'build: '+(window.BMN_BUILD||'old'),'gaps lg/stage: '+(window.__bmnGap?window.__bmnGap.lg+' / '+window.__bmnGap.stage:'n/a'),'bottom strip: '+(function(){try{const L=document.elementsFromPoint(innerWidth/2,innerHeight-6).slice(0,4);return L.map(e=>e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')).join(' > ')}catch(e){return'err'}})(),'bmn scroll: '+(function(){try{const c=document.getElementById('bmn-app-scroll').getBoundingClientRect();return Math.round(c.top)+'/'+Math.round(c.height)}catch(e){return'n/a'}})()].join('\n');
   }
 }
 const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)};
@@ -9743,84 +9781,6 @@ whenClient(sb=>{hook(sb);try{sb.auth.getSession().then(r=>{if(r&&r.data&&r.data.
 </script>
 
 <!-- ===== END BMN FINAL V18 INTEGRATION PATCH ===== -->
-
-<!-- ===== BMN iOS EDGE-TO-EDGE FYP FIX ===== -->
-<style id="bmn-ios-edge-to-edge-fyp-fix">
-/*
-  iPhone standalone FYP:
-  - The media layer paints all the way to the physical bottom edge.
-  - The bottom navigation remains a floating overlay above the video.
-  - The Home Indicator safe area is NOT turned into a separate black strip.
-*/
-@media (max-width: 599px) {
-  html.bmn-ios.bmn-community-app,
-  html.bmn-ios.bmn-community-app body {
-    background: transparent !important;
-  }
-
-  html.bmn-ios.bmn-community-app #lgtt {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    background: transparent !important;
-    box-sizing: border-box !important;
-  }
-
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-stage {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: calc(100% + env(safe-area-inset-bottom, 0px)) !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    border: 0 !important;
-    background: #000 !important;
-    overflow: hidden !important;
-  }
-
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-view,
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-feed,
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-track,
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-slide {
-    height: 100% !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-media,
-  html.bmn-ios.bmn-community-app #lgtt video.lgtt-vid {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    object-fit: cover !important;
-    background: #000 !important;
-  }
-
-  /* Keep the navigation floating over the video, not in a separate bottom area. */
-  html.bmn-ios.bmn-community-app #lgtt .lgtt-dock {
-    position: absolute !important;
-    z-index: 9999 !important;
-    bottom: max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px)) !important;
-  }
-}
-</style>
-<!-- ===== END BMN iOS EDGE-TO-EDGE FYP FIX ===== -->
-
 </body>
 </html>
 
