@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Minimal iOS full-screen test: no BMN code, no manifest, no service worker. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BMN Test">
+<meta name="theme-color" content="#000000">
+<title>BMN screen test</title>
+<style>
+  html,body{margin:0;padding:0;background:#16164f;color:#fff;font:12px/1.35 ui-monospace,Menlo,monospace}
+  .s{position:fixed;top:0;width:calc(100% / 6);box-sizing:border-box;border-bottom:14px solid #fff}
+  #sA{left:0;background:#e11d48;top:0;bottom:0}             /* top:0;bottom:0   */
+  #sB{left:calc(100%/6);background:#f59e0b;height:100vh}    /* 100vh            */
+  #sC{left:calc(200%/6);background:#10b981;height:100dvh}   /* 100dvh           */
+  #sD{left:calc(300%/6);background:#06b6d4;height:100svh}   /* 100svh           */
+  #sE{left:calc(400%/6);background:#8b5cf6;height:100lvh}   /* 100lvh           */
+  #sF{left:calc(500%/6);background:#ec4899;height:-webkit-fill-available} /* fill-available */
+  #bar{position:fixed;left:0;right:0;bottom:0;height:24px;background:#fff;color:#000;text-align:center;font-weight:700;line-height:24px}
+  #top{position:fixed;left:0;right:0;top:0;height:20px;background:#fff;color:#000;text-align:center;font-weight:700;line-height:20px}
+  #info{position:fixed;left:8px;right:8px;top:90px;padding:10px;border-radius:12px;background:rgba(0,0,0,.78);white-space:pre-wrap;z-index:5}
+  #legend{position:fixed;left:8px;right:8px;bottom:60px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.78);z-index:5}
+  .k{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="s" id="sA"></div><div class="s" id="sB"></div><div class="s" id="sC"></div>
+<div class="s" id="sD"></div><div class="s" id="sE"></div><div class="s" id="sF"></div>
+<div id="top">TOP EDGE</div>
+<div id="bar">BOTTOM EDGE</div>
+<div id="info">measuring…</div>
+<div id="legend">
+  <span class="k" style="background:#e11d48"></span>A top:0 bottom:0 &nbsp;
+  <span class="k" style="background:#f59e0b"></span>B 100vh &nbsp;
+  <span class="k" style="background:#10b981"></span>C 100dvh<br>
+  <span class="k" style="background:#06b6d4"></span>D 100svh &nbsp;
+  <span class="k" style="background:#8b5cf6"></span>E 100lvh &nbsp;
+  <span class="k" style="background:#ec4899"></span>F fill-available<br>
+  Each column ends with a thick white line. Screenshot this.
+</div>
+<script>
+(function(){
+  var info=document.getElementById('info');
+  function rect(id){var r=document.getElementById(id).getBoundingClientRect();return Math.round(r.top)+'→'+Math.round(r.bottom)}
+  function run(){
+    var p=document.createElement('div');
+    p.style.cssText='position:fixed;top:0;left:0;width:1px;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(p);var cs=getComputedStyle(p),sat=cs.paddingTop,sab=cs.paddingBottom;p.remove();
+    var vv=window.visualViewport;
+    var standalone=!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+    info.textContent=[
+      'standalone: '+standalone,
+      'navigator.standalone: '+navigator.standalone,
+      'innerWxH: '+innerWidth+' x '+innerHeight,
+      'visualViewport: '+(vv?Math.round(vv.width)+' x '+Math.round(vv.height)+' off '+Math.round(vv.offsetTop):'n/a'),
+      'screen: '+screen.width+' x '+screen.height,
+      'documentElement.clientHeight: '+document.documentElement.clientHeight,
+      'safe top / bottom: '+sat+' / '+sab,
+      'A '+rect('sA')+'   B '+rect('sB')+'   C '+rect('sC'),
+      'D '+rect('sD')+'   E '+rect('sE')+'   F '+rect('sF'),
+      'bar '+rect('bar'),
+      'ua: '+navigator.userAgent.replace(/Mozilla\/5.0 /,'')
+    ].join('\n');
+  }
+  run();addEventListener('resize',run);addEventListener('orientationchange',function(){setTimeout(run,300)});
+  setTimeout(run,500);setTimeout(run,1500);
+})();
+</script>
+</body>
+</html>

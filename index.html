@@ -9247,6 +9247,14 @@ new MutationObserver(sched).observe(root,{attributes:true,attributeFilter:['clas
 })();
 </script>
 
+<style id="bmn-safe-area-footer-css">
+/* Safe-area rules from the iOS fix: backgrounds bleed to the edges, controls stay clear of the home indicator */
+footer,.bottom-nav{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#bmn-app-scroll footer{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#bmn-app-scroll{padding-bottom:0!important}
+#bmn-app-scroll>main.wrap{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))!important}
+</style>
+
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
