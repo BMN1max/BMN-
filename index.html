@@ -9178,6 +9178,7 @@ function apply(){
   const put=(e,o)=>{for(const k in o)e.style.setProperty(k,o[k],'important')};
   put(lg,{position:'fixed',top:'0px',left:'0px',right:'auto',bottom:'auto',width:W+'px',height:H+'px','min-height':'0px','max-height':'none',padding:'0px',margin:'0px'});
   const wide=W>=900&&W>H,sw=wide?Math.min(W,Math.round(H*0.5625)):W;
+  window.__bmnFS={W:W,H:H};
   put(st,{position:'absolute',top:'0px',left:Math.round((W-sw)/2)+'px',width:sw+'px',height:H+'px','min-width':'0px','max-width':'none','min-height':'0px','max-height':'none','aspect-ratio':'auto',margin:'0px','border-radius':'0px'});
 }
 let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(apply)};
@@ -9186,6 +9187,25 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
 new MutationObserver(sched).observe(root,{attributes:true,attributeFilter:['class']});
 let n=0;const t=setInterval(()=>{apply();if(++n>40)clearInterval(t)},250);
 sched();
+})();
+</script>
+
+<style id="bmn-chassis-absolute-css">
+/* BMN page: scroll area is pinned to ALL four screen edges (it runs under the home indicator); header floats above it */
+#bmn-app-root{display:block!important;padding:0!important;overflow:hidden}
+#bmn-app-root>.topbar{position:absolute!important;top:calc(env(safe-area-inset-top,0px) + 8px)!important;left:0!important;right:0!important;margin:0 auto!important;z-index:20}
+#bmn-app-scroll{position:absolute!important;top:0!important;right:0!important;bottom:0!important;left:0!important;box-sizing:border-box;padding-top:calc(env(safe-area-inset-top,0px) + var(--bmn-head-h,64px) + 22px);padding-bottom:env(safe-area-inset-bottom,0px);scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--bmn-head-h,64px) + 22px)}
+#bmn-app-scroll>main.wrap{padding-top:0!important;padding-bottom:28px!important}
+#bmn-app-root>nav.app-dock{display:none!important}
+html,body{background:#070711!important}
+</style>
+<script id="bmn-chassis-absolute-js">
+(()=>{'use strict';
+const root=document.documentElement,head=document.querySelector('#bmn-app-root>.topbar');
+function measure(){if(!head)return;const h=Math.ceil(head.getBoundingClientRect().height);if(h>0)root.style.setProperty('--bmn-head-h',h+'px')}
+measure();window.addEventListener('resize',measure);window.addEventListener('orientationchange',measure);
+if(window.ResizeObserver&&head)new ResizeObserver(measure).observe(head);
+[200,800,2000].forEach(t=>setTimeout(measure,t));
 })();
 </script>
 
@@ -9632,7 +9652,7 @@ function fit(){
   const auto=false;
   if(flag||auto||/[?&]layout=1/.test(location.search)){
     if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
-    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'(this box hides itself after 25s)'].join('\n');
+    dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'overlay: '+(function(){try{const a=document.getElementById('lgtt'),b=document.getElementById('lgttStage');if(!a||!b)return'n/a';const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.round(x.top)+'/'+Math.round(x.height)+'  stage '+Math.round(y.top)+'/'+Math.round(y.height)}catch(e){return'err'}})(),'bmn scroll: '+(function(){try{const c=document.getElementById('bmn-app-scroll').getBoundingClientRect();return Math.round(c.top)+'/'+Math.round(c.height)}catch(e){return'n/a'}})()].join('\n');
   }
 }
 const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)};
