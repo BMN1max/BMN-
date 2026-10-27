@@ -9743,6 +9743,84 @@ whenClient(sb=>{hook(sb);try{sb.auth.getSession().then(r=>{if(r&&r.data&&r.data.
 </script>
 
 <!-- ===== END BMN FINAL V18 INTEGRATION PATCH ===== -->
+
+<!-- ===== BMN iOS EDGE-TO-EDGE FYP FIX ===== -->
+<style id="bmn-ios-edge-to-edge-fyp-fix">
+/*
+  iPhone standalone FYP:
+  - The media layer paints all the way to the physical bottom edge.
+  - The bottom navigation remains a floating overlay above the video.
+  - The Home Indicator safe area is NOT turned into a separate black strip.
+*/
+@media (max-width: 599px) {
+  html.bmn-ios.bmn-community-app,
+  html.bmn-ios.bmn-community-app body {
+    background: transparent !important;
+  }
+
+  html.bmn-ios.bmn-community-app #lgtt {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+  }
+
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-stage {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    background: #000 !important;
+    overflow: hidden !important;
+  }
+
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-view,
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-feed,
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-track,
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-slide {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-media,
+  html.bmn-ios.bmn-community-app #lgtt video.lgtt-vid {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    background: #000 !important;
+  }
+
+  /* Keep the navigation floating over the video, not in a separate bottom area. */
+  html.bmn-ios.bmn-community-app #lgtt .lgtt-dock {
+    position: absolute !important;
+    z-index: 9999 !important;
+    bottom: max(6px, calc(env(safe-area-inset-bottom, 0px) - 14px)) !important;
+  }
+}
+</style>
+<!-- ===== END BMN iOS EDGE-TO-EDGE FYP FIX ===== -->
+
 </body>
 </html>
 
