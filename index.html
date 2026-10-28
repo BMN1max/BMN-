@@ -9176,11 +9176,13 @@ function apply(){
   const W=Math.round(window.innerWidth||root.clientWidth),H=Math.round(Math.max(window.innerHeight||0,vv?vv.height:0,root.clientHeight||0));
   if(!W||!H)return;
   const put=(e,o)=>{for(const k in o)e.style.setProperty(k,o[k],'important')};
-  put(lg,{position:'fixed',top:'0px',left:'0px',right:'auto',bottom:'auto',width:W+'px',height:H+'px','min-height':'0px','max-height':'none',padding:'0px',margin:'0px'});
+  const extra=window.__bmnExtra||0,HH=window.__bmnLvh?'100lvh':(H+extra)+'px';
+  put(lg,{position:'fixed',top:'0px',left:'0px',right:'auto',bottom:'auto',width:W+'px',height:HH,'min-height':'0px','max-height':'none',padding:'0px',margin:'0px'});
   const wide=W>=900&&W>H,sw=wide?Math.min(W,Math.round(H*0.5625)):W;
   window.__bmnFS={W:W,H:H};
-  put(st,{position:'absolute',top:'0px',left:Math.round((W-sw)/2)+'px',width:sw+'px',height:H+'px','min-width':'0px','max-width':'none','min-height':'0px','max-height':'none','aspect-ratio':'auto',margin:'0px','border-radius':'0px'});
+  put(st,{position:'absolute',top:'0px',left:Math.round((W-sw)/2)+'px',width:sw+'px',height:HH,'min-width':'0px','max-width':'none','min-height':'0px','max-height':'none','aspect-ratio':'auto',margin:'0px','border-radius':'0px'});
 }
+window.__bmnFSApply=apply;
 let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(apply)};
 ['resize','orientationchange','pageshow','focus'].forEach(e=>window.addEventListener(e,sched));
 if(window.visualViewport)window.visualViewport.addEventListener('resize',sched);
@@ -9227,7 +9229,7 @@ html.bmn-community-app #lgtt .lgtt-top .lgtt-btn,html.bmn-community-app #lgtt .l
 </style>
 <script id="bmn-layout-guard-js">
 (()=>{'use strict';
-window.BMN_BUILD='r16';document.documentElement.setAttribute('data-bmn-build','r16');
+window.BMN_BUILD='r17';document.documentElement.setAttribute('data-bmn-build','r17');
 const root=document.documentElement;
 /* If the browser still leaves the overlay short of the screen bottom, measure the gap and close it. */
 function guard(){
@@ -9235,6 +9237,7 @@ function guard(){
   const lg=document.getElementById('lgtt'),st=document.getElementById('lgttStage');if(!lg||!st)return;
   const H=Math.round(window.innerHeight||root.clientHeight);if(!H)return;
   const a=lg.getBoundingClientRect(),b=st.getBoundingClientRect();
+  if(window.__bmnExtra||window.__bmnLvh)return;
   const gapStage=Math.round(H-b.bottom),gapLg=Math.round(H-a.bottom);
   window.__bmnGap={lg:gapLg,stage:gapStage};
   if(gapLg>2&&gapLg<160){lg.style.setProperty('height',Math.round(a.height+gapLg)+'px','important')}
@@ -9254,6 +9257,269 @@ footer,.bottom-nav{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 #bmn-app-scroll{padding-bottom:0!important}
 #bmn-app-scroll>main.wrap{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))!important}
 </style>
+
+<style id="bmn-liquid-v2-css">
+/* ============================================================================
+   BMN Liquid Glass v2 (iPhone only). Real blur + saturation, bright rim light, inner glow,
+   a clear "lens" that follows your finger, and squash-and-bounce press physics.
+   (Pixel-level refraction needs SVG backdrop filters, which iPhone Safari does not support.)
+   ========================================================================== */
+html.bmn-ios #lgttStage[data-view="feed"]{--g-tint:rgba(12,14,24,.30)}
+html.bmn-ios #lgtt{--g-blur:22px;--g-sat:1.9;--g-bright:1.1;--g-fill-a:.20;--g-fill-b:.06;--g-rim:rgba(255,255,255,.62);--g-rim2:rgba(255,255,255,.2);--g-shadow:rgba(0,0,0,.26)}
+html.bmn-ios #lgtt .lgtt-dock,html.bmn-ios #lgtt .lgtt-tabs,html.bmn-ios #lgtt .lgtt-seg,
+html.bmn-ios #lgtt .lgtt-act-btn,html.bmn-ios #lgtt .lgtt-btn.lgtt-round,html.bmn-ios #lgtt .lgtt-top .lgtt-btn{
+  background:linear-gradient(135deg,rgba(255,255,255,var(--g-fill-a)),rgba(255,255,255,var(--g-fill-b)) 46%,rgba(255,255,255,calc(var(--g-fill-a) * .6))),var(--g-tint,transparent)!important;
+  -webkit-backdrop-filter:blur(var(--g-blur)) saturate(var(--g-sat)) brightness(var(--g-bright))!important;
+  backdrop-filter:blur(var(--g-blur)) saturate(var(--g-sat)) brightness(var(--g-bright))!important;
+  border:0!important;
+  box-shadow:inset 1.5px 1.5px 0 var(--g-rim),inset -1px -1px 0 var(--g-rim2),inset 0 0 22px rgba(255,255,255,.09),inset 0 -12px 18px -14px rgba(255,255,255,.35),0 10px 28px var(--g-shadow)!important;
+}
+html.bmn-ios #lgtt .lgtt-dock{border-radius:34px!important}
+/* specular sheen across the top edge, like Apple's glass */
+html.bmn-ios #lgtt .lgtt-dock::after,html.bmn-ios #lgtt .lgtt-tabs::after{content:"";position:absolute;left:10%;right:10%;top:1px;height:38%;border-radius:999px;pointer-events:none;z-index:2;background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0));opacity:.7;mix-blend-mode:screen}
+/* the lens: clearer than the bar, brighter rim, slightly larger than its slot */
+html.bmn-ios #lgtt .lgtt-dock-lens{
+  top:3px!important;bottom:3px!important;left:4px!important;width:calc((100% - 8px) / 5)!important;border-radius:30px!important;
+  background:radial-gradient(130% 150% at 28% 18%,rgba(255,255,255,.5),rgba(255,255,255,.12) 58%,rgba(255,255,255,.06))!important;
+  -webkit-backdrop-filter:blur(2px) saturate(2.4) brightness(1.32) contrast(1.05)!important;backdrop-filter:blur(2px) saturate(2.4) brightness(1.32) contrast(1.05)!important;
+  box-shadow:inset 2px 2px 3px rgba(255,255,255,.85),inset -2px -3px 7px rgba(255,255,255,.3),inset 0 0 18px rgba(255,255,255,.28),0 0 0 1px rgba(255,255,255,.22),0 8px 20px rgba(0,0,0,.3)!important;
+  transition:transform .62s cubic-bezier(.34,1.5,.52,1),scale .35s cubic-bezier(.34,1.56,.64,1),opacity .25s!important;
+}
+html.bmn-ios #lgtt .lgtt-dock.is-drag .lgtt-dock-lens{scale:1.2 1.26;transition:scale .3s cubic-bezier(.34,1.56,.64,1)!important}
+html.bmn-ios #lgtt .lgtt-dock .lgtt-dk{color:rgba(255,255,255,.78)}
+html.bmn-ios #lgtt .lgtt-dock .lgtt-dk.on{color:#fff;font-weight:800}
+html.bmn-ios #lgtt .lgtt-dock .lgtt-dk.peek{color:#fff}
+html.bmn-ios #lgtt .lgtt-seg-ind,html.bmn-ios #lgtt .lgtt-tab-ind{background:radial-gradient(130% 150% at 28% 18%,rgba(255,255,255,.55),rgba(255,255,255,.16) 60%)!important;-webkit-backdrop-filter:blur(2px) saturate(2.2) brightness(1.3)!important;backdrop-filter:blur(2px) saturate(2.2) brightness(1.3)!important;box-shadow:inset 1.5px 1.5px 2px rgba(255,255,255,.8),inset -1px -2px 5px rgba(255,255,255,.25),0 5px 14px rgba(0,0,0,.28)!important}
+/* sheets: deeper frosted glass with a grabber and bright top rim */
+html.bmn-ios #lgtt .lgtt-sheet.lgtt-glass-strong{background:linear-gradient(165deg,rgba(40,44,70,.52),rgba(14,16,28,.66))!important;-webkit-backdrop-filter:blur(36px) saturate(1.9) brightness(1.05)!important;backdrop-filter:blur(36px) saturate(1.9) brightness(1.05)!important;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 0 26px rgba(255,255,255,.06),0 -14px 50px rgba(0,0,0,.4)!important;border:0!important}
+html.bmn-ios #lgtt .lgtt-grab{background:rgba(255,255,255,.5);box-shadow:0 0 6px rgba(255,255,255,.3)}
+/* press physics: swell up like a bubble, then settle with overshoot */
+html.bmn-ios .bmn-tap{animation:bmnGlassPress .62s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bmnGlassPress{0%{scale:1}20%{scale:1.14 1.1}52%{scale:.975 1.02}78%{scale:1.015}100%{scale:1}}
+/* feed (over video): white labels and icons in every theme */
+html.bmn-ios #lgttStage[data-view="feed"] .lgtt-dock .lgtt-dk,html.bmn-ios #lgttStage[data-view="feed"] .lgtt-tabs button,html.bmn-ios #lgttStage[data-view="feed"] .lgtt-top .lgtt-btn,html.bmn-ios #lgttStage[data-view="feed"] .lgtt-top .lgtt-ico{color:rgba(255,255,255,.82)!important}
+html.bmn-ios #lgttStage[data-view="feed"] .lgtt-dock .lgtt-dk.on,html.bmn-ios #lgttStage[data-view="feed"] .lgtt-tabs button.on,html.bmn-ios #lgttStage[data-view="feed"] .lgtt-tabs button[aria-selected="true"]{color:#fff!important}
+html.bmn-ios #lgttStage[data-view="feed"] .lgtt-act-btn{color:#fff!important}
+/* light theme glass */
+html.bmn-ios[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]){--g-fill-a:.58;--g-fill-b:.3;--g-rim:rgba(255,255,255,.95);--g-rim2:rgba(255,255,255,.55);--g-shadow:rgba(40,60,110,.16)}
+@media (prefers-reduced-motion:reduce){html.bmn-ios .bmn-tap{animation:none}}
+/* Light theme: dark text on light surfaces for the non-feed screens (Friends, Profile, Discover) */
+html[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]){background:#f3f5fb!important;--lg-fg:#11141c;--lg-fg-2:rgba(17,20,28,.72);--lg-fg-3:rgba(17,20,28,.5);color:#11141c}
+html[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]) .lgtt-glass,html[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]) .lgtt-glass-strong{color:#11141c}
+html[data-bmn-theme="light"] #lgttStage[data-view="feed"]{--lg-fg:#fff;--lg-fg-2:rgba(255,255,255,.8);--lg-fg-3:rgba(255,255,255,.55)}
+html.bmn-ios[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]) .lgtt-dock .lgtt-dk{color:rgba(17,20,28,.7)}
+html.bmn-ios[data-bmn-theme="light"] #lgttStage:not([data-view="feed"]) .lgtt-dock .lgtt-dk.on{color:#11141c}
+</style>
+<script id="bmn-liquid-v2-js">
+(()=>{'use strict';
+/* Drag the lens: press the dock, slide your finger, release over a tab. */
+function init(){
+  const dock=document.getElementById('lgttDock'),lens=document.getElementById('lgttLens');
+  if(!dock||!lens||dock.dataset.bmnLens)return false;dock.dataset.bmnLens='1';
+  const tabs=[...dock.querySelectorAll('.lgtt-dk')];
+  let drag=null,suppress=0;
+  const slot=()=>{const r=dock.getBoundingClientRect();return {left:r.left,w:(r.width-8)/5,x0:4}};
+  const idxAt=x=>{const r=dock.getBoundingClientRect(),w=(r.width-8)/5;return Math.max(0,Math.min(4,Math.floor((x-r.left-4)/w)))};
+  const curIdx=()=>{const v=parseFloat(getComputedStyle(lens).getPropertyValue('--i'));return Number.isFinite(v)?v:0};
+  dock.addEventListener('pointerdown',e=>{
+    if(e.button&&e.button!==0)return;const t=e.target.closest('.lgtt-dk');if(!t||t.dataset.dock==='create')return;
+    drag={x0:e.clientX,i0:curIdx(),moved:false,id:e.pointerId};
+  },{passive:true});
+  window.addEventListener('pointermove',e=>{
+    if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x0;
+    if(!drag.moved&&Math.abs(dx)<8)return;
+    if(!drag.moved){drag.moved=true;dock.classList.add('is-drag');lens.style.transition='scale .3s cubic-bezier(.34,1.56,.64,1)';try{window.LGTT&&LGTT.haptic&&LGTT.haptic('tap')}catch(_){}}
+    const s=slot(),px=Math.max(0,Math.min(4*s.w,drag.i0*s.w+dx));
+    lens.style.transform='translateX('+px+'px)';
+    const i=Math.round(px/s.w);tabs.forEach((b,k)=>b.classList.toggle('peek',k===i));
+  },{passive:true});
+  const end=e=>{
+    if(!drag||(e&&e.pointerId!==undefined&&e.pointerId!==drag.id))return;const d=drag;drag=null;
+    dock.classList.remove('is-drag');tabs.forEach(b=>b.classList.remove('peek'));
+    if(!d.moved)return;
+    const s=slot(),m=/translateX\(([-\d.]+)px\)/.exec(lens.style.transform||''),px=m?parseFloat(m[1]):d.i0*s.w;
+    const i=Math.max(0,Math.min(4,Math.round(px/s.w)));
+    lens.style.transition='';lens.style.transform='';
+    suppress=Date.now()+350;
+    const target=tabs[i];if(target&&!target.classList.contains('on'))target.click();
+    else{lens.style.setProperty('--i',String(i))}
+  };
+  window.addEventListener('pointerup',end,{passive:true});window.addEventListener('pointercancel',end,{passive:true});
+  // swallow the synthetic click that follows a drag so it does not double-trigger
+  dock.addEventListener('click',e=>{if(Date.now()<suppress&&!e.isTrusted===false&&e.detail===0)return},true);
+  return true;
+}
+let n=0;const t=setInterval(()=>{if(init()||++n>40)clearInterval(t)},400);
+})();
+</script>
+
+<style id="bmn-lab-css">
+/* default mitigations in Community: no full-screen blur layer, plain (non-fixed) html/body */
+html.bmn-community-app:not(.lab-blur) #lgtt{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#000!important}
+html.bmn-community-app:not(.lab-fixed),html.bmn-community-app:not(.lab-fixed) body{position:static!important;height:100%!important;overflow:hidden!important}
+html.lab-red,html.lab-red body{background:#ff0000!important}
+html.lab-gpu #lgtt{transform:translateZ(0)!important;will-change:transform}
+html.bmn-community-app body>#bmnLab:not(#x1):not(#x2){display:block!important;visibility:visible!important}
+#bmnLab{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:2147483600;max-height:62vh;overflow:auto;padding:12px;border-radius:22px;background:rgba(10,12,22,.88);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);color:#fff;font:13px/1.4 system-ui,-apple-system,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18)}
+#bmnLab h3{margin:0 0 6px;font-size:15px}
+#bmnLab pre{margin:0 0 8px;white-space:pre-wrap;font:11px/1.35 ui-monospace,Menlo,monospace;color:#9fe}
+#bmnLab .g{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#bmnLab button{min-height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:600 12px system-ui;padding:6px 8px;text-align:left}
+#bmnLab button[aria-pressed="true"]{background:#2563eb;border-color:#60a5fa}
+#bmnLab .x{width:100%;margin-top:8px;text-align:center;background:#fe2c55;border:0}
+</style>
+<script id="bmn-lab-js">
+(()=>{'use strict';
+const root=document.documentElement,KEY='bmn-lab';
+let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(_){}};
+const DEFS=[['red','Paint page RED (is the strip page or phone?)'],['ext47','Extend app +47pt'],['ext34','Extend app +34pt'],['lvh','Use 100lvh height'],['fixed','html/body fixed (old way)'],['blur','Full-screen blur layer ON'],['gpu','Force GPU layer'],['meta','Simple viewport meta'],['nometa','Remove theme-color meta']];
+let metaViewport=null,savedViewport='',savedTheme=[];
+function apply(){
+  ['red','fixed','blur','gpu'].forEach(k=>root.classList.toggle('lab-'+k,!!st[k]));
+  window.__bmnExtra=(st.ext47?47:0)+(st.ext34?34:0);window.__bmnLvh=!!st.lvh;
+  const mv=document.querySelector('meta[name="viewport"]');
+  if(mv){if(!metaViewport){metaViewport=mv;savedViewport=mv.getAttribute('content')}
+    mv.setAttribute('content',st.meta?'width=device-width, initial-scale=1, viewport-fit=cover':savedViewport)}
+  const tags=[...document.querySelectorAll('meta[name="theme-color"],meta[name="color-scheme"]')];
+  if(st.nometa){tags.forEach(t=>{savedTheme.push([t,t.parentNode]);t.remove()})}
+  else if(savedTheme.length){savedTheme.forEach(([t,p])=>{if(!t.isConnected&&p)p.appendChild(t)});savedTheme=[]}
+  try{window.__bmnFSApply&&window.__bmnFSApply()}catch(_){}
+}
+apply();
+let panel=null,timer=0;
+function readout(){
+  const r=e=>{if(!e)return'n/a';const b=e.getBoundingClientRect();return Math.round(b.top)+'→'+Math.round(b.bottom)};
+  const vv=window.visualViewport;
+  return ['build '+(window.BMN_BUILD||'?')+'  standalone '+(!!(navigator.standalone||matchMedia('(display-mode: standalone)').matches)),
+    'inner '+innerWidth+'x'+innerHeight+'  vv '+(vv?Math.round(vv.height):'n/a')+'  screen '+screen.width+'x'+screen.height,
+    'overlay '+r(document.getElementById('lgtt'))+'   stage '+r(document.getElementById('lgttStage'))+'   dock '+r(document.querySelector('.lgtt-dock')),
+    'page bg '+getComputedStyle(root).backgroundColor].join('\n');
+}
+function open(){
+  if(panel)return;panel=document.createElement('div');panel.id='bmnLab';
+  panel.innerHTML='<h3>Layout Lab</h3><pre id="bmnLabOut"></pre><div class="g"></div><button class="x" type="button">Close</button>';
+  const g=panel.querySelector('.g');
+  DEFS.forEach(([k,label])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed',String(!!st[k]));b.onclick=()=>{st[k]=!st[k];b.setAttribute('aria-pressed',String(!!st[k]));save();apply()};g.appendChild(b)});
+  panel.querySelector('.x').onclick=close;document.body.appendChild(panel);
+  const out=panel.querySelector('#bmnLabOut');const tick=()=>{out.textContent=readout()};tick();timer=setInterval(tick,600);
+}
+function close(){clearInterval(timer);if(panel){panel.remove();panel=null}}
+window.bmnToggleLayoutDebug=()=>{panel?close():open();return !!panel};
+window.bmnOpenLab=open;
+// triple-tap the very top edge of the screen to open the lab
+let taps=[];document.addEventListener('pointerdown',e=>{if(e.clientY>46)return;const t=Date.now();taps=taps.filter(x=>t-x<900);taps.push(t);if(taps.length>=3){taps=[];panel?close():open()}},{passive:true});
+})();
+</script>
+
+<style id="bmn-emoji-activity-css">
+.bmn-emo{position:absolute;left:0;right:0;bottom:0;z-index:70;max-height:46%;display:flex;flex-direction:column;border-radius:26px 26px 0 0;background:rgba(18,20,32,.82);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),0 -12px 40px rgba(0,0,0,.4);color:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+html[data-bmn-theme="light"] .bmn-emo{background:rgba(250,251,255,.9);color:#11141c}
+html.bmn-android .bmn-emo{-webkit-backdrop-filter:none;backdrop-filter:none;background:#1a1c24}
+html.bmn-android[data-bmn-theme="light"] .bmn-emo{background:#fff}
+.bmn-emo-tabs{display:flex;gap:4px;padding:8px 10px 4px;overflow-x:auto;scrollbar-width:none}
+.bmn-emo-tabs button{flex:0 0 auto;min-width:40px;height:36px;border:0;border-radius:12px;background:transparent;font-size:20px;opacity:.6}
+.bmn-emo-tabs button[aria-pressed="true"]{background:rgba(127,127,127,.25);opacity:1}
+.bmn-emo-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:4px 8px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.bmn-emo-grid button{height:42px;border:0;background:transparent;font-size:26px;border-radius:10px;touch-action:manipulation}
+.bmn-emo-grid button:active{background:rgba(127,127,127,.25)}
+.bmn-emo-btn{width:40px;height:40px;border:0;background:transparent;color:inherit;display:grid;place-items:center;font-size:22px;touch-action:manipulation}
+.bmn-act-row{display:flex;align-items:center;gap:14px;width:100%;padding:12px 16px;border:0;background:transparent;color:inherit;text-align:left}
+.bmn-act-ic{width:58px;height:58px;border-radius:50%;background:#fe2c55;display:grid;place-items:center;color:#fff;font-size:26px;flex:0 0 auto}
+.bmn-act-row strong{display:block;font-size:17px}.bmn-act-row small{display:block;font-size:15px;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmn-act-panel{position:absolute;inset:0;z-index:45;display:flex;flex-direction:column;background:#000;color:#fff}
+html[data-bmn-theme="light"] .bmn-act-panel{background:#fff;color:#11141c}
+.bmn-act-head{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 10px}
+.bmn-act-head strong{font-size:20px}.bmn-act-head button{width:44px;height:44px;border:0;background:transparent;color:inherit;font-size:24px}
+.bmn-act-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+.bmn-act-item{display:flex;gap:12px;padding:12px 16px;align-items:center}
+.bmn-act-item .av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#a78bfa);flex:0 0 auto;object-fit:cover}
+.bmn-act-item small{opacity:.55;display:block;font-size:12px}
+.bmn-act-empty{padding:40px 24px;text-align:center;opacity:.6}
+</style>
+<script id="bmn-emoji-activity-js">
+(()=>{'use strict';
+const $=(s,r)=> (r||document).querySelector(s);
+const CATS=[['\u{1F600}','Smileys','\u{1F600}\u{1F603}\u{1F604}\u{1F601}\u{1F606}\u{1F605}\u{1F602}\u{1F923}\u{1F60A}\u{1F607}\u{1F642}\u{1F609}\u{1F60D}\u{1F970}\u{1F618}\u{1F617}\u{1F60B}\u{1F61B}\u{1F61C}\u{1F92A}\u{1F914}\u{1F928}\u{1F610}\u{1F611}\u{1F636}\u{1F60F}\u{1F612}\u{1F644}\u{1F62C}\u{1F60C}\u{1F614}\u{1F62A}\u{1F634}\u{1F637}\u{1F912}\u{1F975}\u{1F976}\u{1F92F}\u{1F973}\u{1F60E}\u{1F913}\u{1F615}\u{1F61F}\u{1F62E}\u{1F632}\u{1F633}\u{1F97A}\u{1F622}\u{1F62D}\u{1F631}\u{1F616}\u{1F624}\u{1F621}\u{1F620}\u{1F92C}\u{1F608}\u{1F480}\u{1F4A9}\u{1F921}\u{1F47B}\u{1F47D}\u{1F916}'],
+ ['\u2764\uFE0F','Hearts','\u2764\uFE0F\u{1F9E1}\u{1F49B}\u{1F49A}\u{1F499}\u{1F49C}\u{1F5A4}\u{1F90D}\u{1F90E}\u{1F498}\u{1F49D}\u{1F496}\u{1F497}\u{1F493}\u{1F49E}\u{1F495}\u{1F48C}\u{1F494}\u2763\uFE0F\u{1F48B}\u{1F525}\u2728\u{1F4AF}\u{1F4A5}\u{1F4AB}\u{1F31F}\u2B50\u{1F389}\u{1F38A}\u{1F381}\u{1F3C6}\u{1F451}'],
+ ['\u{1F44D}','Hands','\u{1F44D}\u{1F44E}\u{1F44A}\u270A\u{1F91B}\u{1F91C}\u{1F44F}\u{1F64C}\u{1F450}\u{1F932}\u{1F91D}\u{1F64F}\u270C\uFE0F\u{1F91E}\u{1F91F}\u{1F918}\u{1F44C}\u{1F90F}\u{1F448}\u{1F449}\u{1F446}\u{1F447}\u261D\uFE0F\u270B\u{1F91A}\u{1F590}\uFE0F\u{1F596}\u{1F44B}\u{1F919}\u{1F4AA}\u{1F485}\u{1F933}\u{1F440}\u{1F441}\uFE0F\u{1F9E0}'],
+ ['\u{1F436}','Nature','\u{1F436}\u{1F431}\u{1F42D}\u{1F439}\u{1F430}\u{1F98A}\u{1F43B}\u{1F43C}\u{1F428}\u{1F42F}\u{1F981}\u{1F42E}\u{1F437}\u{1F438}\u{1F435}\u{1F648}\u{1F649}\u{1F64A}\u{1F412}\u{1F414}\u{1F427}\u{1F426}\u{1F985}\u{1F989}\u{1F98B}\u{1F41D}\u{1F422}\u{1F40D}\u{1F433}\u{1F42C}\u{1F338}\u{1F33C}\u{1F33A}\u{1F33B}\u{1F340}\u{1F334}\u{1F335}\u{1F30D}\u{1F319}\u2600\uFE0F\u{1F308}\u26A1\u2744\uFE0F\u{1F30A}'],
+ ['\u{1F355}','Food','\u{1F34E}\u{1F34C}\u{1F349}\u{1F347}\u{1F353}\u{1F352}\u{1F351}\u{1F34D}\u{1F96D}\u{1F951}\u{1F33D}\u{1F955}\u{1F35E}\u{1F9C0}\u{1F356}\u{1F357}\u{1F354}\u{1F35F}\u{1F355}\u{1F32D}\u{1F32E}\u{1F32F}\u{1F37F}\u{1F363}\u{1F35C}\u{1F35D}\u{1F366}\u{1F370}\u{1F382}\u{1F36B}\u{1F36C}\u{1F369}\u2615\u{1F375}\u{1F964}\u{1F37A}\u{1F377}\u{1F378}'],
+ ['\u26BD','Things','\u26BD\u{1F3C0}\u{1F3C8}\u26BE\u{1F3BE}\u{1F3B1}\u{1F3AE}\u{1F3AF}\u{1F3B2}\u{1F3B5}\u{1F3A4}\u{1F3A7}\u{1F3B8}\u{1F3AC}\u{1F4F7}\u{1F4F1}\u{1F4BB}\u231A\u{1F4A1}\u{1F50B}\u{1F4B0}\u{1F4B8}\u{1F48E}\u{1F697}\u2708\uFE0F\u{1F680}\u{1F3E0}\u{1F514}\u{1F512}\u{1F511}\u{1F4A3}\u{1F6A8}\u2705\u274C\u2757\u2753\u{1F4A4}']];
+let host=null,target=null,recent=[];
+try{recent=JSON.parse(localStorage.getItem('bmn-emoji-recent')||'[]')}catch(_){}
+const list=str=>Array.from(str);
+function insert(ch){
+  if(!target)return;const t=target,s=t.selectionStart==null?t.value.length:t.selectionStart,e=t.selectionEnd==null?s:t.selectionEnd;
+  t.value=t.value.slice(0,s)+ch+t.value.slice(e);const p=s+ch.length;try{t.setSelectionRange(p,p)}catch(_){}
+  t.dispatchEvent(new Event('input',{bubbles:true}));
+  recent=[ch].concat(recent.filter(x=>x!==ch)).slice(0,24);try{localStorage.setItem('bmn-emoji-recent',JSON.stringify(recent))}catch(_){}
+  try{window.LGTT&&LGTT.haptic&&LGTT.haptic('tap')}catch(_){}
+}
+function render(i){
+  const grid=host.querySelector('.bmn-emo-grid'),tabs=host.querySelectorAll('.bmn-emo-tabs button');
+  tabs.forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));
+  const items=i===0?(recent.length?recent:list(CATS[0][2]).slice(0,24)):list(CATS[i-1][2]);
+  grid.innerHTML='';items.forEach(ch=>{const b=document.createElement('button');b.type='button';b.textContent=ch;b.setAttribute('aria-label','Emoji '+ch);b.onclick=()=>insert(ch);grid.appendChild(b)});grid.scrollTop=0;
+}
+function closeEmo(){if(host){host.remove();host=null}}
+function openEmo(input,parent,bottomPx){
+  closeEmo();target=input;host=document.createElement('div');host.className='bmn-emo';host.setAttribute('role','dialog');host.setAttribute('aria-label','Emoji');
+  host.innerHTML='<div class="bmn-emo-tabs"></div><div class="bmn-emo-grid"></div>';
+  const tabs=host.querySelector('.bmn-emo-tabs');
+  const first=document.createElement('button');first.type='button';first.textContent='\u{1F550}';first.setAttribute('aria-label','Recent');first.onclick=()=>render(0);tabs.appendChild(first);
+  CATS.forEach((c,k)=>{const b=document.createElement('button');b.type='button';b.textContent=c[0];b.setAttribute('aria-label',c[1]);b.onclick=()=>render(k+1);tabs.appendChild(b)});
+  host.style.bottom=(bottomPx||0)+'px';host.style.maxHeight='40%';host.style.borderRadius='22px 22px 0 0';
+  (parent||document.getElementById('lgttStage')||document.body).appendChild(host);render(recent.length?0:1);
+}
+document.addEventListener('pointerdown',e=>{if(host&&!host.contains(e.target)&&!e.target.closest('.bmn-emo-btn'))closeEmo()},true);
+function addButton(form,input,anchor){
+  if(!form||!input||form.querySelector('.bmn-emo-btn'))return;
+  const b=document.createElement('button');b.type='button';b.className='bmn-emo-btn';b.setAttribute('aria-label','Emoji');b.textContent='\u{1F642}';
+  b.addEventListener('pointerdown',e=>e.preventDefault());
+  b.onclick=()=>{if(host){closeEmo();return}const frm=input.closest('form'),par=input.closest('#bmnRiChat')||input.closest('#lgttComments')||document.getElementById('lgttStage');openEmo(input,par,frm?Math.round(frm.getBoundingClientRect().height):0)};
+  (anchor?anchor.parentNode.insertBefore(b,anchor):form.appendChild(b));
+}
+function wire(){
+  const f=document.getElementById('bmnRiForm'),i=document.getElementById('bmnRiInput'),shell=f&&f.querySelector('.bmn-ri-composer-shell'),attach=document.getElementById('bmnRiAttach');
+  if(shell&&i)addButton(shell,i,attach);
+  const cf=document.getElementById('lgttCmtForm')||document.querySelector('#lgttComments form'),ci=document.getElementById('lgttCmtInput');
+  if(cf&&ci){const send=cf.querySelector('.lgtt-send');addButton(cf,ci,send)}
+}
+let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;wire()})}).observe(document.documentElement,{childList:true,subtree:true});
+wire();
+
+/* ---------- Activity (real notifications) inside Inbox ---------- */
+const sb=()=>window.bmnSupabase||null,me=()=>window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id;
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WHAT={like:'liked your video',comment:'commented on your video',repost:'reposted your video',message:'sent you a message',follow:'started following you'};
+const ago=t=>{const m=Math.max(0,(Date.now()-new Date(t).getTime())/60000);if(m<1)return'now';if(m<60)return Math.floor(m)+'m';if(m<1440)return Math.floor(m/60)+'h';return Math.floor(m/1440)+'d'};
+async function openActivity(){
+  const ov=document.getElementById('bmnRealInbox');if(!ov||$('.bmn-act-panel',ov))return;
+  const p=document.createElement('div');p.className='bmn-act-panel';p.innerHTML='<div class="bmn-act-head"><button type="button" aria-label="Back" data-b>\u2039</button><strong>Activity</strong><span style="width:44px"></span></div><div class="bmn-act-list"><div class="bmn-act-empty">Loading\u2026</div></div>';
+  ov.appendChild(p);p.querySelector('[data-b]').onclick=()=>p.remove();
+  const list=p.querySelector('.bmn-act-list'),c=sb(),uid=me();
+  if(!c||!uid){list.innerHTML='<div class="bmn-act-empty">Sign in to see your activity.</div>';return}
+  try{
+    const {data,error}=await c.from('notifications').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(60);
+    if(error)throw error;
+    const rows=data||[];if(!rows.length){list.innerHTML='<div class="bmn-act-empty">No activity yet. Likes, comments, reposts and messages will show up here.</div>';return}
+    const ids=[...new Set(rows.map(r=>r.actor_id).filter(Boolean))],names={};
+    if(ids.length){try{const r=await c.from('profiles').select('*').in('id',ids);(r.data||[]).forEach(x=>{names[x.id]=x})}catch(_){}}
+    list.innerHTML=rows.map(r=>{const a=names[r.actor_id]||{},nm=a.display_name||a.username||'Someone',av=a.avatar_display_url||a.avatar_url||'';
+      return '<div class="bmn-act-item">'+(av?'<img class="av" alt="" src="'+esc(av)+'">':'<div class="av"></div>')+'<div style="min-width:0"><strong>'+esc(nm)+'</strong> '+esc(WHAT[r.type]||r.message||'interacted with you')+'<small>'+esc(ago(r.created_at))+'</small></div></div>'}).join('');
+  }catch(e){list.innerHTML='<div class="bmn-act-empty">Could not load activity: '+esc(e&&e.message||'error')+'</div>'}
+}
+function addActivityRow(){
+  const list=document.getElementById('bmnRiList');if(!list||list.querySelector('.bmn-act-row'))return;
+  const b=document.createElement('button');b.type='button';b.className='bmn-act-row';b.innerHTML='<span class="bmn-act-ic" aria-hidden="true">\u26A1</span><span><strong>Activity</strong><small>Likes, comments, reposts and messages</small></span>';
+  b.onclick=openActivity;list.insertBefore(b,list.firstChild);
+}
+let q2=0;const lo=()=>{if(q2)return;q2=requestAnimationFrame(()=>{q2=0;addActivityRow()})};
+const watchList=()=>{const l=document.getElementById('bmnRiList');if(!l)return false;new MutationObserver(lo).observe(l,{childList:true});addActivityRow();return true};
+let n=0;const t=setInterval(()=>{if(watchList()||++n>60)clearInterval(t)},500);
+})();
+</script>
 
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
@@ -9360,7 +9626,7 @@ window.bmnLikeReal=async function(id,on){
   try{
     if(on){const {error}=await c.from('likes').insert({post_id:id,user_id:uid});if(error&&error.code!=='23505')throw error;
       const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(id));
-      if(!error&&post&&post.user_id&&post.user_id!==uid)bg(()=>c.from('notifications').insert({user_id:post.user_id,actor_id:uid,post_id:id,type:'like',message:'liked your post'}))}
+      /* like notifications are created by the bmn_like_notification database trigger */}
     else{const {error}=await c.from('likes').delete().eq('post_id',id).eq('user_id',uid);if(error)throw error}
     return true;
   }catch(e){had?M.add(id):M.delete(id);L[id]=prev;toast('Like not saved: '+errMsg(e),'lock');return false}
@@ -9382,7 +9648,7 @@ window.bmnCommentReal=async function(postId,text){
     if(last)throw last;
     const C=window.cachedComments||(window.cachedComments={});(C[postId]=C[postId]||[]).push(row);
     const post=(window.cachedPosts||[]).find(p=>String(p.id)===String(postId));
-    if(post&&post.user_id&&post.user_id!==uid)bg(()=>c.from('notifications').insert({user_id:post.user_id,actor_id:uid,post_id:postId,type:'comment',message:'commented on your post'}));
+    /* comment notifications are created by the bmn_comment_notification database trigger */
     return row;
   }finally{commenting=false}
 };
