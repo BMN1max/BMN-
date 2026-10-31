@@ -1,9 +1,9 @@
 /* BMN Community service worker — delivery/cache/update layer only.
    SUPABASE = source of truth · FRONTEND = application · SERVICE WORKER = static delivery + updates.
    Never caches: Supabase/API traffic, private media, realtime, non-GET requests, range/media requests.
-   v1.0.8: network-first WITH A TIMEOUT. A slow or hanging connection now falls back to the saved copy
+   v1.0.9: network-first WITH A TIMEOUT. A slow or hanging connection now falls back to the saved copy
    after a few seconds instead of leaving a blank white screen. */
-const CACHE_NAME = 'bmn-application-v1.0.8';
+const CACHE_NAME = 'bmn-application-v1.0.9';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/bmn-icon.svg', '/bmn-icon-192.png'];
 const NAV_TIMEOUT_MS = 3500;     // page loads: give the network 3.5 s, then use the saved copy
 const ASSET_TIMEOUT_MS = 5000;   // icons, manifest and other same-origin files
