@@ -1946,6 +1946,140 @@ html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-android[data
 html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #lgttProfGrid .lgtt-tile .bmn-profile-media-preview{pointer-events:none!important}
 </style>
+
+<style id="bmn-liquidass-iphone-layer">
+/* BMN iPhone Liquid Glass layer — inspired by the uploaded LiquidAss project.
+   Web-safe recreation: layered translucency, specular edge light, lens highlight,
+   depth/morphing motion and safe-area-aware iPhone surfaces. */
+@media (max-width: 700px) {
+  :root {
+    --bmn-lg-surface: rgba(20,24,38,.34);
+    --bmn-lg-edge: rgba(255,255,255,.20);
+    --bmn-lg-hi: rgba(255,255,255,.22);
+    --bmn-lg-shadow: 0 18px 50px -24px rgba(0,0,0,.72);
+    --bmn-lg-radius: 22px;
+  }
+  body.community-mode .dock,
+  body.community-mode .bmn-feed-tabs,
+  body.community-mode .lgtt-dock,
+  body.community-mode .lgtt-tabs,
+  body.community-mode .lgtt-sheet,
+  body.community-mode .lgtt-composer,
+  body.community-mode .sheet,
+  body.community-mode .bmn-comments-sheet,
+  body.community-mode .bmn-profile-menu-sheet,
+  body.community-mode .create-panel,
+  body.community-mode .bmn-camera-tools {
+    background:
+      radial-gradient(130% 180% at var(--bmn-lens-x,18%) var(--bmn-lens-y,0%), rgba(255,255,255,.16), transparent 42%),
+      linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 48%, rgba(100,170,255,.035));
+    border: 1px solid var(--bmn-lg-edge);
+    box-shadow: inset 0 1px 0 var(--bmn-lg-hi), inset 0 -1px 0 rgba(0,0,0,.16), var(--bmn-lg-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    isolation: isolate;
+  }
+  body.community-mode .dock::before,
+  body.community-mode .bmn-feed-tabs::before,
+  body.community-mode .lgtt-dock::before,
+  body.community-mode .lgtt-tabs::before,
+  body.community-mode .lgtt-sheet::before,
+  body.community-mode .create-panel::before,
+  body.community-mode .bmn-camera-tools::before {
+    content:""; position:absolute; inset:1px; border-radius:inherit; pointer-events:none; z-index:-1;
+    background: linear-gradient(112deg, rgba(255,255,255,.13), transparent 28%, transparent 66%, rgba(86,213,255,.055));
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+  body.community-mode .dock {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 6px;
+    border-radius: 25px;
+    transform: translateX(-50%);
+  }
+  body.community-mode .dock a,
+  body.community-mode .dock button {
+    border-radius: 18px;
+    transition: transform .24s cubic-bezier(.2,.9,.2,1), background .24s ease, box-shadow .24s ease;
+  }
+  body.community-mode .dock a:active,
+  body.community-mode .dock button:active,
+  body.community-mode .lgtt-tab:active,
+  body.community-mode .bmn-feed-tabs button:active {
+    transform: scale(.93);
+  }
+  body.community-mode .dock a.active,
+  body.community-mode .dock button.active,
+  body.community-mode .dock a[aria-current="page"] {
+    background:
+      radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.19), transparent 45%),
+      linear-gradient(145deg, rgba(100,190,255,.18), rgba(140,110,255,.10));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 7px 22px rgba(50,130,255,.14);
+  }
+  body.community-mode .bmn-feed-tabs {
+    border-radius: 999px;
+    padding: 5px;
+    overflow: hidden;
+  }
+  body.community-mode .bmn-feed-tabs button.active {
+    background:
+      radial-gradient(110% 160% at 50% 0%, rgba(255,255,255,.18), transparent 48%),
+      linear-gradient(145deg, rgba(105,183,255,.20), rgba(135,110,255,.12));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 5px 18px rgba(70,130,255,.12);
+  }
+  body.community-mode .post-action {
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(10,14,25,.30);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    backdrop-filter: blur(12px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 20px rgba(0,0,0,.16);
+  }
+  body.community-mode .post-action:active { transform: scale(.94); }
+  body.community-mode .bmn-camera-tools {
+    border-radius: var(--bmn-lg-radius);
+    padding: 8px;
+  }
+  body.community-mode .bmn-camera-tools button {
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.045);
+    border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  body.community-mode .bmn-camera-preview {
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 18px 45px -22px rgba(0,0,0,.65);
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 700px) {
+  body.community-mode .dock,
+  body.community-mode .bmn-feed-tabs,
+  body.community-mode .lgtt-sheet,
+  body.community-mode .create-panel {
+    animation: bmnLiquidSettle .42s cubic-bezier(.2,.9,.2,1) both;
+  }
+  @keyframes bmnLiquidSettle {
+    from { opacity: .72; transform: translate3d(-50%, 8px, 0) scale(.985); }
+    to { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
+  }
+}
+body.light {
+  --bmn-lg-surface: rgba(255,255,255,.46);
+  --bmn-lg-edge: rgba(90,110,150,.20);
+  --bmn-lg-hi: rgba(255,255,255,.72);
+  --bmn-lg-shadow: 0 18px 48px -26px rgba(55,75,110,.28);
+}
+</style>
+<script id="bmn-liquidass-lens-js">
+(()=>{
+  'use strict';
+  const root=document.documentElement;
+  const move=(x,y)=>{root.style.setProperty('--bmn-lens-x',x+'%');root.style.setProperty('--bmn-lens-y',y+'%')};
+  document.addEventListener('touchstart',e=>{const t=e.touches&&e.touches[0];if(t)move((t.clientX/innerWidth)*100,(t.clientY/innerHeight)*100)},{passive:true});
+  document.addEventListener('pointermove',e=>{if(e.pointerType==='touch')move((e.clientX/innerWidth)*100,(e.clientY/innerHeight)*100)},{passive:true});
+})();
+</script>
+
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
