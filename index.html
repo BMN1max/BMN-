@@ -1946,140 +1946,6 @@ html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-android[data
 html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #lgttProfGrid .lgtt-tile .bmn-profile-media-preview{pointer-events:none!important}
 </style>
-
-<style id="bmn-liquidass-iphone-layer">
-/* BMN iPhone Liquid Glass layer — inspired by the uploaded LiquidAss project.
-   Web-safe recreation: layered translucency, specular edge light, lens highlight,
-   depth/morphing motion and safe-area-aware iPhone surfaces. */
-@media (max-width: 700px) {
-  :root {
-    --bmn-lg-surface: rgba(20,24,38,.34);
-    --bmn-lg-edge: rgba(255,255,255,.20);
-    --bmn-lg-hi: rgba(255,255,255,.22);
-    --bmn-lg-shadow: 0 18px 50px -24px rgba(0,0,0,.72);
-    --bmn-lg-radius: 22px;
-  }
-  body.community-mode .dock,
-  body.community-mode .bmn-feed-tabs,
-  body.community-mode .lgtt-dock,
-  body.community-mode .lgtt-tabs,
-  body.community-mode .lgtt-sheet,
-  body.community-mode .lgtt-composer,
-  body.community-mode .sheet,
-  body.community-mode .bmn-comments-sheet,
-  body.community-mode .bmn-profile-menu-sheet,
-  body.community-mode .create-panel,
-  body.community-mode .bmn-camera-tools {
-    background:
-      radial-gradient(130% 180% at var(--bmn-lens-x,18%) var(--bmn-lens-y,0%), rgba(255,255,255,.16), transparent 42%),
-      linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 48%, rgba(100,170,255,.035));
-    border: 1px solid var(--bmn-lg-edge);
-    box-shadow: inset 0 1px 0 var(--bmn-lg-hi), inset 0 -1px 0 rgba(0,0,0,.16), var(--bmn-lg-shadow);
-    -webkit-backdrop-filter: blur(18px) saturate(165%);
-    backdrop-filter: blur(18px) saturate(165%);
-    isolation: isolate;
-  }
-  body.community-mode .dock::before,
-  body.community-mode .bmn-feed-tabs::before,
-  body.community-mode .lgtt-dock::before,
-  body.community-mode .lgtt-tabs::before,
-  body.community-mode .lgtt-sheet::before,
-  body.community-mode .create-panel::before,
-  body.community-mode .bmn-camera-tools::before {
-    content:""; position:absolute; inset:1px; border-radius:inherit; pointer-events:none; z-index:-1;
-    background: linear-gradient(112deg, rgba(255,255,255,.13), transparent 28%, transparent 66%, rgba(86,213,255,.055));
-    mask-image: linear-gradient(to bottom, black, transparent 82%);
-    -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
-  }
-  body.community-mode .dock {
-    bottom: max(10px, env(safe-area-inset-bottom));
-    padding: 6px;
-    border-radius: 25px;
-    transform: translateX(-50%);
-  }
-  body.community-mode .dock a,
-  body.community-mode .dock button {
-    border-radius: 18px;
-    transition: transform .24s cubic-bezier(.2,.9,.2,1), background .24s ease, box-shadow .24s ease;
-  }
-  body.community-mode .dock a:active,
-  body.community-mode .dock button:active,
-  body.community-mode .lgtt-tab:active,
-  body.community-mode .bmn-feed-tabs button:active {
-    transform: scale(.93);
-  }
-  body.community-mode .dock a.active,
-  body.community-mode .dock button.active,
-  body.community-mode .dock a[aria-current="page"] {
-    background:
-      radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.19), transparent 45%),
-      linear-gradient(145deg, rgba(100,190,255,.18), rgba(140,110,255,.10));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 7px 22px rgba(50,130,255,.14);
-  }
-  body.community-mode .bmn-feed-tabs {
-    border-radius: 999px;
-    padding: 5px;
-    overflow: hidden;
-  }
-  body.community-mode .bmn-feed-tabs button.active {
-    background:
-      radial-gradient(110% 160% at 50% 0%, rgba(255,255,255,.18), transparent 48%),
-      linear-gradient(145deg, rgba(105,183,255,.20), rgba(135,110,255,.12));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 5px 18px rgba(70,130,255,.12);
-  }
-  body.community-mode .post-action {
-    border: 1px solid rgba(255,255,255,.13);
-    background: rgba(10,14,25,.30);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
-    backdrop-filter: blur(12px) saturate(150%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 20px rgba(0,0,0,.16);
-  }
-  body.community-mode .post-action:active { transform: scale(.94); }
-  body.community-mode .bmn-camera-tools {
-    border-radius: var(--bmn-lg-radius);
-    padding: 8px;
-  }
-  body.community-mode .bmn-camera-tools button {
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.045);
-    border-radius: 16px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
-  }
-  body.community-mode .bmn-camera-preview {
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,.16);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 18px 45px -22px rgba(0,0,0,.65);
-  }
-}
-@media (prefers-reduced-motion: no-preference) and (max-width: 700px) {
-  body.community-mode .dock,
-  body.community-mode .bmn-feed-tabs,
-  body.community-mode .lgtt-sheet,
-  body.community-mode .create-panel {
-    animation: bmnLiquidSettle .42s cubic-bezier(.2,.9,.2,1) both;
-  }
-  @keyframes bmnLiquidSettle {
-    from { opacity: .72; transform: translate3d(-50%, 8px, 0) scale(.985); }
-    to { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
-  }
-}
-body.light {
-  --bmn-lg-surface: rgba(255,255,255,.46);
-  --bmn-lg-edge: rgba(90,110,150,.20);
-  --bmn-lg-hi: rgba(255,255,255,.72);
-  --bmn-lg-shadow: 0 18px 48px -26px rgba(55,75,110,.28);
-}
-</style>
-<script id="bmn-liquidass-lens-js">
-(()=>{
-  'use strict';
-  const root=document.documentElement;
-  const move=(x,y)=>{root.style.setProperty('--bmn-lens-x',x+'%');root.style.setProperty('--bmn-lens-y',y+'%')};
-  document.addEventListener('touchstart',e=>{const t=e.touches&&e.touches[0];if(t)move((t.clientX/innerWidth)*100,(t.clientY/innerHeight)*100)},{passive:true});
-  document.addEventListener('pointermove',e=>{if(e.pointerType==='touch')move((e.clientX/innerWidth)*100,(e.clientY/innerHeight)*100)},{passive:true});
-})();
-</script>
-
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -10756,6 +10622,79 @@ whenClient(sb=>{hook(sb);try{sb.auth.getSession().then(r=>{if(r&&r.data&&r.data.
     }catch(e){clean();setTimeout(()=>toast('Sign-in could not finish: '+(e&&e.message||'try again')),1200)}
   });
 })();
+})();
+</script>
+
+<!-- ===== BMN iOS 26 LIQUID GLASS LAYER (final override; additive, no logic changed) ===== -->
+<style id="bmn-ios26-glass-layer">
+/* Web approximation of iOS 26 Liquid Glass: no private APIs, no true refraction (Safari can't do SVG backdrop displacement). */
+:root{--ios-spring:cubic-bezier(.34,1.45,.64,1);--ios-ease:cubic-bezier(.22,1,.36,1);--ios-stroke:rgba(255,255,255,.22);--ios-hi:rgba(255,255,255,.62);--ios-sh:0 14px 38px -10px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.2);--sx:50%;--sy:0%}
+@supports (transition-timing-function:linear(0,1)){:root{--ios-spring:linear(0,.2 5%,.62 12%,.98 21%,1.1 29%,1.06 38%,.99 52%,1 70%,1)}}
+html[data-bmn-theme="light"]{--ios-stroke:rgba(255,255,255,.8);--ios-hi:#fff;--ios-sh:0 12px 32px -10px rgba(30,40,80,.28),0 1px 4px rgba(30,40,80,.1)}
+
+/* ---- Floating tab bar: capsule, edge-lit, specular follows the finger ---- */
+html.bmn-ios body #lgtt .lgtt-dock{
+ bottom:calc(max(env(safe-area-inset-bottom,0px)*.55,10px))!important;height:68px!important;border-radius:999px!important;
+ -webkit-backdrop-filter:blur(22px) saturate(1.9) brightness(1.06)!important;backdrop-filter:blur(22px) saturate(1.9) brightness(1.06)!important;
+ border:.5px solid var(--ios-stroke)!important;
+ box-shadow:inset 1.5px 1.5px 1px -.5px var(--ios-hi),inset -1px -1.5px 2px -.5px rgba(255,255,255,.35),inset 0 0 18px rgba(255,255,255,.07),var(--ios-sh)!important;
+ transition-timing-function:var(--ios-spring)!important;isolation:isolate}
+html.bmn-ios body #lgtt .lgtt-dock::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+ background:radial-gradient(120px 70px at var(--sx) var(--sy),rgba(255,255,255,.28),transparent 70%),linear-gradient(180deg,rgba(255,255,255,.14),transparent 38%);mix-blend-mode:soft-light}
+html.bmn-ios body #lgtt .lgtt-dk{min-height:44px;font-size:10px;font-weight:600;letter-spacing:.01em;transition:transform .5s var(--ios-spring),color .25s}
+html.bmn-ios body #lgtt .lgtt-dk:active{transform:scale(.9)}
+html.bmn-ios body #lgtt .lgtt-dock-lens{border-radius:999px!important;border:.5px solid var(--ios-stroke);
+ background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.1))!important;
+ box-shadow:inset 1.5px 1.5px 1px -.5px var(--ios-hi),inset -1px -1px 2px rgba(255,255,255,.3),0 4px 14px rgba(0,0,0,.22)!important;
+ transition:left .55s var(--ios-spring),transform .4s var(--ios-spring)!important}
+html.bmn-ios body #lgtt .lgtt-dock:active .lgtt-dock-lens{transform:scale(1.08)}
+
+/* ---- Toolbar buttons: 44pt hit area, circular glass, springy press ---- */
+html.bmn-ios body #lgtt .lgtt-top .lgtt-btn,html.bmn-ios body #lgtt .lgtt-btn.lgtt-round{min-width:44px;min-height:44px;border:.5px solid var(--ios-stroke)!important;transition:transform .45s var(--ios-spring),background .2s}
+html.bmn-ios body #lgtt .lgtt-top .lgtt-btn:active,html.bmn-ios body #lgtt .lgtt-btn.lgtt-round:active{transform:scale(.92)}
+html.bmn-ios body #lgtt .lgtt-top{padding-top:max(env(safe-area-inset-top,0px),12px)}
+
+/* ---- Sheets: large radius, grabber, spring entrance, content-aware blur ---- */
+html.bmn-ios body #lgtt .lgtt-sheet,html.bmn-ios body .bmn-sh{border-radius:36px 36px 0 0!important;border:.5px solid var(--ios-stroke)!important;border-bottom:0!important;
+ -webkit-backdrop-filter:blur(44px) saturate(2)!important;backdrop-filter:blur(44px) saturate(2)!important;
+ box-shadow:inset 0 1.5px 0 var(--ios-hi),inset 0 0 30px rgba(255,255,255,.05),0 -18px 50px -10px rgba(0,0,0,.45)!important;
+ transition-timing-function:var(--ios-spring)!important;padding-bottom:max(env(safe-area-inset-bottom,0px),16px)!important}
+html.bmn-ios body #lgtt .lgtt-grab{width:36px!important;height:5px!important;border-radius:3px!important}
+
+/* ---- Scroll-edge effect: status bar / Dynamic Island scrim (progressive blur) ---- */
+#bmnEdgeTop{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 10px);z-index:2147483000;pointer-events:none;display:none;
+ -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ -webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);background:linear-gradient(rgba(0,0,0,.28),transparent)}
+html.bmn-ios.bmn-community-app #bmnEdgeTop{display:block}
+html.bmn-ios[data-bmn-theme="light"] #bmnEdgeTop{background:linear-gradient(rgba(255,255,255,.4),transparent)}
+
+/* ---- Accessibility & compatibility ---- */
+html.bmn-ios body #lgtt :focus-visible{outline:2px solid #0a84ff;outline-offset:3px;border-radius:14px}
+@media (prefers-contrast:more){:root{--ios-stroke:rgba(255,255,255,.7)}html.bmn-ios body #lgtt .lgtt-dock,html.bmn-ios body #lgtt .lgtt-sheet{background:rgba(20,22,32,.92)!important}html.bmn-ios[data-bmn-theme="light"] body #lgtt .lgtt-dock,html.bmn-ios[data-bmn-theme="light"] body #lgtt .lgtt-sheet{background:rgba(255,255,255,.96)!important}}
+@media (prefers-reduced-transparency:reduce){html.bmn-ios body #lgtt .lgtt-dock,html.bmn-ios body #lgtt .lgtt-sheet,html.bmn-ios body .bmn-sh{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(24,26,36,.96)!important}html.bmn-ios[data-bmn-theme="light"] body #lgtt .lgtt-dock,html.bmn-ios[data-bmn-theme="light"] body #lgtt .lgtt-sheet{background:rgba(250,250,252,.98)!important}#bmnEdgeTop{display:none!important}}
+@media (prefers-reduced-motion:reduce){html.bmn-ios body #lgtt *{transition-duration:.01ms!important}html.bmn-ios body #lgtt .lgtt-dock::after{display:none}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){html body #lgtt .lgtt-dock,html body #lgtt .lgtt-sheet{background:rgba(24,26,36,.94)!important}}
+/* Desktop / Android keep their existing treatment; only the press spring is shared */
+html:not(.bmn-ios) body #lgtt .lgtt-dk{transition:transform .45s var(--ios-spring),color .25s}
+html:not(.bmn-ios) body #lgtt .lgtt-dk:active{transform:scale(.94)}
+</style>
+<script id="bmn-ios26-glass-layer-js">
+(()=>{'use strict';
+const root=document.documentElement;
+/* 1) status-bar scrim element (iOS only) */
+if(root.classList.contains('bmn-ios')&&!document.getElementById('bmnEdgeTop')){const e=document.createElement('div');e.id='bmnEdgeTop';e.setAttribute('aria-hidden','true');document.body.appendChild(e)}
+/* 2) specular highlight follows touch/pointer on the dock (rAF-throttled, passive) */
+let raf=0,px=0,py=0,el=null;
+function paint(){raf=0;if(!el)return;const r=el.getBoundingClientRect();el.style.setProperty('--sx',(px-r.left)+'px');el.style.setProperty('--sy',(py-r.top)+'px')}
+function move(ev){const d=ev.target&&ev.target.closest&&ev.target.closest('.lgtt-dock');if(!d)return;el=d;px=ev.clientX;py=ev.clientY;if(!raf)raf=requestAnimationFrame(paint)}
+document.addEventListener('pointerdown',move,{passive:true});
+document.addEventListener('pointermove',move,{passive:true});
+/* 3) theme-color follows the app's light/dark so the iOS status bar and browser chrome match */
+function sync(){try{const t=root.getAttribute('data-bmn-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+ let m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m)}
+ m.content=t==='light'?'#f5f6fa':'#070711'}catch(_){}}
+sync();
+try{new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-bmn-theme']});matchMedia('(prefers-color-scheme: light)').addEventListener('change',sync)}catch(_){}
 })();
 </script>
 
