@@ -1946,6 +1946,140 @@ html.bmn-android[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-android[data
 html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap,html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #lgttProfGrid .lgtt-tile .bmn-profile-media-preview{pointer-events:none!important}
 </style>
+
+<style id="bmn-liquidass-iphone-layer">
+/* BMN iPhone Liquid Glass layer — inspired by the uploaded LiquidAss project.
+   Web-safe recreation: layered translucency, specular edge light, lens highlight,
+   depth/morphing motion and safe-area-aware iPhone surfaces. */
+@media (max-width: 700px) {
+  :root {
+    --bmn-lg-surface: rgba(20,24,38,.34);
+    --bmn-lg-edge: rgba(255,255,255,.20);
+    --bmn-lg-hi: rgba(255,255,255,.22);
+    --bmn-lg-shadow: 0 18px 50px -24px rgba(0,0,0,.72);
+    --bmn-lg-radius: 22px;
+  }
+  body.community-mode .dock,
+  body.community-mode .bmn-feed-tabs,
+  body.community-mode .lgtt-dock,
+  body.community-mode .lgtt-tabs,
+  body.community-mode .lgtt-sheet,
+  body.community-mode .lgtt-composer,
+  body.community-mode .sheet,
+  body.community-mode .bmn-comments-sheet,
+  body.community-mode .bmn-profile-menu-sheet,
+  body.community-mode .create-panel,
+  body.community-mode .bmn-camera-tools {
+    background:
+      radial-gradient(130% 180% at var(--bmn-lens-x,18%) var(--bmn-lens-y,0%), rgba(255,255,255,.16), transparent 42%),
+      linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.018) 48%, rgba(100,170,255,.035));
+    border: 1px solid var(--bmn-lg-edge);
+    box-shadow: inset 0 1px 0 var(--bmn-lg-hi), inset 0 -1px 0 rgba(0,0,0,.16), var(--bmn-lg-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
+    backdrop-filter: blur(18px) saturate(165%);
+    isolation: isolate;
+  }
+  body.community-mode .dock::before,
+  body.community-mode .bmn-feed-tabs::before,
+  body.community-mode .lgtt-dock::before,
+  body.community-mode .lgtt-tabs::before,
+  body.community-mode .lgtt-sheet::before,
+  body.community-mode .create-panel::before,
+  body.community-mode .bmn-camera-tools::before {
+    content:""; position:absolute; inset:1px; border-radius:inherit; pointer-events:none; z-index:-1;
+    background: linear-gradient(112deg, rgba(255,255,255,.13), transparent 28%, transparent 66%, rgba(86,213,255,.055));
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+  body.community-mode .dock {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 6px;
+    border-radius: 25px;
+    transform: translateX(-50%);
+  }
+  body.community-mode .dock a,
+  body.community-mode .dock button {
+    border-radius: 18px;
+    transition: transform .24s cubic-bezier(.2,.9,.2,1), background .24s ease, box-shadow .24s ease;
+  }
+  body.community-mode .dock a:active,
+  body.community-mode .dock button:active,
+  body.community-mode .lgtt-tab:active,
+  body.community-mode .bmn-feed-tabs button:active {
+    transform: scale(.93);
+  }
+  body.community-mode .dock a.active,
+  body.community-mode .dock button.active,
+  body.community-mode .dock a[aria-current="page"] {
+    background:
+      radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.19), transparent 45%),
+      linear-gradient(145deg, rgba(100,190,255,.18), rgba(140,110,255,.10));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 7px 22px rgba(50,130,255,.14);
+  }
+  body.community-mode .bmn-feed-tabs {
+    border-radius: 999px;
+    padding: 5px;
+    overflow: hidden;
+  }
+  body.community-mode .bmn-feed-tabs button.active {
+    background:
+      radial-gradient(110% 160% at 50% 0%, rgba(255,255,255,.18), transparent 48%),
+      linear-gradient(145deg, rgba(105,183,255,.20), rgba(135,110,255,.12));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 5px 18px rgba(70,130,255,.12);
+  }
+  body.community-mode .post-action {
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(10,14,25,.30);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    backdrop-filter: blur(12px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 20px rgba(0,0,0,.16);
+  }
+  body.community-mode .post-action:active { transform: scale(.94); }
+  body.community-mode .bmn-camera-tools {
+    border-radius: var(--bmn-lg-radius);
+    padding: 8px;
+  }
+  body.community-mode .bmn-camera-tools button {
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.045);
+    border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  body.community-mode .bmn-camera-preview {
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 18px 45px -22px rgba(0,0,0,.65);
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 700px) {
+  body.community-mode .dock,
+  body.community-mode .bmn-feed-tabs,
+  body.community-mode .lgtt-sheet,
+  body.community-mode .create-panel {
+    animation: bmnLiquidSettle .42s cubic-bezier(.2,.9,.2,1) both;
+  }
+  @keyframes bmnLiquidSettle {
+    from { opacity: .72; transform: translate3d(-50%, 8px, 0) scale(.985); }
+    to { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
+  }
+}
+body.light {
+  --bmn-lg-surface: rgba(255,255,255,.46);
+  --bmn-lg-edge: rgba(90,110,150,.20);
+  --bmn-lg-hi: rgba(255,255,255,.72);
+  --bmn-lg-shadow: 0 18px 48px -26px rgba(55,75,110,.28);
+}
+</style>
+<script id="bmn-liquidass-lens-js">
+(()=>{
+  'use strict';
+  const root=document.documentElement;
+  const move=(x,y)=>{root.style.setProperty('--bmn-lens-x',x+'%');root.style.setProperty('--bmn-lens-y',y+'%')};
+  document.addEventListener('touchstart',e=>{const t=e.touches&&e.touches[0];if(t)move((t.clientX/innerWidth)*100,(t.clientY/innerHeight)*100)},{passive:true});
+  document.addEventListener('pointermove',e=>{if(e.pointerType==='touch')move((e.clientX/innerWidth)*100,(e.clientY/innerHeight)*100)},{passive:true});
+})();
+</script>
+
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -9962,7 +10096,7 @@ window.bmnVerifySheet=async function(){
     const reason=B.querySelector('#bmnVReason').value.trim(),evid=B.querySelector('#bmnVEvid').value.trim(),n=B.querySelector('#bmnVNote');
     if(!reason){n.className='note';n.textContent='A reason is required.';return}
     if(evid&&!safeUrl(evid)){n.className='note';n.textContent='The evidence link must start with https://';return}
-    go.disabled=true;try{const r=await c.from('bmn_verification_requests').insert({user_id:id,request_reason:reason,evidence_url:evid?safeUrl(evid):null});if(r.error)throw r.error;toast('Verification request sent','check');window.bmnCloseSheet();setTimeout(window.bmnVerifySheet,300)}
+    go.disabled=true;try{const r=await c.from('bmn_verification_requests').insert({user_id:id,request_reason:reason,evidence_url:evid?safeUrl(evid):null,status:'pending'});if(r.error)throw r.error;toast('Verification request sent','check');window.bmnCloseSheet();setTimeout(window.bmnVerifySheet,300)}
     catch(e){go.disabled=false;n.className='note';n.textContent='Not sent: '+String(e&&e.message||e)}};
 };
 
@@ -9971,16 +10105,17 @@ async function profilesFor(ids){const out={};ids=[...new Set(ids.filter(Boolean)
 const nm=(P,id)=>{const p=P[id]||{};return esc(p.display_name||p.username||String(id||'').slice(0,8))+(p.username?' <small style="display:inline">@'+esc(p.username)+'</small>':'')};
 async function tabVerify(box){
   const c=sbc();box.innerHTML='<p>Loading\u2026</p>';let reqs=[],vers=[];
-  try{const a=await c.from('bmn_verification_requests').select('*').eq('status','pending').order('created_at',{ascending:true}).limit(50);if(a.error)throw a.error;reqs=a.data||[]}catch(e){box.innerHTML='<p>Could not load requests: '+esc(e&&e.message||e)+'</p>';return}
+  try{const a=await c.from('bmn_verification_requests').select('*').or('status.eq.pending,status.is.null').order('created_at',{ascending:true}).limit(50);if(a.error)throw a.error;reqs=a.data||[]}catch(e){box.innerHTML='<p>Could not load requests: '+esc(e&&e.message||e)+'</p>';return}
   try{const b=await c.from('bmn_verified_users').select('*').order('verified_at',{ascending:false}).limit(100);vers=(b.data||[])}catch(_){}
   const P=await profilesFor(reqs.map(r=>r.user_id).concat(vers.map(v=>v.user_id)));
-  let h='<h3>Pending requests ('+reqs.length+')</h3>';
+  let h='<div class="row"><button data-refresh type="button">Refresh</button></div><h3>Pending requests ('+reqs.length+')</h3>';
   if(!reqs.length)h+='<p>No pending verification requests.</p>';
   reqs.forEach(r=>{const ev=safeUrl(r.evidence_url);h+='<div class="bmn-card" data-req="'+esc(r.id)+'"><b>'+nm(P,r.user_id)+'</b><small>'+esc(when(r.created_at))+'</small><div>'+esc(r.request_reason)+'</div>'+(ev?'<div><small>Evidence</small><a href="'+esc(ev)+'" target="_blank" rel="noopener noreferrer">'+esc(ev)+'</a></div>':'<small>No evidence link</small>')+'<textarea rows="2" maxlength="300" placeholder="Review note (optional)" aria-label="Review note"></textarea><div class="row"><button class="pri" data-d="approved" type="button">Approve</button><button data-d="rejected" type="button">Reject</button></div></div>'});
   h+='<h3>Verified users ('+vers.length+')</h3>';if(!vers.length)h+='<p>No verified users yet.</p>';
   vers.forEach(v=>{const lv=v.badge_level==='gold'?'gold':'standard';h+='<div class="bmn-card" data-user="'+esc(v.user_id)+'"><b>'+nm(P,v.user_id)+'</b> <span class="bmn-badge bmn-b-'+lv+'">'+ART[lv]+'</span><small>'+(lv==='gold'?'Gold':'Standard')+' \u00b7 '+esc(when(v.verified_at))+'</small><div class="row"><button data-lv="'+(lv==='gold'?'standard':'gold')+'" type="button">'+(lv==='gold'?'Change to Standard':'Promote to Gold')+'</button><button data-revoke type="button">Revoke</button></div></div>'});
   box.innerHTML=h;
   box.onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+    if('refresh' in b.dataset){tabVerify(box);return}
     const card=b.closest('.bmn-card');if(!card)return;b.disabled=true;
     try{
       if(b.dataset.d){const note=card.querySelector('textarea').value.trim();await callRpc('bmn_review_verification',{id:card.dataset.req,choice:b.dataset.d,text:note});toast(b.dataset.d==='approved'?'Request approved':'Request rejected','check')}
@@ -10695,6 +10830,41 @@ function sync(){try{const t=root.getAttribute('data-bmn-theme')||(matchMedia('(p
  m.content=t==='light'?'#f5f6fa':'#070711'}catch(_){}}
 sync();
 try{new MutationObserver(sync).observe(root,{attributes:true,attributeFilter:['data-bmn-theme']});matchMedia('(prefers-color-scheme: light)').addEventListener('change',sync)}catch(_){}
+})();
+</script>
+<style id="bmn-lg-refract-css">
+.bmn-rf{position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;z-index:0;pointer-events:none;opacity:0;transition:opacity .3s;filter:blur(.7px) saturate(1.75) brightness(1.1) contrast(1.04)}
+html.bmn-ios body #lgtt .lgtt-dock.rf-on{background:rgba(255,255,255,.05)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.bmn-ios body #lgtt .lgtt-dock.rf-on .bmn-rf{opacity:1}
+html.bmn-ios body #lgtt .lgtt-dock .lgtt-dk{position:relative;z-index:3}
+</style>
+<script id="bmn-lg-refract-js">
+/* True per-pixel refraction of the live video under the tab bar (convex-lens edge bend + chromatic split).
+   Needs a readable (same-origin/CORS) video; otherwise it silently falls back to the frosted CSS glass. */
+(()=>{'use strict';
+const root=document.documentElement;if(!root.classList.contains('bmn-ios'))return;
+if(matchMedia('(prefers-reduced-transparency: reduce)').matches||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+const S=.5,P=10,B=16;let cv,cx,dock,W=0,H=0,map=null,buf,bw,bh,last=0,dead=false;
+function build(w,h){W=w;H=h;bw=w+2*P;bh=h+2*P;const n=w*h;map=new Int32Array(n*3);const r=h/2;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const qx=Math.max(Math.abs(x+.5-w/2)-(w/2-r),0),qy=y+.5-h/2,d=r-Math.hypot(qx,qy);   /* distance inside the capsule edge */
+  let ox=0,oy=0;if(d<B){const k=Math.pow(1-Math.max(d,0)/B,2)*B*.9;const L=Math.hypot(qx,qy)||1;const nx=(Math.sign(x+.5-w/2)*qx)/L,ny=qy/L;ox=-nx*k;oy=-ny*k}
+  for(let c=0;c<3;c++){const ca=(c-1)*.22;const sx=Math.min(bw-1,Math.max(0,Math.round(x+P+ox*(1+ca)))),sy=Math.min(bh-1,Math.max(0,Math.round(y+P+oy*(1+ca))));map[(y*w+x)*3+c]=(sy*bw+sx)*4+c}}}
+function frame(t){requestAnimationFrame(frame);if(dead||t-last<40||document.hidden)return;last=t;
+ dock=dock&&dock.isConnected?dock:document.querySelector('#lgtt .lgtt-dock');if(!dock)return;
+ const st=document.getElementById('lgttStage');let v=null;try{v=window.LGTT&&LGTT.audioState?LGTT.audioState().active:null}catch(_){}
+ const ok=st&&st.dataset.view==='feed'&&!st.classList.contains('bmn-inbox-open')&&!st.classList.contains('bmn-cam-open')&&v&&v.readyState>=2&&v.videoWidth;
+ if(!ok){dock.classList.remove('rf-on');return}
+ if(!cv||cv.parentNode!==dock){cv=document.createElement('canvas');cv.className='bmn-rf';cv.setAttribute('aria-hidden','true');dock.insertBefore(cv,dock.firstChild);cx=cv.getContext('2d',{willReadFrequently:true})}
+ const r=dock.getBoundingClientRect(),vr=v.getBoundingClientRect();if(!r.width||!vr.width)return;
+ const w=Math.round(r.width*S),h=Math.round(r.height*S);if(w!==W||h!==H||!map){build(w,h);cv.width=w;cv.height=h;buf=document.createElement('canvas');buf.width=bw;buf.height=bh;buf.x=buf.getContext('2d',{willReadFrequently:true})}
+ const sc=Math.max(vr.width/v.videoWidth,vr.height/v.videoHeight),ox=(vr.width-v.videoWidth*sc)/2,oy=(vr.height-v.videoHeight*sc)/2,pp=P/S;
+ const sx=(r.left-pp-vr.left-ox)/sc,sy=(r.top-pp-vr.top-oy)/sc;
+ try{buf.x.drawImage(v,sx,sy,(r.width+2*pp)/sc,(r.height+2*pp)/sc,0,0,bw,bh);const src=buf.x.getImageData(0,0,bw,bh).data,out=cx.createImageData(w,h),o=out.data;
+  for(let i=0,n=w*h;i<n;i++){const m=i*3,j=i*4;o[j]=src[map[m]];o[j+1]=src[map[m+1]];o[j+2]=src[map[m+2]];o[j+3]=255}
+  cx.putImageData(out,0,0);dock.classList.add('rf-on')}
+ catch(e){dock.classList.remove('rf-on');if(e&&e.name==='SecurityError')dead=true}}
+requestAnimationFrame(frame);
 })();
 </script>
 
