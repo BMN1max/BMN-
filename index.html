@@ -10040,11 +10040,21 @@ async function callRpc(fn,vals){ // vals: {id, choice?, text?}
 
 /* ---------- owner (decided by the database), badges, restrictions ---------- */
 async function checkOwner(){
-  const id=uid();if(!id){st.owner=false;window.bmnIsOwner=false;st.ownerFor=null;return}
-  if(st.ownerFor===id)return;st.ownerFor=id;
-  try{const r=await sbc().rpc('is_bmn_owner');const d=r.data;st.owner=!r.error&&(d===true||(Array.isArray(d)&&(d[0]===true||(d[0]&&Object.values(d[0])[0]===true)))||(d&&typeof d==='object'&&Object.values(d)[0]===true))}catch(_){st.owner=false}
-  window.bmnIsOwner=st.owner;if(st.owner)st.ownerIds.add(id);
-  refreshFeedBadges();
+  const id=uid(),c=sbc();
+  if(!id||!c){st.owner=false;window.bmnIsOwner=false;st.ownerFor=null;return}
+  if(st.ownerFor===id)return;
+  try{
+    const r=await c.rpc('is_bmn_owner');if(r.error)throw r.error;
+    const d=r.data;
+    st.owner=(d===true||(Array.isArray(d)&&(d[0]===true||(d[0]&&Object.values(d[0])[0]===true)))||(d&&typeof d==='object'&&Object.values(d)[0]===true));
+    st.ownerFor=id;window.bmnIsOwner=st.owner;
+    if(st.owner)st.ownerIds.add(id);
+    refreshFeedBadges();
+  }catch(e){
+    // Do not cache a failed owner check: the periodic session watcher can retry it.
+    st.owner=false;st.ownerFor=null;window.bmnIsOwner=false;
+    console.warn('[BMN owner console] Owner check will retry:',e&&e.message||e);
+  }
 }
 async function loadBadges(){
   const c=sbc();if(!c)return;let changed=false;
@@ -10108,7 +10118,7 @@ async function tabVerify(box){
   try{const a=await c.from('bmn_verification_requests').select('*').or('status.eq.pending,status.is.null').order('created_at',{ascending:true}).limit(50);if(a.error)throw a.error;reqs=a.data||[]}catch(e){box.innerHTML='<p>Could not load requests: '+esc(e&&e.message||e)+'</p>';return}
   try{const b=await c.from('bmn_verified_users').select('*').order('verified_at',{ascending:false}).limit(100);vers=(b.data||[])}catch(_){}
   const P=await profilesFor(reqs.map(r=>r.user_id).concat(vers.map(v=>v.user_id)));
-  let h='<div class="row"><button data-refresh type="button">Refresh</button></div><h3>Pending requests ('+reqs.length+')</h3>';
+  let h='<div class="row"><button data-refresh type="button">Refresh requests</button></div><h3>Pending requests ('+reqs.length+')</h3>';
   if(!reqs.length)h+='<p>No pending verification requests.</p>';
   reqs.forEach(r=>{const ev=safeUrl(r.evidence_url);h+='<div class="bmn-card" data-req="'+esc(r.id)+'"><b>'+nm(P,r.user_id)+'</b><small>'+esc(when(r.created_at))+'</small><div>'+esc(r.request_reason)+'</div>'+(ev?'<div><small>Evidence</small><a href="'+esc(ev)+'" target="_blank" rel="noopener noreferrer">'+esc(ev)+'</a></div>':'<small>No evidence link</small>')+'<textarea rows="2" maxlength="300" placeholder="Review note (optional)" aria-label="Review note"></textarea><div class="row"><button class="pri" data-d="approved" type="button">Approve</button><button data-d="rejected" type="button">Reject</button></div></div>'});
   h+='<h3>Verified users ('+vers.length+')</h3>';if(!vers.length)h+='<p>No verified users yet.</p>';
@@ -10253,16 +10263,36 @@ const errMsg=e=>String(e&&e.message||e||'Unknown error');
 const bg=fn=>{try{Promise.resolve(fn()).catch(()=>{})}catch(_){}};
 
 /* ---------- generic sheet host (one place for sign-in + report) ---------- */
-let host=null,lastFocus=null;
+let host=null,lastFocus=null,sheetHistoryArmed=false,sheetSkipPop=false;
 function sheet(html,onMount){
-  if(!host){host=document.createElement('div');host.id='bmnSheetHost';host.innerHTML='<div class="bmn-sh-scrim" data-close></div><div class="bmn-sh" role="dialog" aria-modal="true"></div>';document.body.appendChild(host);
-    host.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeSheet()});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1')closeSheet()})}
-  const box=host.querySelector('.bmn-sh');box.innerHTML=html;host.dataset.open='1';lastFocus=document.activeElement;
+  if(!host){
+    host=document.createElement('div');host.id='bmnSheetHost';
+    host.innerHTML='<div class="bmn-sh-scrim" data-close aria-hidden="true"></div><div class="bmn-sh" role="dialog" aria-modal="true" aria-label="BMN dialog"></div>';
+    document.body.appendChild(host);
+    // Capture close controls before nested sheet handlers can swallow the tap.
+    host.addEventListener('click',e=>{
+      const t=e.target,btn=t&&t.closest&&t.closest('[data-close],[data-dismiss],.bmn-sh-x,.bmn-sheet-cancel');
+      const scrim=t===host.querySelector('.bmn-sh-scrim');
+      if(btn||scrim){e.preventDefault();e.stopPropagation();closeSheet();}
+    },true);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1'){e.preventDefault();closeSheet();}});
+  }
+  const box=host.querySelector('.bmn-sh');box.innerHTML=html;host.dataset.open='1';host.setAttribute('aria-hidden','false');lastFocus=document.activeElement;
+  if(!sheetHistoryArmed){try{history.pushState({bmnSheet:true},'',location.href);sheetHistoryArmed=true;}catch(_){}}
   try{onMount&&onMount(box)}catch(e){console.warn(e)}
-  const f=box.querySelector('input,select,textarea,button');if(f)setTimeout(()=>f.focus({preventScroll:true}),60);return box;
+  const f=box.querySelector('input,select,textarea,button');if(f)setTimeout(()=>{if(host&&host.dataset.open==='1')f.focus({preventScroll:true})},60);return box;
 }
-function closeSheet(){if(host){host.dataset.open='0';host.removeAttribute('data-open')}try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(_){}}
+function closeSheet(){
+  if(host&&host.dataset.open==='1'){
+    host.dataset.open='0';host.setAttribute('aria-hidden','true');
+    if(sheetHistoryArmed){sheetHistoryArmed=false;sheetSkipPop=true;try{history.back()}catch(_){sheetSkipPop=false;}}
+  }
+  try{if(lastFocus&&lastFocus.isConnected&&lastFocus.focus)lastFocus.focus({preventScroll:true})}catch(_){}
+}
+window.addEventListener('popstate',()=>{
+  if(sheetSkipPop){sheetSkipPop=false;return;}
+  if(host&&host.dataset.open==='1'){sheetHistoryArmed=false;host.dataset.open='0';host.setAttribute('aria-hidden','true');try{if(lastFocus&&lastFocus.isConnected)lastFocus.focus({preventScroll:true})}catch(_){}}
+});
 
 /* ---------- ONE auth prompt that reuses the existing Supabase client/session ---------- */
 const PEND='bmn-pending-auth';
@@ -10281,6 +10311,13 @@ async function afterSignIn(reason){
   replay(reason);
 }
 window.bmnSheet=sheet;window.bmnCloseSheet=closeSheet;
+// Some older sheets have plain Cancel / Not Now buttons without a close attribute.
+document.addEventListener('click',e=>{
+  if(!host||host.dataset.open!=='1'||!e.target||!e.target.closest)return;
+  const b=e.target.closest('#bmnSheetHost button');if(!b)return;
+  const label=(b.textContent||'').trim().toLowerCase();
+  if(label==='cancel'||label==='not now'){e.preventDefault();e.stopPropagation();closeSheet();}
+},true);
 window.requestCommunityAuth=function(reason){
   if(me())return true;
   reason=reason||'';setPending(reason);
@@ -10869,6 +10906,26 @@ requestAnimationFrame(frame);
 </script>
 
 <!-- ===== END BMN FINAL V18 INTEGRATION PATCH ===== -->
+
+<style id="bmn-safe-glass-refinement-2026">
+#bmnSheetHost .bmn-sh,.bmn-owner-console,.bmn-owner-console .backend-panel{
+  -webkit-backdrop-filter:blur(22px) saturate(1.45);
+  backdrop-filter:blur(22px) saturate(1.45);
+}
+#bmnSheetHost .bmn-sh{
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 22px 64px rgba(0,0,0,.38);
+}
+#bmnSheetHost .bmn-sh-x,#bmnSheetHost .bmn-sh button[data-close],#bmnSheetHost .bmn-sh button.cancel{
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
+}
+#bmnSheetHost .bmn-sh button:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){#bmnSheetHost .bmn-sh button:active{transform:none}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+ #bmnSheetHost .bmn-sh{background:rgba(20,25,40,.97)!important}
+}
+</style>
+
 </body>
 </html>
 
