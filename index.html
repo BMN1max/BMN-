@@ -7892,7 +7892,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     function renderHead() {
       const u = user(), f = !!S.follows[u.id];
       /* Founder appearance is resolved from the permanent owner ID list, so every visitor sees it on this profile. */
-      try { R.root.classList.toggle('lgtt-founder-profile', !!(u && u.id && window.bmnFounderOwnerIds && window.bmnFounderOwnerIds.has(String(u.id)))); } catch (_) {}
+      try { const realId = u && (u.me ? (window.bmnSession && window.bmnSession.user && window.bmnSession.user.id) : u.id); R.root.classList.toggle('lgtt-founder-profile', !!(realId && window.bmnFounderOwnerIds && window.bmnFounderOwnerIds.has(String(realId)))); } catch (_) {}
       const myStory = u.me && S.myStories.length;
       const followers = u.followers == null ? null : Number(u.followers) + (!u.me && f ? 1 : 0);
       R.ProfHead.innerHTML =
@@ -10260,7 +10260,8 @@ const wrap=()=>{const orig=window.uploadCommunityFile;if(typeof orig!=='function
 <style id="bmn-actions-bridge-css">
 /* Community mode hides every body child except #lgtt; these overlays must stay reachable. */
 html.bmn-community-app body>#bmnRealInbox.open:not(#x1):not(#x2){display:flex!important;visibility:visible!important;pointer-events:auto!important}
-html.bmn-community-app body>#bmnSheetHost:not(#x1):not(#x2){display:block!important;visibility:visible!important;pointer-events:auto!important}
+html.bmn-community-app body>#bmnSheetHost[data-open="1"]:not(#x1):not(#x2){display:block!important;visibility:visible!important;pointer-events:auto!important}
+html.bmn-community-app body>#bmnSheetHost:not([data-open="1"]){display:none!important;pointer-events:none!important}
 #bmnSheetHost{position:fixed;inset:0;z-index:2147483000;display:none}
 #bmnSheetHost[data-open="1"]{display:block}
 .bmn-sh-scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
