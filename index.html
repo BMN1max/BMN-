@@ -10029,8 +10029,9 @@ const toast=(m,i)=>{try{window.LGTT&&LGTT.toast&&LGTT.toast(m,i)}catch(_){}};
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const when=t=>{try{return new Date(t).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}catch(_){return''}};
 const safeUrl=u=>{try{const x=new URL(String(u||'').trim());return /^https?:$/.test(x.protocol)?x.href:''}catch(_){return''}};
-const st={owner:false,ownerFor:null,badges:{},ownerIds:new Set(),shownFor:null};
-window.bmnIsOwner=false;
+const BMN_OWNER_UUID='d3ee407c-094a-47f0-b5f4-a9e589a4323d';
+const st={owner:false,ownerFor:null,badges:{},ownerIds:new Set([BMN_OWNER_UUID]),shownFor:null};
+window.bmnIsOwner=false;window.bmnFounderOwnerIds=st.ownerIds;
 
 /* ---------- badge artwork: jade (standard), champagne (gold), 3D metallic Founder ---------- */
 const SHIELD='M12 1.8l8.2 4.2v8.4c0 4.2-3.3 7.1-8.2 8.8-4.9-1.7-8.2-4.6-8.2-8.8V6z';
@@ -10831,7 +10832,7 @@ html.bmn-ios body #lgtt .lgtt-grab{width:36px!important;height:5px!important;bor
 #bmnEdgeTop{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 10px);z-index:2147483000;pointer-events:none;display:none;
  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
  -webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);background:linear-gradient(rgba(0,0,0,.28),transparent)}
-html.bmn-ios.bmn-community-app #bmnEdgeTop{display:block}
+html.bmn-ios.bmn-community-app #bmnEdgeTop{display:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.bmn-ios[data-bmn-theme="light"] #bmnEdgeTop{background:linear-gradient(rgba(255,255,255,.4),transparent)}
 
 /* ---- Accessibility & compatibility ---- */
