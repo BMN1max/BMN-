@@ -2463,7 +2463,7 @@ function openBmnCommentsSheet(postId){
 communityFeed?.addEventListener('click',async event=>{const tappedVideo=event.target.closest('.post-preview video');if(tappedVideo){if(tappedVideo.paused)tappedVideo.play().catch(()=>{});else tappedVideo.pause();return}const profileButton=event.target.closest('[data-profile-id]');if(profileButton){openBMNPublicProfile(profileButton.dataset.profileId);return}const btn=event.target.closest('button');if(!btn)return;const id=btn.dataset.id;if(!id)return;if(btn.classList.contains('bmn-reply-comment')){const input=$('.bmn-comment-input[data-id="'+CSS.escape(id)+'"]');if(input){const mention='@'+(btn.dataset.replyName||'creator')+' ';input.value=input.value.trim()?input.value.trim()+' '+mention:mention;input.focus();input.setSelectionRange(input.value.length,input.value.length);$('#bmnComments-'+CSS.escape(id))?.classList.remove('comments-collapsed');setBackendStatus('Reply mention added. Write your reply and tap Reply to post it.')}return}if(btn.classList.contains('bmn-share')){const url=location.origin+location.pathname+'#post-'+encodeURIComponent(id);try{if(navigator.share){await navigator.share({title:'BMN Community post',text:'Check out this post on BMN Community',url});setBackendStatus('Share sheet opened.')}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);setBackendStatus('Link to this post copied.')}else{const field=document.createElement('textarea');field.value=url;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();const copied=document.execCommand('copy');field.remove();if(!copied)throw new Error('Copy is not available in this browser.');setBackendStatus('Link to this post copied.')}}catch(e){if(e?.name!=='AbortError')setBackendStatus('Could not share automatically. Copy this link from your browser address bar: '+url,true)}return}if(btn.classList.contains('bmn-save-post')){if(bmnSavedPostIds.has(id))bmnSavedPostIds.delete(id);else bmnSavedPostIds.add(id);if(!bmnPersistSavedPostIds())return;renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);setBackendStatus(bmnSavedPostIds.has(id)?'Post saved on this device.':'Post removed from Saved.');return}if(btn.classList.contains('bmn-like-comment')){const commentId=btn.dataset.commentId;if(!commentId){setBackendStatus('This comment has no saved identifier, so it cannot be reacted to.',true);return}if(bmnCommentReactionIds.has(commentId))bmnCommentReactionIds.delete(commentId);else bmnCommentReactionIds.add(commentId);if(!bmnPersistCommentReactions())return;renderCommunityPosts(cachedPosts,cachedLikes,cachedMyLikes);$('#bmnComments-'+CSS.escape(id))?.classList.remove('comments-collapsed');setBackendStatus(bmnCommentReactionIds.has(commentId)?'Comment liked on this device.':'Comment like removed.');return}if(!bmnSession){setBackendStatus('Sign in to like, comment, or delete posts.',true);return}try{if(btn.classList.contains('bmn-like')){btn.disabled=true;if(cachedMyLikes.has(id)){const {error}=await bmnSupabase.from('likes').delete().eq('post_id',id).eq('user_id',bmnSession.user.id);if(error)throw error}else{const {error}=await bmnSupabase.from('likes').insert({post_id:id,user_id:bmnSession.user.id});if(error)throw error;const likedPost=cachedPosts.find(p=>p.id===id);if(likedPost&&likedPost.user_id!==bmnSession.user.id)await bmnSupabase.from('notifications').insert({user_id:likedPost.user_id,actor_id:bmnSession.user.id,post_id:id,type:'like',message:'liked your post'});}await loadCommunityPosts();return}if(btn.classList.contains('bmn-submit-comment')){const input=$('.bmn-comment-input[data-id="'+CSS.escape(id)+'"]'),content=input?.value.trim();if(!content){setBackendStatus('Write a comment first.',true);return}await bmnInsertCommentCompatible(id,bmnSession.user.id,content);const commentedPost=cachedPosts.find(p=>p.id===id);if(commentedPost&&commentedPost.user_id!==bmnSession.user.id)await bmnSupabase.from('notifications').insert({user_id:commentedPost.user_id,actor_id:bmnSession.user.id,post_id:id,type:'comment',message:'commented on your post'});await loadCommunityPosts();setBackendStatus('Comment added.');return}if(btn.classList.contains('bmn-toggle-comments')){openBmnCommentsSheet(id);return}if(btn.classList.contains('bmn-edit-post')){const postToEdit=cachedPosts.find(p=>p.id===id);if(!postToEdit||postToEdit.user_id!==bmnSession.user.id){setBackendStatus('You can only edit your own posts.',true);return}const revised=prompt('Edit your post caption:',String(postToEdit.content||''));if(revised===null)return;if(!revised.trim()){setBackendStatus('A post caption cannot be empty.',true);return}let {error}=await bmnSupabase.from('posts').update({content:revised.trim(),caption:revised.trim(),updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',bmnSession.user.id);if(error&&bmnIsMissingColumnError(error)){({error}=await bmnSupabase.from('posts').update({content:revised.trim(),updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',bmnSession.user.id))}if(error)throw error;await loadCommunityPosts();setBackendStatus('Post caption updated.');return}if(btn.classList.contains('bmn-delete')){if(!confirm('Delete this post? This cannot be undone.'))return;const postToDelete=cachedPosts.find(p=>p.id===id);if(postToDelete?.media_url?.startsWith('storage:')){const objectPath=postToDelete.media_url.slice(8);const removed=await bmnSupabase.storage.from('community-media').remove([objectPath]);if(removed.error)throw removed.error}const {error}=await bmnSupabase.from('posts').delete().eq('id',id).eq('user_id',bmnSession.user.id);if(error)throw error;await loadCommunityPosts();setBackendStatus('Post deleted.')}}catch(error){setBackendStatus(error.message||'That action could not be saved.',true)}});
 /* Duplicate follow click handler removed: the creator directory already handles follow and message actions above. */
 communityFeed?.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&event.target.matches('.bmn-comment-input')){event.preventDefault();const postId=event.target.dataset.id;communityFeed.querySelector('.bmn-submit-comment[data-id="'+CSS.escape(postId)+'"]')?.click()}});
-$('#bmnSaveProfile')?.addEventListener('click',async()=>{if(!bmnSession)return;const username=$('#bmnEditUsername').value.trim().replace(/^@/,''),display_name=$('#bmnEditDisplay').value.trim(),bio=$('#bmnEditBio').value.trim(),website_url=$('#bmnEditWebsite').value.trim();if(!username||!display_name){setBackendStatus('Add a display name and username.',true);return}try{const {error}=await bmnSupabase.from('profiles').update({username,display_name,bio,website_url:website_url||null,updated_at:new Date().toISOString()}).eq('id',bmnSession.user.id);if(error)throw error;await loadCommunityPosts();setBackendStatus('Your profile was updated.')}catch(error){setBackendStatus(error.message||'Profile could not be saved.',true)}});
+$('#bmnSaveProfile')?.addEventListener('click',async()=>{if(!bmnSession)return;const username=$('#bmnEditUsername').value.trim().replace(/^@/, '').toLowerCase(),display_name=$('#bmnEditDisplay').value.trim(),bio=$('#bmnEditBio').value.trim(),website_url=$('#bmnEditWebsite').value.trim();if(!/^[a-z0-9._]{3,30}$/.test(username)){setBackendStatus('Username must be 3–30 characters using letters, numbers, dots or underscores.',true);return}if(!display_name){setBackendStatus('Add a display name.',true);return}try{const check=await bmnSupabase.from('profiles').select('id').eq('username',username).neq('id',bmnSession.user.id).limit(1);if(check.error)throw check.error;if(check.data&&check.data.length){setBackendStatus('That username is already taken. Choose another one.',true);return}const {error}=await bmnSupabase.from('profiles').update({username,display_name,bio,website_url:website_url||null,updated_at:new Date().toISOString()}).eq('id',bmnSession.user.id);if(error)throw error;await loadCommunityPosts();setBackendStatus('Your profile was updated.')}catch(error){setBackendStatus(error.message||'Profile could not be saved.',true)}});
 async function loadSocialHub(){const inbox=$('#bmnInbox'),notifications=$('#bmnNotifications'),counts=$('#bmnHubCounts');if(!inbox||!notifications)return;if(!bmnSession){inbox.innerHTML='<div class="backend-empty">Sign in to view your messages.</div>';notifications.innerHTML='<div class="backend-empty">Sign in to view notifications.</div>';if(counts)counts.textContent='Sign in to view your activity.';return}const uid=bmnSession.user.id;try{const [mr,nr]=await Promise.all([bmnSupabase.from('messages').select('id,sender_id,recipient_id,content,read_at,created_at').or('sender_id.eq.'+uid+',recipient_id.eq.'+uid).order('created_at',{ascending:false}).limit(50),bmnSupabase.from('notifications').select('id,user_id,actor_id,post_id,type,message,read_at,created_at').eq('user_id',uid).order('created_at',{ascending:false}).limit(50)]);if(mr.error)throw mr.error;if(nr.error)throw nr.error;const msgs=mr.data||[],notes=nr.data||[],unread=notes.filter(n=>!n.read_at).length+(msgs.filter(m=>m.recipient_id===uid&&!m.read_at).length);if(counts)counts.textContent=unread+' unread · '+msgs.length+' messages · '+notes.length+' notifications';inbox.innerHTML=msgs.length?msgs.map(m=>{const incoming=m.recipient_id===uid,p=bmnProfiles[incoming?m.sender_id:m.recipient_id]||{};return '<article class="bmn-hub-item"><div><strong>'+(incoming?'From ':'To ')+escapeHTML(p.display_name||p.username||'Community member')+'</strong><small>'+escapeHTML(shortDate(m.created_at))+(incoming&&!m.read_at?' · Unread':'')+'</small></div><p>'+escapeHTML(m.content)+'</p>'+(incoming&&!m.read_at?'<button class="post-action bmn-read-message" data-id="'+escapeHTML(m.id)+'" type="button">Mark read</button>':'')+'</article>'}).join(''):'<div class="backend-empty">Your inbox is empty for now.</div>';notifications.innerHTML=notes.length?notes.map(n=>{const p=bmnProfiles[n.actor_id]||{};return '<article class="bmn-hub-item"><div><strong>'+escapeHTML(p.display_name||p.username||'BMN Community')+'</strong><small>'+escapeHTML(shortDate(n.created_at))+(n.read_at?'':' · Unread')+'</small></div><p>'+escapeHTML(n.message||('You have a new '+n.type+' notification.'))+'</p>'+(n.read_at?'':'<button class="post-action bmn-read-notification" data-id="'+escapeHTML(n.id)+'" type="button">Mark read</button>')+'</article>'}).join(''):'<div class="backend-empty">You’re all caught up.</div>'}catch(error){inbox.innerHTML='<div class="backend-empty">Could not load inbox: '+escapeHTML(error.message)+'</div>';notifications.innerHTML='<div class="backend-empty">Could not load notifications. Check your Supabase policies.</div>'}}
 $('#bmnSendMessage')?.addEventListener('click',async()=>{if(!bmnSession){setBackendStatus('Sign in to send messages.',true);return}const recipient_id=$('#bmnMessageRecipient').value,content=$('#bmnMessageContent').value.trim();if(!recipient_id||!content){setBackendStatus('Choose a creator and write a message.',true);return}try{const {error}=await bmnSupabase.from('messages').insert({sender_id:bmnSession.user.id,recipient_id,content});if(error)throw error;const notice=await bmnSupabase.from('notifications').insert({user_id:recipient_id,actor_id:bmnSession.user.id,type:'message',message:'sent you a message'});$('#bmnMessageContent').value='';await loadSocialHub();setBackendStatus(notice.error?'Message sent, but its notification could not be saved.':'Message sent.')}catch(error){setBackendStatus(error.message||'Message could not be sent.',true)}});
 $('#bmnRefreshHub')?.addEventListener('click',async()=>{await loadCommunityPosts();await loadSocialHub();setBackendStatus('Community activity refreshed.')});
@@ -5352,6 +5352,7 @@ ctx.addEventListener('click',e=>{
   else if(act==='fav'){const was=isSaved(id);const b=postEl(id)?.querySelector('.bmn-save-post');if(b){b.click();toast(was?'Removed from Favorites':'Added to Favorites')}else toast('Open this post to change Favorites.')}
   else if(act==='delete'){postEl(id)?.querySelector('.bmn-delete')?.click()}
 });
+
 
 /* ============ K. Repost (real, backed by a `reposts` table) ============ */
 window.bmnRepostPost=async function(id){
@@ -9977,7 +9978,7 @@ requestAnimationFrame(frame);
 <style id="bmn-verify-css">
 .bmn-badge{display:inline-grid;place-items:center;margin-left:5px;vertical-align:-3px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
 .bmn-badge svg{display:block}
-.bmn-b-standard svg{width:17px;height:17px}.bmn-b-gold svg{width:18px;height:18px}.bmn-b-founder svg{width:24px;height:24px;filter:drop-shadow(0 0 5px rgba(240,207,122,.55))}
+.bmn-b-standard svg{width:17px;height:17px}.bmn-b-gold svg{width:18px;height:18px}.bmn-b-founder svg{width:18px;height:18px;filter:drop-shadow(0 0 3px rgba(240,190,65,.42))}
 .bmn-oc h3{margin:14px 0 6px;font-size:15px}.bmn-oc .tabs{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;scrollbar-width:none}
 .bmn-oc .tabs button{flex:0 0 auto;min-height:38px;border-radius:19px;padding:0 14px;font-size:13px}
 .bmn-oc .tabs button[aria-pressed="true"]{background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;border-color:transparent}
@@ -9985,6 +9986,11 @@ requestAnimationFrame(frame);
 .bmn-card small{opacity:.65;display:block}.bmn-card .row{margin:8px 0 0}.bmn-card textarea,.bmn-card input{margin:6px 0 0!important;font-size:14px!important;padding:9px 11px!important;min-height:40px}
 .bmn-card a{color:inherit;text-decoration:underline}
 #bmnRestrictBar{position:absolute;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:30;padding:10px 14px;border-radius:14px;background:rgba(220,38,38,.92);color:#fff;font:600 13px/1.4 system-ui;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+
+/* BMN verification mark refresh: compact checkmark seals, preserving founder's gold identity. */
+.bmn-badge{width:18px;height:18px;display:inline-grid;place-items:center;vertical-align:-3px;line-height:0;flex:0 0 auto}
+.bmn-badge svg{width:100%;height:100%;display:block;overflow:visible}
+.bmn-b-founder{filter:drop-shadow(0 1px 3px rgba(215,164,42,.32))}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
 <linearGradient id="bmnJade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ff2dc"/><stop offset=".55" stop-color="#14b8a6"/><stop offset="1" stop-color="#0b5f58"/></linearGradient>
@@ -10008,7 +10014,7 @@ const SHIELD='M12 1.8l8.2 4.2v8.4c0 4.2-3.3 7.1-8.2 8.8-4.9-1.7-8.2-4.6-8.2-8.8V
 const ART={
  standard:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+SHIELD+'" fill="url(#bmnJade)"/><path d="'+SHIELD+'" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7"/><path d="m7.6 12.3 3.1 3.1 5.7-6.5" fill="none" stroke="#04332e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  gold:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+SHIELD+'" fill="url(#bmnGold)"/><path d="'+SHIELD+'" fill="none" stroke="#fff3c4" stroke-width=".8"/><path d="m7.6 12.3 3.1 3.1 5.7-6.5" fill="none" stroke="#5a3b05" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 2.6l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="#fffdf0"/></svg>',
- founder:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.2l11.3 5.3v9.4c0 6.2-4.7 10.3-11.3 12.9C9.4 27.2 4.7 23.100 4.7 16.900V7.500z" fill="url(#bmnFG)" stroke="url(#bmnFR)" stroke-width="1"/><path d="M16 4.3l9.2 4.3v8.3c0 5-3.800 8.500-9.200 10.700-5.400-2.200-9.200-5.700-9.200-10.700V8.600z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".6"/><path d="M8.800 13.400c-1.600-2.100-1.400-4.500.5-6.200-.3 2.300.7 3.800 2.200 4.800z M23.200 13.400c1.600-2.100 1.400-4.500-.5-6.200.3 2.300-.7 3.800-2.200 4.800z" fill="url(#bmnFC)" stroke="#7a5010" stroke-width=".4"/><path d="M9.800 16.200l1.700-5.600 3 3.600L16 9l1.500 5.200 3-3.600 1.700 5.600z" fill="url(#bmnFC)" stroke="#7a5010" stroke-width=".4"/><rect x="9.800" y="16.200" width="12.400" height="2" rx=".8" fill="#8a5d12"/><circle cx="16" cy="12.300" r=".9" fill="#fff6c9"/><text x="16" y="24.200" text-anchor="middle" font-size="5" font-weight="900" font-family="Georgia,serif" fill="#6b4710" stroke="rgba(255,244,190,.7)" stroke-width=".15" letter-spacing=".3">BMN</text><path d="M7 8.600l8.200-4 2.600 1.300-10.200 5.100z" fill="rgba(255,255,255,.38)"/></svg>'};
+ founder:'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><linearGradient id="bmnFounderTick" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".48" stop-color="#e9b93f"/><stop offset="1" stop-color="#a96b13"/></linearGradient></defs><path d="M12 1.2l2.35 1.15 2.6-.35 1.35 2.25 2.35 1.2-.35 2.6 1.15 2.35-1.15 2.35.35 2.6-2.35 1.2-1.35 2.25-2.6-.35L12 22.8l-2.35-1.15-2.6.35-1.35-2.25-2.35-1.2.35-2.6L2.55 13.6 1.4 11.25l1.15-2.35-.35-2.6 2.35-1.2L5.9 2.85l2.6.35z" fill="url(#bmnFounderTick)" stroke="#fff0bd" stroke-width=".65"/><path d="m7.1 12.2 3.15 3.1 6.75-7" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
 const TITLE={standard:'BMN Verified',gold:'BMN Gold Verified',founder:'BMN Founder'};
 function levelFor(u){
   if(!u)return null;const real=u.me?uid():String(u.id||'');
@@ -10022,44 +10028,33 @@ function wrapSetUser(){const L=window.LGTT;if(!L||!L.setUser||L.__bmnWrapped)ret
 const wt=setInterval(()=>{if(wrapSetUser())clearInterval(wt)},300);
 
 /* ---------- RPC helper: finds the real parameter names from the server, never guesses secrets ---------- */
-// Explicit PostgREST argument names for verified BMN moderation RPCs.
-// Avoid unreliable signature discovery by intentionally calling RPCs with empty arguments.
-const sigs={
-  bmn_review_verification:['p_request_id','p_decision','p_review_note'],
-  bmn_set_badge_level:['p_user_id','p_badge_level'],
-  bmn_revoke_verification:['p_user_id','p_reason']
-};
+const sigs={};
+function roleOf(n){n=String(n).toLowerCase();if(/(^|_)(id|uuid)$|user|request|post/.test(n))return'id';if(/status|decision|action|result|level|badge/.test(n))return'choice';if(/note|reason|comment|message/.test(n))return'text';return'other'}
+async function names(fn){
+  if(sigs[fn])return sigs[fn];const r=await sbc().rpc(fn,{});const h=(r.error&&(r.error.hint||r.error.details||r.error.message))||'';
+  const m=new RegExp(fn+'\\(([^)]*)\\)').exec(h);if(!m)return null;
+  const list=m[1].split(',').map(x=>x.trim().split(/\s+/)[0]).filter(Boolean);return sigs[fn]=list;
+}
 async function callRpc(fn,vals){
   const c=sbc();if(!c)throw new Error('Not connected');
-  const map={
-    bmn_review_verification:{p_request_id:vals.id,p_decision:vals.choice,p_review_note:vals.text==null?null:vals.text},
+  // Use the exact Postgres function argument names. Do not guess from PostgREST errors.
+  const signatures={
+    bmn_review_verification:{p_request_id:vals.id,p_decision:vals.choice,p_review_note:vals.text??null},
     bmn_set_badge_level:{p_user_id:vals.id,p_badge_level:vals.choice},
-    bmn_revoke_verification:{p_user_id:vals.id,p_reason:vals.text==null?'':vals.text}
+    bmn_revoke_verification:{p_user_id:vals.id,p_reason:vals.text||''}
   };
-  const args=map[fn];if(!args)throw new Error('No verified argument mapping for '+fn);
-  if(args.p_request_id===undefined||args.p_user_id===undefined||args.p_decision===undefined||args.p_badge_level===undefined) {
-    if(fn!=='bmn_review_verification')throw new Error('Missing required arguments for '+fn);
-  }
+  let args=signatures[fn];
+  if(!args){const list=await names(fn);if(!list)throw new Error(fn+' is not available on this server');args={};let used={id:0,choice:0,text:0};list.forEach(n=>{const r=roleOf(n);if(r==='id'&&!used.id&&vals.id!=null){args[n]=vals.id;used.id=1}else if(r==='choice'&&!used.choice&&vals.choice!=null){args[n]=vals.choice;used.choice=1}else if(r==='text'&&!used.text){args[n]=vals.text==null?'':vals.text;used.text=1}else if(r==='other'&&vals.text!=null&&!used.text){args[n]=vals.text;used.text=1}});if(Object.keys(args).length!==list.length)throw new Error('Unexpected parameters for '+fn+': '+list.join(', '));}
   const r=await c.rpc(fn,args);if(r.error)throw r.error;return r.data;
 }
 
 /* ---------- owner (decided by the database), badges, restrictions ---------- */
 async function checkOwner(){
-  const id=uid(),c=sbc();
-  if(!id||!c){st.owner=false;window.bmnIsOwner=false;st.ownerFor=null;return}
-  if(st.ownerFor===id)return;
-  try{
-    const r=await c.rpc('is_bmn_owner');if(r.error)throw r.error;
-    const d=r.data;
-    st.owner=(d===true||(Array.isArray(d)&&(d[0]===true||(d[0]&&Object.values(d[0])[0]===true)))||(d&&typeof d==='object'&&Object.values(d)[0]===true));
-    st.ownerFor=id;window.bmnIsOwner=st.owner;
-    if(st.owner)st.ownerIds.add(id);
-    refreshFeedBadges();
-  }catch(e){
-    // Do not cache a failed owner check: the periodic session watcher can retry it.
-    st.owner=false;st.ownerFor=null;window.bmnIsOwner=false;
-    console.warn('[BMN owner console] Owner check will retry:',e&&e.message||e);
-  }
+  const id=uid();if(!id){st.owner=false;window.bmnIsOwner=false;st.ownerFor=null;return}
+  if(st.ownerFor===id)return;st.ownerFor=id;
+  try{const r=await sbc().rpc('is_bmn_owner');const d=r.data;st.owner=!r.error&&(d===true||(Array.isArray(d)&&(d[0]===true||(d[0]&&Object.values(d[0])[0]===true)))||(d&&typeof d==='object'&&Object.values(d)[0]===true))}catch(_){st.owner=false}
+  window.bmnIsOwner=st.owner;if(st.owner)st.ownerIds.add(id);
+  refreshFeedBadges();
 }
 async function loadBadges(){
   const c=sbc();if(!c)return;let changed=false;
@@ -10123,11 +10118,11 @@ async function tabVerify(box){
   try{const a=await c.from('bmn_verification_requests').select('*').or('status.eq.pending,status.is.null').order('created_at',{ascending:true}).limit(50);if(a.error)throw a.error;reqs=a.data||[]}catch(e){box.innerHTML='<p>Could not load requests: '+esc(e&&e.message||e)+'</p>';return}
   try{const b=await c.from('bmn_verified_users').select('*').order('verified_at',{ascending:false}).limit(100);vers=(b.data||[])}catch(_){}
   const P=await profilesFor(reqs.map(r=>r.user_id).concat(vers.map(v=>v.user_id)));
-  let h='<div class="row"><button data-refresh type="button">Refresh requests</button></div><h3>Pending requests ('+reqs.length+')</h3>';
+  let h='<div class="row"><button data-refresh type="button">Refresh</button></div><h3>Pending requests ('+reqs.length+')</h3>';
   if(!reqs.length)h+='<p>No pending verification requests.</p>';
   reqs.forEach(r=>{const ev=safeUrl(r.evidence_url);h+='<div class="bmn-card" data-req="'+esc(r.id)+'"><b>'+nm(P,r.user_id)+'</b><small>'+esc(when(r.created_at))+'</small><div>'+esc(r.request_reason)+'</div>'+(ev?'<div><small>Evidence</small><a href="'+esc(ev)+'" target="_blank" rel="noopener noreferrer">'+esc(ev)+'</a></div>':'<small>No evidence link</small>')+'<textarea rows="2" maxlength="300" placeholder="Review note (optional)" aria-label="Review note"></textarea><div class="row"><button class="pri" data-d="approved" type="button">Approve</button><button data-d="rejected" type="button">Reject</button></div></div>'});
   h+='<h3>Verified users ('+vers.length+')</h3>';if(!vers.length)h+='<p>No verified users yet.</p>';
-  vers.forEach(v=>{const lv=v.badge_level==='gold'?'gold':'standard';h+='<div class="bmn-card" data-user="'+esc(v.user_id)+'"><b>'+nm(P,v.user_id)+'</b> <span class="bmn-badge bmn-b-'+lv+'">'+ART[lv]+'</span><small>'+(lv==='gold'?'Gold':'Standard')+' \u00b7 '+esc(when(v.verified_at))+'</small><div class="row"><button data-lv="'+(lv==='gold'?'standard':'gold')+'" type="button">'+(lv==='gold'?'Change to Standard':'Promote to Gold')+'</button><button data-revoke type="button">Revoke</button></div></div>'});
+  vers.forEach(v=>{const lv=(v.badge_level==='official'||v.badge_level==='gold')?'official':(v.badge_level==='creator'?'creator':'standard');h+='<div class="bmn-card" data-user="'+esc(v.user_id)+'"><b>'+nm(P,v.user_id)+'</b> <span class="bmn-badge bmn-b-'+lv+'">'+ART[lv]+'</span><small>'+(lv==='gold'?'Gold':'Standard')+' \u00b7 '+esc(when(v.verified_at))+'</small><div class="row"><button data-lv="'+(lv==='gold'?'standard':'gold')+'" type="button">'+(lv==='gold'?'Change to Standard':'Promote to Gold')+'</button><button data-revoke type="button">Revoke</button></div></div>'});
   box.innerHTML=h;
   box.onclick=async e=>{const b=e.target.closest('button');if(!b)return;
     if('refresh' in b.dataset){tabVerify(box);return}
@@ -10168,8 +10163,7 @@ async function tabRestricted(box){
     box.innerHTML=rows.map(x=>'<div class="bmn-card"><b>'+nm(P,x.user_id)+'</b> \u00b7 '+esc(x.status||x.account_status)+'<small>'+esc(when(x.updated_at||x.created_at))+(x.expires_at?' \u00b7 until '+esc(when(x.expires_at)):'')+'</small>'+(x.reason?'<div>'+esc(x.reason)+'</div>':'')+'</div>').join('')}
   catch(e){box.innerHTML='<p>Could not load restrictions: '+esc(e&&e.message||e)+'</p>'}
 }
-window.bmnOwnerConsole=async function(){
-  await checkOwner();
+window.bmnOwnerConsole=function(){
   if(!st.owner){toast('Owner only','lock');return}
   window.bmnSheet('<button class="bmn-sh-x" data-close type="button" aria-label="Close">\u2715</button><div class="bmn-oc"><h2>Owner console</h2><div class="tabs" role="tablist"><button data-t="v" aria-pressed="true" type="button">Verification</button><button data-t="r" aria-pressed="false" type="button">Reports</button><button data-t="h" aria-pressed="false" type="button">History</button><button data-t="a" aria-pressed="false" type="button">Restricted</button></div><div id="bmnOCBody"></div></div>',box=>{
     const body=box.querySelector('#bmnOCBody'),go=t=>{box.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));({v:tabVerify,r:tabReports,h:tabHistory,a:tabRestricted})[t](body)};
@@ -10269,37 +10263,16 @@ const errMsg=e=>String(e&&e.message||e||'Unknown error');
 const bg=fn=>{try{Promise.resolve(fn()).catch(()=>{})}catch(_){}};
 
 /* ---------- generic sheet host (one place for sign-in + report) ---------- */
-let host=null,lastFocus=null,sheetHistoryArmed=false,sheetSkipPop=false;
+let host=null,lastFocus=null;
 function sheet(html,onMount){
-  if(!host){
-    host=document.createElement('div');host.id='bmnSheetHost';
-    host.innerHTML='<div class="bmn-sh-scrim" data-close aria-hidden="true"></div><div class="bmn-sh" role="dialog" aria-modal="true" aria-label="BMN dialog"></div>';
-    document.body.appendChild(host);
-    // Capture close controls before nested sheet handlers can swallow the tap.
-    host.addEventListener('click',e=>{
-      const t=e.target,btn=t&&t.closest&&t.closest('[data-close],[data-dismiss],.bmn-sh-x,.bmn-sheet-cancel,[data-cancel]');
-      const scrim=t===host.querySelector('.bmn-sh-scrim');
-      const label=btn?String(btn.textContent||'').trim().toLowerCase():'';
-      if(btn||scrim||label==='cancel'||label==='not now'){e.preventDefault();e.stopImmediatePropagation();closeSheet();}
-    },true);
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1'){e.preventDefault();closeSheet();}});
-  }
-  const box=host.querySelector('.bmn-sh');box.innerHTML=html;host.dataset.open='1';host.setAttribute('aria-hidden','false');lastFocus=document.activeElement;
-  if(!sheetHistoryArmed){try{history.pushState({bmnSheet:true},'',location.href);sheetHistoryArmed=true;}catch(_){}}
+  if(!host){host=document.createElement('div');host.id='bmnSheetHost';host.innerHTML='<div class="bmn-sh-scrim" data-close></div><div class="bmn-sh" role="dialog" aria-modal="true"></div>';document.body.appendChild(host);
+    host.addEventListener('click',e=>{const close=e.target&&e.target.closest&&e.target.closest('[data-close],.bmn-sh-x');if(close){e.preventDefault();e.stopPropagation();closeSheet()}});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1')closeSheet()})}
+  const box=host.querySelector('.bmn-sh');box.innerHTML=html;host.dataset.open='1';lastFocus=document.activeElement;
   try{onMount&&onMount(box)}catch(e){console.warn(e)}
-  const f=box.querySelector('input,select,textarea,button');if(f)setTimeout(()=>{if(host&&host.dataset.open==='1')f.focus({preventScroll:true})},60);return box;
+  const f=box.querySelector('input,select,textarea,button');if(f)setTimeout(()=>f.focus({preventScroll:true}),60);return box;
 }
-function closeSheet(){
-  if(host&&host.dataset.open==='1'){
-    host.dataset.open='0';host.setAttribute('aria-hidden','true');
-    if(sheetHistoryArmed){sheetHistoryArmed=false;sheetSkipPop=true;try{history.back()}catch(_){sheetSkipPop=false;}}
-  }
-  try{if(lastFocus&&lastFocus.isConnected&&lastFocus.focus)lastFocus.focus({preventScroll:true})}catch(_){}
-}
-window.addEventListener('popstate',()=>{
-  if(sheetSkipPop){sheetSkipPop=false;return;}
-  if(host&&host.dataset.open==='1'){sheetHistoryArmed=false;host.dataset.open='0';host.setAttribute('aria-hidden','true');try{if(lastFocus&&lastFocus.isConnected)lastFocus.focus({preventScroll:true})}catch(_){}}
-});
+function closeSheet(){if(host){host.dataset.open='0';host.removeAttribute('data-open')}try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(_){}}
 
 /* ---------- ONE auth prompt that reuses the existing Supabase client/session ---------- */
 const PEND='bmn-pending-auth';
@@ -10318,13 +10291,6 @@ async function afterSignIn(reason){
   replay(reason);
 }
 window.bmnSheet=sheet;window.bmnCloseSheet=closeSheet;
-// Some older sheets have plain Cancel / Not Now buttons without a close attribute.
-document.addEventListener('click',e=>{
-  if(!host||host.dataset.open!=='1'||!e.target||!e.target.closest)return;
-  const b=e.target.closest('#bmnSheetHost button');if(!b)return;
-  const label=(b.textContent||'').trim().toLowerCase();
-  if(label==='cancel'||label==='not now'){e.preventDefault();e.stopPropagation();closeSheet();}
-},true);
 window.requestCommunityAuth=function(reason){
   if(me())return true;
   reason=reason||'';setPending(reason);
@@ -10841,11 +10807,7 @@ html.bmn-ios body #lgtt .lgtt-sheet,html.bmn-ios body .bmn-sh{border-radius:36px
 html.bmn-ios body #lgtt .lgtt-grab{width:36px!important;height:5px!important;border-radius:3px!important}
 
 /* ---- Scroll-edge effect: status bar / Dynamic Island scrim (progressive blur) ---- */
-#bmnEdgeTop{position:fixed;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 10px);z-index:2147483000;pointer-events:none;display:none;
- -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
- -webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);background:linear-gradient(rgba(0,0,0,.28),transparent)}
-html.bmn-ios.bmn-community-app #bmnEdgeTop{display:block}
-html.bmn-ios[data-bmn-theme="light"] #bmnEdgeTop{background:linear-gradient(rgba(255,255,255,.4),transparent)}
+#bmnEdgeTop{display:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 
 /* ---- Accessibility & compatibility ---- */
 html.bmn-ios body #lgtt :focus-visible{outline:2px solid #0a84ff;outline-offset:3px;border-radius:14px}
@@ -10861,7 +10823,7 @@ html:not(.bmn-ios) body #lgtt .lgtt-dk:active{transform:scale(.94)}
 (()=>{'use strict';
 const root=document.documentElement;
 /* 1) status-bar scrim element (iOS only) */
-if(root.classList.contains('bmn-ios')&&!document.getElementById('bmnEdgeTop')){const e=document.createElement('div');e.id='bmnEdgeTop';e.setAttribute('aria-hidden','true');document.body.appendChild(e)}
+/* Status-bar blur intentionally disabled for the iOS 18 web app. */
 /* 2) specular highlight follows touch/pointer on the dock (rAF-throttled, passive) */
 let raf=0,px=0,py=0,el=null;
 function paint(){raf=0;if(!el)return;const r=el.getBoundingClientRect();el.style.setProperty('--sx',(px-r.left)+'px');el.style.setProperty('--sy',(py-r.top)+'px')}
@@ -10913,26 +10875,6 @@ requestAnimationFrame(frame);
 </script>
 
 <!-- ===== END BMN FINAL V18 INTEGRATION PATCH ===== -->
-
-<style id="bmn-safe-glass-refinement-2026">
-#bmnSheetHost .bmn-sh,.bmn-owner-console,.bmn-owner-console .backend-panel{
-  -webkit-backdrop-filter:blur(22px) saturate(1.45);
-  backdrop-filter:blur(22px) saturate(1.45);
-}
-#bmnSheetHost .bmn-sh{
-  border:1px solid rgba(255,255,255,.24);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 22px 64px rgba(0,0,0,.38);
-}
-#bmnSheetHost .bmn-sh-x,#bmnSheetHost .bmn-sh button[data-close],#bmnSheetHost .bmn-sh button.cancel{
-  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);
-}
-#bmnSheetHost .bmn-sh button:active{transform:scale(.97)}
-@media(prefers-reduced-motion:reduce){#bmnSheetHost .bmn-sh button:active{transform:none}}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
- #bmnSheetHost .bmn-sh{background:rgba(20,25,40,.97)!important}
-}
-</style>
-
 </body>
 </html>
 
