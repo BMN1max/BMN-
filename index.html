@@ -10022,19 +10022,24 @@ function wrapSetUser(){const L=window.LGTT;if(!L||!L.setUser||L.__bmnWrapped)ret
 const wt=setInterval(()=>{if(wrapSetUser())clearInterval(wt)},300);
 
 /* ---------- RPC helper: finds the real parameter names from the server, never guesses secrets ---------- */
-const sigs={};
-function roleOf(n){n=String(n).toLowerCase();if(/(^|_)(id|uuid)$|user|request|post/.test(n))return'id';if(/status|decision|action|result|level|badge/.test(n))return'choice';if(/note|reason|comment|message/.test(n))return'text';return'other'}
-async function names(fn){
-  if(sigs[fn])return sigs[fn];const r=await sbc().rpc(fn,{});const h=(r.error&&(r.error.hint||r.error.details||r.error.message))||'';
-  const m=new RegExp(fn+'\\(([^)]*)\\)').exec(h);if(!m)return null;
-  const list=m[1].split(',').map(x=>x.trim().split(/\s+/)[0]).filter(Boolean);return sigs[fn]=list;
-}
-async function callRpc(fn,vals){ // vals: {id, choice?, text?}
+// Explicit PostgREST argument names for verified BMN moderation RPCs.
+// Avoid unreliable signature discovery by intentionally calling RPCs with empty arguments.
+const sigs={
+  bmn_review_verification:['p_request_id','p_decision','p_review_note'],
+  bmn_set_badge_level:['p_user_id','p_badge_level'],
+  bmn_revoke_verification:['p_user_id','p_reason']
+};
+async function callRpc(fn,vals){
   const c=sbc();if(!c)throw new Error('Not connected');
-  const list=await names(fn);if(!list)throw new Error(fn+' is not available on this server');
-  const args={};let used={id:0,choice:0,text:0};
-  list.forEach(n=>{const r=roleOf(n);if(r==='id'&&!used.id&&vals.id!=null){args[n]=vals.id;used.id=1}else if(r==='choice'&&!used.choice&&vals.choice!=null){args[n]=vals.choice;used.choice=1}else if(r==='text'&&!used.text){args[n]=vals.text==null?'':vals.text;used.text=1}else if(r==='other'&&vals.text!=null&&!used.text){args[n]=vals.text;used.text=1}});
-  if(Object.keys(args).length!==list.length)throw new Error('Unexpected parameters for '+fn+': '+list.join(', '));
+  const map={
+    bmn_review_verification:{p_request_id:vals.id,p_decision:vals.choice,p_review_note:vals.text==null?null:vals.text},
+    bmn_set_badge_level:{p_user_id:vals.id,p_badge_level:vals.choice},
+    bmn_revoke_verification:{p_user_id:vals.id,p_reason:vals.text==null?'':vals.text}
+  };
+  const args=map[fn];if(!args)throw new Error('No verified argument mapping for '+fn);
+  if(args.p_request_id===undefined||args.p_user_id===undefined||args.p_decision===undefined||args.p_badge_level===undefined) {
+    if(fn!=='bmn_review_verification')throw new Error('Missing required arguments for '+fn);
+  }
   const r=await c.rpc(fn,args);if(r.error)throw r.error;return r.data;
 }
 
@@ -10163,7 +10168,8 @@ async function tabRestricted(box){
     box.innerHTML=rows.map(x=>'<div class="bmn-card"><b>'+nm(P,x.user_id)+'</b> \u00b7 '+esc(x.status||x.account_status)+'<small>'+esc(when(x.updated_at||x.created_at))+(x.expires_at?' \u00b7 until '+esc(when(x.expires_at)):'')+'</small>'+(x.reason?'<div>'+esc(x.reason)+'</div>':'')+'</div>').join('')}
   catch(e){box.innerHTML='<p>Could not load restrictions: '+esc(e&&e.message||e)+'</p>'}
 }
-window.bmnOwnerConsole=function(){
+window.bmnOwnerConsole=async function(){
+  await checkOwner();
   if(!st.owner){toast('Owner only','lock');return}
   window.bmnSheet('<button class="bmn-sh-x" data-close type="button" aria-label="Close">\u2715</button><div class="bmn-oc"><h2>Owner console</h2><div class="tabs" role="tablist"><button data-t="v" aria-pressed="true" type="button">Verification</button><button data-t="r" aria-pressed="false" type="button">Reports</button><button data-t="h" aria-pressed="false" type="button">History</button><button data-t="a" aria-pressed="false" type="button">Restricted</button></div><div id="bmnOCBody"></div></div>',box=>{
     const body=box.querySelector('#bmnOCBody'),go=t=>{box.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));({v:tabVerify,r:tabReports,h:tabHistory,a:tabRestricted})[t](body)};
@@ -10271,9 +10277,10 @@ function sheet(html,onMount){
     document.body.appendChild(host);
     // Capture close controls before nested sheet handlers can swallow the tap.
     host.addEventListener('click',e=>{
-      const t=e.target,btn=t&&t.closest&&t.closest('[data-close],[data-dismiss],.bmn-sh-x,.bmn-sheet-cancel');
+      const t=e.target,btn=t&&t.closest&&t.closest('[data-close],[data-dismiss],.bmn-sh-x,.bmn-sheet-cancel,[data-cancel]');
       const scrim=t===host.querySelector('.bmn-sh-scrim');
-      if(btn||scrim){e.preventDefault();e.stopPropagation();closeSheet();}
+      const label=btn?String(btn.textContent||'').trim().toLowerCase():'';
+      if(btn||scrim||label==='cancel'||label==='not now'){e.preventDefault();e.stopImmediatePropagation();closeSheet();}
     },true);
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&host.dataset.open==='1'){e.preventDefault();closeSheet();}});
   }
