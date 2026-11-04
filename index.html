@@ -8813,6 +8813,8 @@ function installCreateBridge(){
  file.addEventListener('change',()=>{preview.replaceChildren();const f=file.files?.[0];if(!f){preview.style.display='none';return}preview.style.display='block';let n;if(f.type.startsWith('video/')){n=document.createElement('video');n.controls=true;n.muted=true;n.playsInline=true;n.src=URL.createObjectURL(f);n.style.width='100%'}else{n=document.createElement('img');n.src=URL.createObjectURL(f);n.alt='Selected media';n.style.cssText='width:100%;max-height:45vh;object-fit:contain'}preview.appendChild(n);status.textContent=f.name+' selected'});
  $('#bmnOverlayPublishV17').addEventListener('click',()=>{const original=$('#bmnPostFile'),originalCaption=$('#bmnPostContent'),publish=$('#bmnPublishPost');if(!original||!originalCaption||!publish){status.textContent='The upload pipeline is not ready. Close and reopen Create.';return}const f=file.files?.[0];if(!f){status.textContent='Choose a photo or video first.';return}try{const dt=new DataTransfer();dt.items.add(f);original.files=dt.files;original.dispatchEvent(new Event('change',{bubbles:true}));originalCaption.value=caption.value;originalCaption.dispatchEvent(new Event('input',{bubbles:true}));publish.click();status.textContent='Publishing…'}catch(_){status.textContent='Could not attach this file in this browser.'}});
 }
+// Export the bridge explicitly: the camera/editor code lives in a separate script scope.
+window.bmnInstallCreateBridge=installCreateBridge;
 
 /* ---------- Friends: keep existing real-data implementation, relabel Discover as Friends ---------- */
 function relabelFriends(){const d=$('#lgttDock [data-dock="discover"]');if(d){const label=d.querySelector('span');if(label&&label.textContent!=='Friends')label.textContent='Friends';const use=d.querySelector('use');if(use&&use.getAttribute('href')!=='#lgi-users')use.setAttribute('href','#lgi-users')}const title=$('#lgttDiscScroll .lgtt-page-h h2');if(title&&title.textContent!=='Friends')title.textContent='Friends'}
@@ -10594,7 +10596,7 @@ const toast=(m,i)=>{try{window.LGTT&&window.LGTT.toast&&window.LGTT.toast(m,i)}c
 function openCamera(onFile){
   if(document.getElementById('bmnCam'))return;
   const st=document.getElementById('lgttStage')||document.body;
-  const toCreate=()=>{try{window.LGTT&&LGTT.openCreate&&LGTT.openCreate()}catch(_){}};
+  const toCreate=()=>{try{if(typeof window.bmnShowCreateComposer==='function')window.bmnShowCreateComposer();else window.LGTT&&LGTT.openCreate&&LGTT.openCreate()}catch(_){}};
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Live camera is not available in this browser. Opening Create instead.','info');toCreate();return}
   st.classList.add('bmn-cam-open');try{window.LGTT&&LGTT.resume&&LGTT.resume()}catch(_){}
   const d=document.createElement('div');d.id='bmnCam';d.className='';
@@ -10696,11 +10698,12 @@ window.bmnShowCreateComposer=function(){
   try{
     if(!window.LGTT||typeof window.LGTT.openCreate!=='function')return false;
     window.LGTT.openCreate();
-    // The visible full-screen app owns this composer. Do not route uploads to the
-    // legacy page hidden underneath the Liquid Glass interface.
-    installCreateBridge();
+    // installCreateBridge is defined in the Community integration script above.
+    // It must be called through window because this camera script has its own scope.
+    if(typeof window.bmnInstallCreateBridge!=='function')return false;
+    window.bmnInstallCreateBridge();
     return !!document.getElementById('bmnOverlayFileV17');
-  }catch(_){return false}
+  }catch(error){console.warn('[BMN Create] Editor handoff failed:',error);return false}
 };
 window.bmnOpenCamera=()=>openCamera(f=>window.bmnAttachToCreate(f));
 window.bmnAttachToCreate=function(f){
