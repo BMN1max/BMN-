@@ -3271,11 +3271,7 @@ document.addEventListener('error',async event=>{const v=event.target;if(!(v inst
       else if(action==='tools'){if(!clickFirst(['[data-app-view="profile"]','#bmnDockProfile','#bmnCreatorInsights']))location.hash='#community';}
       else if(action==='live'){if(!clickFirst(['[data-app-view="live"]','#bmnLiveButton','#live']))location.hash='#live';}
       else if(action==='photo'||action==='video'){
-        if(typeof window.bmnShowCreateComposer==='function'&&window.bmnShowCreateComposer()){
-          const composerInput=document.getElementById('bmnOverlayFileV17');
-          if(composerInput){composerInput.accept=action==='photo'?'image/*':'video/*';composerInput.click();}
-          else toast('The photo and video picker is not ready. Please try again.','info');
-        }else toast('The BMN Create editor is not ready. Please reload and try again.','info');
+        if(window.bmnCV20)window.bmnCV20.open();else toast('The BMN Create editor is not ready. Please reload and try again.','info');
       }else if(action==='sound'){
         const input=document.createElement('input');input.type='file';input.accept='audio/*';input.setAttribute('aria-label','Choose sound');input.addEventListener('change',()=>{const file=input.files&&input.files[0];if(file)window.dispatchEvent(new CustomEvent('bmn:action-file-selected',{detail:{action,file}}));});input.click();
       }
@@ -10091,11 +10087,11 @@ const st={owner:false,ownerFor:null,badges:{},ownerIds:new Set([BMN_OWNER_UUID])
 window.bmnIsOwner=false;window.bmnFounderOwnerIds=st.ownerIds;
 
 /* ---------- badge artwork: jade (standard), champagne (gold), 3D metallic Founder ---------- */
-const SHIELD='M12 1.8l8.2 4.2v8.4c0 4.2-3.3 7.1-8.2 8.8-4.9-1.7-8.2-4.6-8.2-8.8V6z';
+const SHIELD='M12 1.8a10.2 10.2 0 1 0 0 20.4a10.2 10.2 0 1 0 0-20.4z';
 const ART={
  standard:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+SHIELD+'" fill="url(#bmnJade)"/><path d="'+SHIELD+'" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7"/><path d="m7.6 12.3 3.1 3.1 5.7-6.5" fill="none" stroke="#04332e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  gold:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+SHIELD+'" fill="url(#bmnGold)"/><path d="'+SHIELD+'" fill="none" stroke="#fff3c4" stroke-width=".8"/><path d="m7.6 12.3 3.1 3.1 5.7-6.5" fill="none" stroke="#5a3b05" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 2.6l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="#fffdf0"/></svg>',
- founder:'<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.2l11.3 5.3v9.4c0 6.2-4.7 10.3-11.3 12.9C9.4 27.2 4.7 23.100 4.7 16.900V7.500z" fill="url(#bmnFG)" stroke="url(#bmnFR)" stroke-width="1"/><path d="M16 4.3l9.2 4.3v8.3c0 5-3.800 8.500-9.200 10.700-5.400-2.200-9.200-5.700-9.200-10.700V8.600z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".6"/><path d="M8.800 13.400c-1.600-2.100-1.400-4.500.5-6.200-.3 2.300.7 3.800 2.200 4.800z M23.200 13.400c1.600-2.100 1.400-4.500-.5-6.200.3 2.300-.7 3.800-2.200 4.800z" fill="url(#bmnFC)" stroke="#7a5010" stroke-width=".4"/><path d="M9.800 16.200l1.700-5.600 3 3.600L16 9l1.500 5.200 3-3.600 1.700 5.600z" fill="url(#bmnFC)" stroke="#7a5010" stroke-width=".4"/><rect x="9.800" y="16.200" width="12.400" height="2" rx=".8" fill="#8a5d12"/><circle cx="16" cy="12.300" r=".9" fill="#fff6c9"/><text x="16" y="24.200" text-anchor="middle" font-size="5" font-weight="900" font-family="Georgia,serif" fill="#6b4710" stroke="rgba(255,244,190,.7)" stroke-width=".15" letter-spacing=".3">BMN</text><path d="M7 8.600l8.200-4 2.600 1.300-10.200 5.100z" fill="rgba(255,255,255,.38)"/></svg>'};
+ founder:'<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="url(#bmnFG)" stroke="url(#bmnFR)" stroke-width="1.2"/><circle cx="16" cy="16" r="11.6" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".6"/><path d="M9.8 16.4l4.2 4.2 8.2-9.2" fill="none" stroke="#5a3b05" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.2 10.6A10.4 10.4 0 0 1 16 5.4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2" stroke-linecap="round"/></svg>'};
 const TITLE={standard:'BMN Verified',gold:'BMN Gold Verified',founder:'BMN Founder'};
 function levelFor(u){
   if(!u)return null;const real=u.me?uid():String(u.id||'');
@@ -10788,7 +10784,7 @@ const origPlay=HTMLMediaElement.prototype.play;
 function pauseOthers(self){try{const all=new Set(document.querySelectorAll('video,audio'));REG.forEach(v=>all.add(v));all.forEach(m=>{if(m!==self&&!m.paused&&!m.srcObject){try{m.pause()}catch(_){}}})}catch(_){}}
 HTMLMediaElement.prototype.play=function(){try{REG.add(this);pauseOthers(this)}catch(_){}return origPlay.apply(this,arguments)};
 document.addEventListener('play',e=>{if(e.target&&e.target.tagName)pauseOthers(e.target)},true);
-const keep=v=>!!(v.closest&&v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17'));
+const keep=v=>!!(v.closest&&v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17,#bmnCV20'));
 const isVisibleSlide=sl=>{const r=sl.getBoundingClientRect(),mid=innerHeight/2;return r.top<=mid&&r.bottom>=mid&&r.width>0};
 function guard(){
   const L=window.LGTT;let blocked=true;try{blocked=!!(L&&L.audioState&&L.audioState().blocked)}catch(_){}
@@ -10995,6 +10991,375 @@ body.community-mode #bmnProfileV2.bmn-founder-profile{background:url("data:image
 .bmn-b-founder svg path,.bmn-badge svg path{stroke-linejoin:round;stroke-linecap:round}
 .bmn-b-founder svg>path:first-child{stroke-width:2.4px}
 </style>
+<style id="bmn-v20-css">
+/* ===== BMN v20 — Liquid Glass tokens, platform tiers, Create editor, circular badge, creator dragon ===== */
+:root{--g20-bg:rgba(22,28,48,.52);--g20-bg2:rgba(255,255,255,.06);--g20-edge:rgba(255,255,255,.22);--g20-hi:rgba(255,255,255,.5);--g20-ink:#f4f7ff;--g20-sub:rgba(235,240,255,.68);--g20-acc:#58aaff;--g20-acc2:#8e6bff;--g20-shadow:0 18px 50px rgba(2,6,20,.5);--g20-blur:22px}
+body.light,html[data-theme=light]{--g20-bg:rgba(255,255,255,.62);--g20-bg2:rgba(20,30,60,.05);--g20-edge:rgba(20,30,60,.14);--g20-hi:rgba(255,255,255,.95);--g20-ink:#101827;--g20-sub:rgba(16,24,39,.62);--g20-shadow:0 16px 40px rgba(40,60,110,.22)}
+.bmn-ios-legacy,.bmn-android{--g20-blur:14px}
+.bmn-ios-legacy .g20,.bmn-ios-legacy #bmnCV20 .cv-glass{background:var(--g20-bg)!important;box-shadow:0 8px 24px rgba(0,0,0,.28)!important}
+@media (prefers-reduced-motion:reduce){#bmnCV20 *{animation:none!important;transition:none!important}}
+html.bmn-reduce-motion #bmnCV20 *{animation:none!important;transition:none!important}
+#bmnCV20{position:fixed;inset:0;z-index:2147483000;display:none;color:var(--g20-ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+#bmnCV20.open{display:block}
+#bmnCV20 *{box-sizing:border-box}
+#bmnCV20 .cv-back{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0%,rgba(88,170,255,.18),transparent 60%),radial-gradient(90% 60% at 90% 100%,rgba(142,107,255,.16),transparent 60%),#070a16}
+body.light #bmnCV20 .cv-back{background:radial-gradient(120% 80% at 50% 0%,rgba(88,170,255,.25),transparent 60%),#eef2fb}
+#bmnCV20 .cv-glass{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),var(--g20-bg);border:1px solid var(--g20-edge);box-shadow:inset 0 1px 0 var(--g20-hi),inset 0 -1px 0 rgba(255,255,255,.04),var(--g20-shadow);-webkit-backdrop-filter:blur(var(--g20-blur)) saturate(1.5);backdrop-filter:blur(var(--g20-blur)) saturate(1.5)}
+#bmnCV20 .cv-chooser{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;padding:16px 14px calc(16px + env(safe-area-inset-bottom));background:rgba(3,6,16,.45)}
+#bmnCV20.chooser .cv-chooser{display:flex}
+#bmnCV20 .cv-sheet{width:min(460px,100%);border-radius:30px;padding:16px;display:grid;gap:10px}
+#bmnCV20 .cv-sheet h3{margin:4px 6px 4px;font-size:18px;font-weight:700;letter-spacing:.01em}
+#bmnCV20 .cv-sheet p{margin:0 6px 6px;font-size:13px;color:var(--g20-sub)}
+#bmnCV20 .cv-opt,#bmnCV20 .cv-btn{position:relative;display:flex;align-items:center;gap:12px;min-height:54px;padding:0 16px;border-radius:20px;border:1px solid var(--g20-edge);background:var(--g20-bg2);color:inherit;font:600 15px/1 inherit;cursor:pointer;overflow:hidden;text-align:left;-webkit-appearance:none;appearance:none}
+#bmnCV20 .cv-opt input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+#bmnCV20 .cv-opt svg,#bmnCV20 .cv-btn svg{flex:0 0 24px;width:24px;height:24px}
+#bmnCV20 .cv-opt small{display:block;font-weight:500;font-size:12px;color:var(--g20-sub);margin-top:3px}
+#bmnCV20 .cv-pri{background:linear-gradient(135deg,var(--g20-acc),var(--g20-acc2));border-color:rgba(255,255,255,.35);color:#fff;justify-content:center}
+#bmnCV20 .cv-btn:disabled{opacity:.5}
+#bmnCV20 .cv-editor{position:absolute;inset:0;display:none;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#bmnCV20.editor .cv-editor{display:flex}
+#bmnCV20 .cv-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px}
+#bmnCV20 .cv-top h2{margin:0;font-size:16px;font-weight:700}
+#bmnCV20 .cv-pill{min-height:44px;min-width:44px;padding:0 16px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 14px/1 inherit;color:inherit;border:1px solid var(--g20-edge);background:var(--g20-bg2);cursor:pointer}
+#bmnCV20 .cv-pill.pub{background:linear-gradient(135deg,var(--g20-acc),var(--g20-acc2));color:#fff;border-color:rgba(255,255,255,.35)}
+#bmnCV20 .cv-pill:disabled{opacity:.5}
+#bmnCV20 .cv-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px calc(24px + env(safe-area-inset-bottom));display:grid;gap:12px;align-content:start}
+#bmnCV20 .cv-stagewrap{display:grid;place-items:center;border-radius:26px;padding:10px;min-height:260px;max-height:52vh;overflow:hidden}
+#bmnCV20 .cv-frame{position:relative;overflow:hidden;border-radius:18px;background:#000;max-width:100%;max-height:46vh;width:min(100%,var(--fw,100%));aspect-ratio:var(--ar,9/16)}
+#bmnCV20 .cv-frame video,#bmnCV20 .cv-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:var(--fit,contain);background:#000}
+#bmnCV20 .cv-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;border:1px solid rgba(255,255,255,.4);background:rgba(10,14,30,.4);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);cursor:pointer}
+#bmnCV20 .cv-play.hide{opacity:0;pointer-events:none}
+#bmnCV20 .cv-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--g20-sub)}
+#bmnCV20 .cv-meta span{padding:6px 10px;border-radius:999px;border:1px solid var(--g20-edge);background:var(--g20-bg2)}
+#bmnCV20 .cv-card{border-radius:22px;padding:14px;display:grid;gap:10px}
+#bmnCV20 .cv-card h4{margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--g20-sub);font-weight:700}
+#bmnCV20 .cv-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+#bmnCV20 input[type=range]{width:100%;accent-color:var(--g20-acc);min-height:32px}
+#bmnCV20 .cv-chips{display:flex;gap:8px;flex-wrap:wrap}
+#bmnCV20 .cv-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--g20-edge);background:var(--g20-bg2);color:inherit;font:600 13px/1 inherit;cursor:pointer}
+#bmnCV20 .cv-chip[aria-pressed=true]{background:linear-gradient(135deg,var(--g20-acc),var(--g20-acc2));color:#fff;border-color:rgba(255,255,255,.4)}
+#bmnCV20 .cv-in,#bmnCV20 .cv-ta{width:100%;border-radius:18px;border:1px solid var(--g20-edge);background:var(--g20-bg2);color:var(--g20-ink);padding:13px 14px;font:500 16px/1.35 inherit;outline:none;-webkit-appearance:none;appearance:none}
+#bmnCV20 .cv-in::placeholder,#bmnCV20 .cv-ta::placeholder{color:var(--g20-sub)}
+#bmnCV20 .cv-ta{min-height:84px;resize:vertical}
+#bmnCV20 .cv-bar{height:8px;border-radius:99px;background:var(--g20-bg2);border:1px solid var(--g20-edge);overflow:hidden}
+#bmnCV20 .cv-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g20-acc),var(--g20-acc2));transition:width .2s}
+#bmnCV20 .cv-status{font-size:13px;min-height:18px;color:var(--g20-sub)}
+#bmnCV20 .cv-status.err{color:#ff7a8a}
+#bmnCV20 .cv-prog{display:none;gap:8px}
+#bmnCV20.busy .cv-prog{display:grid}
+#bmnCV20 .cv-toast{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88%;padding:12px 16px;border-radius:18px;font-size:14px;z-index:5}
+#bmnCV20 .cv-dlg{position:absolute;inset:0;display:none;place-items:center;background:rgba(3,6,16,.55);z-index:6;padding:20px}
+#bmnCV20 .cv-dlg.open{display:grid}
+#bmnCV20 .cv-dlg>div{width:min(380px,100%);border-radius:26px;padding:20px;display:grid;gap:14px}
+@media (min-width:820px){#bmnCV20 .cv-editor{max-width:560px;margin:0 auto}#bmnCV20 .cv-stagewrap{max-height:60vh}#bmnCV20 .cv-frame{max-height:56vh}}
+/* ---- Circular verification badge (keeps jade / champagne / founder palettes) ---- */
+.bmn-badge{border-radius:50%!important;aspect-ratio:1/1;display:inline-grid;place-items:center;overflow:visible;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.bmn-badge svg{display:block;width:100%;height:100%;overflow:visible}
+/* ---- BMN creator: red liquid-glass + dragon (only where #lgtt has .lgtt-founder-profile, set from owner ids) ---- */
+#bmnDragonBg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:0}
+#bmnDragonBg svg{position:absolute;right:-18%;top:-4%;width:150%;max-width:900px;height:auto;opacity:.9;mix-blend-mode:normal}
+#bmnDragonBg:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,2,4,.05),rgba(6,2,4,.55) 55%,rgba(6,2,4,.92))}
+body.light #bmnDragonBg:after{background:linear-gradient(180deg,rgba(255,240,240,0),rgba(255,235,235,.7) 55%,rgba(255,240,240,.95))}
+#lgtt.lgtt-founder-profile{--lg-founder-gold:#ff5a66;--lg-founder-deep:#6d0a16;--lg-founder-soft:rgba(255,60,80,.12)}
+#lgtt.lgtt-founder-profile #lgttProfHead{border:1px solid rgba(255,120,130,.42)!important;background:linear-gradient(145deg,rgba(255,90,100,.18),rgba(120,10,25,.12)),rgba(30,8,14,.35)!important;-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);box-shadow:inset 0 1px 0 rgba(255,210,210,.45),0 18px 50px rgba(110,0,20,.35)!important}
+#lgtt.lgtt-founder-profile #lgttProfHead h2{color:#fff1f1!important;text-shadow:0 1px 18px rgba(255,60,80,.35)!important;font-family:Georgia,"Times New Roman",serif;letter-spacing:.03em}
+#lgtt.lgtt-founder-profile #lgttProfHead .lgtt-handle{color:#ffb3ba!important}
+#lgtt.lgtt-founder-profile #lgttProfHead .lgtt-stat{border-color:rgba(255,120,130,.3)!important;background:rgba(255,70,90,.1)!important}
+#lgtt.lgtt-founder-profile #lgttProfHead .lgtt-stat b{color:#ffd9dc!important}
+#lgtt.lgtt-founder-profile #lgttProfHead .lgtt-primary{background:linear-gradient(135deg,#ff5a66,#a30f24)!important;border-color:rgba(255,200,205,.7)!important;color:#fff!important}
+#lgtt.lgtt-founder-profile #lgttProfTabs button.on{color:#ff9aa3!important}
+
+</style>
+<script id="bmn-v20-create-js">
+(()=>{'use strict';
+if(window.bmnCV20)return;
+/* ---------- platform tier (progressive enhancement) ---------- */
+(function(){const ua=navigator.userAgent||'',h=document.documentElement,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const v=Number((ua.match(/Version\/(\d+)/)||[])[1]||0);
+ if(ios){h.classList.add('bmn-ios');h.classList.add(v>=26?'bmn-ios-modern':'bmn-ios-legacy')}
+ else if(/Android/i.test(ua))h.classList.add('bmn-android');else h.classList.add('bmn-desktop');
+ try{if(localStorage.getItem('bmn-reduce-motion')==='1')h.classList.add('bmn-reduce-motion')}catch(_){}})();
+/* ---------- helpers ---------- */
+const $=(s,r)=>(r||root).querySelector(s);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtT=s=>{s=Math.max(0,s||0);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')};
+const fmtS=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const SB=()=>{try{return bmnSupabase}catch(_){return window.bmnSupabase||null}};
+const maxBytes=f=>{try{return bmnMaxUploadBytes(f,'posts')}catch(_){return 200*1048576}};
+const ic={cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="3"/></svg>',
+ photo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+ lib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+ live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M7 7a7 7 0 0 0 0 10M17 7a7 7 0 0 1 0 10"/></svg>',
+ play:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+ pause:'<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'};
+/* ---------- state (single source of truth for Create) ---------- */
+const S={file:null,url:'',kind:'',dur:0,vw:0,vh:0,start:0,end:0,aspect:'original',busy:false,xhr:null,cancel:false,uploaded:null,published:false,pickAt:0};
+let root=null,vid=null,lastToast=0;
+/* ---------- DOM ---------- */
+function build(){
+ if(root)return;
+ root=document.createElement('div');root.id='bmnCV20';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','Create post');
+ root.innerHTML='<div class="cv-back"></div>'
+ +'<div class="cv-chooser" data-x="chooser-bg"><div class="cv-sheet cv-glass" role="group" aria-label="Create">'
+ +'<h3>Create on BMN</h3><p>Record a video or choose something from your library. You will see a preview before anything is uploaded.</p>'
+ +'<label class="cv-opt" data-pick="record">'+ic.cam+'<span>Record video<small>Opens your phone camera</small></span><input type="file" accept="video/*" capture="environment" data-in="record"></label>'
+ +'<button type="button" class="cv-opt" data-act="live-cam" hidden>'+ic.live+'<span>In-app camera<small>Record inside BMN</small></span></button>'
+ +'<label class="cv-opt" data-pick="photo">'+ic.photo+'<span>Take photo<small>Opens your phone camera</small></span><input type="file" accept="image/*" capture="environment" data-in="photo"></label>'
+ +'<label class="cv-opt" data-pick="library">'+ic.lib+'<span>Choose from library<small>Photos, videos, gallery or files</small></span><input type="file" accept="image/*,video/*,.mov,.mp4,.m4v,.webm,.heic" data-in="library"></label>'
+ +'<button type="button" class="cv-btn" data-act="close">Cancel</button></div></div>'
+ +'<div class="cv-editor"><div class="cv-top"><button type="button" class="cv-pill" data-act="back" aria-label="Go back">‹ Back</button><h2>New post</h2><button type="button" class="cv-pill pub" data-act="publish">Publish</button></div>'
+ +'<div class="cv-scroll"><div class="cv-stagewrap cv-glass"><div class="cv-frame"><button type="button" class="cv-play" data-act="play" aria-label="Play"></button></div></div>'
+ +'<div class="cv-meta" data-meta></div>'
+ +'<div class="cv-card cv-glass" data-trimcard><h4>Trim</h4><div class="cv-row"><span>Start <b data-ts>0:00</b></span><span>End <b data-te>0:00</b></span></div><input type="range" data-trim="s" min="0" max="1" step="0.1" value="0" aria-label="Trim start"><input type="range" data-trim="e" min="0" max="1" step="0.1" value="1" aria-label="Trim end"><div class="cv-status" data-trimnote></div></div>'
+ +'<div class="cv-card cv-glass"><h4>Framing</h4><div class="cv-chips" role="group" aria-label="Aspect ratio"><button type="button" class="cv-chip" data-aspect="original" aria-pressed="true">Original</button><button type="button" class="cv-chip" data-aspect="portrait" aria-pressed="false">Portrait 9:16</button><button type="button" class="cv-chip" data-aspect="square" aria-pressed="false">Square 1:1</button></div></div>'
+ +'<div class="cv-card cv-glass"><h4>Details</h4><input class="cv-in" data-cap maxlength="150" placeholder="Write a caption…" aria-label="Caption" enterkeyhint="done"><textarea class="cv-ta" data-desc maxlength="2800" placeholder="Optional description" aria-label="Description"></textarea></div>'
+ +'<div class="cv-chips"><label class="cv-chip" style="position:relative;display:inline-flex;align-items:center;overflow:hidden">Replace media<input type="file" accept="image/*,video/*,.mov,.mp4,.m4v,.webm,.heic" data-in="library" style="position:absolute;inset:0;opacity:0;font-size:0"></label></div>'
+ +'<div class="cv-prog"><div class="cv-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i></div><div class="cv-row"><span class="cv-status" data-phase></span><button type="button" class="cv-pill" data-act="cancelup">Cancel upload</button></div></div>'
+ +'<div class="cv-status" data-status role="status" aria-live="polite"></div></div></div>'
+ +'<div class="cv-dlg" data-dlg><div class="cv-glass"><div data-dtext style="font-size:15px;line-height:1.4"></div><div class="cv-row"><button type="button" class="cv-pill" data-d="no">Cancel</button><button type="button" class="cv-pill pub" data-d="yes">Continue</button></div></div></div>';
+ document.documentElement.appendChild(root);
+ root.addEventListener('change',onChange,true);
+ root.addEventListener('cancel',()=>{S.pickAt=0},true);
+ root.addEventListener('click',onClick);
+ root.addEventListener('pointerdown',e=>{if(e.target.closest('[data-in]')||e.target.closest('label[data-pick]'))S.pickAt=Date.now()},true);
+ const cap=$('[data-cap]');cap.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();cap.blur()}});
+ root.querySelectorAll('[data-trim]').forEach(r=>r.addEventListener('input',onTrim));
+ if(typeof window.bmnOpenCameraOrig==='function')$('[data-act="live-cam"]').hidden=false;
+}
+/* ---------- guards: nothing outside Create may close it or drag the app to FYP ---------- */
+const editorOpen=()=>!!(root&&root.classList.contains('editor'));
+const pickerPending=()=>S.pickAt&&Date.now()-S.pickAt<120000;
+function installGuards(){
+ try{const L=window.LGTT;if(L&&!L.__cvGuard){L.__cvGuard=1;const sv=L.setView;L.setView=function(v,u){if(v==='feed'&&(editorOpen()||pickerPending())&&!window.__cvAllowFeed)return;return sv.apply(this,arguments)}}}catch(_){}
+ window.addEventListener('popstate',e=>{if(editorOpen()){e.stopImmediatePropagation();attemptBack(true)}},true);
+}
+/* ---------- open / close ---------- */
+function show(mode){build();installGuards();root.classList.remove('chooser','editor');root.classList.add('open',mode);document.documentElement.style.overscrollBehavior='none';
+ if(mode==='editor'){try{history.pushState({bmnCV:1},'')}catch(_){}}}
+function hide(){if(!root)return;root.classList.remove('open','chooser','editor','busy');document.documentElement.style.overscrollBehavior=''}
+function openChooser(){if(!SB()){toast('Community is still connecting. Try again in a moment.');}
+ if(S.file&&!S.published){show('editor');return}
+ show('chooser')}
+function ask(text){return new Promise(res=>{const d=$('[data-dlg]');$('[data-dtext]').textContent=text;d.classList.add('open');const h=e=>{const b=e.target.closest('[data-d]');if(!b)return;d.removeEventListener('click',h);d.classList.remove('open');res(b.dataset.d==='yes')};d.addEventListener('click',h)})}
+function toast(m){try{if(window.LGTT&&LGTT.toast&&!(root&&root.classList.contains('open'))){LGTT.toast(m,'info');return}}catch(_){}
+ build();const t=document.createElement('div');t.className='cv-toast cv-glass';t.textContent=m;root.appendChild(t);setTimeout(()=>t.remove(),3600)}
+function status(m,err){const el=$('[data-status]');if(!el)return;el.textContent=m||'';el.classList.toggle('err',!!err)}
+/* ---------- draft persistence: survives an iOS page reload while the picker/camera is open ---------- */
+const DB='bmn-create-draft';
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('d');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})}
+async function saveDraft(f){try{const db=await idb();const tx=db.transaction('d','readwrite');tx.objectStore('d').put({blob:f,name:f.name,type:f.type,t:Date.now()},'cur')}catch(_){}}
+async function clearDraft(){try{const db=await idb();db.transaction('d','readwrite').objectStore('d').delete('cur')}catch(_){}}
+async function restoreDraft(){try{const db=await idb();const r=await new Promise((res,rej)=>{const q=db.transaction('d').objectStore('d').get('cur');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+ if(r&&r.blob&&Date.now()-r.t<30*60*1000&&!S.file){await load(new File([r.blob],r.name||'media',{type:r.type||r.blob.type}),true);status('Restored your selected media.')}}catch(_){}}
+/* ---------- load media into the editor ---------- */
+const isVid=f=>/^video\//.test(f.type)||/\.(mov|mp4|m4v|webm)$/i.test(f.name||'');
+const isImg=f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name||'');
+async function load(f,silent){
+ build();
+ if(!f)return;
+ if(!isVid(f)&&!isImg(f)){toast('Choose a photo or a video.');return}
+ if(f.size>maxBytes(f)){toast('That file is '+fmtS(f.size)+'. The limit is '+Math.round(maxBytes(f)/1048576)+' MB.');if(!S.file)show('chooser');return}
+ if(!f.size){toast('That file is empty. Please choose another.');return}
+ reset(true);
+ S.file=f;S.kind=isVid(f)?'video':'image';S.url=URL.createObjectURL(f);S.published=false;S.uploaded=null;S.pickAt=0;
+ if(!silent)saveDraft(f);
+ show('editor');renderStage();
+ $('[data-cap]').value=$('[data-cap]').value||'';
+}
+function reset(keepText){
+ try{if(S.url)URL.revokeObjectURL(S.url)}catch(_){}
+ S.file=null;S.url='';S.kind='';S.dur=0;S.start=0;S.end=0;S.aspect='original';S.uploaded=null;S.vw=S.vh=0;
+ if(vid){try{vid.pause()}catch(_){}vid=null}
+ if(root){const fr=$('.cv-frame');fr&&fr.querySelectorAll('video,img').forEach(n=>n.remove());if(!keepText){$('[data-cap]').value='';$('[data-desc]').value=''}status('');root.classList.remove('busy');
+  root.querySelectorAll('[data-aspect]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.aspect==='original')))}
+}
+function renderStage(){
+ const fr=$('.cv-frame'),play=$('.cv-play'),meta=$('[data-meta]'),tc=$('[data-trimcard]');
+ fr.querySelectorAll('video,img').forEach(n=>n.remove());
+ meta.innerHTML='<span>'+esc(S.file.name.length>26?S.file.name.slice(0,23)+'…':S.file.name)+'</span><span>'+fmtS(S.file.size)+'</span>';
+ if(S.kind==='image'){
+  play.hidden=true;tc.hidden=true;const img=document.createElement('img');img.alt='Selected photo preview';img.decoding='async';
+  img.onload=()=>{S.vw=img.naturalWidth;S.vh=img.naturalHeight;applyAspect();meta.insertAdjacentHTML('beforeend','<span>'+S.vw+'×'+S.vh+'</span>')};
+  img.onerror=()=>{status('This browser cannot preview that image. You can still publish it, or choose another.',true);S.vw=1080;S.vh=1350;applyAspect()};
+  img.src=S.url;fr.insertBefore(img,play);return}
+ play.hidden=false;tc.hidden=false;play.classList.remove('hide');play.innerHTML=ic.play;
+ const v=document.createElement('video');v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.preload='metadata';v.loop=false;v.muted=false;v.controls=false;v.src=S.url;vid=v;
+ v.addEventListener('loadedmetadata',()=>{S.dur=isFinite(v.duration)?v.duration:0;S.vw=v.videoWidth;S.vh=v.videoHeight;S.start=0;S.end=S.dur;
+  const s=$('[data-trim="s"]'),e=$('[data-trim="e"]');s.max=e.max=String(S.dur||1);s.value='0';e.value=String(S.dur||1);
+  meta.insertAdjacentHTML('beforeend','<span>'+fmtT(S.dur)+'</span>'+(S.vw?'<span>'+S.vw+'×'+S.vh+'</span>':''));updTrim();applyAspect();try{v.currentTime=0.01}catch(_){}});
+ v.addEventListener('error',()=>{status('This browser cannot preview that video format. Choose another video or replace the media.',true)});
+ v.addEventListener('timeupdate',()=>{if(S.end&&v.currentTime>=S.end-0.05){v.pause();v.currentTime=S.start;play.classList.remove('hide');play.innerHTML=ic.play}});
+ v.addEventListener('play',()=>{play.innerHTML=ic.pause;setTimeout(()=>play.classList.add('hide'),700)});
+ v.addEventListener('pause',()=>{play.innerHTML=ic.play;play.classList.remove('hide')});
+ fr.insertBefore(v,play);
+ const note=$('[data-trimnote]');note.textContent=(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream)?'Trim and framing are applied to the uploaded video.':'This browser cannot re-encode video, so trim and framing may not be applied. You will be asked before publishing.';
+}
+function applyAspect(){
+ const fr=$('.cv-frame');let ar=S.vw&&S.vh?S.vw/S.vh:9/16,fit='contain';
+ if(S.aspect==='portrait'){ar=9/16;fit='cover'}else if(S.aspect==='square'){ar=1;fit='cover'}
+ fr.style.setProperty('--ar',String(ar));fr.style.setProperty('--fit',fit);fr.style.setProperty('--fw',Math.min(100,Math.max(30,ar*46*(innerHeight/100)/(innerWidth/100)*1))+'%');
+}
+function updTrim(){$('[data-ts]').textContent=fmtT(S.start);$('[data-te]').textContent=fmtT(S.end)}
+function onTrim(e){
+ const s=$('[data-trim="s"]'),en=$('[data-trim="e"]'),gap=Math.min(1,S.dur/2);
+ let a=Number(s.value),b=Number(en.value);
+ if(e.target===s){if(a>b-gap)a=Math.max(0,b-gap);s.value=String(a);S.start=a;if(vid){try{vid.currentTime=a}catch(_){}}}
+ else{if(b<a+gap)b=Math.min(S.dur,a+gap);en.value=String(b);S.end=b;if(vid){try{vid.currentTime=Math.max(S.start,b-0.3)}catch(_){}}}
+ updTrim();
+}
+/* ---------- events ---------- */
+function onChange(e){
+ const inp=e.target.closest&&e.target.closest('input[data-in]');if(!inp)return;
+ const f=inp.files&&inp.files[0];try{inp.value=''}catch(_){}S.pickAt=0;
+ if(f)load(f);else if(!S.file)show('chooser')
+}
+async function attemptBack(fromPop){
+ if(S.busy){const ok=await ask('An upload is in progress. Cancel it and go back?');if(!ok){try{history.pushState({bmnCV:1},'')}catch(_){}return}cancelUpload()}
+ else if(S.file&&!S.published){const ok=await ask('Discard this media? Your selection will be removed.');if(!ok){if(fromPop){try{history.pushState({bmnCV:1},'')}catch(_){}}return}}
+ reset();clearDraft();hide();
+}
+function onClick(e){
+ const b=e.target.closest('[data-act],[data-aspect],[data-x]');if(!b)return;
+ if(b.dataset.x==='chooser-bg'&&e.target===b){hide();return}
+ if(b.dataset.aspect){S.aspect=b.dataset.aspect;root.querySelectorAll('[data-aspect]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));applyAspect();return}
+ switch(b.dataset.act){
+  case 'close':hide();break;
+  case 'back':attemptBack(false);break;
+  case 'play':if(vid){if(vid.paused){if(vid.currentTime<S.start||vid.currentTime>=S.end-0.1)vid.currentTime=S.start;vid.play().catch(()=>{vid.muted=true;vid.play().catch(()=>{})})}else vid.pause()}break;
+  case 'live-cam':hide();try{window.bmnOpenCameraOrig()}catch(_){toast('The in-app camera is not available.')}break;
+  case 'publish':publish();break;
+  case 'cancelup':cancelUpload();break;
+ }
+}
+/* ---------- media rendering (real trim / crop) ---------- */
+function targetSize(w,h,aspect,cap){let tw,th;if(aspect==='portrait'){tw=720;th=1280}else if(aspect==='square'){tw=th=1080}else{const k=Math.min(1,cap/Math.max(w,h));tw=Math.round(w*k/2)*2;th=Math.round(h*k/2)*2}return[tw,th]}
+function drawCover(ctx,src,sw,sh,tw,th,contain){const k=contain?Math.min(tw/sw,th/sh):Math.max(tw/sw,th/sh),dw=sw*k,dh=sh*k;ctx.fillStyle='#000';ctx.fillRect(0,0,tw,th);ctx.drawImage(src,(tw-dw)/2,(th-dh)/2,dw,dh)}
+async function renderImage(){
+ const img=new Image();img.decoding='async';img.src=S.url;await img.decode().catch(()=>{});
+ if(!img.naturalWidth)return S.file;
+ const [tw,th]=targetSize(img.naturalWidth,img.naturalHeight,S.aspect,2160);const c=document.createElement('canvas');c.width=tw;c.height=th;
+ drawCover(c.getContext('2d'),img,img.naturalWidth,img.naturalHeight,tw,th,false);
+ const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));
+ return blob?new File([blob],'bmn-photo-'+Date.now()+'.jpg',{type:'image/jpeg'}):S.file;
+}
+function needsVideoRender(){return S.kind==='video'&&(S.start>0.05||(S.dur&&S.end<S.dur-0.05)||S.aspect!=='original')}
+async function renderVideo(onProg){
+ const v=document.createElement('video');v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';v.src=S.url;v.muted=false;
+ await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=()=>rej(new Error('Could not read the video for editing.'))});
+ const [tw,th]=targetSize(v.videoWidth,v.videoHeight,S.aspect,1280);const c=document.createElement('canvas');c.width=tw;c.height=th;const ctx=c.getContext('2d');
+ const stream=c.captureStream(30);let ac=null;
+ try{const AC=window.AudioContext||window.webkitAudioContext;ac=new AC();const src=ac.createMediaElementSource(v),dest=ac.createMediaStreamDestination();src.connect(dest);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));if(ac.state==='suspended')await ac.resume()}catch(_){}
+ const types=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+ const mime=types.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+ const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:4e6}:{videoBitsPerSecond:4e6});const chunks=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+ const end=S.end||v.duration,start=S.start||0;
+ v.currentTime=start;await new Promise(r=>{v.onseeked=r;setTimeout(r,2500)});
+ const done=new Promise((res,rej)=>{rec.onstop=()=>res();rec.onerror=()=>rej(new Error('Recording failed.'))});
+ let raf=0;const tick=()=>{drawCover(ctx,v,v.videoWidth,v.videoHeight,tw,th,S.aspect==='original');const p=Math.min(1,(v.currentTime-start)/Math.max(.1,end-start));onProg&&onProg(p);
+  if(S.cancel||v.currentTime>=end-0.03||v.ended){cancelAnimationFrame(raf);if(rec.state!=='inactive')rec.stop();v.pause();return}raf=requestAnimationFrame(tick)};
+ rec.start(500);await v.play();tick();await done;try{ac&&ac.close()}catch(_){}
+ if(S.cancel)throw new Error('cancelled');
+ const mt=String(rec.mimeType||mime||'video/webm').split(';')[0],ext=mt.indexOf('mp4')>-1?'mp4':'webm';
+ const out=new File(chunks,'bmn-edit-'+Date.now()+'.'+ext,{type:mt});if(!out.size)throw new Error('The edited video was empty.');return out;
+}
+/* ---------- R2 upload with real progress (existing /api/media/presign-video contract) ---------- */
+async function apiBase(){
+ let b=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');
+ for(let i=0;i<4&&!b;i++){try{if(typeof window.bmnR2Health==='function')await window.bmnR2Health(true)}catch(_){}b=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');if(!b){$('[data-phase]').textContent='Waking the upload service…';await new Promise(r=>setTimeout(r,2500))}}
+ return b;
+}
+async function r2Upload(file,onProg){
+ const base=await apiBase();if(!base)throw new Error('Cloud video storage is not ready. Please try again; the video was not sent to Supabase.');
+ const sb=SB();const {data}=await sb.auth.getSession();const token=data&&data.session&&data.session.access_token;if(!token)throw new Error('Your session expired. Sign in again.');
+ const ct=String(file.type||'video/mp4').split(';')[0];
+ const r=await fetch(base+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:ct,size_bytes:file.size})});
+ const t=await r.json().catch(()=>({}));if(!r.ok)throw new Error(t.error||'Could not prepare the secure video upload.');
+ if(!t.upload_url||!t.media_url)throw new Error('The upload service did not return a playable URL.');
+ await new Promise((res,rej)=>{const x=new XMLHttpRequest();S.xhr=x;x.open('PUT',t.upload_url);x.setRequestHeader('Content-Type',ct);
+  x.upload.onprogress=e=>{if(e.lengthComputable)onProg(e.loaded/e.total)};
+  x.onload=()=>{S.xhr=null;x.status>=200&&x.status<300?res():rej(new Error('Video upload failed ('+x.status+'). Your media is kept — try again.'))};
+  x.onerror=()=>{S.xhr=null;rej(new Error('Network problem during upload. Your media is kept — try again.'))};
+  x.onabort=()=>{S.xhr=null;rej(new Error('cancelled'))};x.send(file)});
+ return t.media_url;
+}
+function cancelUpload(){S.cancel=true;try{S.xhr&&S.xhr.abort()}catch(_){}}
+function prog(p,label){const bar=$('.cv-bar i');bar.style.width=Math.round(p*100)+'%';$('.cv-bar').setAttribute('aria-valuenow',Math.round(p*100));$('[data-phase]').textContent=label+(p>0&&p<1?' '+Math.round(p*100)+'%':'')}
+/* ---------- publish ---------- */
+async function publish(){
+ if(S.busy||S.published)return;
+ if(!S.file){status('Choose a photo or video first.',true);return}
+ if(!navigator.onLine){status('You are offline. Your media is kept — reconnect and tap Publish.',true);return}
+ const sb=SB();if(!sb){status('Community is still connecting. Try again in a moment.',true);return}
+ let sess=null;try{sess=(await sb.auth.getSession()).data.session}catch(_){}
+ if(!sess||!sess.user){status('Sign in to publish. Your media is kept.',true);try{window.requestCommunityAuth&&window.requestCommunityAuth('create')}catch(_){}return}
+ try{const r=await sb.rpc('bmn_my_account_status');let d=r&&r.data;if(Array.isArray(d))d=d[0];const st=d&&String(d.account_status||'active');if(st&&st!=='active'){status('Posting is unavailable while this account is '+st+'.',true);return}}catch(_){}
+ const caption=$('[data-cap]').value.trim(),desc=$('[data-desc]').value.trim();const text=[caption,desc].filter(Boolean).join('\n\n');
+ S.busy=true;S.cancel=false;root.classList.add('busy');$('[data-act="publish"]').disabled=true;status('');
+ let thumb=null,created=false;
+ try{
+  let file=S.file;
+  if(!S.uploaded){
+   if(S.kind==='image'){prog(.05,'Preparing photo…');file=await renderImage()}
+   else if(needsVideoRender()){
+    if(window.MediaRecorder&&HTMLCanvasElement.prototype.captureStream){
+     try{prog(0,'Applying trim and framing');file=await renderVideo(p=>prog(p*.4,'Applying trim and framing'))}
+     catch(err){if(S.cancel||String(err.message)==='cancelled')throw new Error('cancelled');
+      const ok=await ask('Trim/framing could not be applied ('+(err.message||'error')+'). Publish the original video instead?');if(!ok)throw new Error('cancelled');file=S.file}
+    }else{const ok=await ask('This browser cannot apply trim or framing to video. Publish the original video instead?');if(!ok)throw new Error('cancelled');}
+   }
+   if(file.size>maxBytes(file))throw new Error('The edited file is '+fmtS(file.size)+', above the '+Math.round(maxBytes(file)/1048576)+' MB limit.');
+   if(S.kind==='video'){
+    try{prog(.4,'Creating preview');const tf=await bmnCreateVideoThumbnail(file);if(tf)thumb=await uploadCommunityFile(tf,'thumbnails')}catch(_){thumb=null}
+    const media=await r2Upload(file,p=>prog(.4+p*.55,'Uploading'));S.uploaded={media,thumb,file};
+   }else{prog(.3,'Uploading');const media=await uploadCommunityFile(file,'posts',p=>prog(.3+(p||0)/100*.65,'Uploading'));S.uploaded={media,thumb:null,file}}
+  }
+  if(S.cancel)throw new Error('cancelled');
+  prog(.97,'Saving post');
+  const {media,thumb:th}=S.uploaded;
+  const res=await bmnInsertPost(sb,sess.user.id,bmnDeriveTitle(text,S.uploaded.file,''),text,media,th);
+  if(res&&res.error){throw res.error}
+  created=true;S.published=true;prog(1,'Published');
+  clearDraft();
+  toast('Your post is live on BMN.');
+  const keep=S.url;reset();hide();
+  try{await loadCommunityPosts()}catch(_){}
+  try{window.dispatchEvent(new CustomEvent('bmn:post-published'));window.LGTT&&LGTT.refreshProfile&&LGTT.refreshProfile();window.LGTT&&LGTT.patchCounts&&LGTT.patchCounts()}catch(_){}
+  window.__cvAllowFeed=true;try{window.LGTT&&LGTT.setView&&LGTT.setView('feed')}catch(_){}window.__cvAllowFeed=false;
+ }catch(err){
+  const m=String(err&&err.message||err);
+  if(m==='cancelled'){status('Upload cancelled. Your media is still here.')}
+  else{let f=m;try{f=bmnFriendlyPostError(err)||m}catch(_){}status((S.uploaded?'The media uploaded, but saving the post failed: ':'Could not publish: ')+f+' Tap Publish to retry.',true)}
+ }finally{S.busy=false;S.xhr=null;if(root){root.classList.remove('busy');const pb=$('[data-act="publish"]');if(pb)pb.disabled=false}}
+}
+/* ---------- public API + override of every legacy entry point ---------- */
+window.bmnOpenCameraOrig=window.bmnOpenCameraOrig||(typeof window.bmnOpenCamera==='function'?window.bmnOpenCamera:null);
+const origCam=window.bmnOpenCameraOrig;
+function sessionOk(){try{return !!(window.bmnSession||(typeof bmnSession!=='undefined'&&bmnSession))}catch(_){return false}}
+window.bmnOpenCamera=function(){if(!sessionOk()){try{if(window.requestCommunityAuth){window.requestCommunityAuth('create');return}}catch(_){}}openChooser()};
+window.bmnShowCreateComposer=function(){openChooser();return true};
+window.bmnAttachToCreate=function(f){if(f)load(f)};
+window.bmnCV20={open:openChooser,load,state:S,pick(kind){openChooser()}};
+if(origCam){window.bmnOpenCameraOrig=function(){origCam.call(window)};build();$('[data-act="live-cam"]').hidden=false;
+ /* in-app camera hands its file to bmnAttachToCreate, which now opens the single editor */}
+window.addEventListener('offline',()=>toast('You are offline. Uploads will resume when you reconnect.'));
+window.addEventListener('online',()=>toast('Back online.'));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&editorOpen()&&vid&&!vid.paused&&false)vid.pause()});
+setTimeout(restoreDraft,1800);
+/* ---------- BMN creator dragon backdrop: only when #lgtt has .lgtt-founder-profile (owner id from bmn_admins / immutable owner UUID) ---------- */
+const DRAGON='<svg viewBox="0 0 800 700" aria-hidden="true"><defs><radialGradient id="dgBody" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#d1323e"/><stop offset=".45" stop-color="#7d0f1c"/><stop offset="1" stop-color="#1b0306"/></radialGradient><linearGradient id="dgRim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb0b6" stop-opacity=".9"/><stop offset=".5" stop-color="#ff4a5a" stop-opacity=".15"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient><radialGradient id="dgEye" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".35" stop-color="#ffb200"/><stop offset="1" stop-color="#7a1200"/></radialGradient><radialGradient id="dgFire" cx="30%" cy="60%" r="70%"><stop offset="0" stop-color="#ff8a3c" stop-opacity=".85"/><stop offset="1" stop-color="#ff1f3c" stop-opacity="0"/></radialGradient><pattern id="dgScale" width="22" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M0 9a11 9 0 0 1 22 0" fill="none" stroke="#ff7a86" stroke-opacity=".35" stroke-width="1.1"/><path d="M-11 18a11 9 0 0 1 22 0M11 18a11 9 0 0 1 22 0" fill="none" stroke="#ff7a86" stroke-opacity=".28" stroke-width="1.1"/></pattern><filter id="dgRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="dgLight"><feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b"/><feSpecularLighting in="b" surfaceScale="5" specularConstant="1" specularExponent="28" lighting-color="#ffd0d4" result="s"><fePointLight x="180" y="60" z="220"/></feSpecularLighting><feComposite in="s" in2="SourceAlpha" operator="in" result="sp"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="sp"/></feMerge></filter><filter id="dgGlow"><feGaussianBlur stdDeviation="14"/></filter></defs><ellipse cx="260" cy="470" rx="260" ry="150" fill="url(#dgFire)" filter="url(#dgGlow)"/><g filter="url(#dgLight)"><g filter="url(#dgRough)"><path d="M820 20C700 60 640 120 560 150 520 90 470 60 400 58 330 56 270 96 238 150 200 175 150 190 96 232 70 254 76 276 104 276 160 270 196 258 226 262 214 300 190 340 150 392 128 424 150 436 182 424 230 404 276 372 322 366 340 406 330 470 290 540 250 600 300 600 350 560 410 490 470 440 560 410 650 372 740 310 820 250Z" fill="url(#dgBody)"/><path d="M400 58C470 60 520 90 560 150 640 120 700 60 820 20 770 90 700 150 610 190 540 230 470 220 420 180 384 150 360 110 400 58Z" fill="#2a0409" opacity=".55"/><path d="M820 20C700 60 640 120 560 150 520 90 470 60 400 58 330 56 270 96 238 150 200 175 150 190 96 232 70 254 76 276 104 276 160 270 196 258 226 262 214 300 190 340 150 392 128 424 150 436 182 424 230 404 276 372 322 366 340 406 330 470 290 540 250 600 300 600 350 560 410 490 470 440 560 410 650 372 740 310 820 250Z" fill="url(#dgScale)"/><path d="M820 20C700 60 640 120 560 150 520 90 470 60 400 58 330 56 270 96 238 150" fill="none" stroke="url(#dgRim)" stroke-width="4"/></g></g><g fill="#1a0407" stroke="#ff6b78" stroke-opacity=".55" stroke-width="1.5"><path d="M388 70C360 20 330-30 286-70 330-20 336 20 352 64Z"/><path d="M450 64C450 8 470-44 510-84 484-30 492 14 492 70Z"/></g><g><path d="M104 276c40 24 90 22 130-6 8 18 4 30-14 40-40 14-86 6-116-34z" fill="#12040a" stroke="#ff8d97" stroke-opacity=".5"/><g fill="#fff0e0" opacity=".92"><path d="M126 282l8 22 6-20zM160 292l7 22 6-18zM196 290l6 20 6-16z"/></g></g><g><path d="M300 150q40-26 86-10-8 30-40 36-30 4-46-26z" fill="#0b0204"/><ellipse cx="348" cy="156" rx="26" ry="14" fill="url(#dgEye)" transform="rotate(-12 348 156)"/><ellipse cx="350" cy="156" rx="4.5" ry="12" fill="#1a0000" transform="rotate(-12 350 156)"/><path d="M322 142q28-22 56-8" fill="none" stroke="#ffd0d4" stroke-opacity=".6" stroke-width="2"/></g></svg>';
+function syncDragon(){
+ const L=document.getElementById('lgtt');if(!L)return;const on=L.classList.contains('lgtt-founder-profile');const head=document.getElementById('lgttProfHead');
+ let bg=document.getElementById('bmnDragonBg');
+ if(!on||!head||!head.parentElement){if(bg)bg.remove();return}
+ const host=head.parentElement;if(bg&&bg.parentElement===host)return;
+ if(bg)bg.remove();bg=document.createElement('div');bg.id='bmnDragonBg';bg.innerHTML=DRAGON;
+ if(getComputedStyle(host).position==='static')host.style.position='relative';host.insertBefore(bg,host.firstChild);
+ Array.from(host.children).forEach(c=>{if(c!==bg&&getComputedStyle(c).position==='static'){c.style.position='relative';c.style.zIndex='1'}});
+}
+let dgRaf=0;new MutationObserver(()=>{if(dgRaf)return;dgRaf=requestAnimationFrame(()=>{dgRaf=0;syncDragon()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+setTimeout(syncDragon,1500);
+})();
+</script>
 </body>
 </html>
 
