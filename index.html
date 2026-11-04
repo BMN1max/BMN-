@@ -2370,7 +2370,13 @@ function showBmnMediaPreview(file){
 }
 $('#bmnPostFile')?.addEventListener('change',event=>{
  const file=event.target.files?.[0];if(!file){clearBmnMediaPreview();return;}
+ // A selected file must always land on the Community Create screen, even if a legacy
+ // Liquid Glass overlay or dock router changed the screen while the picker was open.
+ if(typeof setView==='function')setView('community',false);
+ if(typeof setAppView==='function')setAppView('create',false);
+ document.body.dataset.appScreen='create';
  showBmnMediaPreview(file);
+ setTimeout(()=>document.getElementById('bmnComposer')?.scrollIntoView({block:'start',behavior:'smooth'}),80);
  if(file.size>bmnMaxUploadBytes(file,'posts')){setBackendStatus('This file is larger than '+bmnMaxUploadMB(file,'posts')+' MB. Compress it in CapCut or choose a smaller file.',true);return;}
  const allowed=['image/jpeg','image/png','image/webp','image/gif','video/mp4','video/webm','video/quicktime','video/x-m4v'];
  if(!allowed.includes(file.type)){setBackendStatus('This format is not supported yet. Choose JPG, PNG, WebP, GIF, MP4, WebM, or MOV.',true);return;}
@@ -2524,6 +2530,9 @@ viewButtons.forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view);i
 function setAppView(view,updateHash=true){
  const allowed=['home','discover','create','inbox','profile'];
  if(!allowed.includes(view))view='home';
+ // Community sub-pages must not inherit a stale personal-page or legacy inline screen state.
+ if(typeof setView==='function')setView('community',false);
+ $$('.bmn-app-screen').forEach(screen=>screen.style.removeProperty('display'));
  body.dataset.appScreen=view;
  $$('[data-app-view]').forEach(b=>{const active=b.dataset.appView===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false')});
  const titles={home:'Home',discover:'Discover creators',create:'Create a post',inbox:'Inbox',profile:'Profile'};
