@@ -5,8 +5,10 @@ const express = require('express');
 const {
   S3Client,
   PutObjectCommand,
-  GetObjectCommand
+  GetObjectCommand,
+  HeadBucketCommand
 } = require('@aws-sdk/client-s3');
+
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { randomUUID } = require('crypto');
 const { requireUser } = require('../supabase');
@@ -76,10 +78,47 @@ function publicApiBase() {
   return value;
 }
 
-// Request a temporary, signed URL for uploading a video directly to R2.
+// R2 connection diagnostic.
+// Checks bucket access without uploading or deleting anything.
+router.get('/r2-check', requireUser, async (req, res) => {
+  try {
+    const s3 = getR2();
+
+    await s3.send(
+      new HeadBucketCommand({
+        Bucket: bucketName()
+      })
+    );
+
+    return res.status(200).json({
+      ok: true,
+      storage: 'cloudflare-r2',
+      bucket_accessible: true
+    });
+  } catch (error) {
+    console.error('R2 bucket diagnostic failed:', {
+      name: error.name,
+      code: error.Code,
+      status: error.$metadata?.httpStatusCode
+    });
+
+    return res.status(503).json({
+      ok: false,
+      storage: 'cloudflare-r2',
+      bucket_accessible: false,
+      error: 'Could not verify R2 bucket access.'
+    });
+  }
+});
+
+// Generate an authenticated, temporary upload URL.
 router.post('/presign-video', requireUser, async (req, res) => {
   try {
-    const { filename, content_type, size_bytes } = req.body || {};
+    const {
+      filename,
+      content_type,
+      size_bytes
+    } = req.body || {};
 
     const maxBytes = Number(
       process.env.MAX_VIDEO_BYTES || 209715200
@@ -158,17 +197,18 @@ router.post('/presign-video', requireUser, async (req, res) => {
     );
 
     return res.status(503).json({
-      error:
-        'Secure R2 upload is not configured or is temporarily unavailable.'
+      error: 'Secure R2 upload is not configured or is temporarily unavailable.'
     });
   }
 });
 
-// Redirect video playback requests to a short-lived signed R2 URL.
+// Generate a temporary private playback URL.
 router.get('/play', async (req, res) => {
   try {
     const key =
-      typeof req.query.key === 'string' ? req.query.key : '';
+      typeof req.query.key === 'string'
+        ? req.query.key
+        : '';
 
     if (!objectKeyPattern.test(key)) {
       return res.status(400).json({
