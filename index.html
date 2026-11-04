@@ -2455,8 +2455,8 @@ async function uploadCommunityFile(file,folder,onProgress){
   const isVid=!!(file&&/^video\//.test(file.type||'')),wantR2=isVid&&(folder||'posts')==='posts';
   if(wantR2){
     if(typeof window.bmnR2Health!=='function')throw new Error('The secure video service is not connected. Please try again shortly.');
-    const healthy=await window.bmnR2Health();
-    if(!healthy||!window.BMN_API_BASE_URL)throw new Error('Cloud video storage is unavailable right now. Your video has not been sent to Supabase. Please try again shortly.');
+    try{await window.bmnR2Health()}catch(_){}/* warm-up only; the presign step does the real check and reports the real cause */
+    if(!window.BMN_API_BASE_URL)throw new Error('Video upload service URL is not configured.');
   }
   return __bmnUploadCommunityFileInner.apply(this,arguments);
 }
@@ -10288,24 +10288,44 @@ document.addEventListener('play',e=>{const v=e.target;if(v&&v.__bmnLoops)v.__bmn
 /* New community videos use private Cloudflare R2. Existing Supabase media remains readable. */
 const R2_API=(window.BMN_R2_API_URL||'https://bmn-r2-api-2026.onrender.com').replace(/\/+$/,'');
 let healthy=false,lastCheck=0,healthPromise=null;
+/* The API URL is configuration, not a health result. A sleeping Render instance used to make the
+   12s probe time out, which blanked BMN_API_BASE_URL and produced "Cloud video storage is not ready". */
 async function health(force=false){
   if(healthPromise)return healthPromise;
-  if(!force&&Date.now()-lastCheck<60000)return healthy;
+  if(!force&&healthy&&Date.now()-lastCheck<300000)return healthy;
   healthPromise=(async()=>{
-    let timer;
-    try{
-      const controller=new AbortController();timer=setTimeout(()=>controller.abort(),12000);
-      const response=await fetch(R2_API+'/health',{cache:'no-store',signal:controller.signal});
-      healthy=!!response.ok;
-    }catch(_){healthy=false}
-    finally{if(timer)clearTimeout(timer);lastCheck=Date.now();healthPromise=null;window.BMN_API_BASE_URL=healthy?R2_API:'';}
-    return healthy;
+    for(let i=0;i<3&&!healthy;i++){
+      let timer;
+      try{
+        const controller=new AbortController();timer=setTimeout(()=>controller.abort(),25000);
+        const response=await fetch(R2_API+'/health',{cache:'no-store',signal:controller.signal});
+        healthy=!!response.ok;
+      }catch(_){healthy=false}
+      finally{if(timer)clearTimeout(timer)}
+      if(!healthy&&i<2)await new Promise(r=>setTimeout(r,1500));
+    }
+    lastCheck=Date.now();healthPromise=null;return healthy;
   })();
   return healthPromise;
 }
-window.BMN_R2_API_URL=R2_API;window.bmnR2Health=health;window.BMN_API_BASE_URL='';
+/* Authenticated R2 diagnosis: returns a human-readable reason, or '' if R2 is ready. */
+async function diagnose(){
+  try{
+    let sb=null;try{sb=bmnSupabase}catch(_){sb=window.bmnSupabase||null}
+    let token='';try{token=(await sb.auth.getSession()).data.session.access_token}catch(_){}
+    if(!token)return 'You are not signed in (no access token). Sign in again.';
+    const c=new AbortController(),t=setTimeout(()=>c.abort(),30000);
+    let r;try{r=await fetch(R2_API+'/api/media/r2-check',{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:c.signal})}finally{clearTimeout(t)}
+    const d=await r.json().catch(()=>({}));
+    if(r.status===401||r.status===403)return 'The upload service rejected your sign-in (HTTP '+r.status+'). The Render API must use the same Supabase project URL/JWT secret as this app.';
+    if(r.status===404)return 'The upload service has no /api/media/r2-check route. Redeploy the Render API.';
+    if(!r.ok||d.ok===false||d.ready===false)return 'R2 not ready: '+(d.error||d.message||d.reason||('HTTP '+r.status))+'. Check R2 credentials, bucket name and endpoint on Render.';
+    return '';
+  }catch(e){return 'Could not reach the upload service at '+R2_API+' ('+(e&&e.name==='AbortError'?'timed out — it may be waking up':'network or CORS error')+'). Check Render is running and CORS allows this site.'}
+}
+window.BMN_R2_API_URL=R2_API;window.bmnR2Health=health;window.bmnR2Diagnose=diagnose;window.BMN_API_BASE_URL=R2_API;
 setTimeout(()=>health(true),2500);
-window.addEventListener('online',()=>{lastCheck=0;health(true)});
+window.addEventListener('online',()=>{healthy=false;health(true)});
 })();
 </script>
 
@@ -11264,22 +11284,47 @@ async function renderVideo(onProg){
 }
 /* ---------- R2 upload with real progress (existing /api/media/presign-video contract) ---------- */
 async function apiBase(){
- let b=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');
- for(let i=0;i<4&&!b;i++){try{if(typeof window.bmnR2Health==='function')await window.bmnR2Health(true)}catch(_){}b=String(window.BMN_API_BASE_URL||'').replace(/\/+$/,'');if(!b){$('[data-phase]').textContent='Waking the upload service…';await new Promise(r=>setTimeout(r,2500))}}
+ const b=String(window.BMN_API_BASE_URL||window.BMN_R2_API_URL||'').replace(/\/+$/,'');
+ if(!b)return '';
+ try{if(typeof window.bmnR2Health==='function'){const el=$('[data-phase]');const p=window.bmnR2Health();const w=new Promise(r=>setTimeout(()=>r('slow'),4000));if(await Promise.race([p,w])==='slow'&&el)el.textContent='Waking the upload service…';await p}}catch(_){}
  return b;
 }
+function r2Mime(file){
+ let ct=String(file.type||'').split(';')[0].toLowerCase();const n=String(file.name||'').toLowerCase();
+ if(!ct||ct==='video/mov'||ct==='application/octet-stream'){ct=/\.mov$/.test(n)?'video/quicktime':/\.webm$/.test(n)?'video/webm':/\.(mp4|m4v)$/.test(n)?'video/mp4':ct||'video/mp4'}
+ return ct;
+}
+async function presign(base,token,file,ct){
+ let last=null;
+ for(let i=0;i<3;i++){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),45000);
+  try{
+   const r=await fetch(base+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:ct,size_bytes:file.size}),signal:c.signal});
+   const d=await r.json().catch(()=>({}));
+   if(r.ok)return d;
+   if([502,503,504,429].includes(r.status)&&i<2){last=new Error('retry');await new Promise(x=>setTimeout(x,2500*(i+1)));continue}
+   if(r.status===401||r.status===403)throw new Error('The upload service rejected your sign-in. Sign out and in again; if it persists the Render API is using a different Supabase project.');
+   throw new Error(d.error||d.message||('Could not prepare the video upload (HTTP '+r.status+').'));
+  }catch(e){
+   if(e&&(e.name==='AbortError'||e instanceof TypeError)&&i<2){last=e;await new Promise(x=>setTimeout(x,2500*(i+1)));continue}
+   if(e&&(e.name==='AbortError'||e instanceof TypeError)){const why=window.bmnR2Diagnose?await window.bmnR2Diagnose():'';throw new Error(why||'Could not reach the upload service. Your media is kept — tap Publish to retry.')}
+   throw e;
+  }finally{clearTimeout(t)}
+ }
+ throw last||new Error('Could not prepare the video upload.');
+}
 async function r2Upload(file,onProg){
- const base=await apiBase();if(!base)throw new Error('Cloud video storage is not ready. Please try again; the video was not sent to Supabase.');
+ const base=await apiBase();if(!base)throw new Error('Video upload service URL is not configured.');
  const sb=SB();const {data}=await sb.auth.getSession();const token=data&&data.session&&data.session.access_token;if(!token)throw new Error('Your session expired. Sign in again.');
- const ct=String(file.type||'video/mp4').split(';')[0];
- const r=await fetch(base+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:ct,size_bytes:file.size})});
- const t=await r.json().catch(()=>({}));if(!r.ok)throw new Error(t.error||'Could not prepare the secure video upload.');
+ const ct=r2Mime(file);
+ const t=await presign(base,token,file,ct);
  if(!t.upload_url||!t.media_url)throw new Error('The upload service did not return a playable URL.');
- await new Promise((res,rej)=>{const x=new XMLHttpRequest();S.xhr=x;x.open('PUT',t.upload_url);x.setRequestHeader('Content-Type',ct);
+ const put=()=>new Promise((res,rej)=>{const x=new XMLHttpRequest();S.xhr=x;x.open('PUT',t.upload_url);x.setRequestHeader('Content-Type',ct);
   x.upload.onprogress=e=>{if(e.lengthComputable)onProg(e.loaded/e.total)};
-  x.onload=()=>{S.xhr=null;x.status>=200&&x.status<300?res():rej(new Error('Video upload failed ('+x.status+'). Your media is kept — try again.'))};
-  x.onerror=()=>{S.xhr=null;rej(new Error('Network problem during upload. Your media is kept — try again.'))};
+  x.onload=()=>{S.xhr=null;x.status>=200&&x.status<300?res():rej(Object.assign(new Error('Video upload to R2 was refused (HTTP '+x.status+'). Check the R2 bucket CORS (PUT + Content-Type) and that the file type is allowed.'),{fatal:true}))};
+  x.onerror=()=>{S.xhr=null;rej(new Error('Network or R2 CORS problem during upload. Your media is kept — try again.'))};
   x.onabort=()=>{S.xhr=null;rej(new Error('cancelled'))};x.send(file)});
+ try{await put()}catch(e){if(e.fatal||S.cancel||e.message==='cancelled')throw e;onProg(0);await new Promise(r=>setTimeout(r,1500));await put()}
  return t.media_url;
 }
 function cancelUpload(){S.cancel=true;try{S.xhr&&S.xhr.abort()}catch(_){}}
@@ -11360,6 +11405,40 @@ let dgRaf=0;new MutationObserver(()=>{if(dgRaf)return;dgRaf=requestAnimationFram
 setTimeout(syncDragon,1500);
 })();
 </script>
+<style id="bmn-owner-theme-css">
+/* Owner red-and-gold Liquid Glass. Activated only when the server RPC is_bmn_owner returns true (see bmn-owner-theme-js). */
+body.bmn-owner{--bmn-owner-red:#8a1022;--bmn-owner-crimson:#4a0812;--bmn-owner-gold:#e8c164;--bmn-owner-champagne:#fbeab8;
+ --bmn-glass-blue:rgba(190,32,52,.20);--bmn-glass-violet:rgba(232,193,100,.14);--bmn-glass-cyan:rgba(232,193,100,.08);
+ --bmn-glass-edge:rgba(251,234,184,.34);--bmn-glass-shadow:0 18px 52px rgba(74,8,18,.42);--liquid-edge:rgba(251,234,184,.42);
+ --bmn-cc-edge:rgba(232,193,100,.34);--bmn-cc-edge-hot:rgba(251,234,184,.6);accent-color:#e8c164}
+body.bmn-owner:not(.light){background-image:radial-gradient(120% 70% at 50% -10%,rgba(160,22,44,.38),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(232,193,100,.12),transparent 60%)}
+body.bmn-owner.light{background-image:radial-gradient(120% 70% at 50% -10%,rgba(214,90,104,.16),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(232,193,100,.2),transparent 60%)}
+body.bmn-owner .lgtt-dock,body.bmn-owner .dock,body.bmn-owner [class*="dock"]:not(.dock-symbol):not(.dock-dot):not(.dock-create-symbol){
+ background:linear-gradient(180deg,rgba(176,30,52,.36),rgba(74,8,18,.46))!important;border-color:rgba(251,234,184,.38)!important;
+ box-shadow:inset 0 1px 0 rgba(255,244,210,.5),inset 0 -1px 0 rgba(0,0,0,.25),0 14px 40px rgba(74,8,18,.5)!important}
+body.bmn-owner.light .lgtt-dock,body.bmn-owner.light .dock{background:linear-gradient(180deg,rgba(255,244,236,.7),rgba(232,193,100,.28))!important;box-shadow:inset 0 1px 0 #fff,0 12px 34px rgba(138,16,34,.2)!important}
+body.bmn-owner .dock-create,body.bmn-owner .backend-btn.primary,body.bmn-owner button.primary{
+ background:linear-gradient(135deg,#b3162e,#e8c164)!important;color:#2a0509!important;border-color:rgba(251,234,184,.6)!important;box-shadow:0 6px 18px rgba(138,16,34,.45),inset 0 1px 0 rgba(255,255,255,.55)!important}
+body.bmn-owner .backend-btn:not(.primary),body.bmn-owner .lgtt-glass{border-color:rgba(232,193,100,.34)!important}
+body.bmn-owner .backend-btn:focus-visible,body.bmn-owner button:focus-visible,body.bmn-owner input:focus-visible,body.bmn-owner textarea:focus-visible{outline:2px solid #e8c164!important;outline-offset:2px}
+/* Owner identity on comments/posts wherever the founder badge appears */
+body .lgtt-comment:has(.bmn-b-founder),body [class*="comment"]:has(> * .bmn-b-founder):not(body):not(html){
+ border-image:none;box-shadow:inset 3px 0 0 #e8c164,0 0 22px rgba(176,30,52,.18)}
+.lgtt-comment:has(.bmn-b-founder){background:linear-gradient(90deg,rgba(176,30,52,.16),transparent 70%)!important}
+@media (prefers-reduced-motion:reduce){body.bmn-owner *{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+<script id="bmn-owner-theme-js">
+(()=>{'use strict';
+/* Trust model: the class is toggled ONLY when window.bmnIsOwner is set true by the existing server-side
+   is_bmn_owner RPC. Editing localStorage/profile fields cannot set it; a forged client flag would only change
+   local CSS and grants no data access, because every owner action is enforced by RLS/RPC on the server. */
+let v=!!window.bmnIsOwner;
+const apply=()=>{document.body&&document.body.classList.toggle('bmn-owner',v===true)};
+try{Object.defineProperty(window,'bmnIsOwner',{configurable:true,get:()=>v,set:x=>{v=(x===true);apply()}})}catch(_){}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+})();
+</script>
+
 </body>
 </html>
 
