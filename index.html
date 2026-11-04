@@ -3271,13 +3271,11 @@ document.addEventListener('error',async event=>{const v=event.target;if(!(v inst
       else if(action==='tools'){if(!clickFirst(['[data-app-view="profile"]','#bmnDockProfile','#bmnCreatorInsights']))location.hash='#community';}
       else if(action==='live'){if(!clickFirst(['[data-app-view="live"]','#bmnLiveButton','#live']))location.hash='#live';}
       else if(action==='photo'||action==='video'){
-        const composerInput=document.getElementById('bmnPostFile');
-        if(composerInput){
-          if(typeof window.setAppView==='function')window.setAppView('create');
-          else if(typeof window.bmnSetAppView==='function')window.bmnSetAppView('create');
-          composerInput.accept=action==='photo'?'image/*':'video/*';
-          composerInput.click();
-        }else{const fallback=document.getElementById('bmnOverlayFileV17');if(fallback){fallback.accept=action==='photo'?'image/*':'video/*';fallback.click();}}
+        if(typeof window.bmnShowCreateComposer==='function'&&window.bmnShowCreateComposer()){
+          const composerInput=document.getElementById('bmnOverlayFileV17');
+          if(composerInput){composerInput.accept=action==='photo'?'image/*':'video/*';composerInput.click();}
+          else toast('The photo and video picker is not ready. Please try again.','info');
+        }else toast('The BMN Create editor is not ready. Please reload and try again.','info');
       }else if(action==='sound'){
         const input=document.createElement('input');input.type='file';input.accept='audio/*';input.setAttribute('aria-label','Choose sound');input.addEventListener('change',()=>{const file=input.files&&input.files[0];if(file)window.dispatchEvent(new CustomEvent('bmn:action-file-selected',{detail:{action,file}}));});input.click();
       }
@@ -7640,7 +7638,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       R.CreateBody.addEventListener('click', e => {
         const b = e.target.closest('[data-create]'); if (!b) return; const k = b.dataset.create;
         if (k === 'story') { closeLayer(R.Create); setTimeout(Stories.composer, 200); }
-        else if (k === 'upload') { closeLayer(R.Create); const input=document.getElementById('bmnPostFile'); if(typeof window.setAppView==='function')window.setAppView('create'); else if(typeof window.bmnSetAppView==='function')window.bmnSetAppView('create'); if(input){input.accept='image/*,video/*';input.click();}else{toast('The BMN Community uploader is not ready. Please reopen Community and try again.','info');} }
+        else if (k === 'upload') { closeLayer(R.Create); setTimeout(()=>{ if(typeof window.bmnShowCreateComposer==='function')window.bmnShowCreateComposer(); else toast('The Create editor is not ready. Please reload BMN and try again.','info'); },140); }
         else if (k === 'record') { closeLayer(R.Create); if(typeof window.bmnOpenCamera==='function')window.bmnOpenCamera(); else toast('Camera capture is not ready on this device. Use Upload an edit instead.','info'); }
         else { haptic('warn'); toast('LIVE streaming is not connected yet. Video uploads and posts are available through Upload an edit.','info'); }
       });
@@ -10694,15 +10692,25 @@ function openCamera(onFile){
   d.addEventListener('touchend',()=>{pinch=null},{passive:true});
   start();
 }
+window.bmnShowCreateComposer=function(){
+  try{
+    if(!window.LGTT||typeof window.LGTT.openCreate!=='function')return false;
+    window.LGTT.openCreate();
+    // The visible full-screen app owns this composer. Do not route uploads to the
+    // legacy page hidden underneath the Liquid Glass interface.
+    installCreateBridge();
+    return !!document.getElementById('bmnOverlayFileV17');
+  }catch(_){return false}
+};
 window.bmnOpenCamera=()=>openCamera(f=>window.bmnAttachToCreate(f));
 window.bmnAttachToCreate=function(f){
   if(!f)return;
   const max=typeof window.bmnMaxUploadBytes==='function'?window.bmnMaxUploadBytes(f,'posts'):200*1024*1024;
   if(f.size>max){toast('This file is larger than the '+Math.round(max/1048576)+' MB limit. Choose a smaller file.','info');return}
-  const input=document.getElementById('bmnPostFile');
-  if(!input){toast('The BMN Community uploader is not ready. Open Community and try again.','info');return}
-  if(typeof window.setAppView==='function')window.setAppView('create');else if(typeof window.bmnSetAppView==='function')window.bmnSetAppView('create');
-  try{const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));document.getElementById('bmnPostStatus')?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  if(!window.bmnShowCreateComposer||!window.bmnShowCreateComposer()){toast('The BMN Create editor is not ready. Please reopen Community and try again.','info');return}
+  const input=document.getElementById('bmnOverlayFileV17');
+  if(!input){toast('The BMN preview editor could not be opened. Please try again.','info');return}
+  try{const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));}
   catch(_){toast('This browser could not attach the captured media. Use Upload an edit instead.','info')}
 };
 function enhanceCreate(){
