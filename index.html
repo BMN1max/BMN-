@@ -11299,7 +11299,7 @@ async function presign(base,token,file,ct){
  for(let i=0;i<3;i++){
   const c=new AbortController(),t=setTimeout(()=>c.abort(),45000);
   try{
-   const r=await fetch(base+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,content_type:ct,size_bytes:file.size}),signal:c.signal});
+   const r=await fetch(base+'/api/media/presign-video',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({filename:file.name,fileName:file.name,content_type:ct,contentType:ct,size_bytes:file.size,size:file.size}),signal:c.signal});
    const d=await r.json().catch(()=>({}));
    if(r.ok)return d;
    if([502,503,504,429].includes(r.status)&&i<2){last=new Error('retry');await new Promise(x=>setTimeout(x,2500*(i+1)));continue}
@@ -11313,19 +11313,41 @@ async function presign(base,token,file,ct){
  }
  throw last||new Error('Could not prepare the video upload.');
 }
+function r2Info(url){try{const u=new URL(url),q=u.searchParams;let exp=null;const d=q.get('X-Amz-Date'),e=Number(q.get('X-Amz-Expires'));if(d&&e){const m=d.match(/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)Z$/);if(m)exp=Date.UTC(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6])+e*1000}return{host:u.host,signed:(q.get('X-Amz-SignedHeaders')||'').split(';').filter(Boolean),exp}}catch(_){return{host:'',signed:[],exp:null}}}
+async function r2Probe(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),10000);try{const r=await fetch(url,{method:'HEAD',signal:c.signal,cache:'no-store'});return 'R2 reachable from this origin (HTTP '+r.status+') so origin CORS is OK; the PUT itself is what is blocked'}catch(_){return 'R2 did not answer this origin (CORS blocked, offline or DNS)'}finally{clearTimeout(t)}}
+function r2HttpError(x){const body=String(x.responseText||'');const code=(body.match(/<Code>([^<]+)<\/Code>/)||[])[1]||'';const msg=(body.match(/<Message>([^<]+)<\/Message>/)||[])[1]||'';
+ if(/SignatureDoesNotMatch/.test(code))return 'R2 rejected the signature (HTTP '+x.status+'). The Content-Type sent ('+'video type) or a header signed by the backend does not match the signed URL. Backend: sign exactly the content_type the app sends and no extra headers.';
+ if(/Expired|RequestTimeTooSkewed/.test(code+msg))return 'The upload link expired or your device clock is wrong (HTTP '+x.status+'). Tap Publish to get a fresh link.';
+ if(/EntityTooLarge|MaxMessageLength/.test(code))return 'R2 refused the file as too large (HTTP '+x.status+').';
+ if(/AccessDenied|InvalidAccessKeyId/.test(code))return 'R2 denied access (HTTP '+x.status+', '+code+'). Check the R2 API token on Render has Object Read & Write on bucket bmn-community-media.';
+ return 'R2 refused the upload (HTTP '+x.status+(code?', '+code:'')+(msg?': '+msg:'')+').'}
 async function r2Upload(file,onProg){
  const base=await apiBase();if(!base)throw new Error('Video upload service URL is not configured.');
  const sb=SB();const {data}=await sb.auth.getSession();const token=data&&data.session&&data.session.access_token;if(!token)throw new Error('Your session expired. Sign in again.');
  const ct=r2Mime(file);
- const t=await presign(base,token,file,ct);
- if(!t.upload_url||!t.media_url)throw new Error('The upload service did not return a playable URL.');
- const put=()=>new Promise((res,rej)=>{const x=new XMLHttpRequest();S.xhr=x;x.open('PUT',t.upload_url);x.setRequestHeader('Content-Type',ct);
-  x.upload.onprogress=e=>{if(e.lengthComputable)onProg(e.loaded/e.total)};
-  x.onload=()=>{S.xhr=null;x.status>=200&&x.status<300?res():rej(Object.assign(new Error('Video upload to R2 was refused (HTTP '+x.status+'). Check the R2 bucket CORS (PUT + Content-Type) and that the file type is allowed.'),{fatal:true}))};
-  x.onerror=()=>{S.xhr=null;rej(new Error('Network or R2 CORS problem during upload. Your media is kept — try again.'))};
-  x.onabort=()=>{S.xhr=null;rej(new Error('cancelled'))};x.send(file)});
- try{await put()}catch(e){if(e.fatal||S.cancel||e.message==='cancelled')throw e;onProg(0);await new Promise(r=>setTimeout(r,1500));await put()}
- return t.media_url;
+ const attempt=async()=>{
+  const t=await presign(base,token,file,ct);
+  if(!t.upload_url||!t.media_url)throw new Error('The upload service did not return upload_url and media_url, so nothing was uploaded.');
+  const info=r2Info(t.upload_url);
+  if(info.exp&&info.exp<Date.now()+5000)throw Object.assign(new Error('The upload link was already expired when received. Your device clock may be wrong.'),{fatal:true});
+  const sendType=String((t.headers&&(t.headers['Content-Type']||t.headers['content-type']))||t.content_type||t.contentType||ct);
+  await new Promise((res,rej)=>{const x=new XMLHttpRequest();S.xhr=x;x.open('PUT',t.upload_url);x.setRequestHeader('Content-Type',sendType);
+   x.upload.onprogress=e=>{if(e.lengthComputable)onProg(e.loaded/e.total)};
+   x.onload=()=>{S.xhr=null;x.status>=200&&x.status<300?res():rej(Object.assign(new Error(r2HttpError(x)),{fatal:true}))};
+   x.onerror=()=>{S.xhr=null;rej(Object.assign(new Error('network'),{net:true,t,info,sendType}))};
+   x.onabort=()=>{S.xhr=null;rej(new Error('cancelled'))};x.send(file)});
+  return t.media_url;
+ };
+ try{return await attempt()}catch(e){
+  if(!e.net||S.cancel)throw e;
+  onProg(0);await new Promise(r=>setTimeout(r,1500));
+  try{return await attempt()}catch(e2){
+   if(!e2.net||S.cancel)throw e2;
+   const extra=(e2.info.signed||[]).filter(h=>!['host','content-type'].includes(h));
+   const probe=await r2Probe(e2.t.upload_url);
+   throw new Error('Upload did not reach R2. Page origin: '+location.origin+'. R2 host: '+(e2.info.host||'unknown')+'. Content-Type sent: '+e2.sendType+'. '+probe+'.'+(extra.length?' The backend signed extra headers ('+extra.join(', ')+') that browsers do not send: configure the S3 client with requestChecksumCalculation "WHEN_REQUIRED" and do not sign them.':'')+' Your media is kept.');
+  }
+ }
 }
 function cancelUpload(){S.cancel=true;try{S.xhr&&S.xhr.abort()}catch(_){}}
 function prog(p,label){const bar=$('.cv-bar i');bar.style.width=Math.round(p*100)+'%';$('.cv-bar').setAttribute('aria-valuenow',Math.round(p*100));$('[data-phase]').textContent=label+(p>0&&p<1?' '+Math.round(p*100)+'%':'')}
