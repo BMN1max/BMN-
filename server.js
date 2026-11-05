@@ -20,7 +20,7 @@ const corsOrigin = (origin, callback) => {
 
 app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: corsOrigin, methods: ['GET', 'POST'], allowedHeaders: ['Content-Type', 'Authorization', 'Stripe-Signature'] }));
+app.use(cors({ origin: corsOrigin, methods: ['GET', 'HEAD', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'Stripe-Signature'] }));
 
 // Stripe webhook must receive the exact raw body for signature verification.
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), async (req, res) => {
@@ -62,7 +62,31 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '
 
 app.use(express.json({ limit: '1mb' }));
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'bmn-community-api' }));
-app.use('/api/media', rateLimit({ windowMs: 60_000, limit: 12, standardHeaders: true, legacyHeaders: false }), mediaRouter);
+
+// Separate rate limits for media. Upload setup/diagnostics are rare, sensitive actions.
+// Playback (/api/media/play) is hit once per video load while scrolling the feed, and many
+// phones share one carrier IP, so it gets a much larger allowance. Both are env-tunable.
+const limitFromEnv = (name, fallback) => {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+};
+const mediaUploadLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: limitFromEnv('MEDIA_UPLOAD_RATE_LIMIT', 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many upload requests. Wait a minute and try again.' }
+});
+const mediaPlaybackLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: limitFromEnv('MEDIA_PLAY_RATE_LIMIT', 1200),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many video requests. Please slow down.' }
+});
+app.use('/api/media', (req, res, next) => (
+  req.path === '/play' ? mediaPlaybackLimiter(req, res, next) : mediaUploadLimiter(req, res, next)
+), mediaRouter);
 app.use('/api/monetization', rateLimit({ windowMs: 60_000, limit: 8, standardHeaders: true, legacyHeaders: false }), tipsRouter);
 app.use((error, _req, res, _next) => {
   if (error.message?.includes('CORS policy')) return res.status(403).json({ error: 'This origin is not allowed.' });
