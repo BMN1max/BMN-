@@ -5,19 +5,36 @@
   "description": "BMN — creator, editor, storyteller and community for sharing edits.",
   "lang": "en",
   "dir": "ltr",
-  "start_url": "/#community-page",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": ["standalone"],
   "orientation": "portrait-primary",
-  "background_color": "#05070c",
-  "theme_color": "#05070c",
+  "background_color": "#070711",
+  "theme_color": "#070711",
   "categories": ["social", "entertainment", "photo"],
   "prefer_related_applications": false,
-  "launch_handler": { "client_mode": "navigate-existing" },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
-    { "src": "/bmn-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/bmn-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/bmn-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "/bmn-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/bmn-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/bmn-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }
