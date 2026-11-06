@@ -11537,6 +11537,100 @@ html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-handle{font-size:.95rem;
 html.bmn-community-app body #lgtt .lgtt-prof-head .bmn-creator-brand{margin:10px auto;max-width:100%}
 html body #lgtt.lgtt-founder-profile #lgttProfBarTitle{color:#ffe9b0}
 </style>
+
+<style id="bmn-pwa-cross-device-dock-fix">
+/* Restore the original BMN app chassis after the later absolute-layout override.
+   The existing header, scroll area and five-button dock remain unchanged. */
+html, body {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  overflow: hidden !important;
+}
+
+#bmn-app-root {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  box-sizing: border-box !important;
+  padding: env(safe-area-inset-top, 0px)
+           env(safe-area-inset-right, 0px)
+           env(safe-area-inset-bottom, 0px)
+           env(safe-area-inset-left, 0px) !important;
+  overflow: hidden !important;
+}
+
+#bmn-app-root > .topbar {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  margin: 8px auto 0 !important;
+  z-index: 30 !important;
+}
+
+#bmn-app-scroll {
+  position: relative !important;
+  inset: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  scroll-padding-top: 12px !important;
+}
+
+#bmn-app-scroll > main.wrap {
+  padding-top: 16px !important;
+  padding-bottom: 24px !important;
+  min-height: 100% !important;
+}
+
+#bmn-app-root > nav.app-dock {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  width: min(520px, calc(100% - 20px)) !important;
+  max-width: calc(100% - 20px) !important;
+  box-sizing: border-box !important;
+  margin: 6px auto 8px !important;
+  padding: 6px 8px !important;
+  z-index: 60 !important;
+}
+
+body.community-mode #bmn-app-root > nav.app-dock {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: center !important;
+}
+
+body:not(.community-mode) #bmn-app-root > nav.app-dock {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  #bmn-app-root > .topbar {
+    width: calc(100% - 16px) !important;
+  }
+
+  #bmn-app-root > nav.app-dock {
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+    margin: 6px auto 6px !important;
+  }
+}
+</style>
+
 </body>
 </html>
 
