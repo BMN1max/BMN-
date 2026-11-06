@@ -7093,7 +7093,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         '<div class="lgtt-media">' + media + '</div><div class="lgtt-shade"></div>' +
         '<div class="lgtt-ppflash" aria-hidden="true">' + ico('play') + '</div>' +
         '<div class="lgtt-meta">' +
-          '<button type="button" class="lgtt-author" data-act="open-profile" data-u="' + esc(u.id) + '">@' + esc(u.handle) + (window.bmnBadgeHTML ? window.bmnBadgeHTML(u) : '') + '</button>' +
+          '<button type="button" class="lgtt-author" data-act="open-profile" data-u="' + esc(u.id) + '"><span class="lgtt-un">@' + esc(u.handle) + '</span>' + (window.bmnBadgeHTML ? window.bmnBadgeHTML(u) : '') + '</button>' +
           '<p class="lgtt-cap">' + capHTML(p.cap || '') + '</p>' +
           ((p.cap || '').length > 70 ? '<button type="button" class="lgtt-cap-more" data-act="cap-more">more</button>' : '') +
           '<div class="lgtt-music' + ((p.music || '').length > 24 ? ' is-long' : '') + '">' + ico('music') + '<span class="mq"><span>' + esc(p.music || 'Original sound') + '</span></span></div>' +
@@ -11466,6 +11466,77 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<style id="bmn-ui-alignment-css">
+/* ===== BMN UI alignment + glass refinement (final layer; keeps all existing behaviour) =====
+   Root cause fixed here: a later block set ".bmn-badge svg{width:100%}" with no size on the badge itself,
+   so the badge SVG grew to fill whatever container held it (236px inside the FYP username button). */
+html body .bmn-badge{--bmn-bs:clamp(14px,1.02em,22px);display:inline-flex!important;flex:0 0 auto;align-items:center;justify-content:center;
+  width:var(--bmn-bs)!important;height:var(--bmn-bs)!important;min-width:var(--bmn-bs);aspect-ratio:1/1;margin:0 0 0 .28em!important;
+  vertical-align:-.16em;line-height:0;position:static!important;overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+html body .bmn-badge.bmn-b-founder{--bmn-bs:clamp(15px,1.12em,24px)}
+html body .bmn-badge svg,html body .bmn-b-standard svg,html body .bmn-b-gold svg,html body .bmn-b-founder svg{display:block;position:static!important;width:100%!important;height:100%!important;max-width:none}
+/* Username: one line, readable size, ellipsis when long; badge stays inline beside it */
+html body #lgtt .lgtt-author{display:inline-flex;align-items:center;gap:0;max-width:100%;min-width:0;white-space:nowrap;font-size:16px;line-height:1.25;pointer-events:auto}
+html body #lgtt .lgtt-author .lgtt-un{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body #lgtt .lgtt-author .bmn-badge{--bmn-bs:16px}
+html body #lgtt .lgtt-author .bmn-badge.bmn-b-founder{--bmn-bs:18px}
+/* Bottom stack: author, caption and sound label own their space; progress bar sits independently above the dock */
+html.bmn-community-app body #lgtt{--bmn-prog-h:28px;--bmn-stack-gap:10px}
+html.bmn-community-app body #lgtt .lgtt-prog{height:var(--bmn-prog-h)!important;bottom:calc(var(--lg-dock-space) + 2px)!important;left:16px!important;right:16px!important}
+html.bmn-community-app body #lgtt .lgtt-meta{left:16px!important;right:88px!important;
+  bottom:calc(var(--lg-dock-space) + 2px + var(--bmn-prog-h) + var(--bmn-stack-gap))!important;max-height:42%;overflow:visible}
+html.bmn-community-app body #lgtt .lgtt-cap{overflow:hidden;overflow-wrap:anywhere;word-break:normal;pointer-events:auto}
+html.bmn-community-app body #lgtt .lgtt-music{display:inline-flex;max-width:100%;min-width:0;overflow:hidden;pointer-events:auto}
+/* Right action column: one size for every control, aligned on one axis, clear of the progress bar */
+html.bmn-community-app body #lgtt .lgtt-side{right:12px!important;width:48px;align-items:center;gap:10px!important;
+  bottom:calc(var(--lg-dock-space) + 2px + var(--bmn-prog-h) + var(--bmn-stack-gap))!important;max-height:calc(100% - 150px - var(--lg-dock-space))}
+html.bmn-community-app body #lgtt .lgtt-side .lgtt-act-btn,html.bmn-community-app body #lgtt .lgtt-side .lgtt-round.lgtt-lg{width:46px!important;height:46px!important;flex:0 0 46px}
+html.bmn-community-app body #lgtt .lgtt-side .lgtt-ico{width:24px;height:24px}
+html.bmn-community-app body #lgtt .lgtt-act{display:flex;flex-direction:column;align-items:center;gap:3px}
+html.bmn-community-app body #lgtt .lgtt-act-n{font-size:12px;line-height:1.1;min-height:13px}
+html.bmn-community-app body #lgtt .lgtt-av-wrap{width:48px;height:56px;margin:0}
+@media(max-height:720px){
+ html.bmn-community-app body #lgtt .lgtt-side{gap:6px!important}
+ html.bmn-community-app body #lgtt .lgtt-side .lgtt-act-btn,html.bmn-community-app body #lgtt .lgtt-side .lgtt-round.lgtt-lg{width:40px!important;height:40px!important;flex-basis:40px}
+ html.bmn-community-app body #lgtt .lgtt-side .lgtt-ico{width:21px;height:21px}
+ html.bmn-community-app body #lgtt .lgtt-av-wrap{height:48px}
+ html.bmn-community-app body #lgtt .lgtt-disc{display:none}}
+/* Text that sits on top of video is always light, in every theme, so it can never vanish on a light theme */
+html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs button,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs .lgtt-tab,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-seg button,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-btn,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-btn span,html body #lgtt .lgtt-v-feed .lgtt-act-n,html body #lgtt .lgtt-v-feed .lgtt-cap-more{color:#fff!important;text-shadow:0 1px 8px rgba(0,0,0,.55)}
+html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs button:not(.on){color:rgba(255,255,255,.82)!important}
+html body #lgtt .lgtt-v-feed .lgtt-tabs{background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.06) 60%,rgba(120,160,255,.10));border:1px solid rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 6px 18px rgba(4,8,24,.30)}
+html body #lgtt .lgtt-v-feed .lgtt-tabs button.on{background:rgba(255,255,255,.22)}
+html.bmn-community-app body #lgtt .lgtt-cap-more{display:block;margin:2px 0 0;padding:2px 0;min-height:0;pointer-events:auto}
+html.bmn-community-app body #lgtt .lgtt-music{display:flex;width:fit-content;margin-top:6px}
+/* Liquid glass refinement for the controls above the video: fine border, soft highlight, light shadow, restrained blur */
+html body #lgtt .lgtt-v-feed .lgtt-side .lgtt-act-btn,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-round,html body #lgtt .lgtt-v-feed .lgtt-seg{
+  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.07) 55%,rgba(120,160,255,.10));
+  border:1px solid rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.18),0 6px 18px rgba(4,8,24,.30);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+ html body #lgtt .lgtt-v-feed .lgtt-side .lgtt-act-btn,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-round,html body #lgtt .lgtt-v-feed .lgtt-seg{background:rgba(24,30,58,.62)}}
+html:not(.bmn-ios) body #lgtt .lgtt-v-feed .lgtt-side .lgtt-act-btn,html:not(.bmn-ios) body #lgtt .lgtt-v-feed .lgtt-top .lgtt-round,html:not(.bmn-ios) body #lgtt .lgtt-v-feed .lgtt-seg{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+/* Profile: badge scales with the name, name never breaks mid-word */
+#bmnPublicProfileContent h2,#bmnPublicProfileContent h3,.bmn-profile-name{display:flex;align-items:center;flex-wrap:wrap;min-width:0;overflow-wrap:anywhere;font-size:1.2rem;line-height:1.2}
+#bmnPublicProfileContent h2 .bmn-badge,.bmn-profile-name .bmn-badge{--bmn-bs:1em}
+@media (prefers-reduced-motion:reduce){html body #lgtt .lgtt-v-feed *{transition-duration:.01ms!important}}
+
+/* Gradient definitions used by the verification badges live in a 0x0 <svg>. Some earlier rule hides it with display:none,
+   and browsers do not paint gradients from a display:none SVG, which left the badges unfilled. Keep it zero-sized but rendered. */
+html.bmn-community-app body > svg[focusable="false"][width="0"][height="0"]:not(#lgtt):not(script):not(style),html body svg[focusable="false"][width="0"][height="0"]{display:block!important;position:absolute!important;width:0!important;height:0!important;overflow:hidden;pointer-events:none;visibility:visible}
+html.bmn-community-app body #lgtt .lgtt-av-wrap{margin-bottom:6px!important}
+
+/* Profile picture: a community-mode rule shrank every .lgtt-avatar-wrap to 44px, which also squeezed the profile photo */
+html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-avatar-wrap{width:96px!important;height:96px!important;margin:0 auto}
+html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-avatar-wrap>*{max-width:none!important;max-height:none!important;min-width:0;min-height:0}
+html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-avatar-wrap .lgtt-avatar{width:88px!important;height:88px!important;max-width:none!important;max-height:none!important;aspect-ratio:1/1;flex:0 0 88px;font-size:30px}
+html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-avatar-wrap .lgtt-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+html.bmn-community-app body #lgtt .lgtt-prof-head h2{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;max-width:100%;font-size:1.35rem;line-height:1.2;margin:8px 0 2px}
+html.bmn-community-app body #lgtt .lgtt-prof-head h2 .bmn-badge{--bmn-bs:1em}
+html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-handle{font-size:.95rem;margin:0 0 8px}
+html.bmn-community-app body #lgtt .lgtt-prof-head .bmn-creator-brand{margin:10px auto;max-width:100%}
+html body #lgtt.lgtt-founder-profile #lgttProfBarTitle{color:#ffe9b0}
+</style>
 </body>
 </html>
 
