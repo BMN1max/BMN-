@@ -11537,6 +11537,141 @@ html.bmn-community-app body #lgtt .lgtt-prof-head .lgtt-handle{font-size:.95rem;
 html.bmn-community-app body #lgtt .lgtt-prof-head .bmn-creator-brand{margin:10px auto;max-width:100%}
 html body #lgtt.lgtt-founder-profile #lgttProfBarTitle{color:#ffe9b0}
 </style>
+
+<style id="bmn-pwa-cross-device-dock-fix">
+/* Restore the original BMN app chassis after the later absolute-layout override.
+   The existing header, scroll area and five-button dock remain unchanged. */
+html, body {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  overflow: hidden !important;
+}
+
+#bmn-app-root {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  box-sizing: border-box !important;
+  padding: env(safe-area-inset-top, 0px)
+           env(safe-area-inset-right, 0px)
+           env(safe-area-inset-bottom, 0px)
+           env(safe-area-inset-left, 0px) !important;
+  overflow: hidden !important;
+}
+
+#bmn-app-root > .topbar {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  margin: 8px auto 0 !important;
+  z-index: 30 !important;
+}
+
+#bmn-app-scroll {
+  position: relative !important;
+  inset: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  scroll-padding-top: 12px !important;
+}
+
+#bmn-app-scroll > main.wrap {
+  padding-top: 16px !important;
+  padding-bottom: 24px !important;
+  min-height: 100% !important;
+}
+
+#bmn-app-root > nav.app-dock {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  width: min(520px, calc(100% - 20px)) !important;
+  max-width: calc(100% - 20px) !important;
+  box-sizing: border-box !important;
+  margin: 6px auto 8px !important;
+  padding: 6px 8px !important;
+  z-index: 60 !important;
+}
+
+body.community-mode #bmn-app-root > nav.app-dock {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: center !important;
+}
+
+body:not(.community-mode) #bmn-app-root > nav.app-dock {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  #bmn-app-root > .topbar {
+    width: calc(100% - 16px) !important;
+  }
+
+  #bmn-app-root > nav.app-dock {
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+    margin: 6px auto 6px !important;
+  }
+}
+</style>
+
+
+
+<!-- BMN final FYP search routing + iPhone dock spacing correction -->
+<style id="bmn-fyp-search-dock-spacing-fix">
+/* Lower the existing floating app dock toward the marked position without entering the home-indicator area. */
+@supports (bottom: max(0px, 1px)) {
+  body.community-mode .app-dock {
+    bottom: max(0px, calc(env(safe-area-inset-bottom, 0px) - 10px)) !important;
+  }
+}
+/* Keep the FYP caption, action rail and progress bar aligned as the dock moves down. */
+html.bmn-community-app #lgtt {
+  --lg-dock-space: calc(53px + max(8px, calc(var(--lg-safe-b, 0px) - 31px)) + 16px) !important;
+}
+</style>
+<script id="bmn-fyp-search-routing-fix">
+(() => {
+  'use strict';
+  const root = document.getElementById('lgtt');
+  if (!root || root.dataset.bmnSearchRouteFixed === '1') return;
+  root.dataset.bmnSearchRouteFixed = '1';
+  root.addEventListener('click', event => {
+    const button = event.target && event.target.closest
+      ? event.target.closest('[data-act="goto-discover"]')
+      : null;
+    if (!button || !root.contains(button)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    // Use the existing Discover view inside the FYP experience, not the Friends dock route.
+    if (window.LGTT && typeof window.LGTT.setView === 'function') {
+      window.LGTT.setView('discover');
+    }
+    window.setTimeout(() => {
+      const field = document.getElementById('lgttDiscSearch');
+      if (field) field.focus({ preventScroll: true });
+    }, 180);
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 
