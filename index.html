@@ -6821,7 +6821,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      --------------------------------------------------------------- */
   const LS_KEY = 'lgtt:v1';
   const DEFAULTS = {
-    settings: { haptics: true, wobble: true, autoplay: true, sound: true, captions: true, dataSaver: false, reduceMotion: false,
+    settings: { haptics: true, wobble: true, autoplay: true, sound: true, captions: true, dataSaver: false, reduceMotion: false, highContrast: false,
                 private: false, suggest: true, activity: true, downloads: true, whoComment: 'everyone', whoMessage: 'friends', twoStep: false, loginAlerts: true,
                 notif: true, nLikes: true, nComments: true, nFollows: true, nMessages: true, language: 'English' },
     liked: {}, saved: {}, reposted: {}, follows: {}, commentLikes: {}, seen: {}, myStories: [],
@@ -8024,6 +8024,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       return [
         { h: 'Feel', rows: [T('haptics', 'vibrate', '#b18cff', '#58aaff', 'Haptic feedback', HAS_VIBRATE ? 'Short pulses on taps, double pulse on likes' : 'This browser has no Vibration API (iOS Safari) — a subtle visual pulse is used instead'), T('wobble', 'zap', '#59f1e6', '#58aaff', 'Glass wobble', 'Springy physical motion on glass panels'), T('reduceMotion', 'eyeoff', '#8a93b8', '#5a6290', 'Reduce motion', 'Calmer animations everywhere')] },
         { h: 'Playback', rows: [T('autoplay', 'play', '#58aaff', '#9b6bff', 'Autoplay', 'Start videos as they appear'), T('sound', 'vol', '#59f1e6', '#58aaff', 'Sound on by default', 'Applies to videos with audio'), T('captions', 'type', '#ffd166', '#ff8a5c', 'Captions', 'Show captions when available'), T('dataSaver', 'download', '#3ddc84', '#59f1e6', 'Data saver', 'Lighter blur and effects')] },
+        { h: 'Accessibility', rows: [T('highContrast', 'sliders', '#59f1e6', '#58aaff', 'High contrast', 'Stronger borders and more solid glass so text is easier to read')] },
         { h: 'Cache & data', rows: [L('freespace', 'trash', '#ff8a5c', '#ff5c8a', 'Free up space', 'Clear saved videos, thumbnails and caches', ''), L('clear', 'trash', '#ff8a5c', '#ff5c8a', 'Reset app preferences', 'Favourites, filters and local settings', ''), L('data', 'download', '#58aaff', '#9b6bff', 'Download my data', 'Get a copy of your profile, posts and comments', '')] },
  { h: 'Support & about', rows: [L('help', 'info', '#59f1e6', '#58aaff', 'Help center', '', ''), L('policy', 'shield', '#3ddc84', '#59f1e6', 'Privacy center', '', ''), L('terms', 'info', '#58aaff', '#9b6bff', 'Terms and policies', '', ''), L('about', 'info', '#58aaff', '#59f1e6', 'About BMN', '', 'v18')] }
  ];
@@ -8189,7 +8190,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     /** Applies persisted settings to the DOM (called on open + whenever a setting flips). */
     function applySettings() {
       if (!R.root) return;
-      R.root.classList.toggle('is-calm', calm()); R.root.classList.toggle('is-lite', !!S.settings.dataSaver);
+      document.documentElement.classList.toggle('bmn-high-contrast', !!S.settings.highContrast); R.root.classList.toggle('is-calm', calm()); R.root.classList.toggle('is-lite', !!S.settings.dataSaver);
       $('use', R.Mute).setAttribute('href', '#lgi-' + (S.settings.sound ? 'vol' : 'mute')); R.Mute.setAttribute('aria-pressed', !S.settings.sound);
       Feed.muteChanged();
     }
@@ -11440,7 +11441,7 @@ body.bmn-owner{--bmn-owner-red:#8a1022;--bmn-owner-crimson:#4a0812;--bmn-owner-g
  --bmn-cc-edge:rgba(232,193,100,.34);--bmn-cc-edge-hot:rgba(251,234,184,.6);accent-color:#e8c164}
 body.bmn-owner:not(.light){background-image:radial-gradient(120% 70% at 50% -10%,rgba(160,22,44,.38),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(232,193,100,.12),transparent 60%)}
 body.bmn-owner.light{background-image:radial-gradient(120% 70% at 50% -10%,rgba(214,90,104,.16),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(232,193,100,.2),transparent 60%)}
-body.bmn-owner .lgtt-dock,body.bmn-owner .dock,body.bmn-owner [class*="dock"]:not(.dock-symbol):not(.dock-dot):not(.dock-create-symbol){
+body.bmn-owner nav.lgtt-dock,body.bmn-owner nav.app-dock{
  background:linear-gradient(180deg,rgba(176,30,52,.36),rgba(74,8,18,.46))!important;border-color:rgba(251,234,184,.38)!important;
  box-shadow:inset 0 1px 0 rgba(255,244,210,.5),inset 0 -1px 0 rgba(0,0,0,.25),0 14px 40px rgba(74,8,18,.5)!important}
 body.bmn-owner.light .lgtt-dock,body.bmn-owner.light .dock{background:linear-gradient(180deg,rgba(255,244,236,.7),rgba(232,193,100,.28))!important;box-shadow:inset 0 1px 0 #fff,0 12px 34px rgba(138,16,34,.2)!important}
@@ -11505,7 +11506,7 @@ html.bmn-community-app body #lgtt .lgtt-av-wrap{width:48px;height:56px;margin:0}
 html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs button,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs .lgtt-tab,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-seg button,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-btn,html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-btn span,html body #lgtt .lgtt-v-feed .lgtt-act-n,html body #lgtt .lgtt-v-feed .lgtt-cap-more{color:#fff!important;text-shadow:0 1px 8px rgba(0,0,0,.55)}
 html body #lgtt .lgtt-v-feed .lgtt-top .lgtt-tabs button:not(.on){color:rgba(255,255,255,.82)!important}
 html body #lgtt .lgtt-v-feed .lgtt-tabs{background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.06) 60%,rgba(120,160,255,.10));border:1px solid rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 6px 18px rgba(4,8,24,.30)}
-html body #lgtt .lgtt-v-feed .lgtt-tabs button.on{background:rgba(255,255,255,.22)}
+html body #lgtt .lgtt-v-feed .lgtt-tabs button,html body #lgtt .lgtt-v-feed .lgtt-tabs button.on{background:transparent!important;border-radius:999px}
 html.bmn-community-app body #lgtt .lgtt-cap-more{display:block;margin:2px 0 0;padding:2px 0;min-height:0;pointer-events:auto}
 html.bmn-community-app body #lgtt .lgtt-music{display:flex;width:fit-content;margin-top:6px}
 /* Liquid glass refinement for the controls above the video: fine border, soft highlight, light shadow, restrained blur */
@@ -11632,325 +11633,81 @@ body:not(.community-mode) #bmn-app-root > nav.app-dock {
 </style>
 
 
-<style id="bmn-liquid-glass-v1">
-/* BMN Liquid Glass v1 — shared tokens and first application: app navigation dock.
-   Deliberately CSS-only: existing navigation buttons, routes and app logic are untouched. */
-:root {
-  --bmn-lg-surface: rgba(15, 21, 34, .62);
-  --bmn-lg-surface-hi: rgba(255, 255, 255, .105);
-  --bmn-lg-edge: rgba(232, 242, 255, .30);
-  --bmn-lg-edge-soft: rgba(232, 242, 255, .14);
-  --bmn-lg-specular: rgba(255, 255, 255, .62);
-  --bmn-lg-shadow: 0 18px 48px rgba(0, 0, 0, .34), 0 4px 14px rgba(0, 0, 0, .18);
-  --bmn-lg-blur: 28px;
-  --bmn-lg-saturation: 185%;
-}
-body.light {
-  --bmn-lg-surface: rgba(247, 250, 255, .70);
-  --bmn-lg-surface-hi: rgba(255, 255, 255, .78);
-  --bmn-lg-edge: rgba(255, 255, 255, .82);
-  --bmn-lg-edge-soft: rgba(49, 66, 95, .12);
-  --bmn-lg-specular: rgba(255, 255, 255, .96);
-  --bmn-lg-shadow: 0 18px 42px rgba(32, 47, 72, .16), 0 3px 12px rgba(32, 47, 72, .08);
-}
-#bmn-app-root > nav.app-dock {
-  isolation: isolate !important;
-  position: relative !important;
-  overflow: hidden !important;
-  border: 1px solid var(--bmn-lg-edge) !important;
-  border-top-color: var(--bmn-lg-specular) !important;
-  border-radius: 25px !important;
-  background:
-    radial-gradient(120% 150% at 12% -45%, rgba(103, 174, 255, .24), transparent 56%),
-    radial-gradient(100% 130% at 100% 120%, rgba(90, 241, 230, .12), transparent 58%),
-    linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.025) 48%, rgba(0,0,0,.12)),
-    var(--bmn-lg-surface) !important;
-  -webkit-backdrop-filter: blur(var(--bmn-lg-blur)) saturate(var(--bmn-lg-saturation)) !important;
-  backdrop-filter: blur(var(--bmn-lg-blur)) saturate(var(--bmn-lg-saturation)) !important;
-  box-shadow: var(--bmn-lg-shadow), inset 0 1px 0 rgba(255,255,255,.42),
-              inset 0 -1px 0 rgba(255,255,255,.055) !important;
-}
-#bmn-app-root > nav.app-dock::before {
-  content: "" !important;
-  position: absolute !important;
-  z-index: -1 !important;
-  inset: 1px 1px auto !important;
-  height: 48% !important;
-  border-radius: 24px 24px 45% 45% !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.19), rgba(255,255,255,.035) 58%, transparent) !important;
-  pointer-events: none !important;
-}
-#bmn-app-root > nav.app-dock::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: -1 !important;
-  top: -32px !important;
-  left: 18% !important;
-  width: 64% !important;
-  height: 42px !important;
-  border-radius: 50% !important;
-  background: rgba(125, 190, 255, .20) !important;
-  filter: blur(24px) !important;
-  pointer-events: none !important;
-}
-#bmn-app-root > nav.app-dock button {
-  position: relative !important;
-  z-index: 1 !important;
-  min-width: 0 !important;
-  border-radius: 17px !important;
-  color: rgba(239, 246, 255, .70) !important;
-  transition: background .24s ease, color .24s ease, transform .24s cubic-bezier(.2,.8,.2,1),
-              box-shadow .24s ease !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-body.light #bmn-app-root > nav.app-dock button {
-  color: rgba(29, 43, 66, .66) !important;
-}
-#bmn-app-root > nav.app-dock button.active {
-  color: #fff !important;
-  background: linear-gradient(145deg, rgba(255,255,255,.20), rgba(255,255,255,.075)) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.34), 0 4px 14px rgba(0,0,0,.12) !important;
-}
-body.light #bmn-app-root > nav.app-dock button.active {
-  color: #152238 !important;
-  background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(225,234,247,.52)) !important;
-  box-shadow: inset 0 1px 0 #fff, 0 4px 14px rgba(38,55,82,.10) !important;
-}
-#bmn-app-root > nav.app-dock .dock-symbol,
-#bmn-app-root > nav.app-dock .dock-create-symbol {
-  border: 1px solid transparent !important;
-  transition: transform .24s cubic-bezier(.2,.8,.2,1), background .24s ease,
-              border-color .24s ease, box-shadow .24s ease !important;
-}
-#bmn-app-root > nav.app-dock button.active .dock-symbol {
-  background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(204,225,255,.78)) !important;
-  color: #152238 !important;
-  border-color: rgba(255,255,255,.72) !important;
-  box-shadow: 0 2px 12px rgba(133,190,255,.25), inset 0 1px 0 #fff !important;
-}
-#bmn-app-root > nav.app-dock .dock-create {
-  background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.035)) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-#bmn-app-root > nav.app-dock .dock-create-symbol {
-  background: linear-gradient(145deg, rgba(255,255,255,.23), rgba(255,255,255,.075)) !important;
-  border-color: rgba(255,255,255,.24) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.34), 0 3px 10px rgba(0,0,0,.12) !important;
-}
-#bmn-app-root > nav.app-dock button:active {
-  transform: scale(.96) !important;
-}
-#bmn-app-root > nav.app-dock .dock-dot {
-  box-shadow: 0 0 0 3px rgba(255,55,95,.18), 0 0 12px rgba(255,55,95,.48) !important;
-}
-@media (hover:hover) {
-  #bmn-app-root > nav.app-dock button:not(.active):hover {
-    color: #fff !important;
-    background: rgba(255,255,255,.09) !important;
-  }
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  #bmn-app-root > nav.app-dock {
-    background: rgba(18, 25, 40, .96) !important;
-  }
-  body.light #bmn-app-root > nav.app-dock {
-    background: rgba(244, 248, 255, .97) !important;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  #bmn-app-root > nav.app-dock button,
-  #bmn-app-root > nav.app-dock .dock-symbol,
-  #bmn-app-root > nav.app-dock .dock-create-symbol {
-    transition: none !important;
-  }
-}
-</style>
 
-<style id="bmn-liquid-glass-complete-v2">
-/* BMN Liquid Glass Complete v2 — progressive enhancement over existing app styles.
-   Preserves DOM, routes, event handlers, data attributes and backend behavior. */
-:root{
- --bmn-lg-blur:26px;--bmn-lg-sat:185%;
- --bmn-lg-ink:rgba(13,19,31,.58);--bmn-lg-ink-strong:rgba(12,18,30,.78);
- --bmn-lg-edge:rgba(237,246,255,.27);--bmn-lg-edge-hi:rgba(255,255,255,.54);
- --bmn-lg-inner:rgba(255,255,255,.105);--bmn-lg-shadow:0 18px 54px rgba(0,0,0,.28),0 4px 16px rgba(0,0,0,.14);
- --bmn-lg-spring:cubic-bezier(.2,.85,.25,1.25);--bmn-lg-ease:cubic-bezier(.2,.75,.25,1);
- --bmn-lg-pointer-x:50%;--bmn-lg-pointer-y:0%;
+<!-- BMN final FYP search routing + iPhone dock spacing correction -->
+<style id="bmn-fyp-search-dock-spacing-fix">
+/* Lower the existing floating app dock toward the marked position without entering the home-indicator area. */
+@supports (bottom: max(0px, 1px)) {
+  body.community-mode .app-dock {
+    bottom: max(0px, calc(env(safe-area-inset-bottom, 0px) - 10px)) !important;
+  }
 }
-body.light{
- --bmn-lg-ink:rgba(244,248,255,.66);--bmn-lg-ink-strong:rgba(247,250,255,.84);
- --bmn-lg-edge:rgba(255,255,255,.78);--bmn-lg-edge-hi:rgba(255,255,255,.96);
- --bmn-lg-inner:rgba(255,255,255,.50);--bmn-lg-shadow:0 18px 48px rgba(37,54,82,.14),0 4px 14px rgba(37,54,82,.07);
-}
-/* Common physical-glass material. Applied only to interface surfaces, never media/content canvases. */
-#bmn-app-root .topbar,
-#bmn-app-root>.app-dock,
-#lgtt .lgtt-cm-form,#lgtt .lgtt-search,
-#lgttStage>#bmnRealInbox .bmn-ri-composer-shell,
-#lgttStage>#bmnRealInbox .bmn-ri-search,
-#lgtt .bmn-emo-grid,
-#lgtt .bmn-ri-quick button,
-#bmn-app-root .bmn-comments-panel,
-#bmn-app-root .sheet,#bmn-app-root .modal,
-#bmn-app-root .bmn-conversation-compose,
-#bmn-app-root .backend-composer,
-#bmn-app-root .bmn-tool-panel,
-#bmn-app-root .bmn-inline-form input,
-#bmn-app-root .bmn-inline-form textarea,
-#bmn-app-root .backend-panel input,
-#bmn-app-root .backend-panel textarea,
-#bmn-app-root .backend-composer input,
-#bmn-app-root .backend-composer textarea,
-#bmn-app-root .bmn-conversation-compose textarea,
-#bmn-app-root input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-#bmn-app-root textarea,#bmn-app-root select,
-#lgtt input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-#lgtt textarea,#lgtt select,
-#bmnRealInbox input:not([type="file"]),#bmnRealInbox textarea,#bmnRealInbox select{
- color:inherit;
-}
-#bmn-app-root .topbar,
-#bmn-app-root>.app-dock,
-#lgtt .lgtt-cm-form,#lgtt .lgtt-search,
-#lgttStage>#bmnRealInbox .bmn-ri-composer-shell,
-#lgttStage>#bmnRealInbox .bmn-ri-search,
-#lgtt .bmn-emo-grid,
-#bmn-app-root .bmn-comments-panel,
-#bmn-app-root .sheet,#bmn-app-root .modal,
-#bmn-app-root .bmn-conversation-compose{
- isolation:isolate;
- border-color:var(--bmn-lg-edge)!important;
- -webkit-backdrop-filter:blur(var(--bmn-lg-blur)) saturate(var(--bmn-lg-sat))!important;
- backdrop-filter:blur(var(--bmn-lg-blur)) saturate(var(--bmn-lg-sat))!important;
- box-shadow:var(--bmn-lg-shadow),inset 0 1px 0 rgba(255,255,255,.36),inset 0 -1px 0 rgba(255,255,255,.055)!important;
-}
-#bmn-app-root .topbar{
- background:linear-gradient(115deg,rgba(255,255,255,.15),rgba(255,255,255,.035) 46%,rgba(88,153,255,.07)),var(--bmn-lg-ink)!important;
-}
-#bmn-app-root>.app-dock{
- background:radial-gradient(100% 160% at 15% -45%,rgba(142,194,255,.25),transparent 60%),radial-gradient(100% 140% at 100% 130%,rgba(75,226,225,.12),transparent 58%),linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.035) 52%,rgba(0,0,0,.12)),var(--bmn-lg-ink)!important;
-}
-#bmn-app-root .bmn-comments-panel,#bmn-app-root .sheet,#bmn-app-root .modal{
- background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025) 52%),var(--bmn-lg-ink-strong)!important;
-}
-#bmn-app-root .bmn-conversation-compose,#lgtt .lgtt-cm-form,
-#lgttStage>#bmnRealInbox .bmn-ri-composer-shell{
- background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.055)),var(--bmn-lg-ink)!important;
- border:1px solid var(--bmn-lg-edge)!important;border-radius:24px!important;
-}
-/* Inputs remain legible, selectable and native-editable; glass belongs to the field surface. */
-#bmn-app-root input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-#bmn-app-root textarea,#bmn-app-root select,
-#lgtt input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-#lgtt textarea,#lgtt select,
-#bmnRealInbox input:not([type="file"]),#bmnRealInbox textarea,#bmnRealInbox select{
- background:linear-gradient(180deg,rgba(255,255,255,.105),rgba(255,255,255,.035))!important;
- border:1px solid rgba(235,245,255,.22)!important;border-radius:16px!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(0,0,0,.06)!important;
- -webkit-backdrop-filter:blur(18px) saturate(165%)!important;backdrop-filter:blur(18px) saturate(165%)!important;
- outline:none;transition:border-color .22s ease,box-shadow .22s ease,background .22s ease!important;
-}
-#bmn-app-root input:focus,#bmn-app-root textarea:focus,#bmn-app-root select:focus,
-#lgtt input:focus,#lgtt textarea:focus,#lgtt select:focus,
-#bmnRealInbox input:focus,#bmnRealInbox textarea:focus,#bmnRealInbox select:focus{
- border-color:rgba(126,190,255,.72)!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 0 0 3px rgba(91,165,255,.15),0 6px 22px rgba(0,0,0,.10)!important;
-}
-#bmn-app-root input::placeholder,#bmn-app-root textarea::placeholder,
-#lgtt input::placeholder,#lgtt textarea::placeholder,#bmnRealInbox input::placeholder,#bmnRealInbox textarea::placeholder{color:rgba(210,222,239,.62)!important;opacity:1}
-body.light #bmn-app-root input,body.light #bmn-app-root textarea,body.light #bmn-app-root select,
-body.light #lgtt input,body.light #lgtt textarea,body.light #lgtt select,
-body.light #bmnRealInbox input,body.light #bmnRealInbox textarea,body.light #bmnRealInbox select{
- background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(245,249,255,.48))!important;border-color:rgba(255,255,255,.86)!important;color:#172338!important;
-}
-body.light #bmn-app-root input::placeholder,body.light #bmn-app-root textarea::placeholder,
-body.light #lgtt input::placeholder,body.light #lgtt textarea::placeholder{color:rgba(47,62,84,.55)!important}
-/* Buttons and compact controls: tactile spring without shifting fixed bars. */
-#bmn-app-root button,#lgtt button,#bmnRealInbox button{
- -webkit-tap-highlight-color:transparent;transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,filter .22s ease!important;
-}
-#bmn-app-root .icon-btn,#bmn-app-root .close-btn,
-#lgtt .icon-btn,#lgtt .close-btn,
-#bmnRealInbox .icon-btn,#bmnRealInbox .close-btn{
- border:1px solid rgba(238,247,255,.24)!important;
- background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.045))!important;
- -webkit-backdrop-filter:blur(18px) saturate(170%)!important;backdrop-filter:blur(18px) saturate(170%)!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 5px 16px rgba(0,0,0,.12)!important;
-}
-#bmn-app-root .app-dock button:active,#bmn-app-root button:not(:disabled):active,
-#lgtt button:not(:disabled):active,#bmnRealInbox button:not(:disabled):active{filter:brightness(1.12)}
-/* Message bubbles receive a light-catching edge, not an opaque panel. */
-#bmn-app-root .bmn-message-bubble{border-color:rgba(235,246,255,.19)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 16px rgba(0,0,0,.08)!important}
-#bmn-app-root .bmn-message-bubble.mine{background:linear-gradient(145deg,rgba(92,174,255,.29),rgba(151,128,255,.20))!important}
-/* Optical highlight tracks pointer only on hover-capable Mac/desktop. */
-@media(hover:hover) and (pointer:fine){
- #bmn-app-root .topbar,#bmn-app-root>.app-dock,#bmn-app-root .bmn-comments-panel,
- #lgtt .lgtt-cm-form,#lgttStage>#bmnRealInbox .bmn-ri-composer-shell{
-  background-image:radial-gradient(ellipse 62% 100% at var(--bmn-lg-pointer-x) var(--bmn-lg-pointer-y),rgba(255,255,255,.115),transparent 68%),linear-gradient(145deg,rgba(255,255,255,.10),transparent 52%)!important;
- }
- #bmn-app-root button:not(:disabled):hover,#lgtt button:not(:disabled):hover,#bmnRealInbox button:not(:disabled):hover{filter:brightness(1.10)}
-}
-/* Restrained spring/wobble on touch press; no perpetual motion or layout transforms. */
-@keyframes bmnGlassPress{0%{transform:scale(1)}38%{transform:scale(.965)}72%{transform:scale(1.018)}100%{transform:scale(1)}}
-@media(hover:none) and (prefers-reduced-motion:no-preference){
- #bmn-app-root .app-dock button:active{animation:bmnGlassPress .42s var(--bmn-lg-spring)}
-}
-/* Safari/iOS viewport and safe-area support. Keep the OS keyboard fully native. */
-@supports(-webkit-touch-callout:none){
- #bmn-app-root input,#bmn-app-root textarea,#lgtt input,#lgtt textarea,#bmnRealInbox input,#bmnRealInbox textarea{font-size:max(16px,1em)}
- #bmn-app-root .bmn-conversation-compose,#lgtt .lgtt-cm-form,#bmnRealInbox .bmn-ri-composer-shell{padding-bottom:max(10px,env(safe-area-inset-bottom))}
-}
-/* Native-like Mac trackpad focus and keyboard accessibility. */
-#bmn-app-root :focus-visible,#lgtt :focus-visible,#bmnRealInbox :focus-visible{outline:2px solid rgba(125,190,255,.78)!important;outline-offset:2px}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
- #bmn-app-root .topbar,#bmn-app-root>.app-dock,#bmn-app-root .bmn-comments-panel,#bmn-app-root .sheet,#bmn-app-root .modal,
- #bmn-app-root .bmn-conversation-compose,#lgtt .lgtt-cm-form,#lgtt .lgtt-search,#bmnRealInbox .bmn-ri-composer-shell{background:rgba(17,24,38,.96)!important}
-}
-@media(prefers-reduced-transparency:reduce){
- #bmn-app-root .topbar,#bmn-app-root>.app-dock,#bmn-app-root .bmn-comments-panel,#bmn-app-root .sheet,#bmn-app-root .modal,
- #bmn-app-root .bmn-conversation-compose,#lgtt .lgtt-cm-form,#lgtt .lgtt-search,#bmnRealInbox .bmn-ri-composer-shell{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(18,25,39,.94)!important}
-}
-@media(prefers-reduced-motion:reduce){
- #bmn-app-root *,#lgtt *,#bmnRealInbox *{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-}
-/* Existing BMN social surfaces: keep media clear; glass stays on cards and controls. */
-#bmn-app-root .community-post,#bmn-app-root .bmn-card,#bmn-app-root .bmn-friend-card,
-#bmn-app-root .bmn-friend-card-v17,#bmn-app-root .bmn-profile-card,
-#bmn-app-root .bmn-owner-status-card,#bmn-app-root .bmn-inbox-quick,
-#bmn-app-root .bmn-inbox-search,#bmn-app-root .bmn-profile-menu,
-#bmn-app-root .bmn-tool-panel,#bmn-app-root .backend-composer,
-#bmn-app-root .bmn-tool-item,#bmn-app-root .bmn-comments-post-context,
-#lgtt .lgtt-menu,#lgtt .lgtt-modal-card,#lgtt .lgtt-sheet,
-#lgtt .lgtt-share-card,#lgtt .lgtt-launch-card{
- border-color:rgba(235,246,255,.20)!important;
- box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 12px 34px rgba(0,0,0,.13)!important;
-}
-#bmn-app-root .bmn-friend-card,#bmn-app-root .bmn-friend-card-v17,
-#bmn-app-root .bmn-profile-card,#bmn-app-root .bmn-owner-status-card,
-#bmn-app-root .bmn-inbox-quick,#bmn-app-root .bmn-inbox-search,
-#bmn-app-root .bmn-profile-menu,#bmn-app-root .bmn-tool-panel,
-#bmn-app-root .backend-composer,#lgtt .lgtt-menu,#lgtt .lgtt-modal-card,#lgtt .lgtt-sheet{
- -webkit-backdrop-filter:blur(20px) saturate(170%)!important;backdrop-filter:blur(20px) saturate(170%)!important;
- background-image:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.018) 58%,rgba(93,151,255,.035))!important;
-}
-#bmn-app-root .community-post{ -webkit-backdrop-filter:blur(14px) saturate(155%)!important;backdrop-filter:blur(14px) saturate(155%)!important; }
-body.light #bmn-app-root .community-post,body.light #bmn-app-root .bmn-friend-card,
-body.light #bmn-app-root .bmn-friend-card-v17,body.light #bmn-app-root .bmn-profile-card,
-body.light #bmn-app-root .bmn-inbox-quick,body.light #bmn-app-root .bmn-inbox-search,
-body.light #lgtt .lgtt-menu,body.light #lgtt .lgtt-modal-card,body.light #lgtt .lgtt-sheet{
- border-color:rgba(255,255,255,.82)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 12px 30px rgba(38,57,86,.10)!important;
+/* Keep the FYP caption, action rail and progress bar aligned as the dock moves down. */
+html.bmn-community-app #lgtt {
+  --lg-dock-space: calc(53px + max(8px, calc(var(--lg-safe-b, 0px) - 31px)) + 16px) !important;
 }
 </style>
-<script id="bmn-liquid-glass-optics-v2">
-(()=>{'use strict';if(window.__bmnLiquidOpticsV2)return;window.__bmnLiquidOpticsV2=true;
- const surfaces=['#bmn-app-root .topbar','#bmn-app-root>.app-dock','#bmn-app-root .bmn-comments-panel','#lgtt .lgtt-cm-form','#bmnRealInbox .bmn-ri-composer-shell'];
- const fine=window.matchMedia&&window.matchMedia('(hover:hover) and (pointer:fine)').matches;
- if(fine){document.addEventListener('pointermove',e=>{const el=e.target.closest(surfaces.join(','));if(!el)return;const r=el.getBoundingClientRect();if(!r.width||!r.height)return;el.style.setProperty('--bmn-lg-pointer-x',Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))+'%');el.style.setProperty('--bmn-lg-pointer-y',Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100))+'%')},{passive:true});}
- // Refresh only on system appearance changes; never intercept clicks, form submits or navigation.
- try{const mq=matchMedia('(prefers-color-scheme: light)');mq.addEventListener?.('change',()=>{if(document.body.classList.contains('bmn-system-theme'))document.body.classList.toggle('light',mq.matches)})}catch(_){}
+<script id="bmn-fyp-search-routing-fix">
+(() => {
+  'use strict';
+  const root = document.getElementById('lgtt');
+  if (!root || root.dataset.bmnSearchRouteFixed === '1') return;
+  root.dataset.bmnSearchRouteFixed = '1';
+  root.addEventListener('click', event => {
+    const button = event.target && event.target.closest
+      ? event.target.closest('[data-act="goto-discover"]')
+      : null;
+    if (!button || !root.contains(button)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    // Use the existing Discover view inside the FYP experience, not the Friends dock route.
+    if (window.LGTT && typeof window.LGTT.setView === 'function') {
+      window.LGTT.setView('discover');
+    }
+    window.setTimeout(() => {
+      const field = document.getElementById('lgttDiscSearch');
+      if (field) field.focus({ preventScroll: true });
+    }, 180);
+  }, true);
 })();
 </script>
 
+<style id="bmn-glass-clean-and-settings-css">
+/* ===== 1. Glass without boxes =====
+   Causes found: (a) the owner theme painted every element whose class contains "dock" (including the lens layers)
+   with a gradient and a 40px shadow, which showed as rectangles; (b) the active tab button had a square background;
+   (c) nested backdrop-filters (dock buttons inside a blurred dock) and large outer shadows on blurred bars, which iOS Safari
+   paints as square halos. Blurred bars now carry only tight, inset-style shading. */
+html body.community-mode nav.dock.app-dock button,html body nav.app-dock button,html body #lgtt .lgtt-dock button,html body #lgtt .lgtt-tabs button{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lgtt .lgtt-glass .lgtt-glass{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #lgtt nav.lgtt-dock,html body #lgtt .lgtt-tabs,html body.community-mode nav.dock.app-dock{isolation:isolate;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(0,0,0,.18),0 1px 6px rgba(2,6,20,.16)!important}
+html body #lgtt .lgtt-dock-lens,html body .bmn-dock-lens,html body #lgtt .lgtt-tab-ind{box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.12)!important;filter:none!important}
+html body .dock-create,html body #lgtt .lgtt-plus-pill{box-shadow:0 3px 10px rgba(2,6,20,.22)!important}
+html body #lgtt .lgtt-dock::before,html body #lgtt .lgtt-dock::after,html body #lgtt .lgtt-tabs::before{border-radius:inherit}
+/* ===== 2. Settings: every row is its own rounded card (higher specificity: theme rules with !important were re-painting the old joined card) ===== */
+html body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card.lgtt-set-card{background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  overflow:visible!important;display:flex!important;flex-direction:column;gap:8px;border-radius:0!important;padding:0!important}
+html body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card::before,html body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card::after{display:none!important}
+html body #lgtt .lgtt-set-group .lgtt-set-row.lgtt-set-row{border:1px solid rgba(255,255,255,.2)!important;border-radius:22px!important;margin:0!important;padding:13px 15px;overflow:hidden;
+  background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.07) 60%,rgba(120,160,255,.10))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 5px rgba(2,6,20,.14)!important;-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3)}
+html body #lgtt .lgtt-set-group .lgtt-set-row.lgtt-set-row:last-child{border-bottom:1px solid rgba(255,255,255,.2)!important}
+html body #lgtt button.lgtt-set-row:active{transform:scale(.985)}
+html body #lgtt .lgtt-set-group .lgtt-set-prof.lgtt-set-prof{border:1px solid rgba(255,255,255,.22);border-radius:26px;background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+html body #lgtt .lgtt-set-group>h4{margin:0 10px 8px}
+html body #lgtt .lgtt-set-group .lgtt-kw,html body #lgtt .lgtt-set-group .lgtt-kw-add{border-radius:20px}
+html body #lgtt .lgtt-set-group .lgtt-kw-add input{border-radius:999px}
+body.bmn-owner #lgtt .lgtt-set-group .lgtt-set-row.lgtt-set-row{border-color:rgba(232,193,100,.36)!important}
+html body #lgttSettings .lgtt-over-h h2{font-size:18px;line-height:1.15}
+html body #bmnThemeToggleV17{max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ===== 3. High contrast (Settings > App > Accessibility) ===== */
+html.bmn-high-contrast #lgtt .lgtt-glass,html.bmn-high-contrast body #lgtt .lgtt-set-group .lgtt-set-row.lgtt-set-row,html.bmn-high-contrast body #lgtt .lgtt-set-group .lgtt-set-prof.lgtt-set-prof{background:rgba(10,14,30,.9)!important;border:2px solid rgba(255,255,255,.75)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html.bmn-high-contrast[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-high-contrast[data-bmn-theme="light"] body #lgtt .lgtt-set-group .lgtt-set-row.lgtt-set-row,html.bmn-high-contrast[data-bmn-theme="light"] body #lgtt .lgtt-set-group .lgtt-set-prof.lgtt-set-prof{background:#fff!important;border-color:#11141c!important;color:#11141c}
+html.bmn-high-contrast #lgtt .lgtt-set-txt small,html.bmn-high-contrast #lgtt .lgtt-set-val{opacity:1;color:inherit}
+html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-high-contrast .lgtt-act-n{text-shadow:0 1px 3px #000,0 0 6px #000}
+</style>
 </body>
 </html>
 
