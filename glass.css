@@ -1,0 +1,115 @@
+/*
+ * BMN Liquid Glass: material overrides. Everything is scoped to
+ * html.bmn-glass-on, so removing that class (the kill switch) restores the
+ * original look. The library's own material lives in @zakisheriff/liquid-glass.
+ */
+
+/* ---- BMN identity: crimson accent, warm gold highlights ---- */
+.bmn-gn, .bmn-gs, .bmn-gm, .bmn-gw {
+  --lg-accent: #ff4d5e;
+  --lg-ring: rgb(255 77 94 / 0.6);
+  --bmn-red: #d1323e;
+  --bmn-gold: #f0cf7a;
+  font-family: var(--lg-font);
+}
+
+/* ================= Dock (GlassNav) ================= */
+html.bmn-glass-on #lgttDock,
+html.bmn-glass-on .app-dock {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.bmn-glass-on #lgttDock::before,
+html.bmn-glass-on #lgttDock::after,
+html.bmn-glass-on .app-dock::before,
+html.bmn-glass-on .app-dock::after { display: none !important; }
+
+/* The original buttons keep working (we call .click()) but are hidden from sight and touch. */
+html.bmn-glass-on #lgttDock > :not(.bmn-gn-host),
+html.bmn-glass-on .app-dock > :not(.bmn-gn-host) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+html.bmn-glass-on #lgttDock > #lgttLens,
+html.bmn-glass-on .app-dock > .bmn-dock-lens { display: none !important; }
+
+.bmn-gn-host { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.bmn-gn-host > * { pointer-events: auto; width: 100%; }
+.bmn-gn { width: 100%; }
+.bmn-gn .lg-track { width: 100%; --lg-item-h: 56px; --lg-item-w: 56px; }
+.bmn-gn .lg-track__item { padding: 0 4px; gap: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
+.bmn-gn .lg-nav__icon { display: grid; place-items: center; }
+.bmn-gn-icon { position: relative; display: grid; place-items: center; width: 28px; height: 26px; }
+.bmn-gn-ico { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.bmn-gn-ico--html { display: inline-grid; place-items: center; }
+.bmn-gn-ico--html svg { width: 100%; height: 100%; }
+/* The Create tab keeps its identity: a crimson-to-gold pill. */
+.bmn-gn-icon--create { width: 40px; }
+.bmn-gn-icon--create .bmn-gn-ico { width: 40px; height: 26px; padding: 3px 11px; box-sizing: border-box; border-radius: 9px; stroke: #fff; stroke-width: 2.6;
+  background: linear-gradient(135deg, var(--bmn-red), #b8860b 140%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 2px 8px rgb(209 50 62 / 0.35); }
+.bmn-gn-badge { position: absolute; top: -4px; right: -7px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; font-size: 10px; line-height: 15px; font-weight: 700; text-align: center;
+  color: #fff; background: var(--bmn-red); box-shadow: 0 0 0 2px rgb(0 0 0 / 0.25); box-sizing: border-box; }
+.bmn-gn-badge:empty { min-width: 9px; width: 9px; height: 9px; padding: 0; top: -1px; right: -3px; }
+
+/* ================= Segmented controls (GlassSegmented) ================= */
+html.bmn-glass-on [data-bmn-seg] {
+  background: none !important; box-shadow: none !important; border: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html.bmn-glass-on [data-bmn-seg]::before, html.bmn-glass-on [data-bmn-seg]::after { display: none !important; }
+html.bmn-glass-on [data-bmn-seg] > * { opacity: 0 !important; pointer-events: none !important; }
+.bmn-gs-host { display: flex; align-items: center; }
+.bmn-gs, .bmn-gs .lg-track { width: 100%; }
+.bmn-gs .lg-track__item { font-size: 13px; font-weight: 650; }
+
+/* ================= Switch (GlassSwitch) ================= */
+html.bmn-glass-on button[data-bmn-sw] { display: none !important; }
+.bmn-gw-slot { display: inline-flex; flex: none; }
+.bmn-gw-host, .bmn-gw { display: inline-flex; }
+
+/* ================= Slider (GlassSlider) ================= */
+html.bmn-glass-on input[data-bmn-sl] { display: none !important; }
+.bmn-gsl-slot { display: block; flex: 1; min-width: 120px; }
+.bmn-gsl-host, .bmn-gsl { display: block; width: 100%; }
+
+/* ================= Input (GlassInput): search + composers ================= */
+html.bmn-glass-on .bmn-gi-wrap {
+  background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0 !important; padding-right: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; gap: 8px;
+}
+html.bmn-glass-on .bmn-gi-wrap::before, html.bmn-glass-on .bmn-gi-wrap::after { display: none !important; }
+html.bmn-glass-on .bmn-gi-wrap > input[data-bmn-in], html.bmn-glass-on .bmn-gi-wrap > svg.lgtt-ico { display: none !important; }
+.bmn-gi-host { flex: 1; min-width: 0; }
+.bmn-gi, .bmn-gi .lg-input { width: 100%; }
+.bmn-gi .lg-input__field { min-height: 44px; }
+.bmn-gi input { font-size: 16px; } /* 16px keeps iOS Safari from zooming on focus */
+
+/* ================= Sheet host (GlassSheet) ================= */
+html.bmn-glass-on #bmnSheetHost .bmn-sh-scrim { display: none !important; }
+html.bmn-glass-on #bmnSheetHost .bmn-sh {
+  position: static !important; transform: none !important; left: auto !important; bottom: auto !important; width: auto !important;
+  max-height: min(70dvh, 620px) !important; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  padding: 4px 6px calc(10px + env(safe-area-inset-bottom, 0px));
+}
+html.bmn-glass-on #bmnSheetHost[data-glass-fresh] .lg-sheet__scrim { pointer-events: none; }
+html.bmn-glass-on.bmn-community-app body > #bmnSheetHost[data-glass-closing="1"]:not(#x1):not(#x2) {
+  display: block !important; visibility: visible !important; pointer-events: none !important;
+}
+.bmn-gsh-host, .bmn-gsh { position: absolute; inset: 0; pointer-events: none; }
+.bmn-gsh > * { pointer-events: auto; }
+/* a sheet that is springing away must never catch taps meant for the app underneath */
+#bmnSheetHost[data-glass-closing="1"] *, #bmnSheetHost:not([data-open="1"]) * { pointer-events: none !important; }
+
+/* ================= Menu (GlassMenu) ================= */
+html.bmn-glass-on #lgttMenu { opacity: 0 !important; pointer-events: none !important; }
+.bmn-gm-layer { position: fixed; inset: 0; z-index: 2147482000; pointer-events: none; }
+.bmn-gm { position: fixed; pointer-events: auto; display: flex; align-items: flex-start; justify-content: flex-start; }
+.bmn-gm-ico { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ================= Existing surfaces given engine material ================= */
+.bmn-surface[data-bmn-material="button"] { overflow: visible; }
