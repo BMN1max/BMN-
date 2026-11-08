@@ -3,10 +3,12 @@ import { setGlassQuality, haptic, SPRINGS, createSpring } from '@zakisheriff/liq
 import './glass.css';
 import { whenReady, $ } from './dom';
 import { NavBridge, LGTT_DOCK, APP_DOCK, type DockSpec } from './bridges/NavBridge';
-import { bridgeInputs, bridgeSegmented, bridgeSliders, bridgeSwitches } from './bridges/ControlBridges';
+import { bridgeSegmented, bridgeSliders, bridgeSwitches } from './bridges/ControlBridges';
 import { bridgeSheetHost } from './bridges/SheetBridge';
 import { bridgeMenu } from './bridges/MenuBridge';
-import { bridgeSurfaces } from './bridges/Surfaces';
+import { bridgeSurfaces, scanSurfaces } from './bridges/Surfaces';
+import { bridgePlusMenu, scanPlus } from './bridges/PlusMenu';
+import { tagControls, startControls } from './bridges/Controls';
 import { mount, unmountAll } from './mount';
 
 /**
@@ -67,22 +69,35 @@ function boot() {
   bridgeDock(APP_DOCK);
   whenReady('#lgtt', (stage) => {
     bridgeSegmented();
-    bridgeInputs();
     bridgeSwitches();
     bridgeSliders();
     bridgeMenu();
     bridgeSurfaces(stage);
+    bridgePlusMenu();
+    startControls();
     // Settings rows (and any later-built controls) are rendered on demand: bridge what appears.
     let queued = 0;
-    new MutationObserver(() => {
+    // Only the app's own DOM changes matter: nodes our React roots add (glass hosts, their
+    // children, SVG filters) are ignored, otherwise every glass render would trigger a rescan.
+    const foreign = (n: Node) => {
+      const el = n.nodeType === 1 ? (n as Element) : n.parentElement;
+      return !!el && !el.closest('[data-bmn-glass-host], .lg-glass:not(.bmn-surface), .lg-sheet-layer');
+    };
+    const obs = new MutationObserver((records) => {
       if (queued) return;
+      if (!records.some((r) => Array.from(r.addedNodes).some(foreign))) return;
       queued = requestAnimationFrame(() => {
         queued = 0;
         bridgeSwitches();
         bridgeSliders();
-        bridgeInputs();
+        scanSurfaces();
+        scanPlus();
+        tagControls();
       });
-    }).observe(stage, { childList: true, subtree: true });
+    });
+    obs.observe(stage, { childList: true, subtree: true });
+    const sh = document.getElementById('bmnSheetHost');
+    if (sh) obs.observe(sh, { childList: true, subtree: true });
   });
   bridgeSheetHost();
   const ls = document.getElementById('settingsScrim');

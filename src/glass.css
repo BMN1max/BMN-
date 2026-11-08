@@ -14,10 +14,17 @@
 }
 
 /* ================= Dock (GlassNav) ================= */
+/* The app's own dock paints a blurred, tinted slab with very specific !important rules
+   (html.bmn-ios body #lgtt .lgtt-dock ...). That slab sat behind the glass nav and was the
+   frosted look: out-rank every one of them so only the clear glass remains. */
+html.bmn-glass-on body #lgtt #lgttDock.lgtt-dock,
+html.bmn-glass-on body #lgtt #lgttDock.lgtt-dock.rf-on,
+html.bmn-glass-on body.community-mode nav.dock.app-dock.app-dock,
 html.bmn-glass-on #lgttDock,
 html.bmn-glass-on .app-dock {
   background: none !important;
   border: 0 !important;
+  background-image: none !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -54,6 +61,38 @@ html.bmn-glass-on .app-dock > .bmn-dock-lens { display: none !important; }
   color: #fff; background: var(--bmn-red); box-shadow: 0 0 0 2px rgb(0 0 0 / 0.25); box-sizing: border-box; }
 .bmn-gn-badge:empty { min-width: 9px; width: 9px; height: 9px; padding: 0; top: -1px; right: -3px; }
 
+/* ---- Clear dock: genuinely transparent liquid glass, not a frosted slab ----
+   The library's default bar is a half-opaque fill with a heavy blur. The dock keeps its
+   shape and the refracted, saturated backdrop, but the fill is only a whisper of tint and the
+   blur is a hair, so what sits behind the dock stays visible and bends at the rim. */
+.bmn-gn, .bmn-gn .lg-track--tabbar {
+  --lg-navigation-fill: rgb(255 255 255 / 0.02);
+  --lg-track-active: #ff6b7b;
+  --lg-saturate: 1.3;
+  --lg-brightness: 1.05;
+  --lg-shadow: 0 10px 30px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.18);
+  --lg-edge: rgb(255 255 255 / 0.22);
+  --lg-tab-selection: rgb(255 255 255 / 0.1);
+}
+.bmn-gn .lg-track__glass { --lg-glass-blur: 0.6px; }
+.bmn-gn[data-theme='light'], .bmn-gn[data-theme='light'] .lg-track--tabbar {
+  --lg-navigation-fill: rgb(255 255 255 / 0.03);
+  --lg-saturate: 1.2;
+  --lg-brightness: 0.99;
+  --lg-shadow: 0 10px 28px rgb(30 40 60 / 0.16), 0 1px 2px rgb(30 40 60 / 0.12);
+  --lg-edge: rgb(255 255 255 / 0.7);
+  --lg-tab-selection: rgb(255 255 255 / 0.32);
+  --lg-track-active: #c4252f;
+}
+/* The selected pill is clear glass too, tinted with BMN crimson instead of grey. */
+.bmn-gn .lg-track__select { background: linear-gradient(180deg, rgb(255 90 110 / 0.16), rgb(255 90 110 / 0.07)) !important; box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.3) !important; }
+.bmn-gn[data-theme='light'] .lg-track__select { background: linear-gradient(180deg, rgb(209 50 62 / 0.14), rgb(209 50 62 / 0.05)) !important; box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.9) !important; }
+@media (prefers-reduced-transparency: reduce) {
+  .bmn-gn, .bmn-gn .lg-track--tabbar { --lg-navigation-fill: rgb(30 30 34 / 0.78); }
+  .bmn-gn[data-theme='light'], .bmn-gn[data-theme='light'] .lg-track--tabbar { --lg-navigation-fill: rgb(255 255 255 / 0.86); }
+  .bmn-gn .lg-track__glass { --lg-glass-blur: 12px; }
+}
+
 /* ================= Segmented controls (GlassSegmented) ================= */
 html.bmn-glass-on [data-bmn-seg] {
   background: none !important; box-shadow: none !important; border: 0 !important;
@@ -75,17 +114,77 @@ html.bmn-glass-on input[data-bmn-sl] { display: none !important; }
 .bmn-gsl-slot { display: block; flex: 1; min-width: 120px; }
 .bmn-gsl-host, .bmn-gsl { display: block; width: 100%; }
 
-/* ================= Input (GlassInput): search + composers ================= */
-html.bmn-glass-on .bmn-gi-wrap {
-  background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0 !important; padding-right: 0 !important;
-  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; gap: 8px;
+/* ================= Input pills: the PILL is the glass, the field inside is clear ================= */
+.bmn-surfaces { display: none; }
+/* the PWA install chip sits over the Discover search field; hide it while that screen is open */
+#lgttStage[data-view="discover"] #bmnInstallChip { display: none !important; }
+html.bmn-glass-on .bmn-surface[data-bmn-material="pill"] { overflow: visible; }
+html.bmn-glass-on #lgtt .lgtt-compose-pill input, html.bmn-glass-on #lgtt .lgtt-search input,
+html.bmn-glass-on #bmnRealInbox .bmn-ri-composer-shell textarea, html.bmn-glass-on #bmnRealInbox .bmn-ri-search {
+  background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-html.bmn-glass-on .bmn-gi-wrap::before, html.bmn-glass-on .bmn-gi-wrap::after { display: none !important; }
-html.bmn-glass-on .bmn-gi-wrap > input[data-bmn-in], html.bmn-glass-on .bmn-gi-wrap > svg.lgtt-ico { display: none !important; }
-.bmn-gi-host { flex: 1; min-width: 0; }
-.bmn-gi, .bmn-gi .lg-input { width: 100%; }
-.bmn-gi .lg-input__field { min-height: 44px; }
-.bmn-gi input { font-size: 16px; } /* 16px keeps iOS Safari from zooming on focus */
+html.bmn-glass-on #bmnRealInbox .bmn-ri-search { border-color: transparent !important; }
+/* Emoji button lives INSIDE the pill: fixed size, never shrinks, the field flexes around it. */
+#lgtt .lgtt-compose-pill, #bmnRealInbox .bmn-ri-composer-shell { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#lgtt .lgtt-compose-pill > input, #bmnRealInbox .bmn-ri-composer-shell > textarea { flex: 1 1 0; min-width: 0; }
+#lgtt .lgtt-compose-pill > .bmn-emo-btn, #bmnRealInbox .bmn-ri-composer-shell > .bmn-emo-btn,
+#lgtt .lgtt-compose-pill > .lgtt-send, #bmnRealInbox .bmn-ri-composer-shell > .bmn-ri-send { flex: 0 0 auto; }
+.bmn-emo-btn { width: 36px; height: 36px; border-radius: 50%; font-size: 20px; line-height: 1; padding: 0; }
+
+/* ================= iMessage-style "+" menu ================= */
+.bmn-plus-btn { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: inherit; background: rgba(255,255,255,.12); cursor: pointer; touch-action: manipulation; transition: rotate .32s cubic-bezier(.2,1.3,.4,1), background .2s; }
+.bmn-plus-btn[data-open] { rotate: 45deg; background: rgba(255,255,255,.22); }
+.bmn-plus-panel {
+  position: fixed; z-index: 2147482500; min-width: 212px; padding: 8px; border-radius: 26px; display: grid; gap: 2px; color: inherit;
+  background: linear-gradient(160deg, rgba(255,255,255,.2), rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.18), 0 18px 44px -12px rgba(0,0,0,.55);
+  opacity: 0; scale: .35; filter: blur(8px); pointer-events: none;
+  transition: scale .42s cubic-bezier(.2,1.25,.35,1), opacity .2s ease, filter .28s ease;
+}
+.bmn-plus-panel[data-state="open"] { opacity: 1; scale: 1; filter: none; pointer-events: auto; }
+.bmn-plus-panel[data-state="closing"] { opacity: 0; scale: .6; filter: blur(6px); pointer-events: none; transition-duration: .2s; }
+.bmn-plus-item { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 14px 0 8px; border: 0; border-radius: 18px; background: transparent; color: inherit; font: 600 16px/1 system-ui, -apple-system, sans-serif; text-align: left; cursor: pointer; touch-action: manipulation; opacity: 0; translate: 0 8px; transition: opacity .25s calc(var(--i) * 45ms + 80ms), translate .38s cubic-bezier(.2,1.2,.4,1) calc(var(--i) * 45ms + 80ms), background .15s; }
+.bmn-plus-panel[data-state="open"] .bmn-plus-item, .bmn-plus-panel[data-state="open"] .bmn-plus-react { opacity: 1; translate: 0 0; }
+.bmn-plus-item:active, .bmn-plus-item:focus-visible { background: rgba(255,255,255,.16); outline: 0; }
+.bmn-plus-ic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(120,120,128,.55); }
+.bmn-plus-item[data-tone="blue"] .bmn-plus-ic { background: linear-gradient(145deg, #5aa8ff, #2f6fe0); }
+.bmn-plus-item[data-tone="gold"] .bmn-plus-ic { background: linear-gradient(145deg, #ffd25e, #e0a21a); }
+.bmn-plus-item[data-tone="red"] .bmn-plus-ic { background: linear-gradient(145deg, #ff6a78, #e0283d); }
+.bmn-plus-react { display: flex; gap: 4px; padding: 4px 4px 2px; opacity: 0; translate: 0 8px; transition: opacity .25s calc(var(--i) * 45ms + 80ms), translate .38s cubic-bezier(.2,1.2,.4,1) calc(var(--i) * 45ms + 80ms); }
+.bmn-plus-react button { flex: 1; height: 42px; border: 0; border-radius: 16px; background: rgba(255,255,255,.1); font-size: 21px; cursor: pointer; touch-action: manipulation; }
+.bmn-plus-react button:active { background: rgba(255,255,255,.22); }
+html[data-bmn-theme="light"] .bmn-plus-panel { background: linear-gradient(160deg, rgba(255,255,255,.7), rgba(255,255,255,.4)); border-color: rgba(255,255,255,.8); color: #11141c; box-shadow: inset 0 1px 0 #fff, 0 18px 40px -14px rgba(20,30,60,.35); }
+html[data-bmn-theme="light"] .bmn-plus-btn { background: rgba(0,0,0,.07); }
+html[data-bmn-theme="light"] .bmn-plus-item:active { background: rgba(0,0,0,.07); }
+html[data-bmn-theme="light"] .bmn-plus-react button { background: rgba(0,0,0,.06); }
+html.bmn-glass-on #bmnRealInbox .bmn-has-plus #bmnRiAttach, html.bmn-glass-on #bmnRealInbox .bmn-has-plus > .bmn-ri-attach { display: none !important; }
+
+/* ================= Universal control material (every button, pill, select, range) ================= */
+html.bmn-glass-on .bmn-ctl-rel { position: relative; }
+html.bmn-glass-on .bmn-ctl { transition: scale .34s cubic-bezier(.2,1.35,.4,1), filter .2s; -webkit-tap-highlight-color: transparent; }
+html.bmn-glass-on .bmn-ctl[data-bmn-pressed] { scale: .955; transition-duration: .12s; }
+html.bmn-glass-on .bmn-ctl-ov::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  background: linear-gradient(158deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,.04) 34%, rgba(255,255,255,0) 60%, rgba(255,255,255,.1) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.2), inset 0 0 0 1px rgba(255,255,255,.12), inset 0 9px 14px -9px rgba(255,255,255,.35), inset 0 -8px 12px -9px rgba(0,0,0,.28);
+}
+html[data-bmn-theme="light"].bmn-glass-on .bmn-ctl-ov::after { background: linear-gradient(158deg, rgba(255,255,255,.7) 0%, rgba(255,255,255,.12) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,.3) 100%); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(0,0,0,.1), inset 0 0 0 1px rgba(255,255,255,.4), inset 0 -8px 12px -9px rgba(0,0,0,.14); }
+/* Coloured controls keep their colour identity but turn into tinted, translucent glass. */
+html.bmn-glass-on .bmn-ctl[data-bmn-tone] {
+  background-color: color-mix(in srgb, rgb(var(--bmn-tone)) 72%, transparent) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.6); backdrop-filter: blur(10px) saturate(1.6);
+  box-shadow: 0 8px 20px -8px rgb(var(--bmn-tone) / .65);
+}
+html.bmn-glass-on .bmn-ctl[data-bmn-tone].bmn-ctl-ov::after { box-shadow: inset 0 1.5px 0 rgba(255,255,255,.65), inset 0 -1px 0 rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.2), inset 0 10px 16px -10px rgba(255,255,255,.5); }
+/* Native range inputs the app did not hand to the slider bridge */
+html.bmn-glass-on input[type="range"]:not([data-bmn-sl]) { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; }
+html.bmn-glass-on input[type="range"]:not([data-bmn-sl])::-webkit-slider-runnable-track { height: 8px; border-radius: 99px; background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.26)); box-shadow: inset 0 1px 2px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.18); }
+html.bmn-glass-on input[type="range"]:not([data-bmn-sl])::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -9px; border-radius: 50%; background: radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.95), rgba(255,255,255,.55)); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 4px 12px rgba(0,0,0,.35), inset 0 -3px 6px rgba(0,0,0,.12); }
+html.bmn-glass-on input[type="range"]:not([data-bmn-sl])::-moz-range-track { height: 8px; border-radius: 99px; background: rgba(255,255,255,.2); }
+html.bmn-glass-on input[type="range"]:not([data-bmn-sl])::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.7); }
+@media (prefers-reduced-motion: reduce) { .bmn-plus-panel, .bmn-plus-item, .bmn-plus-react, .bmn-plus-btn, html.bmn-glass-on .bmn-ctl { transition-duration: .01s !important; transition-delay: 0s !important; } }
+@media (prefers-reduced-transparency: reduce) { html.bmn-glass-on .bmn-ctl[data-bmn-tone], .bmn-plus-panel { -webkit-backdrop-filter: none; backdrop-filter: none; } .bmn-plus-panel { background: rgba(40,40,46,.96); } }
 
 /* ================= Sheet host (GlassSheet) ================= */
 html.bmn-glass-on #bmnSheetHost .bmn-sh-scrim { display: none !important; }
