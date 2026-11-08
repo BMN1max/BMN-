@@ -163,7 +163,11 @@ html.bmn-glass-on #bmnRealInbox .bmn-has-plus #bmnRiAttach, html.bmn-glass-on #b
 /* ================= Universal control material (every button, pill, select, range) ================= */
 html.bmn-glass-on .bmn-ctl-rel { position: relative; }
 html.bmn-glass-on .bmn-ctl { transition: scale .34s cubic-bezier(.2,1.35,.4,1), filter .2s; -webkit-tap-highlight-color: transparent; }
-html.bmn-glass-on .bmn-ctl[data-bmn-pressed] { scale: .955; transition-duration: .12s; }
+/* Apple-style: a pressed glass control swells and magnifies what is inside it. */
+html.bmn-glass-on .bmn-ctl[data-bmn-pressed] { scale: 1.06; transition-duration: .16s; }
+html.bmn-glass-on .bmn-ri-row.bmn-ctl[data-bmn-pressed], html.bmn-glass-on .lgtt-opts.bmn-ctl[data-bmn-pressed], html.bmn-glass-on .lgtt-set-prof.bmn-ctl[data-bmn-pressed] { scale: .985; }
+/* The dock's moving lens grows and magnifies as it lifts. */
+.bmn-gn .lg-track__lens { scale: calc(1 + var(--lg-lift, 0) * 0.1); }
 html.bmn-glass-on .bmn-ctl-ov::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
   background: linear-gradient(158deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,.04) 34%, rgba(255,255,255,0) 60%, rgba(255,255,255,.1) 100%);

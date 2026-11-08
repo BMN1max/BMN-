@@ -22,6 +22,11 @@ const SEL = [
   '.bmn-act-panel button',
   '.bmn-conversation-page button',
   '#bmnInboxV2 button',
+  '#lgtt .lgtt-set-row',
+  '#lgtt .lgtt-set-prof',
+  '#lgtt .lgtt-opts',
+  '#bmnRealInbox .bmn-ri-filters button',
+  '#bmnRealInbox .bmn-ri-row',
 ].join(',');
 
 // Never decorate: the dock (its own glass), emoji cells, anything the library already owns.
