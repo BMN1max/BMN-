@@ -2120,7 +2120,7 @@ body.community-mode #bmnProfileV2.bmn-founder-profile .bmn-profile-menu{border-c
 @media(prefers-reduced-motion:no-preference){#lgtt.lgtt-founder-profile #lgttProfHead{transition:border-color .2s ease,box-shadow .2s ease}}
 </style>
 
-<style id="bmn-discover-search-repair">#bmnDiscoverResults{display:grid;gap:8px;margin:4px 0 18px}.bmn-discover-result{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:13px 14px;border:1px solid var(--clear-glass-border);border-radius:16px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;cursor:pointer}.bmn-discover-result>span:first-child{display:flex;align-items:center;gap:8px}.bmn-discover-result strong{font-size:12px}.bmn-discover-result small{font-size:10px;color:var(--muted)}.bmn-discover-result-caption{font-size:12px;line-height:1.45;color:var(--muted)}.bmn-discover-result-count{margin:4px 2px;font-size:11px;color:var(--muted)}.bmn-discover-creator{min-height:42px}</style>
+<style id="bmn-discover-search-repair">#bmnDiscoverResults{display:grid;gap:8px;margin:4px 0 18px}.bmn-dp-h{margin:6px 2px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}.bmn-discover-person{flex-direction:row!important;align-items:center!important;gap:12px!important;cursor:pointer}.bmn-dp-av{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#d1323e,#e8b04a);color:#fff;font-weight:800}.bmn-dp-av img{width:100%;height:100%;object-fit:cover}.bmn-dp-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.bmn-dp-main strong,.bmn-dp-main small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bmn-discover-person .bmn-follow-pill{flex:none}.bmn-discover-result{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:13px 14px;border:1px solid var(--clear-glass-border);border-radius:16px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;cursor:pointer}.bmn-discover-result>span:first-child{display:flex;align-items:center;gap:8px}.bmn-discover-result strong{font-size:12px}.bmn-discover-result small{font-size:10px;color:var(--muted)}.bmn-discover-result-caption{font-size:12px;line-height:1.45;color:var(--muted)}.bmn-discover-result-count{margin:4px 2px;font-size:11px;color:var(--muted)}.bmn-discover-creator{min-height:42px}</style>
 <style id="bmn-action-sheet-visibility-repair">html.bmn-community-app body>#bmnActionSheetHost{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;position:fixed!important;inset:0!important;z-index:2147482500!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-backdrop.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet:not(.open){pointer-events:none!important}</style>
 <link rel="stylesheet" href="bmn-glass/bmn-glass.css" id="bmn-glass-css">
 </head>
@@ -2862,8 +2862,25 @@ function bmnUpgradeDiscover(){
  let mode='all';
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const getPosts=()=>Array.isArray(cachedPosts)?cachedPosts:[];
+ /* Real people search: the profiles table (username / display name), never placeholder users. */
+ let people=[],peopleQ='',peopleTimer=0,peopleTok=0,peopleBusy=false;
+ const meId=()=>bmnSession&&bmnSession.user&&bmnSession.user.id;
+ const fetchPeople=async term=>{
+  const clean=term.replace(/^@/,'').replace(/[%*,()\\]/g,' ').trim();
+  if(clean.length<2||!bmnSupabase){people=[];peopleBusy=false;run();return}
+  const mine=++peopleTok;peopleBusy=true;run();
+  try{
+   const {data,error}=await bmnSupabase.from('profiles').select('*').or('username.ilike.%'+clean+'%,display_name.ilike.%'+clean+'%').limit(20);
+   if(mine!==peopleTok)return;
+   if(error)throw error;
+   people=(data||[]).filter(r=>r&&r.id&&r.id!==meId());
+   people.forEach(r=>{bmnProfiles[r.id]={...(bmnProfiles[r.id]||{}),...r}});
+  }catch(_){if(mine===peopleTok)people=[]}
+  if(mine===peopleTok){peopleBusy=false;run()}
+ };
  const run=()=>{
   const q=(search?.value||'').trim().toLowerCase();
+  if(q!==peopleQ){peopleQ=q;clearTimeout(peopleTimer);if(q.replace(/^@/,'').length<2){peopleTok++;people=[];peopleBusy=false}else peopleTimer=setTimeout(()=>fetchPeople(q),220)}
   const grid=$('#bmnCreatorGrid');let creatorCards=grid?[...grid.querySelectorAll('.creator-card')]:[];
   creatorCards.forEach(card=>{const match=!q||card.textContent.toLowerCase().includes(q);card.style.display=(mode==='videos'||mode==='hashtags'||mode==='trending')?'none':(match?'':'none')});
   let posts=getPosts().filter(p=>p&&(!p.status||String(p.status).toLowerCase()==='published'));
@@ -2875,12 +2892,14 @@ function bmnUpgradeDiscover(){
   const matchingCreators=creatorCards.filter(card=>card.style.display!=='none');
   const creatorHtml=(mode==='all'||mode==='creators')&&matchingCreators.length?matchingCreators.slice(0,8).map(card=>'<button type="button" class="bmn-discover-result bmn-discover-creator" data-discover-creator="1">'+esc(card.textContent.trim().replace(/\s+/g,' ').slice(0,110))+'</button>').join(''):'';
   const postHtml=posts.slice(0,12).map(p=>{const pr=bmnProfiles[p.user_id]||{};const caption=String(p.caption||p.content||p.title||'Community post');return '<button type="button" class="bmn-discover-result" data-discover-post="'+esc(p.id)+'"><span><strong>'+esc(pr.display_name||pr.username||'BMN creator')+'</strong><small>@'+esc(pr.username||'creator')+'</small></span><span class="bmn-discover-result-caption">'+esc(caption.slice(0,150))+'</span><small>'+(String(p.media_type||'').toLowerCase()==='video'?'Video':'Post')+'</small></button>'}).join('');
-  const count=posts.length+(mode==='all'||mode==='creators'?matchingCreators.length:0);
-  result.innerHTML=(creatorHtml||postHtml)?'<p class="bmn-discover-result-count">'+count+' matching result'+(count===1?'':'s')+'</p>'+creatorHtml+postHtml:'<div class="bmn-feed-state">'+(q?'No matches found. Try another name, caption or hashtag.':'No matching content is available yet.')+'</div>';
+  const showPeople=q&&(mode==='all'||mode==='creators');
+  const peopleHtml=showPeople?people.map(r=>{const nm=r.display_name||r.username||'BMN creator',img=r.avatar_display_url||(/^https?:/.test(r.avatar_url||'')?r.avatar_url:'');const mutual=bmnFollowing.has(r.id)&&bmnFollowers.has(r.id);return '<div class="bmn-discover-result bmn-discover-person" data-discover-user="'+esc(r.id)+'" role="button" tabindex="0"><span class="bmn-dp-av">'+(img?'<img src="'+esc(img)+'" alt="" loading="lazy" onerror="this.remove()">':esc((nm.trim()[0]||'B').toUpperCase()))+'</span><span class="bmn-dp-main"><strong>'+esc(nm)+'</strong><small>@'+esc(r.username||'creator')+(mutual?' · Friends':'')+'</small></span>'+(meId()?'<button type="button" class="bmn-follow-pill" data-follow-uid="'+esc(r.id)+'" aria-pressed="'+(bmnFollowing.has(r.id)?'true':'false')+'">'+(bmnFollowing.has(r.id)?'Following':'Follow')+'</button>':'')+'</div>'}).join(''):'';
+  const count=posts.length+people.length*(showPeople?1:0)+(mode==='all'||mode==='creators'?matchingCreators.length:0);
+  result.innerHTML=(creatorHtml||postHtml||peopleHtml)?'<p class="bmn-discover-result-count">'+count+' matching result'+(count===1?'':'s')+(peopleBusy?' · searching people…':'')+'</p>'+(peopleHtml?'<h4 class="bmn-dp-h">People</h4>'+peopleHtml:'')+creatorHtml+postHtml:'<div class="bmn-feed-state">'+(peopleBusy?'Searching BMN members…':(q?'No matches found. Try another name, caption or hashtag.':'No matching content is available yet.'))+'</div>';
  };
  search?.addEventListener('input',run);
  cats.addEventListener('click',e=>{const b=e.target.closest('[data-dcat]');if(!b)return;mode=b.dataset.dcat;cats.querySelectorAll('[data-dcat]').forEach(x=>{const active=x===b;x.setAttribute('aria-pressed',String(active));x.style.background=active?'linear-gradient(120deg,rgba(0,122,255,.22),rgba(177,140,255,.16))':'var(--clear-glass-bg)'});run()});
- result.addEventListener('click',e=>{const post=e.target.closest('[data-discover-post]');if(post){const id=post.dataset.discoverPost;setAppView('home');setTimeout(()=>{const tile=document.querySelector('[data-post-id="'+CSS.escape(id)+'"]');tile?.scrollIntoView({behavior:'smooth',block:'center'})},180);return}const creator=e.target.closest('[data-discover-creator]');if(creator){const grid=$('#bmnCreatorGrid');const card=[...(grid?.querySelectorAll('.creator-card')||[])].find(c=>c.style.display!=='none'&&c.textContent.trim().replace(/\s+/g,' ').startsWith(creator.textContent.trim()));card?.click()}});
+ result.addEventListener('click',e=>{const person=e.target.closest('[data-discover-user]');if(person&&!e.target.closest('.bmn-follow-pill')){const id=person.dataset.discoverUser;if(typeof openBMNPublicProfile==='function')openBMNPublicProfile(id);else window.LGTT&&LGTT.openProfile&&LGTT.openProfile(id);return}const post=e.target.closest('[data-discover-post]');if(post){const id=post.dataset.discoverPost;setAppView('home');setTimeout(()=>{const tile=document.querySelector('[data-post-id="'+CSS.escape(id)+'"]');tile?.scrollIntoView({behavior:'smooth',block:'center'})},180);return}const creator=e.target.closest('[data-discover-creator]');if(creator){const grid=$('#bmnCreatorGrid');const card=[...(grid?.querySelectorAll('.creator-card')||[])].find(c=>c.style.display!=='none'&&c.textContent.trim().replace(/\s+/g,' ').startsWith(creator.textContent.trim()));card?.click()}});
  const setup=$$('#creators details');setup.forEach(el=>el.style.display='none');
  run();window.bmnRefreshDiscover=run;
 }
@@ -4562,6 +4581,7 @@ function refreshPA(){
   const s=document.createElement('span');s.textContent='📌 '+label;d.appendChild(s);host.appendChild(d);
  });
 }
+document.addEventListener('bmn:follow',()=>{try{refreshPA()}catch(_){}try{window.LGTT&&LGTT.refreshProfile&&LGTT.refreshProfile()}catch(_){}});
 document.addEventListener('click',e=>{const p=e.target.closest&&e.target.closest('.bmn-pin[data-pin-post]');if(!p)return;const id=p.dataset.pinPost;go('home');setTimeout(()=>{const el=$('#community [data-post-id="'+CSS.escape(id)+'"]');if(el)el.scrollIntoView({block:'start'})},400)});
 window.bmnGo=go;
 document.addEventListener('click',e=>{
@@ -4737,6 +4757,7 @@ document.addEventListener('click',async e=>{
    else{const {error}=await sb.from('follows').insert({follower_id:me,following_id:uid});if(error)throw error;window.bmnFollowing.add(uid);
     safe(()=>sb.from('notifications').insert({user_id:uid,actor_id:me,type:'follow',message:'started following you'}).then(()=>{},()=>{}))}
    $$('.bmn-follow-pill[data-follow-uid="'+CSS.escape(uid)+'"]').forEach(p=>followState(p,uid));
+   try{document.dispatchEvent(new CustomEvent('bmn:follow',{detail:{uid:uid,following:window.bmnFollowing.has(uid)}}))}catch(_){}
   }catch(err){if(typeof window.setBackendStatus==='function')window.setBackendStatus('Could not update follow: '+(err&&err.message||'network error'),true)}
   finally{pill.disabled=false}
  }
@@ -5330,7 +5351,7 @@ function authPanel(){return $('#bmnAccountPanel')}
 const authBackdrop=document.createElement('div');authBackdrop.id='bmnAuthBackdrop';document.body.appendChild(authBackdrop);
 function openAuth(){const p=authPanel();if(!p)return;p.classList.add('bmn-account-visible');p.style.display='block';ensureX(p,closeAuth);syncAuthBackdrop();const em=$('#bmnEmail');if(em&&!window.bmnSession)safe(()=>em.focus({preventScroll:true}))}
 function closeAuth(){const p=authPanel();if(!p)return;p.classList.remove('bmn-account-visible');p.style.removeProperty('display');syncAuthBackdrop()}
-function syncAuthBackdrop(){const p=authPanel();authBackdrop.classList.toggle('open',!!(p&&p.classList.contains('bmn-account-visible')))}
+function syncAuthBackdrop(){const p=authPanel();const on=!!(p&&p.classList.contains('bmn-account-visible'));if(authBackdrop.classList.contains('open')!==on)authBackdrop.classList.toggle('open',on)}
 authBackdrop.addEventListener('click',closeAuth);
 function ensureX(container,onClose,label){
   if(!container||container.querySelector(':scope > .bmn-x'))return;
@@ -6826,7 +6847,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   const DEFAULTS = {
     settings: { haptics: true, wobble: true, autoplay: true, sound: true, captions: true, dataSaver: false, reduceMotion: false, highContrast: false,
                 private: false, suggest: true, activity: true, downloads: true, whoComment: 'everyone', whoMessage: 'friends', twoStep: false, loginAlerts: true,
-                notif: true, nLikes: true, nComments: true, nFollows: true, nMessages: true, language: 'English' },
+                notif: true, nLikes: true, nComments: true, nFollows: true, nMessages: true, language: 'English', glassQuality: 'auto' },
     liked: {}, saved: {}, reposted: {}, follows: {}, commentLikes: {}, seen: {}, myStories: [],
     extraComments: {}, filterWords: [], blocked: [], profile: {}, hinted: false, notInterested: {}
   };
@@ -7340,7 +7361,23 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       slideOfBase(b).forEach(s => wobble($('[data-act="save"]', s), { amp: 1.3, rot: 4 }));
     }
     function follow(uid) {
+      /* Real follows: a signed-in follow is written to the `follows` table (and rolled back if it
+         fails). Guests are asked to sign in instead of getting a follow that only lives on the phone. */
+      const REAL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(uid));
+      const sb = window.bmnSupabase, meId = window.bmnSession && window.bmnSession.user && window.bmnSession.user.id;
+      if (REAL && !meId) { toast('Sign in to follow creators', 'user'); try { window.requestCommunityAuth && window.requestCommunityAuth('follow'); } catch (_) {} return; }
       const was = !!S.follows[uid]; was ? delete S.follows[uid] : (S.follows[uid] = 1); save();
+      if (REAL && sb && meId && uid !== meId) {
+        const fol = window.bmnFollowing instanceof Set ? window.bmnFollowing : null;
+        const back = () => { was ? (S.follows[uid] = 1) : delete S.follows[uid]; save(); Views.onFollowChanged(uid); try { Discover.render(); } catch (_) {} toast('Could not update follow. Check your connection.', 'info'); };
+        const op = was ? sb.from('follows').delete().eq('follower_id', meId).eq('following_id', uid) : sb.from('follows').insert({ follower_id: meId, following_id: uid });
+        Promise.resolve(op).then(r => {
+          if (r && r.error) throw r.error;
+          if (fol) was ? fol.delete(uid) : fol.add(uid);
+          if (!was) { try { Promise.resolve(sb.from('notifications').insert({ user_id: uid, actor_id: meId, type: 'follow', message: 'started following you' })).then(() => {}, () => {}); } catch (_) {} }
+          try { document.dispatchEvent(new CustomEvent('bmn:follow', { detail: { uid: uid, following: !was } })); } catch (_) {}
+        }).catch(back);
+      }
       haptic(was ? 'tap' : 'success');
       $$('.lgtt-av-follow[data-u="' + uid + '"]', R.root).forEach(b => { b.classList.toggle('is-following', !was); b.innerHTML = ico(was ? 'plus' : 'check'); b.setAttribute('aria-label', (was ? 'Follow' : 'Unfollow') + ' @' + (U[uid] ? U[uid].handle : uid)); wobble(b, { amp: 2, rot: 8 }); });
       toast(was ? 'Unfollowed @' + U[uid].handle : 'Following @' + U[uid].handle, was ? 'user' : 'usercheck');
@@ -7895,24 +7932,66 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   /* ---------------------------------------------------------------
      3.12a DISCOVER
      --------------------------------------------------------------- */
+  /* Pull follows saved on the account (Supabase) into the UI state, so every device agrees. */
+  function syncFollows() {
+    const f = window.bmnFollowing; if (!(f instanceof Set)) return;
+    let changed = false; f.forEach(id => { if (!S.follows[id]) { S.follows[id] = 1; changed = true; } });
+    if (changed) { save(); try { Discover.render(); if (ST.view === 'profile') Profile.render(Profile.id()); } catch (_) {} }
+  }
+  document.addEventListener('bmn:follow', () => { syncFollows(); try { Discover.render(); if (ST.view === 'profile') Profile.render(Profile.id()); } catch (_) {} });
   const Discover = (() => {
     let q = '', tag = '';
     function match(p) {
       const u = userFor(p.u), n = normalize(q);
       if (tag && !normalize(p.cap).includes('#' + normalize(tag))) return false;
-      return !n || normalize(p.cap + ' ' + u.handle + ' ' + u.name + ' ' + (p.music || '')).includes(n.replace(/^#/, ''));
+      if (n.charAt(0) === '#') return n.length < 2 || normalize(p.cap).split(/\s+/).some(w => w.indexOf(n) === 0);   // "#edit" finds captions with a hashtag starting #edit
+      return !n || normalize(p.cap + ' ' + u.handle + ' ' + u.name + ' ' + (p.music || '')).includes(n.replace(/^@/, ''));
+    }
+    /* Hashtag chips come from the real captions in the feed, never from a fixed list. */
+    function liveTags() {
+      const c = {};
+      POSTS.forEach(p => (String(p.cap || '').match(/#[\p{L}\p{N}_]+/gu) || []).forEach(t => { t = t.slice(1); const k = t.toLowerCase(); (c[k] = c[k] || { t: t, n: 0 }).n++; }));
+      return Object.values(c).sort((a, b) => b.n - a.n).slice(0, 12).map(x => x.t);
+    }
+    /* People: creators already loaded, plus a live lookup in the real profiles table. */
+    let remote = {}, remoteQ = '', busy = false, tok = 0;
+    const personMatch = (u, n) => !n || normalize((u.name || '') + ' ' + (u.handle || '')).includes(n.replace(/^[@#]/, ''));
+    function lookup(text) {
+      const term = text.replace(/^[@#]/, '').replace(/[%*,()\\]/g, ' ').trim();
+      const sb = window.bmnSupabase;
+      if (term.length < 2 || !sb || typeof sb.from !== 'function' || text.charAt(0) === '#') { remote = {}; remoteQ = ''; busy = false; return; }
+      const mine = ++tok; busy = true;
+      Promise.resolve(sb.from('profiles').select('id,username,display_name,avatar_url,bio').or('username.ilike.%' + term + '%,display_name.ilike.%' + term + '%').limit(12))
+        .then(r => {
+          if (mine !== tok) return;
+          remote = {}; remoteQ = text;
+          ((r && r.data) || []).forEach(row => {
+            if (!row || !row.id) return;
+            const me = !!(window.bmnSession && window.bmnSession.user && window.bmnSession.user.id === row.id);
+            if (window.bmnProfiles && !window.bmnProfiles[row.id]) window.bmnProfiles[row.id] = row;
+            if (!U[row.id]) U[row.id] = { id: row.id, name: row.display_name || row.username || 'BMN member', handle: row.username || ('member-' + String(row.id).slice(0, 8)), hue: 210, followers: null, following: null, likes: null, avatar: row.avatar_url || '', bio: row.bio || '', me: me };
+            remote[row.id] = 1;
+          });
+        })
+        .catch(() => { if (mine === tok) { remote = {}; remoteQ = ''; } })
+        .then(() => { if (mine === tok) { busy = false; render(); } });
     }
     function render() {
       R.DiscChips.innerHTML = '<button type="button" class="lgtt-chip' + (!tag ? ' on' : '') + '" data-tag-chip="">' + ico('trend', 'lgtt-ico') + ' Trending</button>' +
-        TAGS.map(t => '<button type="button" class="lgtt-chip' + (tag === t ? ' on' : '') + '" data-tag-chip="' + t + '">#' + t + '</button>').join('');
+        liveTags().map(t => '<button type="button" class="lgtt-chip' + (tag === t ? ' on' : '') + '" data-tag-chip="' + esc(t) + '">#' + esc(t) + '</button>').join('');
       R.DiscChips.querySelector('.lgtt-chip .lgtt-ico').style.cssText = 'width:14px;height:14px;display:inline;vertical-align:-2px';
-      R.Creators.innerHTML = Object.values(U).filter(u => !u.me).slice(0, 8).map(u => {
+      const nq = normalize(q), searching = !!nq && nq.charAt(0) !== '#';
+      const people = Object.values(U).filter(u => !u.me && (searching ? (personMatch(u, nq) || (remote[u.id] && remoteQ === q)) : true)).slice(0, searching ? 12 : 8);
+      const head = R.Creators.previousElementSibling; if (head && head.classList.contains('lgtt-sec')) head.textContent = searching ? (people.length ? 'People' : 'People · none found') : 'Creators to follow';
+      R.Creators.hidden = !people.length;
+      R.Creators.innerHTML = people.map(u => {
         const f = !!S.follows[u.id];
         return '<div class="lgtt-creator lgtt-glass"><button type="button" data-act="open-profile" data-u="' + u.id + '" aria-label="Open @' + esc(u.handle) + '">' + avatar(u, 'lgtt-md') + '</button><strong>' + esc(u.name) + '</strong><small>' + fmt(u.followers) + ' followers</small>' +
           '<button type="button" class="lgtt-btn lgtt-pill lgtt-sm lgtt-follow-btn' + (f ? '' : ' lgtt-primary') + '" data-act="follow" data-u="' + u.id + '">' + (f ? 'Following' : 'Follow') + '</button></div>';
       }).join('');
       const res = POSTS.filter(match);
-      R.DiscTitle.textContent = q || tag ? (res.length + (res.length === 1 ? ' result' : ' results') + (q ? ' for “' + q + '”' : '') + (tag ? ' · #' + tag : '')) : 'Trending now';
+      R.DiscTitle.textContent = q || tag ? (res.length + (res.length === 1 ? ' video' : ' videos') + (q ? ' for “' + q + '”' : '') + (tag ? ' · #' + tag : '') + (busy ? ' · searching people…' : '')) : 'Trending now';
+      R.DiscGrid.setAttribute('aria-busy', busy ? 'true' : 'false');
       R.DiscGrid.innerHTML = res.length ? res.map((p, i) => tile(p, i)).join('') : '<div class="lgtt-empty" style="grid-column:1/-1">' + ico('search') + '<b>Nothing found</b><span>Try another keyword or hashtag.</span></div>';
       $('.lgtt-clear', R.DiscSearch.parentElement).hidden = !R.DiscSearch.value;
     }
@@ -7921,11 +8000,11 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         (pinned ? '<span class="pinned">Pinned</span>' : '') + '<span class="cap">' + ico('play') + '<span class="t">' + fmt(countOf(p, 'likes') * 6) + ' · ' + esc((p.cap || '').replace(/#\S+/g, '').trim()) + '</span></span></button>';
     }
     function bind() {
-      let t = 0; R.DiscSearch.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { q = R.DiscSearch.value.trim(); render(); if (q) haptic('soft'); }, 140); });
+      let t = 0; R.DiscSearch.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { q = R.DiscSearch.value.trim(); lookup(q); render(); if (q) haptic('soft'); }, 140); });
       R.DiscChips.addEventListener('click', e => { const b = e.target.closest('[data-tag-chip]'); if (!b) return; tag = b.dataset.tagChip; haptic('select'); render(); wobble(R.DiscGrid, { amp: 0.4, rot: 0 }); });
       scrollWobble(R.DiscScroll, () => R.DiscChips, { amp: 0.5, rot: 0.15 });
     }
-    return { render, bind, tile, search(v) { R.DiscSearch.value = v; q = v; tag = ''; render(); }, clear() { R.DiscSearch.value = ''; q = ''; tag = ''; render(); R.DiscSearch.focus(); } };
+    return { render, bind, tile, search(v) { R.DiscSearch.value = v; q = v; tag = ''; lookup(q); render(); }, clear() { R.DiscSearch.value = ''; q = ''; tag = ''; ++tok; busy = false; remote = {}; remoteQ = ''; render(); R.DiscSearch.focus(); } };
   })();
 
   /* ---------------------------------------------------------------
@@ -8025,7 +8104,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       ];
       if (tab === 'notif') return [{ h: 'Push notifications', rows: [T('notif', 'bell', '#58aaff', '#9b6bff', 'Allow notifications', 'Master switch'), T('nLikes', 'heart', '#ff5c8a', '#ff2d6f', 'Likes', ''), T('nComments', 'comment', '#59f1e6', '#58aaff', 'Comments & replies', ''), T('nFollows', 'userplus', '#b18cff', '#58aaff', 'New followers', ''), T('nMessages', 'mail', '#ffd166', '#ff8a5c', 'Direct messages', '')] }];
       return [
-        { h: 'Feel', rows: [T('haptics', 'vibrate', '#b18cff', '#58aaff', 'Haptic feedback', HAS_VIBRATE ? 'Short pulses on taps, double pulse on likes' : 'This browser has no Vibration API (iOS Safari) — a subtle visual pulse is used instead'), T('wobble', 'zap', '#59f1e6', '#58aaff', 'Glass wobble', 'Springy physical motion on glass panels'), T('reduceMotion', 'eyeoff', '#8a93b8', '#5a6290', 'Reduce motion', 'Calmer animations everywhere')] },
+        { h: 'Feel', rows: [T('haptics', 'vibrate', '#b18cff', '#58aaff', 'Haptic feedback', HAS_VIBRATE ? 'Short pulses on taps, double pulse on likes' : 'This browser has no Vibration API (iOS Safari) — a subtle visual pulse is used instead'), T('wobble', 'zap', '#59f1e6', '#58aaff', 'Glass wobble', 'Springy physical motion on glass panels'), O('glassQuality', 'sliders', '#ffd166', '#ff8a5c', 'Glass quality', 'Auto adapts to your device. Low is lighter on battery.', ['auto', 'high', 'low']), T('reduceMotion', 'eyeoff', '#8a93b8', '#5a6290', 'Reduce motion', 'Calmer animations everywhere')] },
         { h: 'Playback', rows: [T('autoplay', 'play', '#58aaff', '#9b6bff', 'Autoplay', 'Start videos as they appear'), T('sound', 'vol', '#59f1e6', '#58aaff', 'Sound on by default', 'Applies to videos with audio'), T('captions', 'type', '#ffd166', '#ff8a5c', 'Captions', 'Show captions when available'), T('dataSaver', 'download', '#3ddc84', '#59f1e6', 'Data saver', 'Lighter blur and effects')] },
         { h: 'Accessibility', rows: [T('highContrast', 'sliders', '#59f1e6', '#58aaff', 'High contrast', 'Stronger borders and more solid glass so text is easier to read')] },
         { h: 'Cache & data', rows: [L('freespace', 'trash', '#ff8a5c', '#ff5c8a', 'Free up space', 'Clear saved videos, thumbnails and caches', ''), L('clear', 'trash', '#ff8a5c', '#ff5c8a', 'Reset app preferences', 'Favourites, filters and local settings', ''), L('data', 'download', '#58aaff', '#9b6bff', 'Download my data', 'Get a copy of your profile, posts and comments', '')] },
@@ -8076,7 +8155,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       R.SetBody.addEventListener('click', e => {
         const sw = e.target.closest('[data-set]');
         if (sw) { const k = sw.dataset.set; S.settings[k] = !S.settings[k]; save(); sw.setAttribute('aria-checked', S.settings[k]); wobble(sw.closest('.lgtt-set-row'), { amp: 0.6, rot: 0.1 }); haptic(S.settings[k] ? 'success' : 'tap'); if (k === 'haptics' && S.settings.haptics) { lastHap = 0; haptic('success'); } apply(); return; }
-        const op = e.target.closest('[data-opt] [data-v]'); if (op) { const k = op.parentElement.dataset.opt; S.settings[k] = op.dataset.v; save(); $$('[data-v]', op.parentElement).forEach(x => x.classList.toggle('on', x === op)); haptic('select'); return; }
+        const op = e.target.closest('[data-opt] [data-v]'); if (op) { const k = op.parentElement.dataset.opt; S.settings[k] = op.dataset.v; save(); $$('[data-v]', op.parentElement).forEach(x => x.classList.toggle('on', x === op)); haptic('select'); if (k === 'glassQuality') App.applySettings(); return; }
         const lk = e.target.closest('[data-link]'); if (lk) { link(lk.dataset.link); return; }
         const ub = e.target.closest('[data-unblock]'); if (ub) { S.blocked = S.blocked.filter(x => x !== ub.dataset.unblock); save(); haptic('success'); render(); toast('Unblocked', 'check'); return; }
         const kd = e.target.closest('[data-kw-del]'); if (kd) { S.filterWords.splice(+kd.dataset.kwDel, 1); save(); haptic('tap'); render(); return; }
@@ -8196,6 +8275,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       document.documentElement.classList.toggle('bmn-high-contrast', !!S.settings.highContrast); R.root.classList.toggle('is-calm', calm()); R.root.classList.toggle('is-lite', !!S.settings.dataSaver);
       $('use', R.Mute).setAttribute('href', '#lgi-' + (S.settings.sound ? 'vol' : 'mute')); R.Mute.setAttribute('aria-pressed', !S.settings.sound);
       Feed.muteChanged();
+      try { if (window.BMNGlass && window.BMNGlass.quality) window.BMNGlass.quality(S.settings.glassQuality || 'auto'); } catch (_) {}
     }
 
     /* ---- click delegation for every data-act in the overlay ---- */
@@ -8359,12 +8439,14 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     open: o => Overlay.open(typeof o === 'string' ? { view: o } : o), close: () => Overlay.close(),
     openStory: uid => Overlay.open({ story: uid }), openProfile: uid => Overlay.open({ view: 'profile', uid }), openInbox: () => { if (window.BMNRealInbox) { window.BMNRealInbox.open(); if (window.bmnSetDock) window.bmnSetDock('inbox'); } else Overlay.open({ view: 'inbox' }); }, openSelfChat: () => { if (window.BMNRealInbox) { window.BMNRealInbox.open(); const id = window.bmnSession && window.bmnSession.user && window.bmnSession.user.id; if (id) setTimeout(() => window.BMNRealInbox.openChat(id), 60); } else Dm.openWith(ME.id); },
     /** Replace the demo videos: [{id,u:'bmn',cap,music,dur,likes,comments,saves,shares, src:'https://…mp4', scene:{…}}] */
-    setPosts(arr) { POSTS = (Array.isArray(arr) ? arr : []).filter(p => p && p.src && p.id).map(p => Object.assign({ likes: 0, comments: 0, saves: 0, shares: 0, dur: 15, scene: SC.s1 }, p)); Feed.build(Feed.mode()); Discover.render(); },
+    setPosts(arr) { POSTS = (Array.isArray(arr) ? arr : []).filter(p => p && p.src && p.id).map(p => Object.assign({ likes: 0, comments: 0, saves: 0, shares: 0, dur: 15, scene: SC.s1 }, p)); Feed.build(Feed.mode()); syncFollows(); Discover.render(); },
     /** Add / update a creator: LGTT.setUser({id:'abc',name:'Abc',handle:'abc',hue:200,followers:10}) */
     setUser(u) { if (u && u.id) U[u.id] = Object.assign({ hue: 210, followers: null, following: null, likes: null }, U[u.id] || {}, u); },
     refreshProfile() { if (ST.view === 'profile') Profile.render(Profile.id()); },
     patchCounts() { Feed.refreshAll(); },
     profileId: () => Profile.id(),
+    syncFollows: () => syncFollows(),
+    hasUser: id => !!U[id],
     audioState: () => ({ active: Feed.activeVid(), blocked: Feed.isBlocked() }),
     setView: (v, u) => Views.set(v, u),
     openEdit: () => Edit.open(),
@@ -8492,6 +8574,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
    const update={id:'bmn',me:true};if(!followers.error)update.followers=Number(followers.count||0);if(!following.error)update.following=Number(following.count||0);if(likes!==null)update.likes=likes;
    if(Object.keys(update).length>2){window.LGTT?.setUser(update);window.LGTT?.refreshProfile?.();}
  }
+ document.addEventListener('bmn:follow',()=>{statsSignature='';const me=window.bmnSession&&window.bmnSession.user&&window.bmnSession.user.id;if(me)refreshRealProfileStats(me,Array.isArray(window.cachedPosts)?window.cachedPosts:[]).catch(()=>{})});
  function sync(){
    const app=window.LGTT;
    const posts=Array.isArray(window.cachedPosts)?window.cachedPosts:[];
@@ -8527,6 +8610,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
      app.setUser(window.bmnIdentityFor?window.bmnIdentityFor(profile,window.bmnSession.user):{id:'bmn',name:'Member',handle:'member',hue:262,me:true,verified:false,bio:'',link:'',linkHref:''});
      refreshRealProfileStats(me,usable).catch(e=>console.warn('[BMN profile] Real profile counts unavailable:',e?.message||e));
    }
+   try{document.dispatchEvent(new CustomEvent('bmn:follow-refresh'))}catch(_){}
  }
  window.bmnSyncLGTTRealData=sync;
  // Keep the immersive experience as the Community interface; no separate Watch/preview landing step.
@@ -8592,6 +8676,14 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 /* Keep the existing immersive interface; move Stories away from the FYP reading area. */
 #lgttFeed #lgttStoriesWrap{display:none!important}
 #lgttDmScroll #lgttStoriesWrap{display:block!important;margin:0 0 12px;max-height:none;opacity:1;pointer-events:auto;transform:none}
+#lgttDiscScroll:not([data-mode="search"]) > :not(.bmn-friends-home-v17):not(.bmn-friends-stories){display:none!important}
+#lgttDiscScroll[data-mode="search"] > .bmn-friends-home-v17,#lgttDiscScroll[data-mode="search"] > .bmn-friends-stories{display:none!important}
+#lgttDiscScroll .bmn-friend-card-v17{display:flex;align-items:center;gap:11px;border:1px solid #ffffff1c;background:#ffffff08;border-radius:18px;padding:10px 12px;cursor:pointer}
+#lgttDiscScroll .bmn-friend-card-v17>span:nth-child(2){flex:1;min-width:0}
+#lgttDiscScroll .bmn-friend-card-v17 strong{display:block;font:700 14px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lgttDiscScroll .bmn-friend-card-v17 small{display:block;opacity:.66;font:12px/1.5 system-ui}
+#lgttDiscScroll .bmn-friend-card-v17 .bmn-friend-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:0 0 42px;background:linear-gradient(135deg,#58aaff55,#9b6bff66);font-weight:750}
+#lgttDiscScroll .bmn-friend-card-v17 .lgtt-follow-btn{flex:0 0 auto}
 #lgttDiscScroll .bmn-friends-stories{display:block;margin:0 0 14px}
 #lgttProfHead .lgtt-prof-actions{flex-wrap:wrap}
 #bmnOwnerModerationPanel[hidden]{display:none!important}
@@ -8680,6 +8772,7 @@ function tabButton(tab,label){return '<button type="button" data-friends-tab="'+
 function empty(msg){return '<div class="bmn-friends-empty">'+String(msg).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>'}
 async function loadRelationships(uid){const sb=window.bmnSupabase;if(!sb||!uid)return {following:[],followers:[],error:!uid?'Sign in to see your friends.':'Connect to BMN to load your relationships.'};try{const [a,b]=await Promise.all([sb.from('follows').select('following_id').eq('follower_id',uid),sb.from('follows').select('follower_id').eq('following_id',uid)]);if(a.error||b.error)return {following:[],followers:[],error:'Your relationships could not be loaded. Check your connection or follow-table permissions.'};return {following:[...new Set((a.data||[]).map(x=>String(x.following_id)).filter(x=>x&&x!==uid))],followers:[...new Set((b.data||[]).map(x=>String(x.follower_id)).filter(x=>x&&x!==uid))]}}catch(_){return {following:[],followers:[],error:'Your relationships could not be loaded right now.'}}}
 async function renderFriends(){const host=shell();if(!host)return;const token=++friendRenderToken;const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));host.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Posts from people you follow, plus your followers and following list.</p><div class="bmn-friends-tabs">'+tabButton('posts','Following posts')+tabButton('following','Following')+tabButton('followers','Followers')+'</div><div class="bmn-friends-list">'+empty('Loading real BMN community data…')+'</div>';const list=$('.bmn-friends-list',host),uid=meId(),rel=await loadRelationships(uid);if(token!==friendRenderToken||!list?.isConnected)return;let html='';if(rel.error)html=empty(rel.error);else if(activeFriendsTab==='following'||activeFriendsTab==='followers'){const ids=rel[activeFriendsTab];if(ids.length){const sb=window.bmnSupabase,unknown=ids.filter(id=>!(window.bmnProfiles||{})[id]);if(sb&&unknown.length){try{const pr=await sb.from('profiles').select('*').in('id',unknown);if(!pr.error){window.bmnProfiles=window.bmnProfiles||{};(pr.data||[]).forEach(p=>window.bmnProfiles[p.id]=p)}}catch(_){}}if(token!==friendRenderToken)return;html=ids.map(id=>{const name=friendName(id),av=friendAvatar(id);return '<article class="bmn-friend-card"><span class="bmn-friend-avatar">'+(av?'<img loading="lazy" decoding="async" src="'+esc(av)+'" alt="">':esc(name.slice(0,1).toUpperCase()))+'</span><span><strong>'+esc(name)+'</strong><small>'+esc(friendHandle(id))+'</small></span></article>'}).join('')}else html=empty(activeFriendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')}else{const set=new Set(rel.following),posts=(window.cachedPosts||[]).filter(p=>p&&set.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));html=posts.length?posts.map(p=>{const id=String(p.user_id||''),src=p.media_display_url||p.media_url||p.video_url||'',caption=p.caption||p.content||p.title||'',video=src&&!/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src);return '<article class="bmn-friend-post"><strong>'+esc(friendName(id))+'</strong><small>'+esc(friendHandle(id))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video controls playsinline preload="metadata" src="'+esc(src)+'"></video>':'<img loading="lazy" decoding="async" style="width:100%;border-radius:12px;margin-top:10px" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):empty('No published posts from people you follow yet.')}if(token===friendRenderToken&&list.isConnected)list.innerHTML=html}
+document.addEventListener('bmn:follow',()=>{if(document.body.classList.contains('bmn-friends-mode')){try{renderFriends()}catch(_){}}});
 function watchView(){const stage=$('#lgttStage');if(!stage)return;let last='';const apply=()=>{if(stage.dataset.view==='discover'&&last!=='discover'){last='discover';renderFriends()}else if(stage.dataset.view!=='discover')last=stage.dataset.view};new MutationObserver(apply).observe(stage,{attributes:true,attributeFilter:['data-view']});apply()}
 document.addEventListener('click',e=>{const tab=e.target.closest('[data-friends-tab]');if(tab){e.preventDefault();e.stopPropagation();activeFriendsTab=tab.dataset.friendsTab;renderFriends();return;}const close=e.target.closest('#lgtt [data-act="close"],#lgtt .lgtt-outer-close');if(close){e.preventDefault();e.stopImmediatePropagation();window.LGTT?.open({view:'feed'});}},true);
 // Startup/routing is owned by the consolidated BMN final pass below.
@@ -8823,27 +8916,32 @@ function installCreateBridge(){
 window.bmnInstallCreateBridge=installCreateBridge;
 
 /* ---------- Friends: keep existing real-data implementation, relabel Discover as Friends ---------- */
-function relabelFriends(){const d=$('#lgttDock [data-dock="discover"]');if(d){const label=d.querySelector('span');if(label&&label.textContent!=='Friends')label.textContent='Friends';const use=d.querySelector('use');if(use&&use.getAttribute('href')!=='#lgi-users')use.setAttribute('href','#lgi-users')}const title=$('#lgttDiscScroll .lgtt-page-h h2');if(title&&title.textContent!=='Friends')title.textContent='Friends'}
-let friendsViewBound=false, friendsTab='posts';
+function relabelFriends(){const d=$('#lgttDock [data-dock="discover"]');if(d){const label=d.querySelector('span');if(label&&label.textContent!=='Friends')label.textContent='Friends';const use=d.querySelector('use');if(use&&use.getAttribute('href')!=='#lgi-users')use.setAttribute('href','#lgi-users')}const sm=$('#lgttDiscScroll')?.dataset.mode==='search';const title=$('#lgttDiscScroll .lgtt-page-h h2');const want=sm?'Discover':'Friends';if(title&&title.textContent!==want)title.textContent=want}
+let friendsViewBound=false, friendsTab='posts';const friendsAsked=new Set();
 function renderFriendsV17(){
  const host=$('#lgttDiscScroll');if(!host)return;relabelFriends();
- let box=host.querySelector('.bmn-friends-home-v17');if(!box){host.innerHTML='';box=document.createElement('div');box.className='bmn-friends-home-v17';host.appendChild(box)}
+ let box=host.querySelector('.bmn-friends-home-v17');if(!box){box=document.createElement('div');box.className='bmn-friends-home-v17';host.appendChild(box)}
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const uid=String(window.bmnSession?.user?.id||'');
  if(!uid){box.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Follow creators to build your Friends feed.</p><div class="bmn-friends-empty">Sign in to see real Following posts, Following and Followers.</div>';return}
  const relF=window.bmnFollowing instanceof Set?[...window.bmnFollowing]:[];
- const followers=Array.isArray(window.bmnFollowers)?window.bmnFollowers:[...new Set((window.cachedPosts||[]).filter(p=>p.user_id).map(p=>String(p.user_id)))];
- const tabs=[['posts','Following posts'],['following','Following'],['followers','Followers']];
+ const followers=window.bmnFollowers instanceof Set?[...window.bmnFollowers]:(Array.isArray(window.bmnFollowers)?window.bmnFollowers:[]);
+ const tabs=[['posts','Following posts'],['following','Following ('+relF.length+')'],['followers','Followers ('+followers.length+')']];
  box.innerHTML='<h1 class="bmn-friends-headline">Friends</h1><p class="bmn-friends-sub">Real people and posts from your BMN relationships.</p><div class="bmn-friends-tabs">'+tabs.map(t=>'<button type="button" data-friends-tab-v17="'+t[0]+'" aria-selected="'+(friendsTab===t[0])+'">'+t[1]+'</button>').join('')+'</div><div class="bmn-friends-list-v17"></div>';
  const list=box.querySelector('.bmn-friends-list-v17');const profiles=window.bmnProfiles||{};
  if(friendsTab==='posts'){
    const ids=new Set(relF.map(String));const posts=(window.cachedPosts||[]).filter(p=>p&&ids.has(String(p.user_id))&&(!p.status||String(p.status).toLowerCase()==='published')).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
    list.innerHTML=posts.length?posts.map(p=>{const pr=profiles[p.user_id]||{};const src=p.media_display_url||'';const caption=p.caption||p.content||p.title||'';const video=src&&!/\.(png|jpe?g|webp|gif|avif)(?:[?#]|$)/i.test(src);return '<article class="bmn-friend-post-v17"><strong>'+esc(pr.display_name||pr.username||'BMN Community member')+'</strong><small>@'+esc(pr.username||String(p.user_id).slice(0,8))+'</small><p>'+esc(caption)+'</p>'+(src?(video?'<video playsinline preload="metadata" controls src="'+esc(src)+'"></video>':'<img loading="lazy" src="'+esc(src)+'" alt="Community post">'):'')+'</article>'}).join(''):'<div class="bmn-friends-empty">No published posts from people you follow yet.</div>';
  } else {
-   const ids=friendsTab==='following'?relF:followers;list.innerHTML=ids.length?ids.map(id=>{const pr=profiles[id]||{};return '<article class="bmn-friend-card-v17"><span class="bmn-friend-avatar">'+esc((pr.display_name||pr.username||'B').slice(0,1).toUpperCase())+'</span><span><strong>'+esc(pr.display_name||pr.username||'BMN Community member')+'</strong><small>@'+esc(pr.username||String(id).slice(0,8))+'</small></span></article>'}).join(''):'<div class="bmn-friends-empty">'+(friendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')+'</div>';
+   const ids=friendsTab==='following'?relF:followers;list.innerHTML=ids.length?ids.map(id=>{const pr=profiles[id]||{};const nm=pr.display_name||pr.username||'BMN Community member';const f=relF.includes(id);return '<article class="bmn-friend-card-v17" data-friend-open="'+esc(id)+'" role="button" tabindex="0"><span class="bmn-friend-avatar">'+esc(nm.slice(0,1).toUpperCase())+'</span><span><strong>'+esc(nm)+'</strong><small>@'+esc(pr.username||String(id).slice(0,8))+'</small></span><button type="button" class="lgtt-btn lgtt-pill lgtt-sm lgtt-follow-btn'+(f?'':' lgtt-primary')+'" data-act="follow" data-u="'+esc(id)+'">'+(f?'Following':'Follow')+'</button></article>'}).join(''):'<div class="bmn-friends-empty">'+(friendsTab==='following'?'You are not following anyone yet.':'You do not have any followers yet.')+'</div>';
+   // Names for people who have not posted (so are not in the feed cache): fetch their real profiles once.
+   const missing=ids.filter(id=>!profiles[id]&&!friendsAsked.has(id)&&/^[0-9a-f-]{36}$/i.test(String(id)));
+   if(missing.length&&window.bmnSupabase){missing.forEach(id=>friendsAsked.add(id));Promise.resolve(window.bmnSupabase.from('profiles').select('id,username,display_name,avatar_url').in('id',missing.slice(0,100))).then(r=>{const rows=r&&r.data;if(!Array.isArray(rows)||!rows.length)return;rows.forEach(row=>{window.bmnProfiles=window.bmnProfiles||{};window.bmnProfiles[row.id]=Object.assign({},window.bmnProfiles[row.id]||{},row)});if($('.bmn-friends-home-v17'))renderFriendsV17()}).catch(()=>{})}
  }
  box.querySelectorAll('[data-friends-tab-v17]').forEach(b=>b.addEventListener('click',()=>{friendsTab=b.dataset.friendsTabV17;renderFriendsV17()}));
+ if(!box.dataset.cardBound){box.dataset.cardBound='1';const open=e=>{if(e.target.closest('[data-act="follow"]'))return;const c=e.target.closest('[data-friend-open]');if(!c)return;if(e.type==='keydown'&&e.key!=='Enter')return;const id=c.dataset.friendOpen,pr=(window.bmnProfiles||{})[id]||{};try{if(window.LGTT&&!LGTT.hasUser(id))LGTT.setUser({id:id,name:pr.display_name||pr.username||'BMN member',handle:pr.username||String(id).slice(0,8),hue:210});LGTT.openProfile(id)}catch(_){}};box.addEventListener('click',open);box.addEventListener('keydown',open)}
 }
+['bmn:follow','bmn:follow-refresh'].forEach(ev=>document.addEventListener(ev,()=>{try{window.LGTT&&LGTT.syncFollows&&LGTT.syncFollows()}catch(_){}if($('.bmn-friends-home-v17'))renderFriendsV17()}));
 function bindFriendsView(){
  if(friendsViewBound)return;const stage=$('#lgttStage');if(!stage)return;friendsViewBound=true;
  const check=()=>{if(stage.dataset.view==='discover')renderFriendsV17();else relabelFriends()};new MutationObserver(check).observe(stage,{attributes:true,attributeFilter:['data-view']});check();
@@ -9732,7 +9830,7 @@ function addButton(form,input,anchor){
   if(!form||!input||form.querySelector('.bmn-emo-btn'))return;
   const b=document.createElement('button');b.type='button';b.className='bmn-emo-btn';b.setAttribute('aria-label','Emoji');b.textContent='\u{1F642}';
   b.addEventListener('pointerdown',e=>e.preventDefault());
-  b.onclick=()=>{if(host){closeEmo();return}const frm=input.closest('form'),par=input.closest('#bmnRiChat')||input.closest('#lgttComments')||document.getElementById('lgttStage');openEmo(input,par,frm?Math.round(frm.getBoundingClientRect().height):0)};
+  b.onclick=()=>{if(host){closeEmo();return}const frm=input.closest('form'),par=input.closest('#bmnRiChat')||input.closest('#lgttComments')||input.closest('#lgttChat')||document.getElementById('lgttStage');const pr=par.getBoundingClientRect(),fr=frm&&frm.getBoundingClientRect();openEmo(input,par,fr?Math.max(0,Math.round(pr.bottom-fr.top+6)):0)};
   (anchor?anchor.parentNode.insertBefore(b,anchor):form.appendChild(b));
 }
 function wire(){
@@ -9740,6 +9838,8 @@ function wire(){
   if(shell&&i)addButton(shell,i,attach);
   const cf=document.getElementById('lgttCmtForm')||document.querySelector('#lgttComments form'),ci=document.getElementById('lgttCmtInput');
   if(cf&&ci){const send=cf.querySelector('.lgtt-send');addButton(cf,ci,send)}
+  const df=document.getElementById('lgttChatForm'),di=document.getElementById('lgttChatInput');
+  if(df&&di){const quick=df.querySelector('.lgtt-quick');addButton(df,di,quick)}
 }
 let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;wire()})}).observe(document.documentElement,{childList:true,subtree:true});
 wire();
@@ -10058,15 +10158,15 @@ function frame(t){
   requestAnimationFrame(frame);if(t-last<45||document.hidden)return;last=t;
   const lens=ensure();if(!lens||!ctx)return;
   const st=document.getElementById('lgttStage');
-  if(!st||st.dataset.view!=='feed'||st.classList.contains('bmn-inbox-open')||st.classList.contains('bmn-cam-open')){cv.style.opacity=0;lens.classList.remove('has-cv');return}
+  if(!st||st.dataset.view!=='feed'||st.classList.contains('bmn-inbox-open')||st.classList.contains('bmn-cam-open')){cv.style.opacity=0;lens.classList.contains('has-cv')&&lens.classList.remove('has-cv');return}
   let v=null;try{v=window.LGTT&&LGTT.audioState?LGTT.audioState().active:null}catch(_){}
-  if(!v||v.readyState<2||!v.videoWidth||v.paused&&v.currentTime===0){cv.style.opacity=0;lens.classList.remove('has-cv');return}
+  if(!v||v.readyState<2||!v.videoWidth||v.paused&&v.currentTime===0){cv.style.opacity=0;lens.classList.contains('has-cv')&&lens.classList.remove('has-cv');return}
   const r=lens.getBoundingClientRect(),vr=v.getBoundingClientRect();if(!r.width||!vr.width)return;
   const w=Math.max(16,Math.round(r.width/1.6)),h=Math.max(16,Math.round(r.height/1.6));if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
   const sc=Math.max(vr.width/v.videoWidth,vr.height/v.videoHeight),ox=(vr.width-v.videoWidth*sc)/2,oy=(vr.height-v.videoHeight*sc)/2,mag=1.3;
   const cx=r.left+r.width/2,cy=r.top+r.height/2,sw=r.width/mag,sh=r.height/mag;
   const sx=((cx-sw/2)-vr.left-ox)/sc,sy=((cy-sh/2)-vr.top-oy)/sc;
-  try{ctx.drawImage(v,sx,sy,sw/sc,sh/sc,0,0,w,h);cv.style.opacity=1;lens.classList.add('has-cv')}catch(_){cv.style.opacity=0;lens.classList.remove('has-cv')}
+  try{ctx.drawImage(v,sx,sy,sw/sc,sh/sc,0,0,w,h);cv.style.opacity=1;if(!lens.classList.contains('has-cv'))lens.classList.add('has-cv')}catch(_){cv.style.opacity=0;lens.classList.contains('has-cv')&&lens.classList.remove('has-cv')}
 }
 requestAnimationFrame(frame);
 })();
@@ -11003,7 +11103,7 @@ function frame(t){requestAnimationFrame(frame);if(dead||t-last<40||document.hidd
  dock=dock&&dock.isConnected?dock:document.querySelector('#lgtt .lgtt-dock');if(!dock)return;
  const st=document.getElementById('lgttStage');let v=null;try{v=window.LGTT&&LGTT.audioState?LGTT.audioState().active:null}catch(_){}
  const ok=st&&st.dataset.view==='feed'&&!st.classList.contains('bmn-inbox-open')&&!st.classList.contains('bmn-cam-open')&&v&&v.readyState>=2&&v.videoWidth;
- if(!ok){dock.classList.remove('rf-on');return}
+ if(!ok){if(dock.classList.contains('rf-on'))dock.classList.remove('rf-on');return}
  if(!cv||cv.parentNode!==dock){cv=document.createElement('canvas');cv.className='bmn-rf';cv.setAttribute('aria-hidden','true');dock.insertBefore(cv,dock.firstChild);cx=cv.getContext('2d',{willReadFrequently:true})}
  const r=dock.getBoundingClientRect(),vr=v.getBoundingClientRect();if(!r.width||!vr.width)return;
  const w=Math.round(r.width*S),h=Math.round(r.height*S);if(w!==W||h!==H||!map){build(w,h);cv.width=w;cv.height=h;buf=document.createElement('canvas');buf.width=bw;buf.height=bh;buf.x=buf.getContext('2d',{willReadFrequently:true})}
@@ -11675,9 +11775,23 @@ html.bmn-community-app #lgtt {
 <script id="bmn-fyp-search-routing-fix">
 (() => {
   'use strict';
+  /* #lgtt is mounted by the Liquid module after this script parses, so wait for it. */
+  function boot() {
   const root = document.getElementById('lgtt');
-  if (!root || root.dataset.bmnSearchRouteFixed === '1') return;
+  if (!root) return false;
+  if (root.dataset.bmnSearchRouteFixed === '1') return true;
   root.dataset.bmnSearchRouteFixed = '1';
+  // Any other way into the view (dock, inbox shortcuts) shows Friends again.
+  const stageEl = document.getElementById('lgttStage');
+  if (stageEl) new MutationObserver(() => {
+    const sc = document.getElementById('lgttDiscScroll');
+    if (sc && stageEl.dataset.view !== 'discover' && sc.dataset.mode) delete sc.dataset.mode;
+  }).observe(stageEl, { attributes: true, attributeFilter: ['data-view'] });
+  root.addEventListener('click', event => {
+    const d = event.target && event.target.closest ? event.target.closest('[data-dock="discover"]') : null;
+    const sc = document.getElementById('lgttDiscScroll');
+    if (d && sc && sc.dataset.mode) { delete sc.dataset.mode; const h = sc.querySelector('.lgtt-page-h h2'); if (h) h.textContent = 'Friends'; }
+  }, true);
   root.addEventListener('click', event => {
     const button = event.target && event.target.closest
       ? event.target.closest('[data-act="goto-discover"]')
@@ -11687,6 +11801,9 @@ html.bmn-community-app #lgtt {
     event.stopPropagation();
     event.stopImmediatePropagation();
     // Use the existing Discover view inside the FYP experience, not the Friends dock route.
+    // The same view hosts two screens: Friends (dock) and Discover with real search (this button).
+    const scroll = document.getElementById('lgttDiscScroll');
+    if (scroll) { scroll.dataset.mode = 'search'; const h = scroll.querySelector('.lgtt-page-h h2'); if (h) h.textContent = 'Discover'; }
     if (window.LGTT && typeof window.LGTT.setView === 'function') {
       window.LGTT.setView('discover');
     }
@@ -11695,6 +11812,13 @@ html.bmn-community-app #lgtt {
       if (field) field.focus({ preventScroll: true });
     }, 180);
   }, true);
+  return true;
+  }
+  if (!boot()) {
+    const mo = new MutationObserver(() => { if (boot()) mo.disconnect(); });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    window.setTimeout(() => mo.disconnect(), 30000);
+  }
 })();
 </script>
 
