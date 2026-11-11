@@ -1,0 +1,224 @@
+/*
+ * BMN Liquid Glass: material overrides. Everything is scoped to
+ * html.bmn-glass-on, so removing that class (the kill switch) restores the
+ * original look. The library's own material lives in @zakisheriff/liquid-glass.
+ */
+
+/* ---- BMN identity: crimson accent, warm gold highlights ---- */
+.bmn-gn, .bmn-gs, .bmn-gm, .bmn-gw {
+  --lg-accent: #ff4d5e;
+  --lg-ring: rgb(255 77 94 / 0.6);
+  --bmn-red: #d1323e;
+  --bmn-gold: #f0cf7a;
+  font-family: var(--lg-font);
+}
+
+/* ================= Dock (GlassNav) ================= */
+html.bmn-glass-on #lgttDock,
+html.bmn-glass-on .app-dock {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.bmn-glass-on #lgttDock::before,
+html.bmn-glass-on #lgttDock::after,
+html.bmn-glass-on .app-dock::before,
+html.bmn-glass-on .app-dock::after { display: none !important; }
+
+/* The original buttons keep working (we call .click()) but are hidden from sight and touch. */
+html.bmn-glass-on #lgttDock > :not(.bmn-gn-host),
+html.bmn-glass-on .app-dock > :not(.bmn-gn-host) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+html.bmn-glass-on #lgttDock > #lgttLens,
+html.bmn-glass-on .app-dock > .bmn-dock-lens { display: none !important; }
+
+.bmn-gn-host { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.bmn-gn-host > * { pointer-events: auto; width: 100%; }
+.bmn-gn { width: 100%; }
+.bmn-gn .lg-track { width: 100%; --lg-item-h: 56px; --lg-item-w: 56px; }
+.bmn-gn .lg-track__item { padding: 0 4px; gap: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
+.bmn-gn .lg-nav__icon { display: grid; place-items: center; }
+.bmn-gn-icon { position: relative; display: grid; place-items: center; width: 28px; height: 26px; }
+.bmn-gn-ico { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.bmn-gn-ico--html { display: inline-grid; place-items: center; }
+.bmn-gn-ico--html svg { width: 100%; height: 100%; }
+/* The Create tab keeps its identity: a crimson-to-gold pill. */
+.bmn-gn-icon--create { width: 40px; }
+.bmn-gn-icon--create .bmn-gn-ico { width: 40px; height: 26px; padding: 3px 11px; box-sizing: border-box; border-radius: 9px; stroke: #fff; stroke-width: 2.6;
+  background: linear-gradient(135deg, var(--bmn-red), #b8860b 140%); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 2px 8px rgb(209 50 62 / 0.35); }
+.bmn-gn-badge { position: absolute; top: -4px; right: -7px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; font-size: 10px; line-height: 15px; font-weight: 700; text-align: center;
+  color: #fff; background: var(--bmn-red); box-shadow: 0 0 0 2px rgb(0 0 0 / 0.25); box-sizing: border-box; }
+.bmn-gn-badge:empty { min-width: 9px; width: 9px; height: 9px; padding: 0; top: -1px; right: -3px; }
+
+/* ================= Segmented controls (GlassSegmented) ================= */
+html.bmn-glass-on [data-bmn-seg] {
+  background: none !important; box-shadow: none !important; border: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html.bmn-glass-on [data-bmn-seg]::before, html.bmn-glass-on [data-bmn-seg]::after { display: none !important; }
+html.bmn-glass-on [data-bmn-seg] > * { opacity: 0 !important; pointer-events: none !important; }
+.bmn-gs-host { display: flex; align-items: center; }
+.bmn-gs, .bmn-gs .lg-track { width: 100%; }
+.bmn-gs .lg-track__item { font-size: 13px; font-weight: 650; }
+
+/* ================= Switch (GlassSwitch) ================= */
+html.bmn-glass-on button[data-bmn-sw] { display: none !important; }
+.bmn-gw-slot { display: inline-flex; flex: none; }
+.bmn-gw-host, .bmn-gw { display: inline-flex; }
+
+/* ================= Slider (GlassSlider) ================= */
+html.bmn-glass-on input[data-bmn-sl] { display: none !important; }
+.bmn-gsl-slot { display: block; flex: 1; min-width: 120px; }
+.bmn-gsl-host, .bmn-gsl { display: block; width: 100%; }
+
+/* ================= Input (GlassInput): search + composers ================= */
+html.bmn-glass-on .bmn-gi-wrap {
+  background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0 !important; padding-right: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important; gap: 8px;
+}
+html.bmn-glass-on .bmn-gi-wrap::before, html.bmn-glass-on .bmn-gi-wrap::after { display: none !important; }
+html.bmn-glass-on .bmn-gi-wrap > input[data-bmn-in], html.bmn-glass-on .bmn-gi-wrap > svg.lgtt-ico { display: none !important; }
+.bmn-gi-host { flex: 1; min-width: 0; }
+.bmn-gi, .bmn-gi .lg-input { width: 100%; }
+.bmn-gi .lg-input__field { min-height: 44px; }
+.bmn-gi input { font-size: 16px; } /* 16px keeps iOS Safari from zooming on focus */
+
+/* ================= Sheet host (GlassSheet) ================= */
+html.bmn-glass-on #bmnSheetHost .bmn-sh-scrim { display: none !important; }
+html.bmn-glass-on #bmnSheetHost .bmn-sh {
+  position: static !important; transform: none !important; left: auto !important; bottom: auto !important; width: auto !important;
+  max-height: min(70dvh, 620px) !important; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  padding: 4px 6px calc(10px + env(safe-area-inset-bottom, 0px));
+}
+html.bmn-glass-on #bmnSheetHost[data-glass-fresh] .lg-sheet__scrim { pointer-events: none; }
+html.bmn-glass-on.bmn-community-app body > #bmnSheetHost[data-glass-closing="1"]:not(#x1):not(#x2) {
+  display: block !important; visibility: visible !important; pointer-events: none !important;
+}
+.bmn-gsh-host, .bmn-gsh { position: absolute; inset: 0; pointer-events: none; }
+.bmn-gsh > * { pointer-events: auto; }
+/* a sheet that is springing away must never catch taps meant for the app underneath */
+#bmnSheetHost[data-glass-closing="1"] *, #bmnSheetHost:not([data-open="1"]) * { pointer-events: none !important; }
+
+/* ================= Menu (GlassMenu) ================= */
+html.bmn-glass-on #lgttMenu { opacity: 0 !important; pointer-events: none !important; }
+.bmn-gm-layer { position: fixed; inset: 0; z-index: 2147482000; pointer-events: none; }
+.bmn-gm { position: fixed; pointer-events: auto; display: flex; align-items: flex-start; justify-content: flex-start; }
+.bmn-gm-ico { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ================= Existing surfaces given engine material ================= */
+.bmn-surface[data-bmn-material="button"] { overflow: visible; }
+
+/* ======================================================================
+ * Unified material: the Dock (GlassNav) is the reference.
+ *
+ * Every bridged surface (round buttons, Quick Glass pills, sheets, cards)
+ * is painted from the SAME library tokens the Dock bar uses: --bmn-fill,
+ * --bmn-blur, --bmn-sat, --bmn-bright, --bmn-shadow, --bmn-edge,
+ * the engine-generated --lg-rim (bezel specular) and, where the browser can
+ * do it, --lg-filter (Snell's-law displacement of the backdrop).
+ *
+ * The tokens are namespaced --bmn-* on purpose: custom properties inherit, and a sheet's fill must
+ * not leak into the library inputs / tracks / thumbs that live inside it (they keep their own --lg-* sets).
+ *
+ * Why this block exists: the legacy .lgtt-glass rules in index.html carry
+ * !important and higher specificity than the library's .lg-glass rule. They
+ * replaced `backdrop-filter: var(--lg-filter) blur(..)` with a plain 14-36px
+ * blur, replaced the engine rim with a masked gradient and painted 70-80%
+ * white gradients on top, so the engine's refraction never reached the
+ * pixels. :is(#lgtt, body) gives these selectors ID weight everywhere.
+ * ====================================================================== */
+
+/* ---- tone tokens (same values as the library's dock sets) ----
+ * data-bmn-tone is set by the bridge. Media overlays (round buttons, Quick Glass) are always "dark".
+ * Panels are "auto": the bridge reads the element's real text colour and picks the tone that keeps
+ * it legible (light text -> dark glass, dark text -> light glass), and re-checks when the theme flips. */
+.bmn-surface[data-bmn-tone="dark"] {
+  --bmn-edge: rgb(255 255 255 / .16);
+  --bmn-rim-opacity: .72;
+  --bmn-sat: 1.7;
+  --bmn-bright: .98;
+  --bmn-glow: rgb(255 255 255 / .16);
+  --bmn-shadow: 0 8px 28px rgb(0 0 0 / .38), 0 1px 3px rgb(0 0 0 / .3);
+  --bmn-solid: rgb(28 28 32 / .95);
+}
+.bmn-surface[data-bmn-tone="light"] {
+  --bmn-edge: rgb(0 0 0 / .06);
+  --bmn-rim-opacity: 1;
+  --bmn-sat: 1.9;
+  --bmn-bright: 1.04;
+  --bmn-glow: rgb(255 255 255 / .55);
+  --bmn-shadow: 0 8px 28px rgb(0 0 0 / .08), 0 1px 3px rgb(0 0 0 / .07);
+  --bmn-solid: rgb(250 250 252 / .97);
+}
+
+/* ---- per-family geometry-appropriate parameters (material stays the same) ---- */
+/* small droplets that sit on video: dock-level blur so the displacement stays visible */
+.bmn-surface[data-bmn-material="button"],
+.bmn-surface[data-bmn-material="quick"],
+.bmn-surface[data-bmn-material="speed"] { --bmn-fill: rgb(24 26 34 / .34); --bmn-blur: 6px; }
+/* a round button sitting on a light panel (dark icon): light glass instead of dark */
+.bmn-surface[data-bmn-material="button"][data-bmn-tone="light"] { --bmn-fill: rgb(255 255 255 / .55); }
+/* large slabs: more blur for text legibility, bottom-sheet shadow falls upward */
+.bmn-surface[data-bmn-material="sheet"],
+.bmn-surface[data-bmn-material="card"] { --bmn-fill: rgb(30 30 33 / .66); --bmn-blur: 22px; }
+.bmn-surface[data-bmn-material="sheet"][data-bmn-tone="light"],
+.bmn-surface[data-bmn-material="card"][data-bmn-tone="light"] { --bmn-fill: rgb(255 255 255 / .70); }
+.bmn-surface[data-bmn-material="sheet"][data-bmn-tone] { --bmn-shadow: 0 -10px 40px rgb(0 0 0 / .24), 0 1px 3px rgb(0 0 0 / .1); }
+
+/* ---- BMN owner identity: gold edge light (replaces the old gold border-colour) ---- */
+body.bmn-owner .bmn-surface[data-bmn-tone] { --bmn-edge: rgb(232 193 100 / .55); --bmn-glow: rgb(255 226 150 / .34); }
+
+/* ---- the material itself ---- */
+html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material] {
+  background-color: var(--bmn-fill) !important;
+  background-image: none !important;
+  border: 0 !important;
+  -webkit-backdrop-filter: blur(var(--bmn-blur)) saturate(var(--bmn-sat)) brightness(var(--bmn-bright)) !important;
+  backdrop-filter: var(--lg-filter, ) blur(var(--bmn-blur)) saturate(var(--bmn-sat)) brightness(var(--bmn-bright)) !important;
+  box-shadow: var(--bmn-shadow), inset 0 0 0 .5px var(--bmn-edge) !important;
+}
+/* engine rim (bezel specular, computed from this element's own radius) replaces the legacy masked gradient */
+html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material]::before {
+  content: ""; position: absolute !important; inset: 0 !important; padding: 0 !important; border: 0 !important; border-radius: inherit !important;
+  z-index: 0 !important; pointer-events: none !important; box-shadow: none !important; animation: none !important;
+  background: var(--lg-rim, none) 0 0 / 100% 100% no-repeat !important;
+  -webkit-mask: none !important; mask: none !important; opacity: var(--bmn-rim-opacity) !important;
+}
+/* press glow follows the finger / cursor (--lg-x / --lg-y set by the engine) */
+html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material]::after {
+  content: ""; display: block !important; position: absolute !important; inset: 0 !important; border-radius: inherit !important;
+  z-index: 0 !important; pointer-events: none !important; opacity: 0 !important; transition: opacity .36s ease !important; animation: none !important;
+  background: radial-gradient(ellipse 85% 85% at var(--lg-x, 50%) var(--lg-y, 50%), var(--bmn-glow), transparent) !important;
+}
+html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material][data-pressed]::after { opacity: 1 !important; transition-duration: 80ms !important; }
+/* the content stays above the optical layers */
+.bmn-surface[data-bmn-material] > * { position: relative; z-index: 1; }
+.bmn-surface[data-bmn-material="quick"] { overflow: visible; }
+
+/* ---- performance ----
+ * 1. Glass that is nowhere near the viewport (feed slides, closed sheets) paints no backdrop at all.
+ * 2. A panel already blurs its backdrop once; nested glass inside it (inputs, round buttons, tracks)
+ *    does not re-blur. Lenses and thumbs keep their own optics. */
+html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material][data-lg-offscreen] {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html.bmn-glass-on :is(#lgtt, body) .bmn-surface[data-bmn-material="sheet"] .lg-glass:not(.lg-track__lens):not(.lg-switch__thumb):not(.lg-slider__thumb),
+html.bmn-glass-on :is(#lgtt, body) .bmn-surface[data-bmn-material="card"] .lg-glass:not(.lg-track__lens):not(.lg-switch__thumb):not(.lg-slider__thumb) {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+
+/* ---- accessibility ---- */
+@media (prefers-reduced-motion: reduce) {
+  html.bmn-glass-on .bmn-surface, html.bmn-glass-on .bmn-surface::after { transition: none !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html.bmn-glass-on.bmn-glass-on :is(#lgtt, body) .bmn-surface.lg-glass[data-bmn-material] {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: var(--bmn-solid) !important;
+  }
+}
