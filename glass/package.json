@@ -1,0 +1,18 @@
+{
+  "name": "bmn-glass-layer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Isolated React layer that mounts @zakisheriff/liquid-glass components over the existing BMN Community DOM. Built into ../bmn-glass/ as static files; Vercel serves the output, no build step is required on deploy.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@zakisheriff/liquid-glass": "0.3.20",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "~0.28.2"
+  }
+}
