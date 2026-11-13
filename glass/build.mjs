@@ -8,6 +8,8 @@
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
+import { transform } from 'esbuild';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const alias = process.env.LG_SRC ? { '@zakisheriff/liquid-glass': process.env.LG_SRC } : {};
@@ -39,3 +41,8 @@ const result = await build({
 });
 const out = Object.entries(result.metafile.outputs).map(([f, o]) => `${path.basename(f)} ${(o.bytes / 1024).toFixed(1)} KiB`);
 console.log('built:', out.join(' · '), process.env.LG_SRC ? '(library from LG_SRC)' : '(library from npm)');
+
+// Android profile: a separate, tiny, CSS-only stylesheet. The engine bundle is never loaded there.
+const lite = await transform(fs.readFileSync(path.join(here, 'src/lite.css'), 'utf8'), { loader: 'css', minify: true, target: ['chrome92'] });
+fs.writeFileSync(path.join(here, '../bmn-glass/bmn-glass-lite.css'), '/*! BMN Glass lite (Android, CSS only). Built from glass/src/lite.css. */\n' + lite.code);
+console.log('built: bmn-glass-lite.css', (lite.code.length / 1024).toFixed(1), 'KiB');
