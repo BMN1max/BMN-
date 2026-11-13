@@ -81,19 +81,14 @@ let pass=0, fail=0; const out=[]; const ok=(n,c,x='')=>{(c?pass++:fail++);out.pu
 
   // ---------- Comments sheet + GlassInput ----------
   await p.evaluate(()=>document.querySelector('#lgtt .lgtt-slide [data-act="comment"]')?.click()); await p.waitForTimeout(1000);
-  const cm = await p.evaluate(()=>({open:document.getElementById('lgttComments')?.classList.contains('is-open'),glassIn:!!document.querySelector('#lgttCmtForm .bmn-gi input, #lgttCmtForm .lg-input input'),origHidden:getComputedStyle(document.getElementById('lgttCmtInput')).display==='none'}));
-  ok('comments: sheet opens with GlassInput composer; original input hidden', cm.open && cm.glassIn && cm.origHidden, JSON.stringify(cm));
-  if(cm.glassIn){
-    const inp=await rect('#lgttCmtForm .lg-input input'); await tapAt(inp.x,inp.y);
-    await p.evaluate(()=>{window.__ev=[];const o=document.getElementById('lgttCmtInput');o.addEventListener('input',()=>window.__ev.push('input:'+o.value));});
+  // The comment composer pill is itself the glass surface (material "pill"); the app's own input stays visible and typeable.
+  const cm = await p.evaluate(()=>{const f=document.getElementById('lgttCmtForm'),i=document.getElementById('lgttCmtInput');return {open:document.getElementById('lgttComments')?.classList.contains('is-open'),pill:f?.dataset.bmnMaterial,inputVisible:!!i&&getComputedStyle(i).display!=='none'&&i.getBoundingClientRect().width>0,contained:!!f&&i&&(()=>{const a=f.getBoundingClientRect(),c=i.getBoundingClientRect();return c.left>=a.left-1&&c.right<=a.right+1&&c.top>=a.top-1&&c.bottom<=a.bottom+1})()}});
+  ok('comments: sheet opens; composer pill is glass, input visible and inside the pill', cm.open && cm.pill==='pill' && cm.inputVisible && cm.contained, JSON.stringify(cm));
+  if(cm.inputVisible){
+    const inp=await rect('#lgttCmtInput'); await tapAt(inp.x,inp.y);
     await p.keyboard.type('hello glass'); await p.waitForTimeout(200);
-    const typed=await p.evaluate(()=>({orig:document.getElementById('lgttCmtInput').value,glass:document.querySelector('#lgttCmtForm .lg-input input').value,ev:window.__ev.length,last:window.__ev.slice(-1)[0]}));
-    ok('input: typing in GlassInput updates ORIGINAL value and fires its input events', typed.orig==='hello glass' && typed.glass==='hello glass' && typed.ev>=11, JSON.stringify(typed));
-    await p.evaluate(()=>{document.getElementById('lgttCmtInput').value=''}); await p.waitForTimeout(200);
-    ok('input: BMN clearing the original (after send) clears the glass field', await p.evaluate(()=>document.querySelector('#lgttCmtForm .lg-input input').value==='') );
-    // programmatic focus lands on glass field
-    await p.evaluate(()=>{document.activeElement&&document.activeElement.blur&&document.activeElement.blur(); document.getElementById('lgttCmtInput').focus()}); await p.waitForTimeout(150);
-    ok('input: BMN calling focus() focuses the visible glass field', await p.evaluate(()=>document.activeElement===document.querySelector('#lgttCmtForm .lg-input input')));
+    ok('input: typing reaches the original input', await p.evaluate(()=>document.getElementById('lgttCmtInput').value==='hello glass'));
+    await p.evaluate(()=>{document.getElementById('lgttCmtInput').value=''});
   }
   // comments sort segmented
   const sortSeg = await rect('#lgttCmtSort ~ .bmn-gs-host .lg-track > .lg-track__item[data-lg-item="1"]');
