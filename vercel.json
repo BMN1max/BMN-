@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "echo \"BMN static site: bmn-glass/ is pre-built and committed, nothing to build on Vercel\"",
+  "outputDirectory": "."
+}

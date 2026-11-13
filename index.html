@@ -40,6 +40,7 @@ html.bmn-community-app body{overflow:hidden!important;background:#05070d!importa
 <meta name="apple-mobile-web-app-title" content="BMN Community">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/bmn-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="/bmn-icon-180.png">
 <link rel="apple-touch-icon" href="/bmn-icon-192.png">
 <meta name="description" content="BMN® — Nigerian digital creator, video editor and storyteller. Explore edits, creative work and official social links.">
 <meta name="color-scheme" content="dark light">
@@ -2122,7 +2123,46 @@ body.community-mode #bmnProfileV2.bmn-founder-profile .bmn-profile-menu{border-c
 
 <style id="bmn-discover-search-repair">#bmnDiscoverResults{display:grid;gap:8px;margin:4px 0 18px}.bmn-discover-result{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:13px 14px;border:1px solid var(--clear-glass-border);border-radius:16px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;cursor:pointer}.bmn-discover-result>span:first-child{display:flex;align-items:center;gap:8px}.bmn-discover-result strong{font-size:12px}.bmn-discover-result small{font-size:10px;color:var(--muted)}.bmn-discover-result-caption{font-size:12px;line-height:1.45;color:var(--muted)}.bmn-discover-result-count{margin:4px 2px;font-size:11px;color:var(--muted)}.bmn-discover-creator{min-height:42px}</style>
 <style id="bmn-action-sheet-visibility-repair">html.bmn-community-app body>#bmnActionSheetHost{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;position:fixed!important;inset:0!important;z-index:2147482500!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-backdrop.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet:not(.open){pointer-events:none!important}</style>
-<link rel="stylesheet" href="bmn-glass/bmn-glass.css" id="bmn-glass-css">
+<script id="bmn-glass-tier">
+/* BMN Glass device tier. Decided once, before first paint, by capability first and platform second.
+   lite    = Android, or no backdrop-filter: CSS-only frosted glass, the React Liquid Glass engine is never downloaded.
+   ios     = iPhone / iPad: full engine.   desktop = everything else: full engine, desktop profile.
+   ?glass=full forces the engine on Android for testing. */
+(function(){var d=document.documentElement,t='lite';
+try{var n=navigator,ua=n.userAgent||'',u=n.userAgentData,
+android=/Android/i.test(ua)||!!(u&&u.platform==='Android'),
+ios=/iP(hone|ad|od)/.test(ua)||(n.platform==='MacIntel'&&n.maxTouchPoints>1),
+ok=!!(window.CSS&&CSS.supports&&(CSS.supports('backdrop-filter','blur(1px)')||CSS.supports('-webkit-backdrop-filter','blur(1px)'))),
+forced=/[?&]glass=full(&|$)/.test(location.search);
+t=((android&&!forced)||!ok)?'lite':(ios?'ios':'desktop')}catch(e){}
+window.__bmnGlassTier=t;d.setAttribute('data-bmn-glass-tier',t);if(t==='lite')d.classList.add('bmn-glass-lite');
+document.write('<link rel="stylesheet" href="bmn-glass/'+(t==='lite'?'bmn-glass-lite':'bmn-glass')+'.css" id="bmn-glass-css">')})();
+</script>
+<style id="bmn-splash-glass">
+/* BMN Liquid Glass loader: same visual language as the app (clear glass tile, crimson/gold light, soft sheen) on the
+   EXISTING #bmnSplash. Only transform/opacity animate (compositor-only, no filters, no backdrop-filter, no JS loop). */
+html:root body #bmnSplash{background:radial-gradient(90% 70% at 50% 38%,#1a1224 0%,#080a14 62%,#04050a 100%)!important;overflow:hidden!important}
+html:root body #bmnSplash::before{content:"";position:absolute;left:50%;top:38%;width:78vmin;height:78vmin;margin:-39vmin 0 0 -39vmin;border-radius:50%;pointer-events:none;
+ background:radial-gradient(circle at 42% 40%,rgba(209,50,62,.34),rgba(240,207,122,.12) 46%,transparent 70%);
+ animation:bmnGlassDrift 7s ease-in-out infinite alternate;will-change:transform}
+html:root body #bmnSplash .sp-logo{position:relative;z-index:1;width:104px!important;height:104px!important;border-radius:32px!important;overflow:hidden;
+ background:linear-gradient(152deg,rgba(255,255,255,.24),rgba(255,255,255,.05) 46%,rgba(255,255,255,.09))!important;
+ border:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ box-shadow:inset 0 0 0 .5px rgba(255,255,255,.38),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -10px 18px -12px rgba(240,207,122,.35),0 22px 60px -12px rgba(209,50,62,.45)!important;
+ animation:bmnSplashPop .72s cubic-bezier(.2,1.5,.4,1) .05s both,bmnGlassBreathe 3.4s ease-in-out .9s infinite!important}
+html:root body #bmnSplash .sp-logo::before{content:"";display:block!important;position:absolute;top:-10%;bottom:-10%;left:0;width:46%;border:0!important;border-radius:0!important;inset:auto;
+ background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.10) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.10) 70%,rgba(255,255,255,0) 100%);transform:translateX(-160%) skewX(-18deg);opacity:1!important;
+ animation:bmnGlassSheen 2.8s ease-in-out 1s infinite!important}
+html:root body #bmnSplash .sp-logo::after{content:"";display:block!important;position:absolute;inset:0!important;width:auto!important;height:auto!important;border:0!important;border-radius:inherit!important;opacity:1!important;
+ background:radial-gradient(120% 70% at 30% 0%,rgba(255,255,255,.3),transparent 55%);animation:none!important}
+html:root body #bmnSplash .sp-logo b{position:relative;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+html:root body #bmnSplash .sp-tag{position:relative;z-index:1}
+@keyframes bmnGlassDrift{from{transform:translate3d(-6%,-3%,0) scale(.94)}to{transform:translate3d(6%,4%,0) scale(1.08)}}
+@keyframes bmnGlassBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes bmnGlassSheen{0%{transform:translateX(-160%) skewX(-18deg)}55%,100%{transform:translateX(330%) skewX(-18deg)}}
+@media(prefers-reduced-motion:reduce){html:root body #bmnSplash::before{animation:none!important}html:root body #bmnSplash .sp-logo{animation:none!important;scale:1;opacity:1}html:root body #bmnSplash .sp-logo::before{animation:none!important;display:none!important}}
+</style>
+
 </head>
 <body>
 <div id="bmnSplash" aria-hidden="true"><div class="sp-logo"><b>BMN</b></div><div class="sp-tag">BMN&reg; Community</div></div>
@@ -4243,14 +4283,14 @@ function enhancePost(post){
  scrub.addEventListener('input',e=>{if(video.duration)video.currentTime=(Number(e.target.value)/1000)*video.duration});
  let holdTimer=null, holding=false;
  let speed=preview.querySelector('.bmn-speed-hold');
- if(!speed){speed=document.createElement('div');speed.className='bmn-speed-hold';speed.innerHTML='<button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button>';preview.appendChild(speed);speed.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();video.playbackRate=Number(b.dataset.speed);speed.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));speed.classList.remove('open')}))}
+ if(!speed){speed=document.createElement('div');speed.className='bmn-speed-hold';speed.innerHTML='<button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button>';preview.appendChild(speed);window.dispatchEvent(new Event('bmn-glass-rescan'));speed.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();video.playbackRate=Number(b.dataset.speed);speed.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));speed.classList.remove('open')}))}
  const startHold=()=>{if(holdTimer)return;holding=false;holdTimer=setTimeout(()=>{holding=true;video.playbackRate=2;speed.classList.add('open');speed.querySelector('[data-speed="2"]')?.classList.add('active');video.play().catch(()=>{})},430)};
  const endHold=()=>{clearTimeout(holdTimer);holdTimer=null;if(holding){video.playbackRate=1;speed.classList.remove('open');speed.querySelectorAll('button').forEach(x=>x.classList.remove('active'));holding=false}};
  video.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;startHold()});
  video.addEventListener('pointerup',endHold);video.addEventListener('pointercancel',endHold);video.addEventListener('pointerleave',e=>{if(e.pointerType!=='mouse')endHold()});
  let lastTap=0;
  video.addEventListener('click',e=>{if(e.target.closest('button,input'))return;const now=Date.now();if(now-lastTap<320){lastTap=0;const like=post.querySelector('.bmn-like');like?.click();const heart=document.createElement('div');heart.className='bmn-double-heart pop';heart.textContent='♥';preview.appendChild(heart);heart.addEventListener('animationend',()=>heart.remove());return}lastTap=now;if(holding)return;setTimeout(()=>{if(Date.now()-lastTap>=300){if(video.paused)video.play().catch(()=>{});else video.pause()}},320)});
- let qa=post.querySelector('.bmn-quick-actions');if(!qa){qa=document.createElement('div');qa.className='bmn-quick-actions';qa.innerHTML='<button type="button" data-quick="like">♥ Like</button><button type="button" data-quick="save">▣ Save</button><button type="button" data-quick="repost">↻ Repost</button><button type="button" data-quick="share">↗ Share</button>';preview.appendChild(qa);qa.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const action=b.dataset.quick;qa.classList.remove('open');if(action==='like')post.querySelector('.bmn-like')?.click();if(action==='save')post.querySelector('.bmn-save-post')?.click();if(action==='share')post.querySelector('.bmn-share')?.click();if(action==='repost'){if(typeof window.bmnRepostPost==='function')window.bmnRepostPost(post.dataset.postId);else if(navigator.share)navigator.share({title:'BMN Community post',url:location.href.split('#')[0]+'#post-'+encodeURIComponent(post.dataset.postId)}).catch(()=>{});else if(window.setBackendStatus)window.setBackendStatus('Repost is ready to connect to your repost table.')}})}
+ let qa=post.querySelector('.bmn-quick-actions');if(!qa){qa=document.createElement('div');qa.className='bmn-quick-actions';qa.innerHTML='<button type="button" data-quick="like">♥ Like</button><button type="button" data-quick="save">▣ Save</button><button type="button" data-quick="repost">↻ Repost</button><button type="button" data-quick="share">↗ Share</button>';preview.appendChild(qa);window.dispatchEvent(new Event('bmn-glass-rescan'));qa.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const action=b.dataset.quick;qa.classList.remove('open');if(action==='like')post.querySelector('.bmn-like')?.click();if(action==='save')post.querySelector('.bmn-save-post')?.click();if(action==='share')post.querySelector('.bmn-share')?.click();if(action==='repost'){if(typeof window.bmnRepostPost==='function')window.bmnRepostPost(post.dataset.postId);else if(navigator.share)navigator.share({title:'BMN Community post',url:location.href.split('#')[0]+'#post-'+encodeURIComponent(post.dataset.postId)}).catch(()=>{});else if(window.setBackendStatus)window.setBackendStatus('Repost is ready to connect to your repost table.')}})}
  let quickTimer=null;video.addEventListener('contextmenu',e=>e.preventDefault());video.addEventListener('pointerdown',e=>{clearTimeout(quickTimer);quickTimer=setTimeout(()=>{qa.classList.add('open')},900)});['pointerup','pointercancel','pointerleave'].forEach(ev=>video.addEventListener(ev,()=>clearTimeout(quickTimer)));
 }
 function enhanceAll(){ $$('#community .community-post').forEach(enhancePost); }
@@ -11733,7 +11773,7 @@ html.bmn-high-contrast[data-bmn-theme="light"] #lgtt .lgtt-glass,html.bmn-high-c
 html.bmn-high-contrast #lgtt .lgtt-set-txt small,html.bmn-high-contrast #lgtt .lgtt-set-val{opacity:1;color:inherit}
 html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-high-contrast .lgtt-act-n{text-shadow:0 1px 3px #000,0 0 6px #000}
 </style>
-<script defer src="bmn-glass/bmn-glass.js" id="bmn-glass-js"></script>
+<script id="bmn-glass-loader">/* loads the Liquid Glass engine once, never on the lite (Android) tier */(function(){if(window.__bmnGlassTier==="lite"||window.BMNGlass||document.getElementById("bmn-glass-js"))return;var s=document.createElement("script");s.id="bmn-glass-js";s.async=true;s.src="bmn-glass/bmn-glass.js";document.body.appendChild(s)})();</script>
 </body>
 </html>
 
