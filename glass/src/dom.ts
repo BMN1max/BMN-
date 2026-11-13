@@ -3,23 +3,60 @@
 export const $ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 export const $$ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(sel));
 
-/** Runs `cb` once an element matching `sel` exists (the app builds some DOM lazily). */
+/**
+ * Runs `cb` once an element matching `sel` exists (the app builds some DOM lazily).
+ * All pending waiters share ONE MutationObserver on <body>/<html>, checked at most once per frame, and it
+ * disconnects as soon as nobody is waiting (or after `timeout`), so a missing element never leaves an
+ * observer behind.
+ */
+const waiters = new Set<{ sel: string; cb: (el: HTMLElement) => void; timer: number }>();
+let sharedMo: MutationObserver | null = null;
+let sharedRaf = 0;
+
+function checkWaiters() {
+  sharedRaf = 0;
+  for (const w of Array.from(waiters)) {
+    const el = $(w.sel);
+    if (el) {
+      waiters.delete(w);
+      clearTimeout(w.timer);
+      w.cb(el);
+    }
+  }
+  if (!waiters.size) {
+    sharedMo?.disconnect();
+    sharedMo = null;
+  }
+}
+
 export function whenReady(sel: string, cb: (el: HTMLElement) => void, timeout = 30000) {
   const found = $(sel);
   if (found) return cb(found), () => {};
-  const mo = new MutationObserver(() => {
-    const el = $(sel);
-    if (el) {
-      mo.disconnect();
-      clearTimeout(timer);
-      cb(el);
-    }
-  });
-  mo.observe(document.documentElement, { childList: true, subtree: true });
-  const timer = window.setTimeout(() => mo.disconnect(), timeout);
+  const w = {
+    sel,
+    cb,
+    timer: window.setTimeout(() => {
+      waiters.delete(w);
+      if (!waiters.size) {
+        sharedMo?.disconnect();
+        sharedMo = null;
+      }
+    }, timeout),
+  };
+  waiters.add(w);
+  if (!sharedMo) {
+    sharedMo = new MutationObserver(() => {
+      if (!sharedRaf) sharedRaf = requestAnimationFrame(checkWaiters);
+    });
+    sharedMo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   return () => {
-    mo.disconnect();
-    clearTimeout(timer);
+    clearTimeout(w.timer);
+    waiters.delete(w);
+    if (!waiters.size) {
+      sharedMo?.disconnect();
+      sharedMo = null;
+    }
   };
 }
 
