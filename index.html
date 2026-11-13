@@ -32,7 +32,7 @@ html.bmn-community-app body>#lgtt[hidden]{display:none!important;}
 html.bmn-community-app body{overflow:hidden!important;background:#05070d!important;}
 </style>
 <meta name="theme-color" content="#070711">
-<script>try{localStorage.setItem("bmn-v11-sound","on")}catch(e){}</script>
+<script>try{if(localStorage.getItem("bmn-v11-sound")===null)localStorage.setItem("bmn-v11-sound","on")}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -7130,7 +7130,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const s = el('article', 'lgtt-slide');
       s.dataset.id = p.id; s._post = p; s._t = 0; s._paused = false;
       const media = p.src
-        ? '<video class="lgtt-vid" src="' + esc(p.src) + '" loop playsinline webkit-playsinline autoplay preload="metadata"></video>'
+        ? '<video class="lgtt-vid" src="' + esc(p.src) + '"' + (p.poster ? ' poster="' + esc(p.poster) + '"' : '') + ' loop playsinline webkit-playsinline autoplay preload="metadata"></video>'
         : sceneHTML(p.scene);
       s.innerHTML =
         '<div class="lgtt-media">' + media + '</div><div class="lgtt-shade"></div>' +
@@ -7151,7 +7151,10 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
           '<div class="lgtt-disc" aria-hidden="true">' + avatar(u) + '</div>' +
         '</div>' +
         '<div class="lgtt-prog" data-nodrag role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><div class="lgtt-prog-track"><div class="lgtt-prog-fill"></div><div class="lgtt-prog-thumb"></div></div><span class="lgtt-prog-time">0:00 / ' + fmtDur(p.dur || 15) + '</span></div>';
-      s.vid = $('video', s) || null; s._fill = $('.lgtt-prog-fill', s); s._thumb = $('.lgtt-prog-thumb', s); s._time = $('.lgtt-prog-time', s); s._tc = $('[data-tc]', s); s._prog = $('.lgtt-prog', s);
+      s.vid = $('video', s) || null;
+      /* A failed load (network blip, expired link, slow R2 edge) is retried twice with a growing delay instead of leaving a dead frame. */
+      if (s.vid) { let tries = 0; s.vid.addEventListener('error', () => { if (tries >= 2) return; tries++; setTimeout(() => { try { const v = s.vid; if (!v || !v.isConnected) return; v.load(); if (slides[idx] === s && !s._paused && !isBlocked()) { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } } catch (e) { /* ignore */ } }, 900 * tries); }); }
+      s._fill = $('.lgtt-prog-fill', s); s._thumb = $('.lgtt-prog-thumb', s); s._time = $('.lgtt-prog-time', s); s._tc = $('[data-tc]', s); s._prog = $('.lgtt-prog', s);
       bindScrub(s);
       return s;
     }
@@ -7958,7 +7961,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     }
     function tile(p, i, pinned) {
       return '<button type="button" class="lgtt-tile" data-act="tile" data-id="' + esc(p.id) + '" style="--n:' + i + '" aria-label="Play: ' + esc(p.cap) + '">' + sceneHTML(p.scene) +
-        (pinned ? '<span class="pinned">Pinned</span>' : '') + '<span class="cap">' + ico('play') + '<span class="t">' + fmt(countOf(p, 'likes') * 6) + ' · ' + esc((p.cap || '').replace(/#\S+/g, '').trim()) + '</span></span></button>';
+        (pinned ? '<span class="pinned">Pinned</span>' : '') + '<span class="cap">' + ico('heart') + '<span class="t">' + fmt(countOf(p, 'likes') || 0) + ' · ' + esc((p.cap || '').replace(/#\S+/g, '').trim()) + '</span></span></button>';
     }
     function bind() {
       let t = 0; R.DiscSearch.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { q = R.DiscSearch.value.trim(); render(); if (q) haptic('soft'); }, 140); });
@@ -8057,9 +8060,9 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
  { h: 'Session', rows: [L('switch', 'users', '#58aaff', '#59f1e6', 'Switch account', 'Sign out and sign in to another account', ''), L('logout', 'logout', '#ff8a5c', '#ff5c8a', 'Log out', 'Sign out of BMN on this device', ''), L('delete', 'trash', '#ff3b5c', '#ff6a88', 'Delete account', 'Permanently delete your account and data', '', true)] }
  ];
  if (tab === 'privacy') return [
-        { h: 'Discoverability', rows: [T('private', 'lock', '#58aaff', '#9b6bff', 'Private account', 'Only approved followers can watch your videos'), T('suggest', 'users', '#59f1e6', '#58aaff', 'Suggest account to others', 'Appear in “Creators to follow”'), T('activity', 'live', '#3ddc84', '#59f1e6', 'Activity status', 'Let friends see when you are online')] },
-        { h: 'Interactions', rows: [O('whoComment', 'comment', '#ffd166', '#ff8a5c', 'Who can comment', '', ['everyone', 'friends', 'none']), O('whoMessage', 'mail', '#b18cff', '#ff5c8a', 'Who can message me', '', ['everyone', 'friends', 'none']), T('downloads', 'download', '#58aaff', '#59f1e6', 'Allow downloads', 'Let others save your videos')] },
-        { h: 'Safety', rows: [T('twoStep', 'shield', '#3ddc84', '#59f1e6', 'Two-step verification', 'Add an extra layer to your login'), T('loginAlerts', 'bell', '#ffd166', '#ff8a5c', 'Login alerts', 'Notify me of new sign-ins')] },
+        { h: 'Discoverability', rows: [T('private', 'lock', '#58aaff', '#9b6bff', 'Private account', 'Saved on this device only. Not enforced for other people yet.'), T('suggest', 'users', '#59f1e6', '#58aaff', 'Suggest account to others', 'Saved on this device only. Not enforced for other people yet.'), T('activity', 'live', '#3ddc84', '#59f1e6', 'Activity status', 'Saved on this device only. Not enforced for other people yet.')] },
+        { h: 'Interactions', rows: [O('whoComment', 'comment', '#ffd166', '#ff8a5c', 'Who can comment', 'Saved on this device only. Not enforced for other people yet.', ['everyone', 'friends', 'none']), O('whoMessage', 'mail', '#b18cff', '#ff5c8a', 'Who can message me', 'Saved on this device only. Not enforced for other people yet.', ['everyone', 'friends', 'none']), T('downloads', 'download', '#58aaff', '#59f1e6', 'Allow downloads', 'Saved on this device only. Not enforced for other people yet.')] },
+        { h: 'Safety', rows: [T('twoStep', 'shield', '#3ddc84', '#59f1e6', 'Two-step verification', 'Not available yet. This switch does not secure your login.'), T('loginAlerts', 'bell', '#ffd166', '#ff8a5c', 'Login alerts', 'Not available yet. No alerts are sent.')] },
         { kw: true }, { blocked: true },
         { h: 'Data', rows: [L('data', 'download', '#58aaff', '#9b6bff', 'Download my data', 'Request a copy of your information', ''), L('policy', 'info', '#59f1e6', '#58aaff', 'Privacy policy', '', '')] }
       ];
@@ -10854,7 +10857,7 @@ function fit(){
   root.style.setProperty('--bmn-ext',ext+'px');root.style.setProperty('--bmn-full',(h+ext)+'px');root.classList.toggle('bmn-ext',ext>0);window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
   let flag=false;try{flag=localStorage.getItem('bmn-layout-debug')==='1'}catch(_){}
   if(standalone()&&!window.__bmnDiagStart){window.__bmnDiagStart=Date.now()}
-  const auto=(function(){try{if(localStorage.getItem('bmn-diag-r16'))return false;if(!window.__bmnDiagT0)window.__bmnDiagT0=Date.now();if(Date.now()-window.__bmnDiagT0>20000){localStorage.setItem('bmn-diag-r16','1');return false}return true}catch(_){return false}})();
+  const auto=false; /* the on-screen layout readout is opt-in: add ?layout=1 or set localStorage bmn-layout-debug=1 */
   if(flag||auto||/[?&]layout=1/.test(location.search)){
     if(!dbg){dbg=document.createElement('div');dbg.id='bmnLayoutDebug';document.body.appendChild(dbg)}
     dbg.textContent=['standalone: '+standalone(),'innerWxH: '+innerWidth+'x'+innerHeight,'screen: '+screen.width+'x'+screen.height,'fixed box height: '+h,'extend: '+ext+'px','visualViewport: '+(window.visualViewport?Math.round(window.visualViewport.height):'n/a'),'safe top/bottom: '+sat+' / '+sab,'ua: '+(navigator.userAgent.match(/(CriOS|FxiOS|EdgiOS|Chrome|Safari)\/[\d.]+/g)||[]).join(' '),'overlay: '+(function(){try{const a=document.getElementById('lgtt'),b=document.getElementById('lgttStage');if(!a||!b)return'n/a';const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.round(x.top)+'/'+Math.round(x.height)+'  stage '+Math.round(y.top)+'/'+Math.round(y.height)}catch(e){return'err'}})(),'build: '+(window.BMN_BUILD||'old'),'gaps lg/stage: '+(window.__bmnGap?window.__bmnGap.lg+' / '+window.__bmnGap.stage:'n/a'),'bottom strip: '+(function(){try{const L=document.elementsFromPoint(innerWidth/2,innerHeight-6).slice(0,4);return L.map(e=>e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+(e.className&&typeof e.className==='string'?'.'+e.className.split(' ')[0]:'')).join(' > ')}catch(e){return'err'}})(),'bmn scroll: '+(function(){try{const c=document.getElementById('bmn-app-scroll').getBoundingClientRect();return Math.round(c.top)+'/'+Math.round(c.height)}catch(e){return'n/a'}})()].join('\n');
