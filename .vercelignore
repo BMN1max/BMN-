@@ -1,0 +1,27 @@
+
+# Files that are not part of the website. Vercel serves the repository root statically
+# (see vercel.json), so anything listed here is simply not uploaded / not publicly reachable.
+# The Render API, database files and the glass SOURCE are not needed by the browser:
+# the browser only loads index.html, manifest.webmanifest, the icons and bmn-glass/.
+*.sql
+supabase/
+server.js
+routes/
+recommendation.js
+recommendation.test.js
+tips.js
+bmn_api.py
+bmn_engine.cpp
+bmn.conf.example
+github-actions-vps.example.yml
+glass/
+src/
+docs/
+dock.check.js
+bridge.check.js
+parity.check.js
+parity.js
+dock_test.js
+bridge_test.js
+TEST_REPORT.md
+TEST_REPORT.txt
