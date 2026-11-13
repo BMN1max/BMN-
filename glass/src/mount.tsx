@@ -8,6 +8,7 @@ const roots: Array<{ root: Root; host: HTMLElement }> = [];
 export function mount(parent: HTMLElement, node: React.ReactNode, className: string, before?: Node | null) {
   const host = document.createElement('div');
   host.className = className;
+  host.setAttribute('data-bmn-glass-host', '');
   parent.insertBefore(host, before ?? null);
   const root = createRoot(host);
   root.render(node);
