@@ -31,6 +31,8 @@ const FAMILIES: Family[] = [
   // They are created lazily inside posts, so they are picked up as they appear.
   { selector: '.bmn-quick-actions button', shape: { kind: 'surface', bezel: 14, thickness: 22, strength: 1.15, ior: 1.5 }, press: {}, tag: 'quick', tone: 'dark' },
   { selector: '.bmn-speed-hold', shape: { kind: 'surface', bezel: 16, thickness: 24, strength: 1, ior: 1.5 }, press: false, tag: 'speed', tone: 'dark' },
+  // Input pills (comments, chat, search, inbox composer): the PILL is the glass, the field inside stays transparent.
+  { selector: '#lgtt .lgtt-compose-pill, #lgtt .lgtt-search, #bmnRealInbox .bmn-ri-composer-shell, #bmnRealInbox .bmn-ri-search', shape: { kind: 'surface', bezel: 18, thickness: 20, strength: 0.7 }, press: false, tag: 'pill', tone: 'auto' },
   // Sheets (comments, DMs, settings, share): large and shallow, softer rim.
   { selector: '#lgtt aside.lgtt-sheet', shape: { kind: 'surface', bezel: 24, thickness: 30, strength: 0.8 }, press: false, tag: 'sheet', tone: 'auto' },
   // Menu / confirm cards that BMN renders itself.
@@ -77,9 +79,38 @@ function watchTone(fn: () => void) {
   };
 }
 
+/**
+ * One shared IntersectionObserver for every bridged surface. The engine only bakes a displacement map
+ * (a canvas pass, roughly 10 ms each) and only listens for presses for surfaces that are actually on screen:
+ * closed sheets, hidden inbox pills and display:none panels cost nothing until they appear. Baked maps are cached
+ * by size by the engine, so scrolling a surface out and back in is free.
+ */
+const viewCbs = new Map<Element, (visible: boolean) => void>();
+let viewObserver: IntersectionObserver | null = null;
+function observeVisible(el: Element, cb: (visible: boolean) => void) {
+  if (typeof IntersectionObserver !== 'function') {
+    cb(true);
+    return () => {};
+  }
+  viewObserver ??= new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) viewCbs.get(e.target)?.(e.isIntersecting);
+    },
+    { rootMargin: '8% 0px' },
+  );
+  viewCbs.set(el, cb);
+  viewObserver.observe(el);
+  return () => {
+    viewObserver?.unobserve(el);
+    viewCbs.delete(el);
+  };
+}
+
 const Surface: React.FC<{ el: HTMLElement; family: Family }> = ({ el, family }) => {
   // `el` is a long-lived DOM node; useRefraction only reads `.current`.
   const [ref] = useState(() => ({ current: el }));
+  const [visible, setVisible] = useState(false);
+  useEffect(() => observeVisible(el, setVisible), [el]);
   useEffect(() => {
     el.classList.add('lg-glass', 'bmn-surface');
     el.dataset.bmnMaterial = family.tag;
@@ -108,8 +139,8 @@ const Surface: React.FC<{ el: HTMLElement; family: Family }> = ({ el, family }) 
       delete el.dataset.bmnTone;
     };
   }, [el, family]);
-  useRefraction(ref, family.shape, true);
-  usePress(ref, family.press === false ? { disabled: true } : family.press || {});
+  useRefraction(ref, family.shape, visible);
+  usePress(ref, family.press === false || !visible ? { disabled: true } : family.press || {});
   return null;
 };
 
@@ -131,8 +162,15 @@ const App: React.FC = () => {
   );
 };
 
+let stageEl: HTMLElement | null = null;
+
 /** Idempotent: call whenever DOM may have changed. Bridges new elements, releases removed ones. */
+export function scanSurfaces() {
+  if (stageEl) bridgeSurfaces(stageEl);
+}
+
 export function bridgeSurfaces(stage: HTMLElement) {
+  stageEl = stage;
   let changed = false;
   store.items = store.items.filter((it) => {
     if (it.el.isConnected) return true;

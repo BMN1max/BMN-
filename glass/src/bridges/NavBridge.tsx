@@ -98,8 +98,17 @@ export const NavBridge: React.FC<{ spec: DockSpec; dock: HTMLElement }> = ({ spe
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Re-render only when something the glass nav actually shows has changed: the app
+    // touches the dock's classes constantly (lens, drag, peek states) and each of those
+    // used to rebuild every tab and its icon.
+    let last = '';
     const sync = () => {
-      setTabs(read(spec, dock));
+      const next = read(spec, dock);
+      const sig = next.map((t) => `${t.key}|${t.label}|${t.icon.href || t.icon.html || ''}|${t.badge}|${t.on ? 1 : 0}`).join('\u0001');
+      if (sig !== last) {
+        last = sig;
+        setTabs(next);
+      }
       setMode(theme());
     };
     const stop = watch(dock, sync);

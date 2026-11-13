@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GlassInput, GlassSegmented, GlassSlider, GlassSwitch } from '@zakisheriff/liquid-glass';
+import { GlassSegmented, GlassSlider, GlassSwitch } from '@zakisheriff/liquid-glass';
 import { $$, theme, watch } from '../dom';
 import { mount } from '../mount';
 
@@ -101,7 +101,7 @@ function sweep() {
 export function bridgeSwitches() {
   sweep();
   for (const btn of $$('button.lgtt-switch[role="switch"], button#powerToggle[role="switch"]')) {
-    if (btn.dataset.bmnSw) continue;
+    if (btn.dataset.bmnSw || btn.closest('[data-bmn-glass-host]')) continue;
     btn.dataset.bmnSw = '1';
     const slot = document.createElement('span');
     slot.className = 'bmn-gw-slot';
@@ -149,89 +149,11 @@ const SliderBridge: React.FC<{ input: HTMLInputElement }> = ({ input }) => {
 export function bridgeSliders(root: ParentNode = document) {
   sweep();
   for (const input of Array.from(root.querySelectorAll<HTMLInputElement>('#lgtt input[type="range"], .app input[type="range"]'))) {
-    if (input.dataset.bmnSl) continue;
+    if (input.dataset.bmnSl || input.closest('[data-bmn-glass-host]')) continue;
     input.dataset.bmnSl = '1';
     const slot = document.createElement('span');
     slot.className = 'bmn-gsl-slot';
     input.after(slot);
     bridged.set(slot, mount(slot, <SliderBridge input={input} />, 'bmn-gsl-host'));
-  }
-}
-
-/* -------------------------------------------------------------------- Input */
-
-const InputBridge: React.FC<{ input: HTMLInputElement }> = ({ input }) => {
-  const [value, setValue] = useState(input.value);
-  const mine = useRef<HTMLInputElement>(null);
-  const mode = useTheme();
-  const search = input.type === 'search';
-
-  useEffect(() => {
-    // Programmatic writes by BMN (e.g. clearing the composer after send) reach the glass field.
-    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!;
-    Object.defineProperty(input, 'value', {
-      configurable: true,
-      get() {
-        return desc.get!.call(this);
-      },
-      set(v: string) {
-        desc.set!.call(this, v);
-        setValue(String(v));
-      },
-    });
-    // Programmatic focus (opening a chat, tapping the comment button) lands on the visible field.
-    const nativeFocus = input.focus.bind(input);
-    input.focus = (opts?: FocusOptions) => (mine.current ? mine.current.focus(opts) : nativeFocus(opts));
-    input.blur = () => mine.current?.blur();
-    return () => {
-      delete (input as unknown as Record<string, unknown>).value;
-      delete (input as unknown as Record<string, unknown>).focus;
-      delete (input as unknown as Record<string, unknown>).blur;
-    };
-  }, [input]);
-
-  const forward = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    input.dispatchEvent(new KeyboardEvent(e.type, { key: e.key, code: e.code, bubbles: true, cancelable: true }));
-  };
-
-  return (
-    <div className="bmn-gi" data-theme={mode} data-bmn-glass="input">
-      <GlassInput
-        ref={mine}
-        type={search ? 'search' : 'text'}
-        value={value}
-        placeholder={input.placeholder}
-        maxLength={input.maxLength > 0 ? input.maxLength : undefined}
-        enterKeyHint={input.enterKeyHint as React.HTMLAttributes<HTMLInputElement>['enterKeyHint']}
-        autoComplete={input.autocomplete || 'off'}
-        aria-label={input.getAttribute('aria-label') || undefined}
-        tint="#ff4d5e"
-        intensity={4}
-        onKeyDown={forward}
-        onKeyUp={forward}
-        onChange={(e) => {
-          setValue(e.target.value);
-          const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-          set?.call(input, e.target.value);
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        }}
-        onFocus={() => input.dispatchEvent(new FocusEvent('focus'))}
-        onBlur={() => input.dispatchEvent(new FocusEvent('blur'))}
-      />
-    </div>
-  );
-};
-
-export function bridgeInputs() {
-  for (const sel of ['#lgttChatInput', '#lgttCmtInput', '#lgttCmtSearch', '#lgttDmSearch', '#lgtt .lgtt-search input[type="search"]']) {
-    for (const input of $$<HTMLInputElement>(sel)) {
-      // Never bridge the <input> that GlassInput itself renders: `.lgtt-search input[type=search]`
-      // also matches it, which re-wrapped the glass field in another glass field on every DOM change.
-      if (input.dataset.bmnIn || input.closest('.bmn-gi-host')) continue;
-      input.dataset.bmnIn = '1';
-      const parent = input.parentElement!;
-      parent.classList.add('bmn-gi-wrap');
-      mount(parent, <InputBridge input={input} />, 'bmn-gi-host', input);
-    }
   }
 }
