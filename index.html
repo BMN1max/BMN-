@@ -1904,10 +1904,10 @@ body.light .bmn-owner-console{background:linear-gradient(135deg,rgba(54,125,220,
    transparent Liquid Glass, System appearance, real profile media, and chat wallpaper. */
 html.bmn-community-app,html.bmn-community-app body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden!important;overscroll-behavior:none;background:#05070d!important}
 html.bmn-community-app body>#communityPage,html.bmn-community-app body>#community,html.bmn-community-app body>.topbar,html.bmn-community-app body>main.wrap{display:none!important}
-html.bmn-community-app #lgtt{display:flex!important;align-items:center!important;justify-content:center!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}
+html.bmn-community-app #lgtt{display:flex!important;align-items:center!important;justify-content:center!important;position:fixed!important;inset:0!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}
 html.bmn-community-app #lgtt .lgtt-stage{height:100%!important;min-height:0!important;max-height:100%!important}
 @media(min-width:600px) and (min-height:560px){html.bmn-community-app #lgtt .lgtt-stage{width:min(460px,calc(100vw - 48px))!important;height:calc(100dvh - 28px)!important;max-height:calc(100dvh - 28px)!important;border-radius:36px!important;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 50px 120px -20px rgba(0,0,0,.75),0 0 80px -20px rgba(120,150,255,.35)!important}}
-@media(max-width:599px){html.bmn-community-app #lgtt .lgtt-stage{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;box-shadow:none!important}}
+@media(max-width:599px){html.bmn-community-app #lgtt .lgtt-stage{width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important}}
 /* There is exactly one BMN switch: the B button in the feed top row. */
 html.bmn-community-app #lgtt>.lgtt-outer-close{display:none!important}
 html.bmn-community-app #lgtt .lgtt-top-row>.bmn-switch-personal{display:grid!important}
@@ -1941,7 +1941,7 @@ html[data-bmn-theme="light"] #lgtt input,html[data-bmn-theme="light"] #lgtt text
 /* Adaptive splash: no arbitrary loading duration. It stays until the app is ready, with a safety ceiling only. */
 html.bmn-starting,html.bmn-starting body{background:#05060d!important;overflow:hidden!important}
 html.bmn-starting body>*:not(#bmnSplash):not(script):not(style){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-#bmnSplash{display:flex!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;z-index:2147483647!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:22px!important;background:radial-gradient(80% 70% at 50% 38%,#17233f 0%,#090b16 60%,#03040a 100%)!important;opacity:1!important;visibility:visible!important}
+#bmnSplash{display:flex!important;position:fixed!important;inset:0!important;width:auto!important;height:auto!important;z-index:2147483647!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:22px!important;background:radial-gradient(80% 70% at 50% 38%,#17233f 0%,#090b16 60%,#03040a 100%)!important;opacity:1!important;visibility:visible!important}
 #bmnSplash .sp-logo{position:relative;display:grid;place-items:center;width:112px;height:112px;border-radius:34px;background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 24px 80px rgba(65,125,255,.25);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);animation:bmnFinalLogoPop .78s cubic-bezier(.2,1.4,.3,1) both}
 #bmnSplash .sp-logo::before,#bmnSplash .sp-logo::after{content:"";position:absolute;border:1.5px solid rgba(110,210,255,.62);border-radius:50%;width:100%;height:100%;animation:bmnFinalRing 1.55s ease-out infinite}
 #bmnSplash .sp-logo::after{animation-delay:.52s;border-color:rgba(180,145,255,.50)}
@@ -9041,7 +9041,7 @@ function friendlySendError(e,peer){
  return'Message not sent: '+(msg||'check your connection')+'. Your text is kept, tap send to retry.'}
 function sepLabel(ts){const d=new Date(ts);if(Number.isNaN(d.getTime()))return'';const n=new Date(),t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),day=x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime(),diff=Math.round((day(n)-day(d))/864e5);if(diff===0)return t;if(diff===1)return'Yesterday '+t;return d.toLocaleDateString([], {month:'short',day:'numeric'})+', '+t}
 const EMO=/^(?:\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+$/u;
-function renderRows(rows,u){let out='',last=0;rows.forEach(m=>{const t=new Date(m.created_at).getTime();if(!last||t-last>30*60*1000||new Date(t).getDate()!==new Date(last).getDate())out+='<div class="bmn-ri-sep">'+esc(sepLabel(m.created_at))+'</div>';last=t;const mine=m.sender_id===u.id,c=String(m.content||''),emoji=!c.startsWith(IMGP)&&EMO.test(c)&&(c.match(/\p{Extended_Pictographic}/gu)||[]).length<=3;out+='<div class="bmn-ri-msg '+(mine?'mine':'')+(emoji?' emoji':'')+'">'+bubbleBody(c)+'<div class="bmn-ri-stamp">'+(mine&&m.read_at?'Read':'')+'</div></div>'});return out}
+function renderRows(rows,u){let out='',last=0,prevT=0,prevS=null;rows.forEach((m,i)=>{const t=new Date(m.created_at).getTime();let sep=false;if(!last||t-last>30*60*1000||new Date(t).getDate()!==new Date(last).getDate()){out+='<div class="bmn-ri-sep">'+esc(sepLabel(m.created_at))+'</div>';sep=true}last=t;const mine=m.sender_id===u.id,c=String(m.content||''),emoji=!c.startsWith(IMGP)&&EMO.test(c)&&(c.match(/\p{Extended_Pictographic}/gu)||[]).length<=3;const nx=rows[i+1],nt=nx?new Date(nx.created_at).getTime():0;const first=sep||prevS!==m.sender_id||t-prevT>5*60*1000,endGrp=!nx||nx.sender_id!==m.sender_id||nt-t>5*60*1000||new Date(nt).getDate()!==new Date(t).getDate()||nt-t>30*60*1000;prevT=t;prevS=m.sender_id;out+='<div class="bmn-ri-msg '+(mine?'mine':'')+(emoji?' emoji':'')+(first?' g-first':'')+(endGrp?' g-last':'')+'">'+bubbleBody(c)+'<div class="bmn-ri-stamp">'+esc(fmtTime(m.created_at))+(mine?(m.read_at?' \u00b7 Read':' \u00b7 Sent'):'')+'</div></div>'});return out}
 async function loadList(q=''){const s=sb(),u=session();if(!s||!u){list.innerHTML='<div class="bmn-ri-empty"><strong>Sign in to use Inbox</strong><p>Your messages stay connected to your BMN account.</p></div>';return}list.innerHTML='<div class="bmn-ri-empty">Loading real messages…</div>';try{const {data,error}=await msgSelect(b=>b.or(`sender_id.eq.${u.id},recipient_id.eq.${u.id}`).order('created_at',{ascending:true}).limit(500));if(error)throw error;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const peers=[...new Set(rows.map(m=>m.sender_id===u.id?m.recipient_id:m.sender_id))];await ensureProfiles(peers);const latest=new Map();rows.forEach(m=>{const peer=m.sender_id===u.id?m.recipient_id:m.sender_id;const old=latest.get(peer);if(!old||new Date(m.created_at)>new Date(old.created_at))latest.set(peer,m)});const entries=[...latest.entries()].filter(([id,m])=>!q||`${name(id)} ${handle(id)} ${m.content}`.toLowerCase().includes(q));if(!entries.length){list.innerHTML='<div class="bmn-ri-empty">No real conversations yet.<br><small>Start a message from a creator profile.</small></div>';return}const unread=new Map();rows.forEach(m=>{if(m.recipient_id===u.id&&m.sender_id!==u.id&&!m.read_at)unread.set(m.sender_id,(unread.get(m.sender_id)||0)+1)});entries.sort((a,b)=>new Date(b[1].created_at)-new Date(a[1].created_at));list.innerHTML=entries.map(([id,m])=>`<button class="bmn-ri-row" data-peer="${esc(id)}">${avatar(id)}<span class="bmn-ri-meta"><strong>${esc(id===u.id?'Yourself':name(id))}</strong><small>${esc(previewText(m.content))} \u00b7 ${fmtDate(m.created_at)}</small></span>${unread.get(id)?'<span class="bmn-ri-badge" aria-label="'+unread.get(id)+' unread">'+(unread.get(id)>99?'99+':unread.get(id))+'</span>':''}</button>`).join('');$$('[data-peer]',list).forEach(b=>b.onclick=()=>openChat(b.dataset.peer));}catch(e){list.innerHTML=`<div class="bmn-ri-empty">Could not load messages.<br><small>${esc(e.message||'Check your messages permissions.')}</small></div>`}}
 async function openChat(id){const u=session();if(!u){if(typeof window.requestCommunityAuth==='function')window.requestCommunityAuth('inbox');else alert('Please sign in to use Inbox.');return}peerId=id||u.id;await ensureProfiles([peerId]);currentPeer=peerId;try{window.__bmnRiPeer&&window.__bmnRiPeer(peerId)}catch(_){}chat.classList.add('open');$('#bmnRiWho').innerHTML=`${avatar(peerId)}<div><strong>${esc(peerId===u.id?'Yourself':name(peerId))}</strong><small>${esc(handle(peerId)||'BMN Community')}</small></div>`;$('#bmnRiNote').textContent='';await loadMessages();}
 async function loadMessages(silent){const s=sb(),u=session();if(!s||!u||!peerId)return;const forPeer=peerId;if(!silent)chatList.innerHTML='<div class="bmn-ri-empty">Loading…</div>';try{const {data,error}=await msgSelect(b=>{let r=b.order('created_at',{ascending:true});r=forPeer===u.id?r.eq('sender_id',u.id).eq('recipient_id',u.id):r.or(`and(sender_id.eq.${u.id},recipient_id.eq.${forPeer}),and(sender_id.eq.${forPeer},recipient_id.eq.${u.id})`);return r.limit(1000)});if(error)throw error;if(forPeer!==peerId)return;const rows=(data||[]).filter(m=>u.id===m.sender_id?!m.deleted_by_sender:!m.deleted_by_recipient);const near=chatList.scrollHeight-chatList.scrollTop-chatList.clientHeight<140;chatList.innerHTML=rows.length?renderRows(rows,u):'<div class="bmn-ri-empty">No messages yet. Say hello.</div>';hydrateImgs();if(!silent||near)chatList.scrollTop=chatList.scrollHeight;if(forPeer!==u.id){const unread=rows.filter(m=>m.recipient_id===u.id&&!m.read_at).map(m=>m.id);if(unread.length){try{await s.from('messages').update({read_at:new Date().toISOString()}).in('id',unread)}catch(_){}}}}catch(e){if(silent){riNote('Could not refresh this conversation: '+(e.message||''),true)}else chatList.innerHTML=`<div class="bmn-ri-empty">Could not load this conversation.<br><small>${esc(e.message||'')}</small></div>`}}
@@ -9081,13 +9081,13 @@ window.BMNRealInbox={open,close,openChat,refresh:loadList};
 </style>
 <script id="bmn-inbox-wallpaper-keyboard-js">
 (()=>{'use strict';
-const PRESETS=[['Default',''],['Midnight','linear-gradient(160deg,#0b1020,#1a2347)'],['Storm','linear-gradient(160deg,#1c2b4a,#3b5b8f)'],['Violet','linear-gradient(160deg,#1b1038,#5b3a9e)'],['Cyan','linear-gradient(160deg,#06222e,#0e7490)'],['Pearl','linear-gradient(160deg,#e8edf7,#b9c4dc)'],['Ember','linear-gradient(160deg,#2a0f1a,#8a3b4f)'],['Forest','linear-gradient(160deg,#08201a,#1f6b53)']];
+const PRESETS=[['Default',''],['Midnight','linear-gradient(160deg,#0b1020,#1a2347)'],['Storm','linear-gradient(160deg,#1c2b4a,#3b5b8f)'],['Violet','linear-gradient(160deg,#1b1038,#5b3a9e)'],['Cyan','linear-gradient(160deg,#06222e,#0e7490)'],['Pearl','linear-gradient(160deg,#e8edf7,#b9c4dc)'],['Ember','linear-gradient(160deg,#2a0f1a,#8a3b4f)'],['Forest','linear-gradient(160deg,#08201a,#1f6b53)'],['Doodle','url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%27120%27%3E%3Cg fill=%27none%27 stroke=%27%23ffffff%27 stroke-opacity=%27.07%27 stroke-width=%271.6%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2724%27 cy=%2724%27 r=%278%27/%3E%3Cpath d=%27M70 18l10 10M80 18L70 28%27/%3E%3Cpath d=%27M20 80q8-12 16 0t16 0%27/%3E%3Cpath d=%27M84 76l8 14H76z%27/%3E%3Crect x=%2750%27 y=%2754%27 width=%2714%27 height=%2714%27 rx=%273%27/%3E%3C/g%3E%3C/svg%3E"),linear-gradient(160deg,#0b1020,#1a2347)']];
 let peer=null,panel=null;
 const key=id=>'bmn-chat-wp:'+id;
 const get=id=>{try{return localStorage.getItem(key(id))||''}catch(_){return ''}};
 const set=(id,v)=>{try{v?localStorage.setItem(key(id),v):localStorage.removeItem(key(id));return true}catch(_){return false}};
 const note=t=>{const n=document.getElementById('bmnRiNote');if(n)n.textContent=t};
-function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;let w=m.querySelector(':scope>.bmn-ri-wall');if(!w){w=document.createElement('div');w.className='bmn-ri-wall';w.setAttribute('aria-hidden','true');m.insertBefore(w,m.firstChild)}const v=peer?get(peer):'';w.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'')}
+function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;let w=m.querySelector(':scope>.bmn-ri-wall');if(!w){w=document.createElement('div');w.className='bmn-ri-wall';w.setAttribute('aria-hidden','true');m.insertBefore(w,m.firstChild)}const v=peer?get(peer):'';w.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');w.style.backgroundSize=v&&v.startsWith('url(')?'120px 120px,cover':'';w.style.backgroundRepeat=v&&v.startsWith('url(')?'repeat,no-repeat':''}
 function mark(){if(!panel)return;const v=get(peer);panel.querySelectorAll('.bmn-ri-wp-grid button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v||'')===v)))}
 function build(){
   const chat=document.getElementById('bmnRiChat');if(!chat||panel)return;
@@ -9194,7 +9194,6 @@ html.bmn-community-app #lgtt img,html.bmn-community-app #lgtt video{-webkit-user
 </style>
 
 <style id="bmn-fit-css">
-html.bmn-community-app body.bmn-community-app #lgtt,html.bmn-community-app #lgtt{bottom:calc(0px - var(--bmn-ext,0px))!important}
 #bmnLayoutDebug{position:fixed;left:8px;top:90px;z-index:2147483647;max-width:70vw;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.8);color:#9fe;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap;pointer-events:none}
 /* Android: conventional solid TikTok-style surfaces; Liquid Glass stays on iPhone */
 html.bmn-android #lgtt *,html.bmn-android #bmnRealInbox *,html.bmn-android #bmnSheetHost *,html.bmn-android #bmnInstallChip{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
@@ -9281,7 +9280,6 @@ html.bmn-android .bmn-sh{background:#14171f!important}
 #bmnCam .bmn-cam-rb button{flex:1;max-width:180px;height:50px;border-radius:25px;border:0;background:rgba(255,255,255,.18);color:#fff;font:700 16px system-ui}
 #bmnCam .bmn-cam-rb button.pri{background:#fe2c55}
 /* belt and braces for the black band: explicit pixel height when the app is extended */
-html.bmn-ext.bmn-community-app #lgtt{bottom:auto!important;height:var(--bmn-full,100%)!important}
 </style>
 
 <style id="bmn-theme-platform-css">
@@ -10842,6 +10840,66 @@ window.bmnSaveVideo=async function(src,id){
 })();
 </script>
 
+<style id="bmn-inbox-chat-v2-css">
+/* Inbox chat v2: layout follows a messenger-style chat (grouped bubbles with in-bubble time, service pills,
+   scroll-to-latest button, rounded composer). Colours stay BMN. Nothing here adds data the backend does not have. */
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 8px;background:rgba(10,12,20,.72);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border-bottom:1px solid rgba(255,255,255,.08)}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head #bmnRiChatBack{grid-column:1;grid-row:1}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .who{grid-column:2;grid-row:1;display:flex;flex-direction:column-reverse;align-items:center;justify-content:center;gap:0;min-width:0;text-align:center}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .who>div{min-width:0;max-width:100%;text-align:center}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .who .bmn-ri-avatar{display:none}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .who strong{font-size:17px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .who small{font-size:12.5px;color:rgba(255,255,255,.55)}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .bmn-ri-hd-av{grid-column:3;grid-row:1;width:40px;height:40px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,#2f8bff,#7c4dff);font-weight:700;font-size:16px;color:#fff;justify-self:end;margin-right:2px}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head .bmn-ri-hd-av img{width:100%;height:100%;object-fit:cover;display:block}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head #bmnRiClear,#lgttStage>#bmnRealInbox .bmn-ri-chat-head #bmnRiWallpaper{position:absolute;right:58px;top:calc(env(safe-area-inset-top,0px) + 8px);width:36px;height:36px}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head #bmnRiWallpaper{right:96px}
+#lgttStage>#bmnRealInbox .bmn-ri-chat-head:has(.bmn-ri-hd-av) .who{padding:0 92px 0 0;margin-right:-92px}
+/* grouped bubbles */
+#lgttStage>#bmnRealInbox .bmn-ri-messages{gap:2px;padding-left:10px;padding-right:10px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg{position:relative;max-width:80%;padding:7px 12px 6px;border-radius:18px;font-size:16px;line-height:1.3;box-shadow:0 1px 1px rgba(0,0,0,.18)}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:not(.mine){align-self:flex-start;border-bottom-left-radius:5px;background:rgba(38,38,44,.92)}
+#lgttStage>#bmnRealInbox .bmn-ri-msg.mine{align-self:flex-end;border-bottom-right-radius:5px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg.g-first{margin-top:8px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:not(.g-last):not(.mine){border-bottom-left-radius:18px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:not(.g-last).mine{border-bottom-right-radius:18px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:not(.g-first):not(.mine){border-top-left-radius:6px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:not(.g-first).mine{border-top-right-radius:6px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg .bmn-ri-stamp{display:block;text-align:right;margin:2px -2px -1px 14px;font-size:11px;line-height:1;opacity:.62;white-space:nowrap;float:right;clear:none;padding-top:6px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg.emoji .bmn-ri-stamp{float:none;display:inline-block;margin:0 0 0 8px}
+#lgttStage>#bmnRealInbox .bmn-ri-msg:has(.bmn-ri-img) .bmn-ri-stamp{position:absolute;right:10px;bottom:9px;padding:3px 7px;border-radius:10px;background:rgba(0,0,0,.45);opacity:1;float:none;margin:0;color:#fff}
+/* service pill for date/time separators */
+#lgttStage>#bmnRealInbox .bmn-ri-sep{align-self:center;margin:12px 0 6px;padding:4px 12px;border-radius:14px;background:rgba(28,30,38,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:rgba(255,255,255,.8);font-size:13px;font-weight:600}
+/* scroll to latest */
+.bmn-ri-down{position:absolute;right:14px;bottom:calc(100px + env(safe-area-inset-bottom,0px) + var(--bmn-kb,0px));z-index:6;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(28,30,38,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#fff;display:grid;place-items:center;opacity:0;transform:translateY(10px) scale(.9);pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1)}
+.bmn-ri-down.show{opacity:1;transform:none;pointer-events:auto}
+/* composer */
+#lgttStage>#bmnRealInbox .bmn-ri-compose{padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,0,0,.92) 55%,rgba(0,0,0,0))}
+#lgttStage>#bmnRealInbox .bmn-ri-composer-shell{display:flex;align-items:flex-end;gap:6px;padding:4px 4px 4px 4px;background:rgba(28,28,32,.94);border:1px solid rgba(255,255,255,.08);border-radius:24px}
+#lgttStage>#bmnRealInbox .bmn-ri-attach{order:0;flex:0 0 40px;width:40px;height:40px;color:rgba(255,255,255,.7)}
+#lgttStage>#bmnRealInbox #bmnRiInput{order:1;padding:8px 4px;font-size:17px;line-height:1.25;max-height:130px}
+#lgttStage>#bmnRealInbox .bmn-ri-send{order:2;flex:0 0 40px;border-radius:50%;background:linear-gradient(135deg,#2f8bff,#7c4dff)!important;color:#fff;display:grid;place-items:center}
+#lgttStage>#bmnRealInbox .bmn-ri-send:disabled{display:none}
+@media (prefers-reduced-motion:reduce){.bmn-ri-down{transition:none}}
+html.bmn-android #lgttStage>#bmnRealInbox .bmn-ri-sep,html.bmn-android .bmn-ri-down{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#1b1d25!important}
+</style>
+<script id="bmn-inbox-chat-v2-js">
+(()=>{'use strict';
+/* Adds a header avatar and a scroll-to-latest button to the conversation. Pure UI: reads what BMNRealInbox already rendered. */
+function ready(){const chat=document.getElementById('bmnRiChat'),msgs=document.getElementById('bmnRiMessages'),who=document.getElementById('bmnRiWho');if(!chat||!msgs||!who)return false;if(chat.dataset.v2)return true;chat.dataset.v2='1';
+  const down=document.createElement('button');down.type='button';down.className='bmn-ri-down';down.setAttribute('aria-label','Scroll to latest message');down.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';chat.appendChild(down);
+  const form=document.getElementById('bmnRiForm');const upd=()=>{const far=msgs.scrollHeight-msgs.scrollTop-msgs.clientHeight>260;down.classList.toggle('show',far);if(form&&form.offsetHeight)down.style.bottom='calc(var(--bmn-kb,0px) + '+(form.offsetHeight+12)+'px)'};
+  msgs.addEventListener('scroll',upd,{passive:true});
+  down.addEventListener('click',()=>{const rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;msgs.scrollTo({top:msgs.scrollHeight,behavior:rm?'auto':'smooth'})});
+  const syncAv=()=>{const head=chat.querySelector('.bmn-ri-chat-head'),av=who.querySelector('.bmn-ri-avatar');if(!head||!av)return;let h=head.querySelector('.bmn-ri-hd-av');if(!h){h=document.createElement('span');h.className='bmn-ri-hd-av';h.setAttribute('aria-hidden','true');head.appendChild(h)}if(h.innerHTML!==av.innerHTML)h.innerHTML=av.innerHTML};
+  new MutationObserver(upd).observe(msgs,{childList:true});if(window.ResizeObserver&&form)new ResizeObserver(upd).observe(form);
+  new MutationObserver(syncAv).observe(who,{childList:true});syncAv();
+  new MutationObserver(()=>{if(!chat.classList.contains('open'))down.classList.remove('show')}).observe(chat,{attributes:true,attributeFilter:['class']});
+  return true}
+if(!ready()){const t=setInterval(()=>{if(ready())clearInterval(t)},400);setTimeout(()=>clearInterval(t),20000)}
+})();
+</script>
+
 <script id="bmn-fit-js">
 (()=>{'use strict';
 const root=document.documentElement;
@@ -10854,7 +10912,7 @@ function fit(){
   const portrait=window.innerHeight>=window.innerWidth,long=Math.max(screen.width,screen.height),short=Math.min(screen.width,screen.height),full=portrait?long:short;
   /* Only the installed app can paint below the layout viewport. In a browser tab the toolbar owns that space. */
   let ext=standalone()?Math.max(0,Math.round(full-h)):0;if(ext>120)ext=0;
-  root.style.setProperty('--bmn-ext',ext+'px');root.style.setProperty('--bmn-full',(h+ext)+'px');root.classList.toggle('bmn-ext',ext>0);window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
+  root.style.removeProperty('--bmn-ext');root.style.removeProperty('--bmn-full');root.classList.remove('bmn-ext');/* measurement only: the shell is sized by inset:0 in CSS, never stretched from here */window.__bmnFitInfo={standalone:standalone(),h,ext,full,inner:[innerWidth,innerHeight],screen:[screen.width,screen.height]};
   let flag=false;try{flag=localStorage.getItem('bmn-layout-debug')==='1'}catch(_){}
   if(standalone()&&!window.__bmnDiagStart){window.__bmnDiagStart=Date.now()}
   const auto=false; /* the on-screen layout readout is opt-in: add ?layout=1 or set localStorage bmn-layout-debug=1 */
