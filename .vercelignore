@@ -1,8 +1,7 @@
+# Files that are not part of the website.
+# Vercel serves the repository root statically (see vercel.json).
+# The browser needs index.html, manifest.webmanifest, icons and bmn-glass/.
 
-# Files that are not part of the website. Vercel serves the repository root statically
-# (see vercel.json), so anything listed here is simply not uploaded / not publicly reachable.
-# The Render API, database files and the glass SOURCE are not needed by the browser:
-# the browser only loads index.html, manifest.webmanifest, the icons and bmn-glass/.
 *.sql
 supabase/
 server.js
@@ -25,3 +24,28 @@ dock_test.js
 bridge_test.js
 TEST_REPORT.md
 TEST_REPORT.txt
+
+# Backend files and infrastructure documentation.
+supabase.js
+media.js
+hls.js
+feed-cache.js
+README-R2-SETUP.md
+CHANGELOG.md
+
+# Exclude the unauthenticated API endpoint until it is secured.
+api/
+
+# Older design copies not used by the current website.
+index 2.html
+\ Gc.html
+BMN_Community_Creator_Update.html
+BMN_LiquidGlass_Fluid_Max_index.html
+BMN_LiquidGlass_Latest_index.html
+BMN_TikTok_Liquid_Glass_Update.html
+bmn-community-view-counter-fix.html
+bmn-reels-standalone.html
+fs-test.html
+tiktok_blueprint_floating_dock.html
+tiktok_complete_app.html
+tiktok_webapp.html
