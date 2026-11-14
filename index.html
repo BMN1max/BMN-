@@ -7127,10 +7127,10 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     /* ---- markup for one slide ---- */
     function slideEl(p) {
       const u = userOf(p), b = baseId(p.id), following = !!S.follows[u.id], liked = isLiked(b), saved = !!S.saved[b];
-      const s = el('article', 'lgtt-slide');
+      const s = el('article', 'lgtt-slide'); s.style.display = 'none'; /* layout() shows only the slides near the viewport */
       s.dataset.id = p.id; s._post = p; s._t = 0; s._paused = false;
       const media = p.src
-        ? '<video class="lgtt-vid" src="' + esc(p.src) + '"' + (p.poster ? ' poster="' + esc(p.poster) + '"' : '') + ' loop playsinline webkit-playsinline autoplay preload="metadata"></video>'
+        ? '<video class="lgtt-vid" data-bmn-win="1" data-bmn-src="' + esc(p.src) + '"' + (p.poster ? ' poster="' + esc(p.poster) + '"' : '') + ' loop playsinline webkit-playsinline preload="none"></video>'
         : sceneHTML(p.scene);
       s.innerHTML =
         '<div class="lgtt-media">' + media + '</div><div class="lgtt-shade"></div>' +
@@ -7179,8 +7179,8 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       H = R.Feed.clientHeight || H;
       for (let i = 0; i < n; i++) {
         const s = slides[i], d = i - pos, a = Math.abs(d);
-        if (a > 1.5) { if (s._v) { s.style.visibility = 'hidden'; s._v = false; } continue; }
-        if (!s._v) { s.style.visibility = 'visible'; s._v = true; }
+        if (a > 1.5) { if (s._v) { s.style.visibility = 'hidden'; s.style.display = 'none'; s._v = false; } continue; }
+        if (!s._v) { s.style.display = 'block'; s.style.visibility = 'visible'; s._v = true; }
         const t = Math.min(1, a);
         s.style.transform = 'translate3d(0,' + (d * H).toFixed(1) + 'px,0) scale(' + (1 - 0.11 * t).toFixed(4) + ')';
         s.style.opacity = (1 - 0.6 * t).toFixed(3);
@@ -7216,6 +7216,16 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       const i = $$('.lgtt-ambient i', R.root); if (!sc || !i.length) return;
       i[0].style.backgroundColor = sc.c; i[1].style.backgroundColor = sc.b; i[2].style.backgroundColor = sc.a;
     }
+    /* Only the slides around the active one hold a real video source. The other ~100 keep their address in
+       data-bmn-src and load nothing, so the phone decodes a handful of videos, not the whole feed. */
+    function mediaWindow(i) {
+      for (let j = 0; j < n; j++) {
+        const v = slides[j] && slides[j].vid; if (!v) continue;
+        const want = j >= i - 1 && j <= i + 2, ds = v.getAttribute('data-bmn-src');
+        if (want) { if (ds && v.getAttribute('src') !== ds) { v.preload = j === i ? 'auto' : 'metadata'; v.src = ds; } }
+        else if (v.hasAttribute('src')) { try { v.pause(); } catch (e) {} v.removeAttribute('src'); try { v.load(); } catch (e) {} }
+      }
+    }
     function activate(i, first) {
       const prev = slides[idx];
       if (prev && i !== idx) reset(prev);
@@ -7226,6 +7236,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       s.classList.toggle('is-paused', s._paused); const f = $('.lgtt-ppflash', s); f && f.classList.toggle('hold', s._paused);
       if (s._post) ambient(s._post.scene);
       R.Top.classList.toggle('is-compact', i > 0);
+      mediaWindow(i);
       applyPlayback();
       if (i >= n - 3) loadMore();
     }
@@ -10321,7 +10332,7 @@ const nearTiles=new IntersectionObserver(es=>{es.forEach(e=>{const v=e.target;if
 function load(v){const s=v.dataset.bmnSrc;if(s&&!v.getAttribute('src')){v.setAttribute('src',s);v.preload=v.closest('.lgtt-slide')?'metadata':'metadata'}}
 function unload(v){if(!v.paused)return;const s=v.getAttribute('src');if(!s)return;v.dataset.bmnSrc=s;v.removeAttribute('src');v.preload='none';try{v.load()}catch(_){}}
 function manage(v){
-  if(managed.has(v)||v.srcObject||v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17,.bmn-cam-prev'))return;
+  if(managed.has(v)||v.hasAttribute('data-bmn-win')||v.srcObject||v.closest('#bmnCam,#lgttCreate,#bmnOverlayPreviewV17,.bmn-cam-prev'))return;
   const s=v.getAttribute('src');if(!s||/^blob:|^data:/.test(s))return;managed.add(v);v.dataset.bmnSrc=s;
   const slide=v.closest('.lgtt-slide');
   if(slide){v.removeAttribute('autoplay');v.preload='metadata';near.observe(v)}else{v.preload='none';nearTiles.observe(v)}
@@ -10840,6 +10851,40 @@ window.bmnSaveVideo=async function(src,id){
 })();
 </script>
 
+<style id="bmn-glass-upgrade-css">
+/* BMN glass upgrade (batch 4). Same glass, lit like iOS 26: a bright specular edge on the light side, a soft return
+   light on the underside, inner depth, and a spring "lift" while pressed. Box-shadow and gradients only:
+   no extra backdrop-filter layers are added. Android keeps its lighter treatment (see html.bmn-android rules). */
+html:not(.bmn-android) #lgtt .lgtt-btn.lgtt-round,
+html:not(.bmn-android) #lgtt .lgtt-tabs.lgtt-glass,
+html:not(.bmn-android) #lgtt .lgtt-music{
+  background-image:
+    radial-gradient(120% 95% at 24% 6%, rgb(255 255 255 / .30), rgb(255 255 255 / 0) 54%),
+    linear-gradient(180deg, rgb(255 255 255 / .10), rgb(255 255 255 / 0) 46%, rgb(0 0 0 / .12))!important;
+  box-shadow:
+    inset 0 1.5px 1px -.5px rgb(255 255 255 / .70),
+    inset 0 -1.5px 3px -1.5px rgb(255 255 255 / .30),
+    inset 1px 0 2px -1px rgb(255 255 255 / .20),
+    inset -1px 0 2px -1px rgb(255 255 255 / .14),
+    0 0 0 .5px rgb(255 255 255 / .24),
+    0 8px 20px -8px rgb(0 0 0 / .5)!important;
+}
+body.light #lgtt .lgtt-btn.lgtt-round,body.light #lgtt .lgtt-tabs.lgtt-glass,body.light #lgtt .lgtt-music{
+  box-shadow:
+    inset 0 1.5px 1px -.5px rgb(255 255 255 / .95),
+    inset 0 -1.5px 3px -1.5px rgb(255 255 255 / .55),
+    0 0 0 .5px rgb(255 255 255 / .55),
+    0 8px 20px -8px rgb(20 30 60 / .28)!important;
+}
+/* Lag fix: slides far from the active one are display:none (layout() shows only the ones near the viewport) and
+   only the active slide asks for its own GPU layer. */
+#lgtt .lgtt-slide{will-change:auto!important}
+#lgtt .lgtt-slide.is-active{will-change:transform,opacity!important}
+@media (prefers-reduced-transparency:reduce){
+  #lgtt .lgtt-btn.lgtt-round,#lgtt .lgtt-tabs.lgtt-glass,#lgtt .lgtt-music{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:rgb(28 30 38 / .92)!important}
+}
+@media (prefers-reduced-motion:reduce){html:not(.bmn-android) #lgtt .lgtt-btn.lgtt-round:active{transform:none!important}}
+</style>
 <style id="bmn-inbox-chat-v2-css">
 /* Inbox chat v2: layout follows a messenger-style chat (grouped bubbles with in-bubble time, service pills,
    scroll-to-latest button, rounded composer). Colours stay BMN. Nothing here adds data the backend does not have. */
