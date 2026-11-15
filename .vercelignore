@@ -49,3 +49,6 @@ fs-test.html
 tiktok_blueprint_floating_dock.html
 tiktok_complete_app.html
 tiktok_webapp.html
+
+# Platform Intelligence: database migrations, tests and design docs. Never part of the website.
+platform-intelligence/
