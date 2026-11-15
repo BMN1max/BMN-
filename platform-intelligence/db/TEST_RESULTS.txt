@@ -1,1 +1,221 @@
+BMN Platform Intelligence - Batch 1 database test results
+==========================================================
+Produced by:  platform-intelligence/db/run_db_tests.sh
+Database:     DISPOSABLE local PostgreSQL 16.15 (Ubuntu), database "pi_migration_test", created and dropped by the script.
+Baseline:     supabase/migrations/20261102090000_bmn_baseline.sql (the real committed baseline; dumped from PostgreSQL 17.11)
+Not touched:  production Supabase. No network connection to any Supabase project was made.
+Run date:     2026-11-14 (final run, after the last edit to the migration)
 
+Honest scope notes
+  * This ran on PostgreSQL 16, not Supabase's PostgreSQL 17, with a small emulation of Supabase's roles, auth.uid(),
+    auth.role() and default privileges (tests/00_supabase_shim.sql). It proves the SQL logic, constraints, privileges,
+    RLS and rollback. It does NOT prove behaviour through PostgREST / GoTrue / real JWTs.
+  * Production's real schema may differ from the baseline. The migration depends only on auth.users, public.bmn_admins,
+    public.is_bmn_owner() and the three Supabase roles, and refuses to run if any of those is missing.
+  * Bugs found by this suite during development, all fixed before this run:
+      - migration bug: pg_get_serial_sequence() raised an error on a table with no "id" column (the failed migration
+        rolled back completely, leaving nothing half-applied);
+      - test defects: a baseline trigger needs auth.role() (shim fixed); two assertions read a row inside the same
+        statement that modified it (split into two checks); one test called a test-only helper as a restricted role.
+
+Mutation check ("can these tests actually fail?") - run against deliberately sabotaged copies of the migration (done before the 3 name-collision tests were added, so these runs had 179 tests):
+  Sabotage 1: Weakened the automation limit (system actor allowed to ban/suspend/remove)
+    -> suite exit 1, TOTAL=179  PASSED=175  FAILED=4
+    -> caught by: E1 SYSTEM cannot ban; E2 SYSTEM cannot suspend; E3 SYSTEM cannot remove content; E4 SYSTEM cannot revoke verification
+  Sabotage 2: Broke owner-only RLS (every signed-in user can read every pi_ table)
+    -> suite exit 1, TOTAL=179  PASSED=171  FAILED=8
+    -> caught by: F13 another user sees zero appeals; H5 ordinary user cannot read risk assessments (private security signals); H11 ordinary user cannot read security events; I14 ordinary user cannot read verification evaluations; J8 ordinary users cannot read AI usage / cost; K21 ordinary users cannot read the job queue; L3 ordinary user sees ZERO moderation cases even though rows exist; L4 ordinary user sees ZERO feature flags / policies / analyses / actions
+  Sabotage 3: Removed the audit-log append-only trigger
+    -> suite exit 1, TOTAL=179  PASSED=177  FAILED=2
+    -> caught by: G1 audit rows cannot be updated; G2 audit rows cannot be deleted
+  Sabotage 4: Granted ordinary users direct write access to pi_ tables
+    -> suite exit 1, TOTAL=179  PASSED=176  FAILED=3
+    -> caught by: B2 authenticated has SELECT only (no writes) on pi_ tables; L6 even the owner cannot write directly through the client role; L8 ordinary user cannot flip a feature flag
+
+
+================ RESULTS ================
+PASS | N1 migration applies cleanly with ON_ERROR_STOP
+PASS | N2 BMN schema (non-pi) is byte-for-byte unchanged after UP
+PASS | N3 BMN data (every existing row) is unchanged after UP
+PASS | N4 UP created pi_ objects
+PASS | N5 UP is re-runnable (idempotent) without error
+PASS | A1 sixteen pi_ tables exist
+PASS | A2 RLS enabled on every pi_ table
+PASS | A3 all 8 feature flags exist and ALL are disabled
+PASS | A4 all 10 policy categories exist, all disabled, no automatic action allowed
+PASS | A5 serious categories default to mandatory human review
+PASS | A6 schema version 1 recorded
+PASS | A7 no activity rows were seeded (no fake data)
+PASS | A8 every pi_ function pins search_path
+PASS | B1 anon has no privilege at all on any pi_ table
+PASS | B2 authenticated has SELECT only (no writes) on pi_ tables
+PASS | B3 only service_role may run queue / audit / decision functions
+PASS | B4 users can call exactly the two user-facing functions; anon cannot
+PASS | C1 cannot enable a policy without a review threshold
+PASS | C2 cannot allow an automatic action without an auto-action threshold
+PASS | C3 auto-action threshold cannot be below review threshold
+PASS | C4 automation can never be allowed to ban (value rejected)
+PASS | C5 automation can never be allowed to suspend (value rejected)
+PASS | C6 thresholds outside 0..1 are rejected
+PASS | C7 a valid policy update succeeds
+PASS | C8 a behavioural change bumps the policy version
+PASS | C9 a description-only change does not bump the version
+PASS | C10 version unchanged after description-only edit
+PASS | C11 unknown category rejected by the domain
+PASS | C12 feature-flag keys must be lower_snake_case
+PASS | D1 create a moderation case
+PASS | D2 duplicate idempotency key rejected
+PASS | D3 invalid case status rejected
+PASS | D4 resolved case must carry resolved_at
+PASS | D5 risk score above 1 rejected
+PASS | D6 valid analysis stored (hash only, no raw text)
+PASS | D7 content hash must be 64-char hex (raw text cannot be stored there)
+PASS | D8 a "clear" result without a score is rejected (no invented results)
+PASS | D9 a provider_error must record the error
+PASS | D10 a provider_error with its error and no score is accepted
+PASS | D11 a skipped analysis needs no score
+PASS | E1 SYSTEM cannot ban
+PASS | E2 SYSTEM cannot suspend
+PASS | E3 SYSTEM cannot remove content
+PASS | E4 SYSTEM cannot revoke verification
+PASS | E5 SYSTEM hold without an expiry is rejected
+PASS | E6 owner ban without a user-visible reason is rejected
+PASS | E7 SYSTEM shadow-mode flag recorded (A1: not applied)
+PASS | E8 owner enforced warning (A2)
+PASS | E9 owner enforced content removal with reason (A3)
+PASS | E10 shadow warning (A4: must stay invisible to the user)
+PASS | E11 SYSTEM temporary hold WITH expiry is accepted
+PASS | E12 action history cannot be edited (action_type)
+PASS | E13 action history cannot be edited (internal note)
+PASS | E14 action history cannot be edited (mode shadow->enforced)
+PASS | E15 action history cannot be deleted
+PASS | E16 reversal fields CAN be written once (A3 reversed by owner)
+PASS | E17 a reversal cannot be rewritten
+PASS | E18 reversal reason without reversal timestamp rejected
+PASS | F1 notices expose only enforced actions (shadow + flag hidden): user1 sees A2 and A3
+PASS | F2 notices never include internal columns
+PASS | F3 another user sees none of user1's notices
+PASS | F4 reversed action is listed as reversed and no longer appealable
+PASS | F5 anonymous user cannot appeal (no execute right)
+PASS | F6 user cannot appeal someone else's action
+PASS | F7 cannot appeal a shadow (never-applied) decision
+PASS | F8 cannot appeal an already-reversed action
+PASS | F9 appeal statement must be at least 10 characters
+PASS | F10 owner of the action can appeal an enforced warning
+PASS | F11 only one appeal per action
+PASS | F12 user sees their own appeal; other users and anon do not
+PASS | F13 another user sees zero appeals
+PASS | F14 appeal submission was written to the audit log
+PASS | F15 users cannot decide appeals (no execute right)
+PASS | F16 service role acting as a NON-owner is refused by the database itself
+PASS | F17 a decision requires a note
+PASS | F18 a decision must be upheld or overturned
+PASS | F19 owner overturns the appeal
+PASS | F20 overturning reversed the action
+PASS | F21 overturning queued exactly one idempotent reverse_action job
+PASS | F22 the decision was audited with the owner as actor
+PASS | F23 an appeal cannot be decided twice
+PASS | F24 repeat-offender count ignores reversed actions (both of user1's enforced actions are reversed)
+PASS | F25 a new enforced, un-reversed warning is recorded
+PASS | F26 repeat-offender count now sees exactly that one action
+PASS | F27 a zero-length window counts nothing
+PASS | F28 shadow-mode actions never count toward repeat-offender status
+PASS | G1 audit rows cannot be updated
+PASS | G2 audit rows cannot be deleted
+PASS | G3 audit log cannot be truncated
+PASS | G4 audit append works through pi_write_audit
+PASS | G5 raw (non-hash) IP address is rejected in audit log
+PASS | H1 risk above "low" must carry reason codes (explainability)
+PASS | H2 explained high risk accepted
+PASS | H3 only one CURRENT assessment per user
+PASS | H4 history kept: old assessment retired then new one accepted
+PASS | H5 ordinary user cannot read risk assessments (private security signals)
+PASS | H6 invalid risk level rejected
+PASS | H7 security event stores a hashed IP
+PASS | H8 security event with a raw IP is rejected
+PASS | H9 duplicate security event (same dedupe key) rejected
+PASS | H10 unknown event type rejected
+PASS | H11 ordinary user cannot read security events
+PASS | H12 protective restriction must be temporary and forward-dated
+PASS | H13 temporary restriction accepted (shadow by default)
+PASS | H14 restrictions default to shadow mode
+PASS | H15 permanent-style restriction (no expiry) impossible
+PASS | I1 evaluation with every check passing may be "eligible_for_auto_approval"
+PASS | I2 one unverifiable check blocks auto-approval eligibility
+PASS | I3 one failed check blocks auto-approval eligibility
+PASS | I4 an EMPTY check list cannot make an account eligible
+PASS | I5 checks must be a JSON array
+PASS | I6 uncertain case is recorded as needing human review
+PASS | I7 SYSTEM cannot reject a verification
+PASS | I8 SYSTEM cannot revoke a verification
+PASS | I9 SYSTEM approval without an evaluation is rejected
+PASS | I10 SYSTEM approval backed by an evaluation is accepted
+PASS | I11 SYSTEM may refer an uncertain case to a human
+PASS | I12 owner can revoke for fraud and flag it
+PASS | I13 fraud flag only valid on a revocation
+PASS | I14 ordinary user cannot read verification evaluations
+PASS | J1 usage with unknown cost accepted (cost left NULL, never guessed)
+PASS | J2 a cost cannot be recorded with basis "unknown"
+PASS | J3 basis "reported" requires an actual cost
+PASS | J4 reported cost accepted
+PASS | J5 negative cost rejected
+PASS | J6 provider health row (degraded mode support)
+PASS | J7 invalid provider state rejected
+PASS | J8 ordinary users cannot read AI usage / cost
+PASS | K1 enqueue jobs (priority 1, 5 w/ 2 attempts, future)
+PASS | K2 duplicate idempotency key cannot double-enqueue
+PASS | K3 unknown job type rejected
+PASS | K4 claim limit of 0 rejected
+PASS | K5 blank worker id rejected
+PASS | K6 highest priority is claimed first
+PASS | K7 a second worker gets the remaining ready job only (no double-claim, future job untouched)
+PASS | K8 type filter respected: an unrelated type is not claimed
+PASS | K9 completing with the WRONG worker is refused
+PASS | K10 completing with the right worker succeeds
+PASS | K11a failing a job with attempts left returns "queued"
+PASS | K11b the failed job is unlocked, keeps its error and is delayed by back-off (>5s)
+PASS | K12 (make the retry due)
+PASS | K13 retry is claimed again as attempt 2
+PASS | K14a failing the FINAL attempt returns "dead"
+PASS | K14b the dead-lettered job is finished and unlocked
+PASS | K15 setup: crashed worker (job running, lease about to expire)
+PASS | K16 workers claim both
+PASS | K17 (simulate crash: leases expire)
+PASS | K18 expired lease with attempts left is reclaimed by another worker
+PASS | K19 expired lease on the final attempt dead-letters instead of retrying forever
+PASS | K20 a running job must record its lock (constraint)
+PASS | K21 ordinary users cannot read the job queue
+PASS | L2 anon cannot read cases
+PASS | L3 ordinary user sees ZERO moderation cases even though rows exist
+PASS | L4 ordinary user sees ZERO feature flags / policies / analyses / actions
+PASS | L5 the BMN owner CAN read cases, policies, actions and the audit log
+PASS | L6 even the owner cannot write directly through the client role
+PASS | L7 ordinary user cannot write
+PASS | L8 ordinary user cannot flip a feature flag
+PASS | L9 anon cannot call the user functions
+PASS | M1 setup: pi_ rows referencing user3
+PASS | M2 snapshot: existing BMN data for user3 is present
+PASS | M3 user3 deletes their account using the REAL baseline bmn_delete_my_account()
+PASS | M4 account is gone from auth.users, profiles and posts
+PASS | M5 personal pi_ rows were erased with the account (appeals, risk, events, restrictions, evaluations)
+PASS | M6 moderation history survives, anonymised (target set to NULL)
+PASS | M7 the audit log entry survives the deletion
+PASS | M8 other users' data was not affected by the deletion
+PASS | N6 re-applying UP keeps existing pi_ data and edited policy
+PASS | R1 rollback refuses when pi_ data exists and is not confirmed
+PASS | R2 nothing was removed by the refused rollback (transaction rolled back)
+PASS | R3 confirmed rollback runs cleanly
+PASS | R4 rollback removed EVERY pi_ table, function and domain
+PASS | R5 BMN schema identical to the ORIGINAL baseline after rollback
+PASS | R6 BMN data unchanged by rollback (vs just before it)
+PASS | R7 existing owner check still works after rollback
+PASS | R8 rolled-back database still accepts normal BMN writes (as a normal user)
+PASS | R9 rollback of an empty install needs no confirmation
+PASS | R10 empty-install rollback leaves zero pi_ objects
+PASS | R11 UP applies again after a rollback, flags still all OFF
+PASS | C1x UP refuses to run when an unrelated pi_policies table already exists
+PASS | C2x the refused UP left the foreign table untouched and created nothing else
+PASS | C3x after the foreign object is removed, UP applies normally
+-----------------------------------------
+TOTAL=182  PASSED=182  FAILED=0
+fingerprints: after_down=e9eaba89  after_up=32e914d1  baseline=32e914d1  before_rollback=e9eaba89
