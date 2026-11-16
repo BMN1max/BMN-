@@ -18,6 +18,19 @@
 --   * Raw message / post text is never stored here: only a SHA-256 content hash and scores.
 --   * Raw IP addresses are never stored: only a keyed hash computed by the API server.
 --   * Everything ships OFF: all feature flags are disabled, all policy categories are disabled.
+--
+-- Hardening (Batch 1 review):
+--   * INSTALL VERIFIER. A built-in manifest of every expected pi_ object (tables, columns, constraints,
+--     indexes, triggers, policies, functions + body hashes, privileges) is compared with the database
+--     BEFORE anything is changed and again AFTER. A database holding a partial, damaged, foreign or
+--     newer pi_ installation is refused with a list of differences; a re-run is only accepted when the
+--     existing installation is exactly complete. The manifest is regenerated from the real catalog by
+--     db/tools/refresh_manifest.py and the test suite fails if it is stale.
+--   * JOB QUEUE. Lease, retry, attempt and state rules are enforced by CHECK constraints, a transition
+--     guard trigger and validated function arguments, not only by application code.
+--   * HISTORY. Deleting a case never deletes moderation history: actions keep existing with case_id cleared,
+--     the deletion is written to the append-only audit log, unresolved cases cannot be deleted, and the
+--     history tables cannot be truncated.
 -- =====================================================================================
 
 BEGIN;
@@ -39,14 +52,6 @@ BEGIN
   IF to_regclass('public.bmn_admins') IS NULL THEN
     RAISE EXCEPTION 'Precondition failed: public.bmn_admins not found';
   END IF;
-  -- Refuse to run if something named pi_* already exists that this migration did not create
-  -- (otherwise CREATE ... IF NOT EXISTS would silently skip it and later steps would misbehave).
-  IF to_regclass('public.pi_schema_version') IS NULL
-     AND (EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relname LIKE 'pi\_%')
-          OR EXISTS (SELECT 1 FROM pg_proc  WHERE pronamespace = 'public'::regnamespace AND proname  LIKE 'pi\_%')
-          OR EXISTS (SELECT 1 FROM pg_type  WHERE typnamespace = 'public'::regnamespace AND typname   LIKE 'pi\_%' AND typtype = 'd')) THEN
-    RAISE EXCEPTION 'Precondition failed: objects named pi_* already exist but were not created by this migration. Inspect them before continuing.';
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated')
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
@@ -54,6 +59,691 @@ BEGIN
   END IF;
 END $$;
 
+-- ---------------------------------------------------------------- install verifier
+-- Two TEMPORARY functions (they vanish at the end of this transaction and leave nothing behind):
+--   pg_temp.pi_actual()    describes every pi_ object that EXISTS right now, one text line per object.
+--   pg_temp.pi_problems()  compares that with the manifest of what this migration creates.
+-- The manifest is generated, never hand-edited: run db/tools/refresh_manifest.py after changing the DDL.
+-- @@PI_ACTUAL_BEGIN@@
+CREATE OR REPLACE FUNCTION pg_temp.pi_actual() RETURNS SETOF text LANGUAGE sql STABLE AS $f$
+  SELECT 'table|' || c.relname || '|rls=' || c.relrowsecurity::text
+    FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind IN ('r', 'p')
+  UNION ALL
+  SELECT 'sequence|' || c.relname
+    FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind = 'S'
+  UNION ALL
+  SELECT 'otherrelation|' || c.relname || '|kind=' || c.relkind::text
+    FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind NOT IN ('r', 'p', 'i', 'S')
+  UNION ALL
+  SELECT 'column|' || c.relname || '.' || a.attname || '|' || format_type(a.atttypid, a.atttypmod)
+         || '|notnull=' || a.attnotnull::text
+         || '|identity=' || CASE a.attidentity WHEN 'a' THEN 'always' WHEN 'd' THEN 'default' ELSE 'none' END
+    FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid
+   WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind IN ('r', 'p')
+     AND a.attnum > 0 AND NOT a.attisdropped
+  UNION ALL
+  SELECT 'constraint|' || c.relname || '|' || o.conname || '|' || o.contype::text
+    FROM pg_constraint o JOIN pg_class c ON c.oid = o.conrelid
+   WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND o.contype IN ('p', 'u', 'c', 'f')
+  UNION ALL
+  SELECT 'index|' || t.relname || '|' || i.relname || '|unique=' || x.indisunique::text || '|partial=' || (x.indpred IS NOT NULL)::text
+    FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid JOIN pg_class t ON t.oid = x.indrelid
+   WHERE i.relnamespace = 'public'::regnamespace AND (i.relname LIKE 'pi\_%' OR t.relname LIKE 'pi\_%')
+  UNION ALL
+  SELECT 'trigger|' || c.relname || '|' || g.tgname || '|enabled=' || g.tgenabled::text
+    FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid
+   WHERE NOT g.tgisinternal AND c.relnamespace = 'public'::regnamespace AND (c.relname LIKE 'pi\_%' OR g.tgname LIKE 'pi\_%')
+  UNION ALL
+  SELECT 'policy|' || c.relname || '|' || p.polname || '|' || p.polcmd::text || '|'
+         || array_to_string(ARRAY(SELECT CASE WHEN r.o = 0 THEN 'public' ELSE (SELECT rolname::text FROM pg_roles WHERE oid = r.o) END
+                                    FROM unnest(p.polroles) AS r(o) ORDER BY 1), ',')
+    FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
+   WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%'
+  UNION ALL
+  SELECT 'domain|' || t.typname || '|' || format_type(t.typbasetype, t.typtypmod)
+    FROM pg_type t WHERE t.typnamespace = 'public'::regnamespace AND t.typname LIKE 'pi\_%' AND t.typtype = 'd'
+  UNION ALL
+  SELECT 'domainconstraint|' || t.typname || '|' || o.conname
+    FROM pg_constraint o JOIN pg_type t ON t.oid = o.contypid
+   WHERE t.typnamespace = 'public'::regnamespace AND t.typname LIKE 'pi\_%' AND o.contype = 'c'
+  UNION ALL
+  SELECT 'othertype|' || t.typname || '|kind=' || t.typtype::text
+    FROM pg_type t WHERE t.typnamespace = 'public'::regnamespace AND t.typname LIKE 'pi\_%' AND t.typtype <> 'd' AND t.typrelid = 0
+  UNION ALL
+  SELECT 'function|' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')|secdef=' || p.prosecdef::text
+         || '|volatility=' || p.provolatile::text || '|config=' || coalesce(array_to_string(p.proconfig, ','), '')
+         || '|body=' || md5(p.prosrc)
+    FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace AND p.proname LIKE 'pi\_%'
+  UNION ALL
+  SELECT 'execute|' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')|' || r.rolname || '|'
+         || has_function_privilege(r.rolname, p.oid, 'EXECUTE')::text
+    FROM pg_proc p CROSS JOIN pg_roles r
+   WHERE p.pronamespace = 'public'::regnamespace AND p.proname LIKE 'pi\_%' AND r.rolname IN ('anon', 'authenticated', 'service_role')
+  UNION ALL
+  SELECT 'privileges|' || c.relname || '|' || r.rolname || '|'
+         || coalesce((SELECT string_agg(pr, ',' ORDER BY pr)
+                        FROM unnest(ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) AS pr
+                       WHERE has_table_privilege(r.rolname, c.oid, pr)), 'none')
+    FROM pg_class c CROSS JOIN pg_roles r
+   WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind IN ('r', 'p')
+     AND r.rolname IN ('anon', 'authenticated', 'service_role')
+$f$;
+-- @@PI_ACTUAL_END@@
+
+-- @@PI_MANIFEST_BEGIN@@
+CREATE OR REPLACE FUNCTION pg_temp.pi_problems() RETURNS SETOF text LANGUAGE sql STABLE AS $f$
+  WITH exp AS (
+    SELECT l FROM unnest(string_to_array($manifest$
+-- @@PI_MANIFEST_DATA_BEGIN@@
+column|pi_account_risk_assessments.assessed_at|timestamp with time zone|notnull=true|identity=none
+column|pi_account_risk_assessments.escalated_at|timestamp with time zone|notnull=false|identity=none
+column|pi_account_risk_assessments.expires_at|timestamp with time zone|notnull=false|identity=none
+column|pi_account_risk_assessments.explanation|text|notnull=true|identity=none
+column|pi_account_risk_assessments.id|uuid|notnull=true|identity=none
+column|pi_account_risk_assessments.is_current|boolean|notnull=true|identity=none
+column|pi_account_risk_assessments.model_version|text|notnull=true|identity=none
+column|pi_account_risk_assessments.reason_codes|text[]|notnull=true|identity=none
+column|pi_account_risk_assessments.risk_level|text|notnull=true|identity=none
+column|pi_account_risk_assessments.risk_score|numeric(5,4)|notnull=true|identity=none
+column|pi_account_risk_assessments.signals|jsonb|notnull=true|identity=none
+column|pi_account_risk_assessments.user_id|uuid|notnull=true|identity=none
+column|pi_ai_provider_usage.analysis_id|uuid|notnull=false|identity=none
+column|pi_ai_provider_usage.billable_units|numeric(14,3)|notnull=false|identity=none
+column|pi_ai_provider_usage.cost_basis|text|notnull=true|identity=none
+column|pi_ai_provider_usage.cost_usd|numeric(12,6)|notnull=false|identity=none
+column|pi_ai_provider_usage.id|bigint|notnull=true|identity=always
+column|pi_ai_provider_usage.input_tokens|bigint|notnull=false|identity=none
+column|pi_ai_provider_usage.latency_ms|integer|notnull=false|identity=none
+column|pi_ai_provider_usage.model|text|notnull=false|identity=none
+column|pi_ai_provider_usage.occurred_at|timestamp with time zone|notnull=true|identity=none
+column|pi_ai_provider_usage.operation|text|notnull=true|identity=none
+column|pi_ai_provider_usage.output_tokens|bigint|notnull=false|identity=none
+column|pi_ai_provider_usage.provider|text|notnull=true|identity=none
+column|pi_ai_provider_usage.request_count|integer|notnull=true|identity=none
+column|pi_ai_provider_usage.request_id|text|notnull=false|identity=none
+column|pi_ai_provider_usage.status|text|notnull=true|identity=none
+column|pi_appeals.action_id|uuid|notnull=true|identity=none
+column|pi_appeals.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_appeals.decided_at|timestamp with time zone|notnull=false|identity=none
+column|pi_appeals.decision_note|text|notnull=false|identity=none
+column|pi_appeals.id|uuid|notnull=true|identity=none
+column|pi_appeals.reviewer_id|uuid|notnull=false|identity=none
+column|pi_appeals.statement|text|notnull=true|identity=none
+column|pi_appeals.status|text|notnull=true|identity=none
+column|pi_appeals.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_appeals.user_id|uuid|notnull=true|identity=none
+column|pi_audit_log.action|text|notnull=true|identity=none
+column|pi_audit_log.actor_id|uuid|notnull=false|identity=none
+column|pi_audit_log.actor_type|text|notnull=true|identity=none
+column|pi_audit_log.after_state|jsonb|notnull=false|identity=none
+column|pi_audit_log.before_state|jsonb|notnull=false|identity=none
+column|pi_audit_log.id|bigint|notnull=true|identity=always
+column|pi_audit_log.ip_hash|text|notnull=false|identity=none
+column|pi_audit_log.occurred_at|timestamp with time zone|notnull=true|identity=none
+column|pi_audit_log.reason|text|notnull=false|identity=none
+column|pi_audit_log.request_id|text|notnull=false|identity=none
+column|pi_audit_log.target_id|text|notnull=false|identity=none
+column|pi_audit_log.target_type|text|notnull=false|identity=none
+column|pi_content_analyses.analysed_at|timestamp with time zone|notnull=true|identity=none
+column|pi_content_analyses.analysis_kind|text|notnull=true|identity=none
+column|pi_content_analyses.case_id|uuid|notnull=false|identity=none
+column|pi_content_analyses.category_scores|jsonb|notnull=true|identity=none
+column|pi_content_analyses.confidence|numeric(5,4)|notnull=false|identity=none
+column|pi_content_analyses.content_hash|text|notnull=true|identity=none
+column|pi_content_analyses.content_length|integer|notnull=false|identity=none
+column|pi_content_analyses.error|text|notnull=false|identity=none
+column|pi_content_analyses.idempotency_key|text|notnull=false|identity=none
+column|pi_content_analyses.id|uuid|notnull=true|identity=none
+column|pi_content_analyses.language|text|notnull=false|identity=none
+column|pi_content_analyses.latency_ms|integer|notnull=false|identity=none
+column|pi_content_analyses.model_version|text|notnull=false|identity=none
+column|pi_content_analyses.model|text|notnull=false|identity=none
+column|pi_content_analyses.outcome|text|notnull=true|identity=none
+column|pi_content_analyses.policy_version|integer|notnull=false|identity=none
+column|pi_content_analyses.provider|text|notnull=true|identity=none
+column|pi_content_analyses.risk_score|numeric(5,4)|notnull=false|identity=none
+column|pi_content_analyses.subject_id|uuid|notnull=true|identity=none
+column|pi_content_analyses.subject_type|text|notnull=true|identity=none
+column|pi_content_analyses.subject_user_id|uuid|notnull=false|identity=none
+column|pi_content_analyses.top_category|pi_category|notnull=false|identity=none
+column|pi_feature_flags.config|jsonb|notnull=true|identity=none
+column|pi_feature_flags.description|text|notnull=true|identity=none
+column|pi_feature_flags.enabled|boolean|notnull=true|identity=none
+column|pi_feature_flags.key|text|notnull=true|identity=none
+column|pi_feature_flags.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_feature_flags.updated_by|uuid|notnull=false|identity=none
+column|pi_jobs.attempts|integer|notnull=true|identity=none
+column|pi_jobs.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_jobs.finished_at|timestamp with time zone|notnull=false|identity=none
+column|pi_jobs.idempotency_key|text|notnull=false|identity=none
+column|pi_jobs.id|uuid|notnull=true|identity=none
+column|pi_jobs.job_type|pi_job_type|notnull=true|identity=none
+column|pi_jobs.last_error|text|notnull=false|identity=none
+column|pi_jobs.lease_expires_at|timestamp with time zone|notnull=false|identity=none
+column|pi_jobs.locked_at|timestamp with time zone|notnull=false|identity=none
+column|pi_jobs.locked_by|text|notnull=false|identity=none
+column|pi_jobs.max_attempts|integer|notnull=true|identity=none
+column|pi_jobs.payload|jsonb|notnull=true|identity=none
+column|pi_jobs.priority|smallint|notnull=true|identity=none
+column|pi_jobs.run_after|timestamp with time zone|notnull=true|identity=none
+column|pi_jobs.started_at|timestamp with time zone|notnull=false|identity=none
+column|pi_jobs.status|text|notnull=true|identity=none
+column|pi_jobs.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_moderation_actions.action_type|text|notnull=true|identity=none
+column|pi_moderation_actions.actor_id|uuid|notnull=false|identity=none
+column|pi_moderation_actions.actor_type|text|notnull=true|identity=none
+column|pi_moderation_actions.analysis_id|uuid|notnull=false|identity=none
+column|pi_moderation_actions.appealable|boolean|notnull=true|identity=none
+column|pi_moderation_actions.case_id|uuid|notnull=false|identity=none
+column|pi_moderation_actions.confidence|numeric(5,4)|notnull=false|identity=none
+column|pi_moderation_actions.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_moderation_actions.expires_at|timestamp with time zone|notnull=false|identity=none
+column|pi_moderation_actions.idempotency_key|text|notnull=false|identity=none
+column|pi_moderation_actions.id|uuid|notnull=true|identity=none
+column|pi_moderation_actions.internal_note|text|notnull=false|identity=none
+column|pi_moderation_actions.mode|text|notnull=true|identity=none
+column|pi_moderation_actions.policy_id|uuid|notnull=false|identity=none
+column|pi_moderation_actions.policy_version|integer|notnull=false|identity=none
+column|pi_moderation_actions.reason_code|pi_category|notnull=false|identity=none
+column|pi_moderation_actions.reversal_reason|text|notnull=false|identity=none
+column|pi_moderation_actions.reversed_at|timestamp with time zone|notnull=false|identity=none
+column|pi_moderation_actions.reversed_by|uuid|notnull=false|identity=none
+column|pi_moderation_actions.subject_id|uuid|notnull=true|identity=none
+column|pi_moderation_actions.subject_type|text|notnull=true|identity=none
+column|pi_moderation_actions.target_user_id|uuid|notnull=false|identity=none
+column|pi_moderation_actions.user_visible_reason|text|notnull=false|identity=none
+column|pi_moderation_cases.assigned_to|uuid|notnull=false|identity=none
+column|pi_moderation_cases.confidence|numeric(5,4)|notnull=false|identity=none
+column|pi_moderation_cases.idempotency_key|text|notnull=false|identity=none
+column|pi_moderation_cases.id|uuid|notnull=true|identity=none
+column|pi_moderation_cases.opened_at|timestamp with time zone|notnull=true|identity=none
+column|pi_moderation_cases.primary_category|pi_category|notnull=false|identity=none
+column|pi_moderation_cases.priority|smallint|notnull=true|identity=none
+column|pi_moderation_cases.report_id|uuid|notnull=false|identity=none
+column|pi_moderation_cases.requires_human_review|boolean|notnull=true|identity=none
+column|pi_moderation_cases.resolution|text|notnull=false|identity=none
+column|pi_moderation_cases.resolved_at|timestamp with time zone|notnull=false|identity=none
+column|pi_moderation_cases.risk_score|numeric(5,4)|notnull=false|identity=none
+column|pi_moderation_cases.source|text|notnull=true|identity=none
+column|pi_moderation_cases.status|text|notnull=true|identity=none
+column|pi_moderation_cases.subject_id|uuid|notnull=true|identity=none
+column|pi_moderation_cases.subject_type|text|notnull=true|identity=none
+column|pi_moderation_cases.subject_user_id|uuid|notnull=false|identity=none
+column|pi_moderation_cases.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_policies.always_human_review|boolean|notnull=true|identity=none
+column|pi_policies.auto_action_threshold|numeric(4,3)|notnull=false|identity=none
+column|pi_policies.category|pi_category|notnull=true|identity=none
+column|pi_policies.description|text|notnull=true|identity=none
+column|pi_policies.enabled|boolean|notnull=true|identity=none
+column|pi_policies.id|uuid|notnull=true|identity=none
+column|pi_policies.max_auto_action|text|notnull=true|identity=none
+column|pi_policies.review_threshold|numeric(4,3)|notnull=false|identity=none
+column|pi_policies.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_policies.updated_by|uuid|notnull=false|identity=none
+column|pi_policies.version|integer|notnull=true|identity=none
+column|pi_protective_restrictions.actor_type|text|notnull=true|identity=none
+column|pi_protective_restrictions.assessment_id|uuid|notnull=false|identity=none
+column|pi_protective_restrictions.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_protective_restrictions.created_by|uuid|notnull=false|identity=none
+column|pi_protective_restrictions.expires_at|timestamp with time zone|notnull=true|identity=none
+column|pi_protective_restrictions.id|uuid|notnull=true|identity=none
+column|pi_protective_restrictions.lift_reason|text|notnull=false|identity=none
+column|pi_protective_restrictions.lifted_at|timestamp with time zone|notnull=false|identity=none
+column|pi_protective_restrictions.lifted_by|uuid|notnull=false|identity=none
+column|pi_protective_restrictions.mode|text|notnull=true|identity=none
+column|pi_protective_restrictions.reason_code|text|notnull=true|identity=none
+column|pi_protective_restrictions.restriction_type|text|notnull=true|identity=none
+column|pi_protective_restrictions.starts_at|timestamp with time zone|notnull=true|identity=none
+column|pi_protective_restrictions.user_id|uuid|notnull=true|identity=none
+column|pi_provider_health.circuit_open_until|timestamp with time zone|notnull=false|identity=none
+column|pi_provider_health.consecutive_failures|integer|notnull=true|identity=none
+column|pi_provider_health.last_error|text|notnull=false|identity=none
+column|pi_provider_health.last_failure_at|timestamp with time zone|notnull=false|identity=none
+column|pi_provider_health.last_success_at|timestamp with time zone|notnull=false|identity=none
+column|pi_provider_health.provider|text|notnull=true|identity=none
+column|pi_provider_health.state|text|notnull=true|identity=none
+column|pi_provider_health.updated_at|timestamp with time zone|notnull=true|identity=none
+column|pi_schema_version.applied_at|timestamp with time zone|notnull=true|identity=none
+column|pi_schema_version.name|text|notnull=true|identity=none
+column|pi_schema_version.version|integer|notnull=true|identity=none
+column|pi_security_events.acknowledged_at|timestamp with time zone|notnull=false|identity=none
+column|pi_security_events.acknowledged_by|uuid|notnull=false|identity=none
+column|pi_security_events.case_id|uuid|notnull=false|identity=none
+column|pi_security_events.dedupe_key|text|notnull=false|identity=none
+column|pi_security_events.details|jsonb|notnull=true|identity=none
+column|pi_security_events.device_hash|text|notnull=false|identity=none
+column|pi_security_events.event_type|text|notnull=true|identity=none
+column|pi_security_events.id|bigint|notnull=true|identity=always
+column|pi_security_events.ip_hash|text|notnull=false|identity=none
+column|pi_security_events.occurred_at|timestamp with time zone|notnull=true|identity=none
+column|pi_security_events.severity|text|notnull=true|identity=none
+column|pi_security_events.source|text|notnull=true|identity=none
+column|pi_security_events.user_id|uuid|notnull=false|identity=none
+column|pi_verification_decisions.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_verification_decisions.decided_by_type|text|notnull=true|identity=none
+column|pi_verification_decisions.decided_by|uuid|notnull=false|identity=none
+column|pi_verification_decisions.decision|text|notnull=true|identity=none
+column|pi_verification_decisions.evaluation_id|uuid|notnull=false|identity=none
+column|pi_verification_decisions.fraud_related|boolean|notnull=true|identity=none
+column|pi_verification_decisions.id|uuid|notnull=true|identity=none
+column|pi_verification_decisions.reason|text|notnull=true|identity=none
+column|pi_verification_decisions.user_id|uuid|notnull=true|identity=none
+column|pi_verification_decisions.verification_request_id|uuid|notnull=false|identity=none
+column|pi_verification_evaluations.checks|jsonb|notnull=true|identity=none
+column|pi_verification_evaluations.created_at|timestamp with time zone|notnull=true|identity=none
+column|pi_verification_evaluations.criteria_version|integer|notnull=true|identity=none
+column|pi_verification_evaluations.id|uuid|notnull=true|identity=none
+column|pi_verification_evaluations.impersonation_risk|numeric(5,4)|notnull=false|identity=none
+column|pi_verification_evaluations.outcome|text|notnull=true|identity=none
+column|pi_verification_evaluations.user_id|uuid|notnull=true|identity=none
+column|pi_verification_evaluations.verification_request_id|uuid|notnull=true|identity=none
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_explanation_check|c
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_pkey|p
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_risk_level_check|c
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_risk_score_check|c
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_signals_check|c
+constraint|pi_account_risk_assessments|pi_account_risk_assessments_user_id_fkey|f
+constraint|pi_account_risk_assessments|pi_risk_explainable|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_analysis_id_fkey|f
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_billable_units_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_cost_basis_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_cost_usd_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_input_tokens_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_latency_ms_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_operation_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_output_tokens_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_pkey|p
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_provider_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_request_count_check|c
+constraint|pi_ai_provider_usage|pi_ai_provider_usage_status_check|c
+constraint|pi_ai_provider_usage|pi_usage_cost_consistent|c
+constraint|pi_appeals|pi_appeals_action_id_fkey|f
+constraint|pi_appeals|pi_appeals_action_id_key|u
+constraint|pi_appeals|pi_appeals_decided_consistent|c
+constraint|pi_appeals|pi_appeals_decision_has_note|c
+constraint|pi_appeals|pi_appeals_pkey|p
+constraint|pi_appeals|pi_appeals_reviewer_id_fkey|f
+constraint|pi_appeals|pi_appeals_statement_check|c
+constraint|pi_appeals|pi_appeals_status_check|c
+constraint|pi_appeals|pi_appeals_user_id_fkey|f
+constraint|pi_audit_log|pi_audit_log_action_check|c
+constraint|pi_audit_log|pi_audit_log_actor_type_check|c
+constraint|pi_audit_log|pi_audit_log_ip_hash_check|c
+constraint|pi_audit_log|pi_audit_log_pkey|p
+constraint|pi_content_analyses|pi_analyses_error_recorded|c
+constraint|pi_content_analyses|pi_analyses_scored|c
+constraint|pi_content_analyses|pi_content_analyses_analysis_kind_check|c
+constraint|pi_content_analyses|pi_content_analyses_case_id_fkey|f
+constraint|pi_content_analyses|pi_content_analyses_category_scores_check|c
+constraint|pi_content_analyses|pi_content_analyses_confidence_check|c
+constraint|pi_content_analyses|pi_content_analyses_content_hash_check|c
+constraint|pi_content_analyses|pi_content_analyses_content_length_check|c
+constraint|pi_content_analyses|pi_content_analyses_idempotency_key_key|u
+constraint|pi_content_analyses|pi_content_analyses_latency_ms_check|c
+constraint|pi_content_analyses|pi_content_analyses_outcome_check|c
+constraint|pi_content_analyses|pi_content_analyses_pkey|p
+constraint|pi_content_analyses|pi_content_analyses_provider_check|c
+constraint|pi_content_analyses|pi_content_analyses_risk_score_check|c
+constraint|pi_content_analyses|pi_content_analyses_subject_type_check|c
+constraint|pi_content_analyses|pi_content_analyses_subject_user_id_fkey|f
+constraint|pi_feature_flags|pi_feature_flags_config_check|c
+constraint|pi_feature_flags|pi_feature_flags_key_check|c
+constraint|pi_feature_flags|pi_feature_flags_pkey|p
+constraint|pi_feature_flags|pi_feature_flags_updated_by_fkey|f
+constraint|pi_jobs|pi_jobs_attempts_not_negative|c
+constraint|pi_jobs|pi_jobs_attempts_within_max|c
+constraint|pi_jobs|pi_jobs_finished_consistent|c
+constraint|pi_jobs|pi_jobs_idempotency_key_key|u
+constraint|pi_jobs|pi_jobs_lease_after_lock|c
+constraint|pi_jobs|pi_jobs_lock_consistent|c
+constraint|pi_jobs|pi_jobs_max_attempts_range|c
+constraint|pi_jobs|pi_jobs_payload_is_object|c
+constraint|pi_jobs|pi_jobs_pkey|p
+constraint|pi_jobs|pi_jobs_priority_range|c
+constraint|pi_jobs|pi_jobs_running_has_attempt|c
+constraint|pi_jobs|pi_jobs_status_valid|c
+constraint|pi_jobs|pi_jobs_worker_id_valid|c
+constraint|pi_moderation_actions|pi_actions_reversal_consistent|c
+constraint|pi_moderation_actions|pi_actions_severe_needs_reason|c
+constraint|pi_moderation_actions|pi_actions_system_limited|c
+constraint|pi_moderation_actions|pi_actions_system_temp_expires|c
+constraint|pi_moderation_actions|pi_moderation_actions_action_type_check|c
+constraint|pi_moderation_actions|pi_moderation_actions_actor_id_fkey|f
+constraint|pi_moderation_actions|pi_moderation_actions_actor_type_check|c
+constraint|pi_moderation_actions|pi_moderation_actions_analysis_id_fkey|f
+constraint|pi_moderation_actions|pi_moderation_actions_case_id_fkey|f
+constraint|pi_moderation_actions|pi_moderation_actions_confidence_check|c
+constraint|pi_moderation_actions|pi_moderation_actions_idempotency_key_key|u
+constraint|pi_moderation_actions|pi_moderation_actions_mode_check|c
+constraint|pi_moderation_actions|pi_moderation_actions_pkey|p
+constraint|pi_moderation_actions|pi_moderation_actions_policy_id_fkey|f
+constraint|pi_moderation_actions|pi_moderation_actions_reversed_by_fkey|f
+constraint|pi_moderation_actions|pi_moderation_actions_subject_type_check|c
+constraint|pi_moderation_actions|pi_moderation_actions_target_user_id_fkey|f
+constraint|pi_moderation_cases|pi_cases_resolved_consistent|c
+constraint|pi_moderation_cases|pi_moderation_cases_assigned_to_fkey|f
+constraint|pi_moderation_cases|pi_moderation_cases_confidence_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_idempotency_key_key|u
+constraint|pi_moderation_cases|pi_moderation_cases_pkey|p
+constraint|pi_moderation_cases|pi_moderation_cases_priority_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_resolution_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_risk_score_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_source_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_status_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_subject_type_check|c
+constraint|pi_moderation_cases|pi_moderation_cases_subject_user_id_fkey|f
+constraint|pi_policies|pi_policies_auto_action_threshold_check|c
+constraint|pi_policies|pi_policies_auto_needs_threshold|c
+constraint|pi_policies|pi_policies_auto_not_below_review|c
+constraint|pi_policies|pi_policies_category_key|u
+constraint|pi_policies|pi_policies_enabled_needs_threshold|c
+constraint|pi_policies|pi_policies_max_auto_action_check|c
+constraint|pi_policies|pi_policies_pkey|p
+constraint|pi_policies|pi_policies_review_threshold_check|c
+constraint|pi_policies|pi_policies_updated_by_fkey|f
+constraint|pi_protective_restrictions|pi_protective_restrictions_actor_type_check|c
+constraint|pi_protective_restrictions|pi_protective_restrictions_assessment_id_fkey|f
+constraint|pi_protective_restrictions|pi_protective_restrictions_created_by_fkey|f
+constraint|pi_protective_restrictions|pi_protective_restrictions_lifted_by_fkey|f
+constraint|pi_protective_restrictions|pi_protective_restrictions_mode_check|c
+constraint|pi_protective_restrictions|pi_protective_restrictions_pkey|p
+constraint|pi_protective_restrictions|pi_protective_restrictions_reason_code_check|c
+constraint|pi_protective_restrictions|pi_protective_restrictions_restriction_type_check|c
+constraint|pi_protective_restrictions|pi_protective_restrictions_user_id_fkey|f
+constraint|pi_protective_restrictions|pi_restrictions_window|c
+constraint|pi_provider_health|pi_provider_health_consecutive_failures_check|c
+constraint|pi_provider_health|pi_provider_health_pkey|p
+constraint|pi_provider_health|pi_provider_health_provider_check|c
+constraint|pi_provider_health|pi_provider_health_state_check|c
+constraint|pi_schema_version|pi_schema_version_pkey|p
+constraint|pi_security_events|pi_security_events_acknowledged_by_fkey|f
+constraint|pi_security_events|pi_security_events_case_id_fkey|f
+constraint|pi_security_events|pi_security_events_dedupe_key_key|u
+constraint|pi_security_events|pi_security_events_details_check|c
+constraint|pi_security_events|pi_security_events_device_hash_check|c
+constraint|pi_security_events|pi_security_events_event_type_check|c
+constraint|pi_security_events|pi_security_events_ip_hash_check|c
+constraint|pi_security_events|pi_security_events_pkey|p
+constraint|pi_security_events|pi_security_events_severity_check|c
+constraint|pi_security_events|pi_security_events_source_check|c
+constraint|pi_security_events|pi_security_events_user_id_fkey|f
+constraint|pi_verification_decisions|pi_verif_fraud_is_revocation|c
+constraint|pi_verification_decisions|pi_verif_system_approval_has_evaluation|c
+constraint|pi_verification_decisions|pi_verif_system_limited|c
+constraint|pi_verification_decisions|pi_verification_decisions_decided_by_fkey|f
+constraint|pi_verification_decisions|pi_verification_decisions_decided_by_type_check|c
+constraint|pi_verification_decisions|pi_verification_decisions_decision_check|c
+constraint|pi_verification_decisions|pi_verification_decisions_evaluation_id_fkey|f
+constraint|pi_verification_decisions|pi_verification_decisions_pkey|p
+constraint|pi_verification_decisions|pi_verification_decisions_reason_check|c
+constraint|pi_verification_decisions|pi_verification_decisions_user_id_fkey|f
+constraint|pi_verification_evaluations|pi_verif_eligible_requires_all_pass|c
+constraint|pi_verification_evaluations|pi_verification_evaluations_checks_check|c
+constraint|pi_verification_evaluations|pi_verification_evaluations_criteria_version_check|c
+constraint|pi_verification_evaluations|pi_verification_evaluations_impersonation_risk_check|c
+constraint|pi_verification_evaluations|pi_verification_evaluations_outcome_check|c
+constraint|pi_verification_evaluations|pi_verification_evaluations_pkey|p
+constraint|pi_verification_evaluations|pi_verification_evaluations_user_id_fkey|f
+domainconstraint|pi_category|pi_category_check
+domainconstraint|pi_job_type|pi_job_type_check
+domain|pi_category|text
+domain|pi_job_type|text
+execute|pi_actions_guard()|anon|false
+execute|pi_actions_guard()|authenticated|false
+execute|pi_actions_guard()|service_role|false
+execute|pi_all_checks_pass(p_checks jsonb)|anon|false
+execute|pi_all_checks_pass(p_checks jsonb)|authenticated|false
+execute|pi_all_checks_pass(p_checks jsonb)|service_role|true
+execute|pi_audit_guard()|anon|false
+execute|pi_audit_guard()|authenticated|false
+execute|pi_audit_guard()|service_role|false
+execute|pi_block_truncate()|anon|false
+execute|pi_block_truncate()|authenticated|false
+execute|pi_block_truncate()|service_role|false
+execute|pi_cases_guard_delete()|anon|false
+execute|pi_cases_guard_delete()|authenticated|false
+execute|pi_cases_guard_delete()|service_role|false
+execute|pi_claim_jobs(p_worker text, p_limit integer, p_lease interval, p_types text[])|anon|false
+execute|pi_claim_jobs(p_worker text, p_limit integer, p_lease interval, p_types text[])|authenticated|false
+execute|pi_claim_jobs(p_worker text, p_limit integer, p_lease interval, p_types text[])|service_role|true
+execute|pi_complete_job(p_job_id uuid, p_worker text)|anon|false
+execute|pi_complete_job(p_job_id uuid, p_worker text)|authenticated|false
+execute|pi_complete_job(p_job_id uuid, p_worker text)|service_role|true
+execute|pi_decide_appeal(p_actor uuid, p_appeal_id uuid, p_decision text, p_note text)|anon|false
+execute|pi_decide_appeal(p_actor uuid, p_appeal_id uuid, p_decision text, p_note text)|authenticated|false
+execute|pi_decide_appeal(p_actor uuid, p_appeal_id uuid, p_decision text, p_note text)|service_role|true
+execute|pi_fail_job(p_job_id uuid, p_worker text, p_error text, p_retry_in interval)|anon|false
+execute|pi_fail_job(p_job_id uuid, p_worker text, p_error text, p_retry_in interval)|authenticated|false
+execute|pi_fail_job(p_job_id uuid, p_worker text, p_error text, p_retry_in interval)|service_role|true
+execute|pi_jobs_guard()|anon|false
+execute|pi_jobs_guard()|authenticated|false
+execute|pi_jobs_guard()|service_role|false
+execute|pi_my_moderation_notices()|anon|false
+execute|pi_my_moderation_notices()|authenticated|true
+execute|pi_my_moderation_notices()|service_role|true
+execute|pi_policy_bump_version()|anon|false
+execute|pi_policy_bump_version()|authenticated|false
+execute|pi_policy_bump_version()|service_role|false
+execute|pi_submit_appeal(p_action_id uuid, p_statement text)|anon|false
+execute|pi_submit_appeal(p_action_id uuid, p_statement text)|authenticated|true
+execute|pi_submit_appeal(p_action_id uuid, p_statement text)|service_role|true
+execute|pi_touch_updated_at()|anon|false
+execute|pi_touch_updated_at()|authenticated|false
+execute|pi_touch_updated_at()|service_role|false
+execute|pi_violation_count(p_user uuid, p_window interval)|anon|false
+execute|pi_violation_count(p_user uuid, p_window interval)|authenticated|false
+execute|pi_violation_count(p_user uuid, p_window interval)|service_role|true
+execute|pi_write_audit(p_actor uuid, p_actor_type text, p_action text, p_target_type text, p_target_id text, p_before jsonb, p_after jsonb, p_reason text)|anon|false
+execute|pi_write_audit(p_actor uuid, p_actor_type text, p_action text, p_target_type text, p_target_id text, p_before jsonb, p_after jsonb, p_reason text)|authenticated|false
+execute|pi_write_audit(p_actor uuid, p_actor_type text, p_action text, p_target_type text, p_target_id text, p_before jsonb, p_after jsonb, p_reason text)|service_role|true
+function|pi_actions_guard()|secdef=false|volatility=v|config=search_path=""|body=232a4b6b289f58c684e338e5da684cbc
+function|pi_all_checks_pass(p_checks jsonb)|secdef=false|volatility=i|config=search_path=""|body=82c99a6567744c49e93e67df909b810c
+function|pi_audit_guard()|secdef=false|volatility=v|config=search_path=""|body=f09127fdbfb1ef23a2421e1ed136bb86
+function|pi_block_truncate()|secdef=false|volatility=v|config=search_path=""|body=2a1d56ac014403135534d269c5badef6
+function|pi_cases_guard_delete()|secdef=true|volatility=v|config=search_path=""|body=9c32c76d3d5da13f9a5c4ff937d7bdce
+function|pi_claim_jobs(p_worker text, p_limit integer, p_lease interval, p_types text[])|secdef=false|volatility=v|config=search_path=""|body=95545144e9ba34ba013159ff6668bc43
+function|pi_complete_job(p_job_id uuid, p_worker text)|secdef=false|volatility=v|config=search_path=""|body=2d8623d4c106212fc1feb983a09268b3
+function|pi_decide_appeal(p_actor uuid, p_appeal_id uuid, p_decision text, p_note text)|secdef=true|volatility=v|config=search_path=""|body=0ab667dc422fde45ae1f0d9a94945fac
+function|pi_fail_job(p_job_id uuid, p_worker text, p_error text, p_retry_in interval)|secdef=false|volatility=v|config=search_path=""|body=29cb9cac42518e15e80eb577ad1962b0
+function|pi_jobs_guard()|secdef=false|volatility=v|config=search_path=""|body=23a876329b8208605fbc1e08618afe32
+function|pi_my_moderation_notices()|secdef=true|volatility=s|config=search_path=""|body=55612885ac2d7584eacc6de19fed8b6f
+function|pi_policy_bump_version()|secdef=false|volatility=v|config=search_path=""|body=cf2fe101901309c154db1fcd548404c1
+function|pi_submit_appeal(p_action_id uuid, p_statement text)|secdef=true|volatility=v|config=search_path=""|body=1d24cefe60a2d0c18c0a0fe7736ba279
+function|pi_touch_updated_at()|secdef=false|volatility=v|config=search_path=""|body=c28bbd99ced3dfcd7ff6c2a1298a90e1
+function|pi_violation_count(p_user uuid, p_window interval)|secdef=false|volatility=s|config=search_path=""|body=9e86b2a264948ee50e75034e7316a6ad
+function|pi_write_audit(p_actor uuid, p_actor_type text, p_action text, p_target_type text, p_target_id text, p_before jsonb, p_after jsonb, p_reason text)|secdef=false|volatility=v|config=search_path=""|body=30327bd414f3a63cc9a0db3d6d366938
+index|pi_account_risk_assessments|pi_account_risk_assessments_pkey|unique=true|partial=false
+index|pi_account_risk_assessments|pi_risk_level_idx|unique=false|partial=true
+index|pi_account_risk_assessments|pi_risk_one_current_per_user|unique=true|partial=true
+index|pi_ai_provider_usage|pi_ai_provider_usage_pkey|unique=true|partial=false
+index|pi_ai_provider_usage|pi_usage_provider_idx|unique=false|partial=false
+index|pi_ai_provider_usage|pi_usage_time_idx|unique=false|partial=false
+index|pi_appeals|pi_appeals_action_id_key|unique=true|partial=false
+index|pi_appeals|pi_appeals_open_idx|unique=false|partial=true
+index|pi_appeals|pi_appeals_pkey|unique=true|partial=false
+index|pi_appeals|pi_appeals_user_idx|unique=false|partial=false
+index|pi_audit_log|pi_audit_actor_idx|unique=false|partial=false
+index|pi_audit_log|pi_audit_log_pkey|unique=true|partial=false
+index|pi_audit_log|pi_audit_target_idx|unique=false|partial=false
+index|pi_audit_log|pi_audit_time_idx|unique=false|partial=false
+index|pi_content_analyses|pi_analyses_case_idx|unique=false|partial=true
+index|pi_content_analyses|pi_analyses_hash_idx|unique=false|partial=false
+index|pi_content_analyses|pi_analyses_subject_idx|unique=false|partial=false
+index|pi_content_analyses|pi_content_analyses_idempotency_key_key|unique=true|partial=false
+index|pi_content_analyses|pi_content_analyses_pkey|unique=true|partial=false
+index|pi_feature_flags|pi_feature_flags_pkey|unique=true|partial=false
+index|pi_jobs|pi_jobs_claim_idx|unique=false|partial=true
+index|pi_jobs|pi_jobs_idempotency_key_key|unique=true|partial=false
+index|pi_jobs|pi_jobs_lease_idx|unique=false|partial=true
+index|pi_jobs|pi_jobs_pkey|unique=true|partial=false
+index|pi_jobs|pi_jobs_type_status_idx|unique=false|partial=false
+index|pi_moderation_actions|pi_actions_case_idx|unique=false|partial=false
+index|pi_moderation_actions|pi_actions_target_idx|unique=false|partial=false
+index|pi_moderation_actions|pi_moderation_actions_idempotency_key_key|unique=true|partial=false
+index|pi_moderation_actions|pi_moderation_actions_pkey|unique=true|partial=false
+index|pi_moderation_cases|pi_cases_queue_idx|unique=false|partial=true
+index|pi_moderation_cases|pi_cases_subject_idx|unique=false|partial=false
+index|pi_moderation_cases|pi_cases_user_idx|unique=false|partial=false
+index|pi_moderation_cases|pi_moderation_cases_idempotency_key_key|unique=true|partial=false
+index|pi_moderation_cases|pi_moderation_cases_pkey|unique=true|partial=false
+index|pi_policies|pi_policies_category_key|unique=true|partial=false
+index|pi_policies|pi_policies_pkey|unique=true|partial=false
+index|pi_protective_restrictions|pi_protective_restrictions_pkey|unique=true|partial=false
+index|pi_protective_restrictions|pi_restrictions_active_idx|unique=false|partial=true
+index|pi_provider_health|pi_provider_health_pkey|unique=true|partial=false
+index|pi_schema_version|pi_schema_version_pkey|unique=true|partial=false
+index|pi_security_events|pi_secevents_ip_idx|unique=false|partial=true
+index|pi_security_events|pi_secevents_open_idx|unique=false|partial=true
+index|pi_security_events|pi_secevents_type_idx|unique=false|partial=false
+index|pi_security_events|pi_secevents_user_idx|unique=false|partial=false
+index|pi_security_events|pi_security_events_dedupe_key_key|unique=true|partial=false
+index|pi_security_events|pi_security_events_pkey|unique=true|partial=false
+index|pi_verification_decisions|pi_verif_dec_user_idx|unique=false|partial=false
+index|pi_verification_decisions|pi_verification_decisions_pkey|unique=true|partial=false
+index|pi_verification_evaluations|pi_verif_eval_user_idx|unique=false|partial=false
+index|pi_verification_evaluations|pi_verification_evaluations_pkey|unique=true|partial=false
+policy|pi_account_risk_assessments|pi_owner_select|r|authenticated
+policy|pi_ai_provider_usage|pi_owner_select|r|authenticated
+policy|pi_appeals|pi_appeals_select_own|r|authenticated
+policy|pi_appeals|pi_owner_select|r|authenticated
+policy|pi_audit_log|pi_owner_select|r|authenticated
+policy|pi_content_analyses|pi_owner_select|r|authenticated
+policy|pi_feature_flags|pi_owner_select|r|authenticated
+policy|pi_jobs|pi_owner_select|r|authenticated
+policy|pi_moderation_actions|pi_owner_select|r|authenticated
+policy|pi_moderation_cases|pi_owner_select|r|authenticated
+policy|pi_policies|pi_owner_select|r|authenticated
+policy|pi_protective_restrictions|pi_owner_select|r|authenticated
+policy|pi_provider_health|pi_owner_select|r|authenticated
+policy|pi_schema_version|pi_owner_select|r|authenticated
+policy|pi_security_events|pi_owner_select|r|authenticated
+policy|pi_verification_decisions|pi_owner_select|r|authenticated
+policy|pi_verification_evaluations|pi_owner_select|r|authenticated
+privileges|pi_account_risk_assessments|anon|none
+privileges|pi_account_risk_assessments|authenticated|SELECT
+privileges|pi_account_risk_assessments|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_ai_provider_usage|anon|none
+privileges|pi_ai_provider_usage|authenticated|SELECT
+privileges|pi_ai_provider_usage|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_appeals|anon|none
+privileges|pi_appeals|authenticated|SELECT
+privileges|pi_appeals|service_role|INSERT,SELECT,UPDATE
+privileges|pi_audit_log|anon|none
+privileges|pi_audit_log|authenticated|SELECT
+privileges|pi_audit_log|service_role|INSERT,SELECT
+privileges|pi_content_analyses|anon|none
+privileges|pi_content_analyses|authenticated|SELECT
+privileges|pi_content_analyses|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_feature_flags|anon|none
+privileges|pi_feature_flags|authenticated|SELECT
+privileges|pi_feature_flags|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_jobs|anon|none
+privileges|pi_jobs|authenticated|SELECT
+privileges|pi_jobs|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_moderation_actions|anon|none
+privileges|pi_moderation_actions|authenticated|SELECT
+privileges|pi_moderation_actions|service_role|INSERT,SELECT,UPDATE
+privileges|pi_moderation_cases|anon|none
+privileges|pi_moderation_cases|authenticated|SELECT
+privileges|pi_moderation_cases|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_policies|anon|none
+privileges|pi_policies|authenticated|SELECT
+privileges|pi_policies|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_protective_restrictions|anon|none
+privileges|pi_protective_restrictions|authenticated|SELECT
+privileges|pi_protective_restrictions|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_provider_health|anon|none
+privileges|pi_provider_health|authenticated|SELECT
+privileges|pi_provider_health|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_schema_version|anon|none
+privileges|pi_schema_version|authenticated|SELECT
+privileges|pi_schema_version|service_role|INSERT,SELECT
+privileges|pi_security_events|anon|none
+privileges|pi_security_events|authenticated|SELECT
+privileges|pi_security_events|service_role|DELETE,INSERT,SELECT,UPDATE
+privileges|pi_verification_decisions|anon|none
+privileges|pi_verification_decisions|authenticated|SELECT
+privileges|pi_verification_decisions|service_role|INSERT,SELECT
+privileges|pi_verification_evaluations|anon|none
+privileges|pi_verification_evaluations|authenticated|SELECT
+privileges|pi_verification_evaluations|service_role|DELETE,INSERT,SELECT,UPDATE
+sequence|pi_ai_provider_usage_id_seq
+sequence|pi_audit_log_id_seq
+sequence|pi_security_events_id_seq
+table|pi_account_risk_assessments|rls=true
+table|pi_ai_provider_usage|rls=true
+table|pi_appeals|rls=true
+table|pi_audit_log|rls=true
+table|pi_content_analyses|rls=true
+table|pi_feature_flags|rls=true
+table|pi_jobs|rls=true
+table|pi_moderation_actions|rls=true
+table|pi_moderation_cases|rls=true
+table|pi_policies|rls=true
+table|pi_protective_restrictions|rls=true
+table|pi_provider_health|rls=true
+table|pi_schema_version|rls=true
+table|pi_security_events|rls=true
+table|pi_verification_decisions|rls=true
+table|pi_verification_evaluations|rls=true
+trigger|pi_appeals|pi_appeals_no_truncate|enabled=O
+trigger|pi_appeals|pi_touch_appeals|enabled=O
+trigger|pi_audit_log|pi_audit_no_change|enabled=O
+trigger|pi_audit_log|pi_audit_no_truncate|enabled=O
+trigger|pi_feature_flags|pi_touch_flags|enabled=O
+trigger|pi_jobs|pi_jobs_state_guard|enabled=O
+trigger|pi_moderation_actions|pi_actions_immutable|enabled=O
+trigger|pi_moderation_actions|pi_actions_no_truncate|enabled=O
+trigger|pi_moderation_cases|pi_cases_before_delete|enabled=O
+trigger|pi_moderation_cases|pi_touch_cases|enabled=O
+trigger|pi_policies|pi_policy_version|enabled=O
+trigger|pi_provider_health|pi_touch_health|enabled=O
+trigger|pi_verification_decisions|pi_decisions_no_truncate|enabled=O
+-- @@PI_MANIFEST_DATA_END@@
+$manifest$, E'\n')) AS l WHERE l <> '' AND l NOT LIKE '--%'),
+  act AS (SELECT l FROM pg_temp.pi_actual() AS l)
+  SELECT 'MISSING     ' || l FROM (SELECT l FROM exp EXCEPT SELECT l FROM act) m
+  UNION ALL
+  SELECT 'UNEXPECTED  ' || l FROM (SELECT l FROM act EXCEPT SELECT l FROM exp) u
+$f$;
+-- @@PI_MANIFEST_END@@
+
+-- Classify the database before touching anything:
+--   nothing named pi_*            -> fresh install, continue
+--   exactly the expected install  -> safe re-run, continue (every statement below is idempotent)
+--   anything else                 -> STOP with the list of differences (partial, damaged, foreign or newer)
+DO $$
+DECLARE
+  n_objects integer; n_problems integer; v_list text; v_max integer;
+BEGIN
+  SELECT count(*) INTO n_objects FROM pg_temp.pi_actual();
+  IF n_objects = 0 THEN
+    RETURN;
+  END IF;
+  BEGIN
+    IF to_regclass('public.pi_schema_version') IS NOT NULL THEN
+      EXECUTE 'SELECT max(version) FROM public.pi_schema_version' INTO v_max;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    v_max := NULL;
+  END;
+  IF v_max IS NOT NULL AND v_max > 1 THEN
+    RAISE EXCEPTION 'Platform Intelligence schema version % is already installed; migration 001 will not run over it.', v_max
+      USING ERRCODE = 'P0001';
+  END IF;
+  SELECT count(*) INTO n_problems FROM pg_temp.pi_problems();
+  IF n_problems > 0 THEN
+    SELECT string_agg(p, E'\n  ') INTO v_list FROM (SELECT p FROM pg_temp.pi_problems() AS p ORDER BY p LIMIT 15) AS s;
+    RAISE EXCEPTION E'Inconsistent or partial Platform Intelligence installation detected: % difference(s) from what migration 001 creates. Nothing was changed. First differences:\n  %\nDo not re-run until this is understood. If this database only holds an old draft or a damaged install, export any data and run 001_pi_schema.down.sql first.', n_problems, v_list
+      USING ERRCODE = 'P0001';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.pi_schema_version WHERE version = 1 AND name = '001_pi_schema') THEN
+    RAISE EXCEPTION 'Inconsistent Platform Intelligence installation: every object is present but pi_schema_version has no row for 001_pi_schema. Nothing was changed.'
+      USING ERRCODE = 'P0001';
+  END IF;
+END $$;
+
+-- @@PI_DDL_BEGIN@@
 -- ---------------------------------------------------------------- shared type + helpers
 DO $$
 BEGIN
@@ -63,6 +753,12 @@ BEGIN
       'harassment_bullying', 'hate_speech', 'threats_violence', 'sexual_exploitation',
       'prohibited_sexual_content', 'spam_scams', 'impersonation', 'dangerous_prohibited',
       'manipulated_engagement', 'repeated_violations'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace
+                 WHERE n.nspname = 'public' AND t.typname = 'pi_job_type') THEN
+    CREATE DOMAIN public.pi_job_type AS text CHECK (VALUE IN (
+      'analyze_content', 'assess_account', 'evaluate_verification', 'apply_action',
+      'reverse_action', 'expire_restrictions', 'purge_retention', 'provider_healthcheck'));
   END IF;
 END $$;
 
@@ -188,7 +884,8 @@ CREATE TABLE IF NOT EXISTS public.pi_content_analyses (
 
 CREATE TABLE IF NOT EXISTS public.pi_moderation_actions (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  case_id             uuid NOT NULL REFERENCES public.pi_moderation_cases(id) ON DELETE CASCADE,
+  -- Deleting a case must never delete the moderation history that hangs off it: the action stays, case_id is cleared.
+  case_id             uuid REFERENCES public.pi_moderation_cases(id) ON DELETE SET NULL,
   target_user_id      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   subject_type        text NOT NULL CHECK (subject_type IN ('post', 'comment', 'message', 'profile', 'media', 'account')),
   subject_id          uuid NOT NULL,
@@ -228,23 +925,25 @@ CREATE TABLE IF NOT EXISTS public.pi_moderation_actions (
 );
 
 -- Moderation history is tamper-resistant: core fields never change, rows are never deleted.
--- Only reversal fields may be written (once), and user/FK columns may be set NULL (account deletion).
+-- Only reversal fields may be written (once), and reference columns (case, user, policy, analysis) may only be
+-- CLEARED, which is what ON DELETE SET NULL does when a case, account, policy or analysis is deleted.
 CREATE OR REPLACE FUNCTION public.pi_actions_guard() RETURNS trigger
   LANGUAGE plpgsql SET search_path = '' AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
     RAISE EXCEPTION 'pi_moderation_actions rows cannot be deleted' USING ERRCODE = '42501';
   END IF;
-  IF ROW(NEW.id, NEW.case_id, NEW.subject_type, NEW.subject_id, NEW.action_type, NEW.actor_type, NEW.mode,
+  IF ROW(NEW.id, NEW.subject_type, NEW.subject_id, NEW.action_type, NEW.actor_type, NEW.mode,
          NEW.reason_code, NEW.user_visible_reason, NEW.internal_note, NEW.policy_version, NEW.confidence,
          NEW.expires_at, NEW.appealable, NEW.idempotency_key, NEW.created_at)
      IS DISTINCT FROM
-     ROW(OLD.id, OLD.case_id, OLD.subject_type, OLD.subject_id, OLD.action_type, OLD.actor_type, OLD.mode,
+     ROW(OLD.id, OLD.subject_type, OLD.subject_id, OLD.action_type, OLD.actor_type, OLD.mode,
          OLD.reason_code, OLD.user_visible_reason, OLD.internal_note, OLD.policy_version, OLD.confidence,
          OLD.expires_at, OLD.appealable, OLD.idempotency_key, OLD.created_at) THEN
     RAISE EXCEPTION 'pi_moderation_actions core fields are immutable' USING ERRCODE = '42501';
   END IF;
-  IF (NEW.target_user_id IS DISTINCT FROM OLD.target_user_id AND NEW.target_user_id IS NOT NULL)
+  IF (NEW.case_id IS DISTINCT FROM OLD.case_id AND NEW.case_id IS NOT NULL)
+     OR (NEW.target_user_id IS DISTINCT FROM OLD.target_user_id AND NEW.target_user_id IS NOT NULL)
      OR (NEW.actor_id IS DISTINCT FROM OLD.actor_id AND NEW.actor_id IS NOT NULL)
      OR (NEW.policy_id IS DISTINCT FROM OLD.policy_id AND NEW.policy_id IS NOT NULL)
      OR (NEW.analysis_id IS DISTINCT FROM OLD.analysis_id AND NEW.analysis_id IS NOT NULL)
@@ -351,7 +1050,9 @@ CREATE TABLE IF NOT EXISTS public.pi_verification_decisions (
   id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id                 uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   verification_request_id uuid,
-  evaluation_id           uuid REFERENCES public.pi_verification_evaluations(id) ON DELETE CASCADE,
+  -- NO ACTION (checked at the end of the statement): an evaluation that a decision relies on cannot be deleted on its own,
+  -- but an account deletion, which removes both together, still succeeds.
+  evaluation_id           uuid REFERENCES public.pi_verification_evaluations(id) ON DELETE NO ACTION,
   decision                text NOT NULL CHECK (decision IN ('approved', 'rejected', 'referred_to_human', 'revoked')),
   decided_by_type         text NOT NULL CHECK (decided_by_type IN ('system', 'owner', 'admin', 'moderator')),
   decided_by              uuid REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -400,13 +1101,12 @@ CREATE TABLE IF NOT EXISTS public.pi_provider_health (
 -- ---------------------------------------------------------------- job queue + audit log
 CREATE TABLE IF NOT EXISTS public.pi_jobs (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_type         text NOT NULL CHECK (job_type IN ('analyze_content', 'assess_account', 'evaluate_verification', 'apply_action',
-                     'reverse_action', 'expire_restrictions', 'purge_retention', 'provider_healthcheck')),
-  payload          jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'),
-  status           text NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'succeeded', 'dead', 'cancelled')),
-  priority         smallint NOT NULL DEFAULT 5 CHECK (priority BETWEEN 1 AND 9),   -- 1 runs first
-  attempts         integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
-  max_attempts     integer NOT NULL DEFAULT 5 CHECK (max_attempts >= 1),
+  job_type         public.pi_job_type NOT NULL,
+  payload          jsonb NOT NULL DEFAULT '{}'::jsonb CONSTRAINT pi_jobs_payload_is_object CHECK (jsonb_typeof(payload) = 'object'),
+  status           text NOT NULL DEFAULT 'queued' CONSTRAINT pi_jobs_status_valid CHECK (status IN ('queued', 'running', 'succeeded', 'dead', 'cancelled')),
+  priority         smallint NOT NULL DEFAULT 5 CONSTRAINT pi_jobs_priority_range CHECK (priority BETWEEN 1 AND 9),   -- 1 runs first
+  attempts         integer NOT NULL DEFAULT 0 CONSTRAINT pi_jobs_attempts_not_negative CHECK (attempts >= 0),
+  max_attempts     integer NOT NULL DEFAULT 5 CONSTRAINT pi_jobs_max_attempts_range CHECK (max_attempts BETWEEN 1 AND 20),
   run_after        timestamptz NOT NULL DEFAULT now(),
   locked_by        text,
   locked_at        timestamptz,
@@ -417,8 +1117,16 @@ CREATE TABLE IF NOT EXISTS public.pi_jobs (
   started_at       timestamptz,
   finished_at      timestamptz,
   updated_at       timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT pi_jobs_lease_consistent
-    CHECK ((status = 'running') = (locked_by IS NOT NULL AND lease_expires_at IS NOT NULL))
+  CONSTRAINT pi_jobs_attempts_within_max CHECK (attempts <= max_attempts),
+  -- A job is locked if and only if it is running; a running job always names its worker and its lease.
+  CONSTRAINT pi_jobs_lock_consistent CHECK (
+    (status = 'running' AND locked_by IS NOT NULL AND locked_at IS NOT NULL AND lease_expires_at IS NOT NULL)
+    OR (status <> 'running' AND locked_by IS NULL AND locked_at IS NULL AND lease_expires_at IS NULL)),
+  CONSTRAINT pi_jobs_worker_id_valid CHECK (locked_by IS NULL OR (btrim(locked_by) <> '' AND char_length(locked_by) <= 200)),
+  CONSTRAINT pi_jobs_lease_after_lock CHECK (lease_expires_at IS NULL OR lease_expires_at > locked_at),
+  CONSTRAINT pi_jobs_running_has_attempt CHECK (status <> 'running' OR attempts >= 1),
+  -- Final states carry a finish time; live states never do.
+  CONSTRAINT pi_jobs_finished_consistent CHECK ((status IN ('succeeded', 'dead', 'cancelled')) = (finished_at IS NOT NULL))
 );
 
 CREATE TABLE IF NOT EXISTS public.pi_audit_log (
@@ -440,6 +1148,55 @@ CREATE OR REPLACE FUNCTION public.pi_audit_guard() RETURNS trigger
   LANGUAGE plpgsql SET search_path = '' AS $$
 BEGIN
   RAISE EXCEPTION 'pi_audit_log is append-only' USING ERRCODE = '42501';
+END $$;
+
+-- History tables can never be emptied in one statement (also stops TRUNCATE ... CASCADE reaching them).
+CREATE OR REPLACE FUNCTION public.pi_block_truncate() RETURNS trigger
+  LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  RAISE EXCEPTION '% is protected history and cannot be truncated', TG_TABLE_NAME USING ERRCODE = '42501';
+END $$;
+
+-- Case deletion: refuse while a human decision is still pending; otherwise allow it, keep every moderation
+-- action (the FK clears case_id), and leave a permanent audit entry so the deletion is never silent.
+-- SECURITY DEFINER so the audit entry is written whoever is allowed to delete the case.
+CREATE OR REPLACE FUNCTION public.pi_cases_guard_delete() RETURNS trigger
+  LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE v_actions integer;
+BEGIN
+  IF OLD.status IN ('open', 'awaiting_review') THEN
+    RAISE EXCEPTION 'case % is still % and has not been decided; resolve or dismiss it before deleting it', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+  SELECT count(*) INTO v_actions FROM public.pi_moderation_actions WHERE case_id = OLD.id;
+  INSERT INTO public.pi_audit_log (actor_id, actor_type, action, target_type, target_id, before_state, reason)
+  VALUES (NULL, 'service', 'case_deleted', 'moderation_case', OLD.id::text,
+          jsonb_build_object('subject_type', OLD.subject_type, 'subject_id', OLD.subject_id, 'status', OLD.status,
+                             'resolution', OLD.resolution, 'primary_category', OLD.primary_category, 'actions_retained', v_actions),
+          'case deleted; its moderation actions are retained with the case reference cleared');
+  RETURN OLD;
+END $$;
+
+-- Job state machine: terminal states are final, identity and limits never change, attempts never go backwards.
+CREATE OR REPLACE FUNCTION public.pi_jobs_guard() RETURNS trigger
+  LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  IF NEW.job_type IS DISTINCT FROM OLD.job_type OR NEW.payload IS DISTINCT FROM OLD.payload
+     OR NEW.idempotency_key IS DISTINCT FROM OLD.idempotency_key OR NEW.max_attempts IS DISTINCT FROM OLD.max_attempts
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'a job''s type, payload, idempotency key, attempt limit and creation time cannot be changed; enqueue a new job instead'
+      USING ERRCODE = '55000';
+  END IF;
+  IF NEW.attempts < OLD.attempts THEN
+    RAISE EXCEPTION 'job attempts can never go backwards' USING ERRCODE = '55000';
+  END IF;
+  IF NEW.status IS DISTINCT FROM OLD.status
+     AND (OLD.status, NEW.status) NOT IN (('queued', 'running'), ('running', 'queued'), ('running', 'succeeded'),
+                                          ('running', 'dead'), ('queued', 'cancelled'), ('running', 'cancelled')) THEN
+    RAISE EXCEPTION 'illegal job state change % -> % (succeeded, dead and cancelled are final)', OLD.status, NEW.status
+      USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
 END $$;
 
 -- ---------------------------------------------------------------- indexes
@@ -488,6 +1245,16 @@ DROP TRIGGER IF EXISTS pi_audit_no_change   ON public.pi_audit_log;
 CREATE TRIGGER pi_audit_no_change   BEFORE UPDATE OR DELETE ON public.pi_audit_log FOR EACH ROW EXECUTE FUNCTION public.pi_audit_guard();
 DROP TRIGGER IF EXISTS pi_audit_no_truncate ON public.pi_audit_log;
 CREATE TRIGGER pi_audit_no_truncate BEFORE TRUNCATE ON public.pi_audit_log FOR EACH STATEMENT EXECUTE FUNCTION public.pi_audit_guard();
+DROP TRIGGER IF EXISTS pi_actions_no_truncate ON public.pi_moderation_actions;
+CREATE TRIGGER pi_actions_no_truncate BEFORE TRUNCATE ON public.pi_moderation_actions FOR EACH STATEMENT EXECUTE FUNCTION public.pi_block_truncate();
+DROP TRIGGER IF EXISTS pi_appeals_no_truncate ON public.pi_appeals;
+CREATE TRIGGER pi_appeals_no_truncate BEFORE TRUNCATE ON public.pi_appeals FOR EACH STATEMENT EXECUTE FUNCTION public.pi_block_truncate();
+DROP TRIGGER IF EXISTS pi_decisions_no_truncate ON public.pi_verification_decisions;
+CREATE TRIGGER pi_decisions_no_truncate BEFORE TRUNCATE ON public.pi_verification_decisions FOR EACH STATEMENT EXECUTE FUNCTION public.pi_block_truncate();
+DROP TRIGGER IF EXISTS pi_cases_before_delete ON public.pi_moderation_cases;
+CREATE TRIGGER pi_cases_before_delete BEFORE DELETE ON public.pi_moderation_cases FOR EACH ROW EXECUTE FUNCTION public.pi_cases_guard_delete();
+DROP TRIGGER IF EXISTS pi_jobs_state_guard ON public.pi_jobs;
+CREATE TRIGGER pi_jobs_state_guard BEFORE UPDATE ON public.pi_jobs FOR EACH ROW EXECUTE FUNCTION public.pi_jobs_guard();
 
 -- ---------------------------------------------------------------- functions
 -- Internal: append to the audit log. Not exposed to users.
@@ -501,16 +1268,31 @@ CREATE OR REPLACE FUNCTION public.pi_write_audit(
 $$;
 
 -- Job queue ---------------------------------------------------------------
+-- p_lease: how long this worker may hold the job before another worker may take it over (1 second to 1 hour).
+-- p_types: NULL = any type, otherwise a non-empty list of known job types.
 CREATE OR REPLACE FUNCTION public.pi_claim_jobs(
   p_worker text, p_limit integer DEFAULT 10, p_lease interval DEFAULT interval '5 minutes', p_types text[] DEFAULT NULL)
   RETURNS SETOF public.pi_jobs
   LANGUAGE plpgsql SET search_path = '' AS $$
 BEGIN
-  IF p_worker IS NULL OR btrim(p_worker) = '' THEN
-    RAISE EXCEPTION 'worker id required' USING ERRCODE = '22023';
+  IF p_worker IS NULL OR btrim(p_worker) = '' OR char_length(p_worker) > 200 THEN
+    RAISE EXCEPTION 'worker id required (1 to 200 characters)' USING ERRCODE = '22023';
   END IF;
   IF p_limit IS NULL OR p_limit < 1 OR p_limit > 100 THEN
     RAISE EXCEPTION 'limit must be between 1 and 100' USING ERRCODE = '22023';
+  END IF;
+  IF p_lease IS NULL OR p_lease < interval '1 second' OR p_lease > interval '1 hour' THEN
+    RAISE EXCEPTION 'lease must be between 1 second and 1 hour (got %)', coalesce(p_lease::text, 'NULL') USING ERRCODE = '22023';
+  END IF;
+  IF p_types IS NOT NULL THEN
+    IF cardinality(p_types) = 0 OR array_position(p_types, NULL) IS NOT NULL THEN
+      RAISE EXCEPTION 'job type filter must be NULL (all types) or a non-empty list without NULLs' USING ERRCODE = '22023';
+    END IF;
+    BEGIN
+      PERFORM p_types::public.pi_job_type[];
+    EXCEPTION WHEN check_violation OR invalid_text_representation OR datatype_mismatch THEN
+      RAISE EXCEPTION 'unknown job type in filter' USING ERRCODE = '22023';
+    END;
   END IF;
   -- A job whose lease expired on its final allowed attempt is dead-lettered, not retried forever.
   UPDATE public.pi_jobs
@@ -521,7 +1303,9 @@ BEGIN
   RETURN QUERY
   UPDATE public.pi_jobs j
      SET status = 'running', attempts = j.attempts + 1, locked_by = p_worker, locked_at = now(),
-         lease_expires_at = now() + p_lease, started_at = coalesce(j.started_at, now()), updated_at = now()
+         lease_expires_at = now() + p_lease, started_at = coalesce(j.started_at, now()), updated_at = now(),
+         last_error = CASE WHEN j.status = 'running' THEN left(coalesce(j.last_error, '') || ' [lease expired; reclaimed]', 2000)
+                           ELSE j.last_error END
    WHERE j.id IN (
      SELECT c.id FROM public.pi_jobs c
       WHERE ((c.status = 'queued' AND c.run_after <= now()) OR (c.status = 'running' AND c.lease_expires_at < now()))
@@ -546,18 +1330,26 @@ BEGIN
 END $$;
 
 -- Returns the new status ('queued' for a retry, 'dead' when attempts are exhausted), or NULL if the
--- caller does not hold the job. Default back-off: 10s, 20s, 40s ... capped at 1 hour.
+-- caller does not hold the job. p_retry_in: NULL = automatic back-off (10s, 20s, 40s ... capped at 1 hour),
+-- otherwise an explicit delay between 1 second and 7 days.
 CREATE OR REPLACE FUNCTION public.pi_fail_job(p_job_id uuid, p_worker text, p_error text, p_retry_in interval DEFAULT NULL)
   RETURNS text
   LANGUAGE plpgsql SET search_path = '' AS $$
 DECLARE j public.pi_jobs; v_status text;
 BEGIN
+  IF p_worker IS NULL OR btrim(p_worker) = '' THEN
+    RAISE EXCEPTION 'worker id required' USING ERRCODE = '22023';
+  END IF;
+  IF p_retry_in IS NOT NULL AND (p_retry_in < interval '1 second' OR p_retry_in > interval '7 days') THEN
+    RAISE EXCEPTION 'retry delay must be NULL (automatic back-off) or between 1 second and 7 days (got %)', p_retry_in
+      USING ERRCODE = '22023';
+  END IF;
   SELECT * INTO j FROM public.pi_jobs WHERE id = p_job_id AND status = 'running' AND locked_by = p_worker FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
   v_status := CASE WHEN j.attempts >= j.max_attempts THEN 'dead' ELSE 'queued' END;
   UPDATE public.pi_jobs
      SET status = v_status, locked_by = NULL, locked_at = NULL, lease_expires_at = NULL,
-         last_error = left(p_error, 2000),
+         last_error = left(coalesce(nullif(btrim(p_error), ''), 'unspecified error'), 2000),
          run_after = CASE WHEN v_status = 'queued'
                           THEN now() + coalesce(p_retry_in, least(interval '10 seconds' * power(2, j.attempts - 1), interval '1 hour'))
                           ELSE j.run_after END,
@@ -685,6 +1477,8 @@ INSERT INTO public.pi_schema_version (version, name) VALUES (1, '001_pi_schema')
 ON CONFLICT (version) DO NOTHING;
 
 -- ---------------------------------------------------------------- RLS + grants (explicit table list only)
+-- Privileges are set EXPLICITLY (REVOKE ALL first, including service_role) so the result never depends on
+-- the database's default privileges, which differ between environments.
 DO $$
 DECLARE
   t text;
@@ -694,12 +1488,22 @@ DECLARE
     'pi_protective_restrictions', 'pi_verification_evaluations', 'pi_verification_decisions',
     'pi_ai_provider_usage', 'pi_provider_health', 'pi_jobs', 'pi_audit_log'];
   s text;
+  v_service_privs text;
 BEGIN
   FOREACH t IN ARRAY tables LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('REVOKE ALL ON public.%I FROM PUBLIC, anon, authenticated', t);
+    EXECUTE format('REVOKE ALL ON public.%I FROM PUBLIC, anon, authenticated, service_role', t);
     EXECUTE format('GRANT SELECT ON public.%I TO authenticated', t);     -- still filtered by RLS below
-    EXECUTE format('GRANT ALL ON public.%I TO service_role', t);
+    -- The API (service_role) never gets TRUNCATE, REFERENCES or TRIGGER, and history tables are append-only
+    -- or update-only at the privilege level as well as by trigger.
+    v_service_privs := CASE t
+      WHEN 'pi_audit_log'              THEN 'SELECT, INSERT'
+      WHEN 'pi_moderation_actions'     THEN 'SELECT, INSERT, UPDATE'
+      WHEN 'pi_appeals'                THEN 'SELECT, INSERT, UPDATE'
+      WHEN 'pi_verification_decisions' THEN 'SELECT, INSERT'
+      WHEN 'pi_schema_version'         THEN 'SELECT, INSERT'
+      ELSE 'SELECT, INSERT, UPDATE, DELETE' END;
+    EXECUTE format('GRANT %s ON public.%I TO service_role', v_service_privs, t);
     EXECUTE format('DROP POLICY IF EXISTS pi_owner_select ON public.%I', t);
     EXECUTE format('CREATE POLICY pi_owner_select ON public.%I FOR SELECT TO authenticated USING ((SELECT public.is_bmn_owner()))', t);
     -- pg_get_serial_sequence() raises an error for a table with no such column, so check first.
@@ -709,8 +1513,8 @@ BEGIN
       s := pg_get_serial_sequence('public.' || t, 'id');
     END IF;
     IF s IS NOT NULL THEN
-      EXECUTE format('REVOKE ALL ON SEQUENCE %s FROM PUBLIC, anon, authenticated', s);
-      EXECUTE format('GRANT ALL ON SEQUENCE %s TO service_role', s);
+      EXECUTE format('REVOKE ALL ON SEQUENCE %s FROM PUBLIC, anon, authenticated, service_role', s);
+      EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE %s TO service_role', s);
     END IF;
   END LOOP;
 END $$;
@@ -720,9 +1524,10 @@ DROP POLICY IF EXISTS pi_appeals_select_own ON public.pi_appeals;
 CREATE POLICY pi_appeals_select_own ON public.pi_appeals FOR SELECT TO authenticated
   USING (user_id = (SELECT auth.uid()));
 
--- Functions: nobody by default; then grant exactly what each caller needs.
+-- Functions: nobody by default (including service_role); then grant exactly what each caller needs.
 REVOKE ALL ON FUNCTION
   public.pi_touch_updated_at(), public.pi_policy_bump_version(), public.pi_actions_guard(), public.pi_audit_guard(),
+  public.pi_block_truncate(), public.pi_cases_guard_delete(), public.pi_jobs_guard(),
   public.pi_all_checks_pass(jsonb),
   public.pi_write_audit(uuid, text, text, text, text, jsonb, jsonb, text),
   public.pi_claim_jobs(text, integer, interval, text[]),
@@ -732,7 +1537,7 @@ REVOKE ALL ON FUNCTION
   public.pi_my_moderation_notices(),
   public.pi_submit_appeal(uuid, text),
   public.pi_decide_appeal(uuid, uuid, text, text)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION
   public.pi_write_audit(uuid, text, text, text, text, jsonb, jsonb, text),
@@ -747,5 +1552,25 @@ GRANT EXECUTE ON FUNCTION public.pi_my_moderation_notices()       TO authenticat
 GRANT EXECUTE ON FUNCTION public.pi_submit_appeal(uuid, text)      TO authenticated, service_role;
 -- pi_all_checks_pass is used inside a CHECK constraint, which runs as the inserting role.
 GRANT EXECUTE ON FUNCTION public.pi_all_checks_pass(jsonb)         TO service_role;
+-- @@PI_DDL_END@@
+
+-- ---------------------------------------------------------------- post-install verification
+-- The finished installation must match the manifest exactly, otherwise EVERYTHING above is rolled back.
+DO $$
+DECLARE n integer; v_list text;
+BEGIN
+  SELECT count(*) INTO n FROM pg_temp.pi_problems();
+  IF n > 0 THEN
+    SELECT string_agg(p, E'\n  ') INTO v_list FROM (SELECT p FROM pg_temp.pi_problems() AS p ORDER BY p LIMIT 15) AS s;
+    RAISE EXCEPTION E'Post-install verification FAILED with % difference(s); the migration has been rolled back. First differences:\n  %', n, v_list
+      USING ERRCODE = 'P0001';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.pi_schema_version WHERE version = 1 AND name = '001_pi_schema') THEN
+    RAISE EXCEPTION 'Post-install verification FAILED: schema version row missing; the migration has been rolled back.' USING ERRCODE = 'P0001';
+  END IF;
+END $$;
+
+DROP FUNCTION pg_temp.pi_problems();
+DROP FUNCTION pg_temp.pi_actual();
 
 COMMIT;

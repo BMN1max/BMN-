@@ -7,6 +7,13 @@
 -- If any real (non-seed) data exists, the rollback REFUSES to run until you explicitly confirm:
 --     SET pi.confirm_rollback = 'yes';      -- in the same session, before running this file
 -- Export what you need first (e.g. pg_dump --table='public.pi_*').
+--
+-- Partial or damaged installs: if pi_ objects exist but the install marker table (pi_schema_version) is
+-- missing, this file cannot tell whether those objects are ours. It then REFUSES until you also run
+--     SET pi.confirm_partial_cleanup = 'yes';
+-- and it will then drop every object that carries one of the exact names created by migration 001
+-- (including a foreign object that happens to share such a name), and nothing else. Unknown extra pi_
+-- objects are left in place and reported.
 -- =====================================================================================
 
 BEGIN;
@@ -17,15 +24,28 @@ SET LOCAL statement_timeout = '60s';
 DO $$
 DECLARE
   v_confirmed boolean := coalesce(current_setting('pi.confirm_rollback', true), '') = 'yes';
+  v_partial_ok boolean := coalesce(current_setting('pi.confirm_partial_cleanup', true), '') = 'yes';
+  v_any boolean;
   v_rows bigint := 0;
   t text;
   n bigint;
 BEGIN
-  -- Seed/config tables (flags, policies, schema version, provider health) don't count as "data".
+  SELECT EXISTS (SELECT 1 FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relname LIKE 'pi\_%' AND relkind IN ('r', 'p', 'S', 'v', 'm', 'f'))
+      OR EXISTS (SELECT 1 FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND proname LIKE 'pi\_%')
+      OR EXISTS (SELECT 1 FROM pg_type WHERE typnamespace = 'public'::regnamespace AND typname LIKE 'pi\_%' AND typtype = 'd')
+    INTO v_any;
+  IF v_any AND to_regclass('public.pi_schema_version') IS NULL AND NOT v_partial_ok THEN
+    RAISE EXCEPTION 'Rollback refused: pi_ objects exist but the install marker (pi_schema_version) is missing, so this is a partial, damaged or foreign installation. Inspect it, export anything you need, then run  SET pi.confirm_partial_cleanup = ''yes'';  and retry.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  -- Seed/config tables (flags, policies, schema version, provider health) don't count as "data"
+  -- in a normal rollback; in a partial cleanup every named table is counted.
   FOREACH t IN ARRAY ARRAY['pi_moderation_cases', 'pi_content_analyses', 'pi_moderation_actions', 'pi_appeals',
                            'pi_account_risk_assessments', 'pi_security_events', 'pi_protective_restrictions',
                            'pi_verification_evaluations', 'pi_verification_decisions', 'pi_ai_provider_usage',
-                           'pi_jobs', 'pi_audit_log'] LOOP
+                           'pi_jobs', 'pi_audit_log']
+                   || CASE WHEN to_regclass('public.pi_schema_version') IS NULL
+                           THEN ARRAY['pi_feature_flags', 'pi_policies', 'pi_provider_health'] ELSE ARRAY[]::text[] END LOOP
     IF to_regclass('public.' || t) IS NOT NULL THEN
       EXECUTE format('SELECT count(*) FROM public.%I', t) INTO n;
       v_rows := v_rows + n;
@@ -66,11 +86,15 @@ DROP TABLE IF EXISTS public.pi_feature_flags;
 DROP TABLE IF EXISTS public.pi_schema_version;
 
 -- trigger functions, helper, domain (after the tables that used them)
+DROP FUNCTION IF EXISTS public.pi_jobs_guard();
+DROP FUNCTION IF EXISTS public.pi_cases_guard_delete();
+DROP FUNCTION IF EXISTS public.pi_block_truncate();
 DROP FUNCTION IF EXISTS public.pi_audit_guard();
 DROP FUNCTION IF EXISTS public.pi_actions_guard();
 DROP FUNCTION IF EXISTS public.pi_policy_bump_version();
 DROP FUNCTION IF EXISTS public.pi_all_checks_pass(jsonb);
 DROP FUNCTION IF EXISTS public.pi_touch_updated_at();
+DROP DOMAIN IF EXISTS public.pi_job_type;
 DROP DOMAIN IF EXISTS public.pi_category;
 
 COMMIT;
