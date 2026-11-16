@@ -1,6 +1,6 @@
 # BMN Platform Intelligence — Batch 1: database schema
 
-**Status: reviewed-ready, NOT deployed, NOT applied to any Supabase project.** Everything below was run only against a
+**Status: HARDENED (see docs/BATCH1_HARDENING_CHANGES.md), NOT deployed, NOT applied to any Supabase project.** Everything below was run only against a
 disposable local PostgreSQL 16. Safe to commit to GitHub (nothing here runs on Vercel or Render by itself).
 
 ## 1. Files inspected
@@ -19,6 +19,10 @@ every `.from()` / `.rpc()` / `storage.from()` call in `index.html`, `server.js`,
 | `platform-intelligence/db/tests/10_seed_baseline_data.sql` | Test-only rows in existing BMN tables (never run on production) |
 | `platform-intelligence/db/tests/15_test_harness.sql` | Test-only assertion helpers + schema/data fingerprints |
 | `platform-intelligence/db/tests/20_pi_tests.sql` | 160+ assertions |
+| `platform-intelligence/db/tests/30_pi_hardening_tests.sql` | job queue, history, privilege and BMN-compat tests (hardening) |
+| `platform-intelligence/db/tests/fixtures/001_pi_schema.v1_draft.up.sql` | first draft, test fixture only |
+| `platform-intelligence/db/tools/refresh_manifest.py` | regenerates / checks the install manifest embedded in the migration |
+| `platform-intelligence/docs/BATCH1_HARDENING_CHANGES.md`, `PRODUCTION_COMPATIBILITY.md` | hardening change report, remaining risks |
 | `platform-intelligence/db/TEST_RESULTS.txt` | Real output of the final run |
 | `platform-intelligence/docs/PROVIDER_COMPARISON.md` | AI provider research (no provider chosen) |
 | `platform-intelligence/README.md` | This report |
@@ -35,7 +39,7 @@ Nothing is created outside the `pi_` namespace and nothing existing is altered. 
 `pi_verification_decisions`, `pi_ai_provider_usage`, `pi_provider_health`, `pi_jobs`, `pi_audit_log`, `pi_schema_version`.
 
 Design decisions, driven by your requirements and by what the existing schema does:
-- **Production is the source of truth.** The baseline is missing tables the app uses (`reposts`, `creator_tips`, `creator_payout_accounts`, `user_settings`, `user_blocks`, `media_assets`), so production has more than the baseline. The migration therefore has **no foreign keys to posts / comments / messages / reports / verification tables** (plain `subject_type` + `subject_id`), depends only on `auth.users`, `bmn_admins`, `is_bmn_owner()` and the 3 Supabase roles, and **aborts if those are absent or if any unrelated `pi_*` object already exists**.
+- **Production is the source of truth.** The baseline is missing tables the app uses (`reposts`, `creator_tips`, `creator_payout_accounts`, `user_settings`, `user_blocks`, `media_assets`), so production has more than the baseline. The migration therefore has **no foreign keys to posts / comments / messages / reports / verification tables** (plain `subject_type` + `subject_id`), depends only on `auth.users`, `bmn_admins`, `is_bmn_owner()` and the 3 Supabase roles, and **aborts if those are absent**, and an install verifier refuses to run over any partial, damaged, foreign or newer `pi_` installation (it compares every object with an embedded manifest before and after installing).
 - **Account deletion keeps working.** `bmn_delete_my_account()` ends with `DELETE FROM auth.users`; every pi_ foreign key is `CASCADE` or `SET NULL`. Proven by running the real function in the tests: personal pi_ rows are erased, moderation history is anonymised, audit log survives.
 - **Automation cannot do irreversible harm — enforced by the database, not just code.** System actor cannot `ban`, `suspend`, `remove_content` or `revoke_verification`; automated holds/restrictions must expire; policies cannot even be *configured* to allow those; severe human actions require a user-visible reason; action history is immutable (only a one-time reversal may be written); audit log is append-only (no update, delete or truncate).
 - **Verification honesty.** `eligible_for_auto_approval` is only storable if every recorded check is `pass` (empty list rejected); system may approve (with a passing evaluation) or refer to a human, never reject or revoke; fraud flag only on revocations.
@@ -46,13 +50,13 @@ Design decisions, driven by your requirements and by what the existing schema do
 - **Queue:** `pi_claim_jobs` (`FOR UPDATE SKIP LOCKED`, leases, priority), `pi_complete_job`, `pi_fail_job` (exponential back-off, dead-letter), idempotency keys everywhere.
 
 ## 5. Tests performed — exact results
-`platform-intelligence/db/TEST_RESULTS.txt` has every line. Final run: **182 total, 182 passed, 0 failed** on PostgreSQL 16.15
+`platform-intelligence/db/TEST_RESULTS.txt` has every line. Final run after hardening: **418 total, 418 passed, 0 failed** (was 182) on PostgreSQL 16.15
 (real baseline loaded, seeded with rows in existing tables). Highlights:
 - BMN schema fingerprint identical before UP and after DOWN; every existing row identical after UP and after DOWN.
 - UP is idempotent (run twice; also re-run on a DB holding data: data and edited policy kept).
 - Rollback refused without confirmation and removed nothing; confirmed rollback removed all 16 tables, functions and the domain; UP→DOWN→UP cycle clean.
 - Real `bmn_delete_my_account()` run against a user with rows in 9 pi_ tables.
-- **Mutation check:** four deliberately sabotaged copies of the migration (weakened automation limit, broken RLS, removed audit trigger, over-broad grants) were each caught by the suite (4, 8, 2 and 3 failures). The suite found one real migration bug during development (fixed).
+- **Mutation check:** 4 sabotaged copies of the first draft and, after hardening, 10 sabotaged copies of the new migration were each caught by the suite (details in docs/BATCH1_HARDENING_CHANGES.md).
 
 **Needing a real device — none apply to Batch 1** (database only). No iPhone/Safari/Android testing was done or needed here.
 
