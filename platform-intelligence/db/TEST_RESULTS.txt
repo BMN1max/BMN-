@@ -1,39 +1,8 @@
-BMN Platform Intelligence - Batch 1 database test results
-==========================================================
-Produced by:  platform-intelligence/db/run_db_tests.sh
-Database:     DISPOSABLE local PostgreSQL 16.15 (Ubuntu), database "pi_migration_test", created and dropped by the script.
-Baseline:     supabase/migrations/20261102090000_bmn_baseline.sql (the real committed baseline; dumped from PostgreSQL 17.11)
-Not touched:  production Supabase. No network connection to any Supabase project was made.
-Run date:     2026-11-14 (final run, after the last edit to the migration)
-
-Honest scope notes
-  * This ran on PostgreSQL 16, not Supabase's PostgreSQL 17, with a small emulation of Supabase's roles, auth.uid(),
-    auth.role() and default privileges (tests/00_supabase_shim.sql). It proves the SQL logic, constraints, privileges,
-    RLS and rollback. It does NOT prove behaviour through PostgREST / GoTrue / real JWTs.
-  * Production's real schema may differ from the baseline. The migration depends only on auth.users, public.bmn_admins,
-    public.is_bmn_owner() and the three Supabase roles, and refuses to run if any of those is missing.
-  * Bugs found by this suite during development, all fixed before this run:
-      - migration bug: pg_get_serial_sequence() raised an error on a table with no "id" column (the failed migration
-        rolled back completely, leaving nothing half-applied);
-      - test defects: a baseline trigger needs auth.role() (shim fixed); two assertions read a row inside the same
-        statement that modified it (split into two checks); one test called a test-only helper as a restricted role.
-
-Mutation check ("can these tests actually fail?") - run against deliberately sabotaged copies of the migration (done before the 3 name-collision tests were added, so these runs had 179 tests):
-  Sabotage 1: Weakened the automation limit (system actor allowed to ban/suspend/remove)
-    -> suite exit 1, TOTAL=179  PASSED=175  FAILED=4
-    -> caught by: E1 SYSTEM cannot ban; E2 SYSTEM cannot suspend; E3 SYSTEM cannot remove content; E4 SYSTEM cannot revoke verification
-  Sabotage 2: Broke owner-only RLS (every signed-in user can read every pi_ table)
-    -> suite exit 1, TOTAL=179  PASSED=171  FAILED=8
-    -> caught by: F13 another user sees zero appeals; H5 ordinary user cannot read risk assessments (private security signals); H11 ordinary user cannot read security events; I14 ordinary user cannot read verification evaluations; J8 ordinary users cannot read AI usage / cost; K21 ordinary users cannot read the job queue; L3 ordinary user sees ZERO moderation cases even though rows exist; L4 ordinary user sees ZERO feature flags / policies / analyses / actions
-  Sabotage 3: Removed the audit-log append-only trigger
-    -> suite exit 1, TOTAL=179  PASSED=177  FAILED=2
-    -> caught by: G1 audit rows cannot be updated; G2 audit rows cannot be deleted
-  Sabotage 4: Granted ordinary users direct write access to pi_ tables
-    -> suite exit 1, TOTAL=179  PASSED=176  FAILED=3
-    -> caught by: B2 authenticated has SELECT only (no writes) on pi_ tables; L6 even the owner cannot write directly through the client role; L8 ordinary user cannot flip a feature flag
-
+Platform Intelligence Batch 1 (hardened) - run_db_tests.sh on a DISPOSABLE local PostgreSQL 16.15 with an emulated Supabase. Never run against production.
+Not tested: Supabase PostgreSQL 17, PostgREST/GoTrue/real JWTs, concurrent workers, production data. Mutation checks (10 sabotaged copies, all caught) are in docs/BATCH1_HARDENING_CHANGES.md.
 
 ================ RESULTS ================
+PASS | V1 embedded install manifest is current (matches a real install)
 PASS | N1 migration applies cleanly with ON_ERROR_STOP
 PASS | N2 BMN schema (non-pi) is byte-for-byte unchanged after UP
 PASS | N3 BMN data (every existing row) is unchanged after UP
@@ -201,7 +170,242 @@ PASS | M5 personal pi_ rows were erased with the account (appeals, risk, events,
 PASS | M6 moderation history survives, anonymised (target set to NULL)
 PASS | M7 the audit log entry survives the deletion
 PASS | M8 other users' data was not affected by the deletion
+PASS | Q01 zero lease rejected
+PASS | Q02 negative lease rejected
+PASS | Q03 NULL lease rejected
+PASS | Q04 sub-second lease rejected
+PASS | Q05 lease over one hour rejected
+PASS | Q06 NULL limit rejected
+PASS | Q07 limit above 100 rejected
+PASS | Q08 NULL worker rejected
+PASS | Q09 worker id over 200 characters rejected
+PASS | Q10 empty job-type filter rejected
+PASS | Q11 job-type filter containing NULL rejected
+PASS | Q12 unknown job type in filter rejected
+PASS | Q13 none of the rejected claims changed any job
+PASS | Q20 setup: job h:a (2 attempts)
+PASS | Q21 claim with the minimum 1-second lease works and records exactly that lease
+PASS | Q22 the stored lease is exactly 1 second after the lock time
+PASS | Q23 zero retry delay rejected
+PASS | Q24 negative retry delay rejected
+PASS | Q25 retry delay over 7 days rejected
+PASS | Q26 blank worker rejected by fail_job
+PASS | Q27 rejected failures left the job running and unchanged
+PASS | Q28 failing a job you do not hold returns NULL and changes nothing
+PASS | Q30 an expired lease is taken over by another worker as attempt 2
+PASS | Q31 the takeover is recorded in last_error
+PASS | Q32 the previous holder can no longer complete the job
+PASS | Q33 expired lease on the final attempt: nobody can claim it again
+PASS | Q34 it was dead-lettered, finished, unlocked, attempts did not exceed the maximum
+PASS | Q34b setup: job h:b (2 attempts)
+PASS | Q35 h:b is claimed as attempt 1
+PASS | Q35b failing with attempts left returns "queued"
+PASS | Q36 it is re-queued with the explicit 30s delay, unlocked, not finished
+PASS | Q37 a retry that is not due yet is not claimable
+PASS | Q38 (make the retry due)
+PASS | Q39 claimed again as attempt 2
+PASS | Q40 failing the last allowed attempt dead-letters
+PASS | Q41 (even if made due, a dead job is never claimed)
+PASS | Q42 a dead job cannot be claimed: attempts stay at the maximum
+PASS | Q50 setup: back-off jobs
+PASS | Q51 claim all four
+PASS | Q52 (raise attempts directly; allowed because attempts may only go up)
+PASS | Q53 failing after attempt 1 re-queues
+PASS | Q53b automatic back-off after attempt 1 is about 10 seconds
+PASS | Q54 failing after attempt 3 re-queues
+PASS | Q54b automatic back-off after attempt 3 is about 40 seconds
+PASS | Q55 failing after attempt 12 re-queues
+PASS | Q55b automatic back-off is capped at 1 hour (attempt 12 would be 5.7 hours)
+PASS | Q56 a blank error text is accepted
+PASS | Q56b and is stored as "unspecified error"
+PASS | Q60 max_attempts 0 rejected
+PASS | Q61 max_attempts 21 rejected
+PASS | Q62 negative attempts rejected
+PASS | Q63 attempts above max_attempts rejected
+PASS | Q64 unknown status rejected
+PASS | Q65 running job with no lock fields rejected
+PASS | Q66 running job with a worker but no lease rejected
+PASS | Q67 queued job that still holds a lock rejected
+PASS | Q68 lease that ends before it starts rejected
+PASS | Q69 zero-length lease rejected
+PASS | Q70 running job with zero attempts rejected
+PASS | Q71 blank worker id rejected
+PASS | Q72 worker id over 200 characters rejected
+PASS | Q73 succeeded job without a finish time rejected
+PASS | Q74 queued job with a finish time rejected
+PASS | Q75 non-object payload rejected
+PASS | Q76 priority 0 rejected
+PASS | Q77 priority 10 rejected
+PASS | Q78 a fully valid running job IS accepted
+PASS | Q80 setup: a job that succeeded, one cancelled, one dead
+PASS | Q81 succeeded -> queued refused
+PASS | Q82 dead -> queued refused (no resurrecting dead letters)
+PASS | Q83 cancelled -> running refused
+PASS | Q84 queued -> succeeded (skipping running) refused
+PASS | Q85 queued -> dead refused
+PASS | Q86 a job's type cannot be changed
+PASS | Q87 a job's payload cannot be changed
+PASS | Q88 a job's idempotency key cannot be changed
+PASS | Q89 a job's attempt limit cannot be raised (no endless retries)
+PASS | Q90 attempts cannot go backwards
+PASS | Q91 a queued job can be cancelled
+PASS | Q92 a running job can be cancelled (unlocked at the same time)
+PASS | Q93 ordinary edits inside a state (priority of a queued job) are allowed
+PASS | Q94 completing an already-finished job is refused
+PASS | Q95 a cancelled job is never claimed
+PASS | R01 setup: a resolved case with an action, an appeal and an analysis
+PASS | R02 setup: an OPEN case and an AWAITING_REVIEW case
+PASS | R03 an OPEN case cannot be deleted (decision still pending)
+PASS | R04 an AWAITING_REVIEW case cannot be deleted
+PASS | R05 both pending cases still exist and nothing was audited for them
+PASS | R06 before deletion: the action and appeal point at the case
+PASS | R07 a RESOLVED case can be deleted (no failure from protected history)
+PASS | R08 the moderation action SURVIVED with its case reference cleared and every other field intact
+PASS | R09 the appeal on that action survived
+PASS | R10 the content analysis survived with its case reference cleared
+PASS | R11 the deletion was written to the audit log with what was deleted and how much history was kept
+PASS | R12 retained history is still immutable: action type cannot be rewritten
+PASS | R13 retained history cannot be re-attached to a different case
+PASS | R14 retained history cannot be deleted
+PASS | R15 an action can still be reversed exactly once after its case was deleted
+PASS | R16 deleting a content analysis keeps the action that used it (reference cleared)
+PASS | R17 the action is still there with analysis_id cleared
+PASS | R20 service_role cannot UPDATE the audit log
+PASS | R21 service_role cannot DELETE from the audit log
+PASS | R22 service_role cannot TRUNCATE the audit log
+PASS | R23 even a superuser cannot UPDATE the audit log (trigger)
+PASS | R24 even a superuser cannot DELETE from the audit log (trigger)
+PASS | R25 even a superuser cannot TRUNCATE the audit log
+PASS | R26 a superuser cannot TRUNCATE moderation actions
+PASS | R27 a superuser cannot TRUNCATE appeals
+PASS | R28 a superuser cannot TRUNCATE verification decisions
+PASS | R29 TRUNCATE ... CASCADE from the cases table cannot sweep away action history
+PASS | R30 all history is still present after the blocked truncates
+PASS | R40 an evaluation that a decision relies on cannot be deleted on its own
+PASS | R41 setup: an evaluation with no decision
+PASS | R42 an evaluation nobody relied on can be deleted
+PASS | R43 verification decisions cannot be deleted through the API
+PASS | R44 verification decisions cannot be edited through the API
+PASS | P01 service_role has none of TRUNCATE / REFERENCES / TRIGGER on any pi_ table
+PASS | P02 audit log: service_role has exactly SELECT + INSERT
+PASS | P03 moderation actions: no DELETE for service_role
+PASS | P04 appeals: no DELETE for service_role
+PASS | P05 verification decisions and schema version: insert-only for service_role
+PASS | P06 anon has no privilege of any kind on any pi_ table
+PASS | P07 authenticated has SELECT only (RLS filters it to the owner)
+PASS | P08 trigger / helper functions are not executable by anon, authenticated or service_role
+PASS | P09 only the two user-facing functions are executable by authenticated
+PASS | P10 anon can execute no pi_ function at all
+PASS | P11 SECURITY DEFINER functions pin search_path
+PASS | P12 RLS on every pi_ table (re-check after hardening)
+PASS | P13 ordinary users see no jobs and no audit rows; the owner sees both
+PASS | P14 owner can read the jobs and the case_deleted audit entry
+PASS | P15 a non-owner cannot call pi_decide_appeal as themselves
+PASS | P16 authenticated cannot claim jobs
+PASS | P17 authenticated cannot delete a case
+PASS | P18 every history table (audit, actions, appeals, decisions) has an enabled BEFORE TRUNCATE guard
+PASS | E01 a normal user can still create a post
+PASS | E02 the API role can still comment
+PASS | E03 the API role can still like
+PASS | E04 the API role can still follow
+PASS | E05 the API role can still send a message
+PASS | E06 a normal user can still report a post
+PASS | E07 is_bmn_owner() still true for the owner and false for a normal user
+PASS | E08 is_bmn_owner() is false for a normal user
+PASS | E09 no pi_ object sits in any non-public schema or collides with a baseline object name
 PASS | N6 re-applying UP keeps existing pi_ data and edited policy
+PASS | S01 UP refuses: a table is missing
+PASS | S01 refused UP changed nothing: a table is missing
+PASS | S01 confirmed DOWN cleans it up: a table is missing
+PASS | S01 fresh UP works after cleanup: a table is missing
+PASS | S02 UP refuses: a trigger is missing
+PASS | S02 refused UP changed nothing: a trigger is missing
+PASS | S02 confirmed DOWN cleans it up: a trigger is missing
+PASS | S02 fresh UP works after cleanup: a trigger is missing
+PASS | S03 UP refuses: the truncate guard is missing
+PASS | S03 refused UP changed nothing: the truncate guard is missing
+PASS | S03 confirmed DOWN cleans it up: the truncate guard is missing
+PASS | S03 fresh UP works after cleanup: the truncate guard is missing
+PASS | S04 UP refuses: an index is missing
+PASS | S04 refused UP changed nothing: an index is missing
+PASS | S04 confirmed DOWN cleans it up: an index is missing
+PASS | S04 fresh UP works after cleanup: an index is missing
+PASS | S05 UP refuses: a function is missing
+PASS | S05 refused UP changed nothing: a function is missing
+PASS | S05 confirmed DOWN cleans it up: a function is missing
+PASS | S05 fresh UP works after cleanup: a function is missing
+PASS | S06 UP refuses: a column is missing
+PASS | S06 refused UP changed nothing: a column is missing
+PASS | S06 confirmed DOWN cleans it up: a column is missing
+PASS | S06 fresh UP works after cleanup: a column is missing
+PASS | S07 UP refuses: RLS is switched off
+PASS | S07 refused UP changed nothing: RLS is switched off
+PASS | S07 confirmed DOWN cleans it up: RLS is switched off
+PASS | S07 fresh UP works after cleanup: RLS is switched off
+PASS | S08 UP refuses: a privilege was revoked
+PASS | S08 refused UP changed nothing: a privilege was revoked
+PASS | S08 confirmed DOWN cleans it up: a privilege was revoked
+PASS | S08 fresh UP works after cleanup: a privilege was revoked
+PASS | S09 UP refuses: a function body was altered
+PASS | S09 refused UP changed nothing: a function body was altered
+PASS | S09 confirmed DOWN cleans it up: a function body was altered
+PASS | S09 fresh UP works after cleanup: a function body was altered
+PASS | S10 UP refuses: the version row is missing
+PASS | S10 refused UP changed nothing: the version row is missing
+PASS | S10 confirmed DOWN cleans it up: the version row is missing
+PASS | S10 fresh UP works after cleanup: the version row is missing
+PASS | S11 UP refuses: an unexpected extra table
+PASS | S11 refused UP changed nothing: an unexpected extra table
+PASS | S11 confirmed DOWN cleans it up: an unexpected extra table
+PASS | S11 fresh UP works after cleanup: an unexpected extra table
+PASS | S12 UP refuses: an unexpected extra column
+PASS | S12 refused UP changed nothing: an unexpected extra column
+PASS | S12 confirmed DOWN cleans it up: an unexpected extra column
+PASS | S12 fresh UP works after cleanup: an unexpected extra column
+PASS | S13 UP refuses: a newer schema version is recorded
+PASS | S13 refused UP changed nothing: a newer schema version is recorded
+PASS | S13 confirmed DOWN cleans it up: a newer schema version is recorded
+PASS | S13 fresh UP works after cleanup: a newer schema version is recorded
+PASS | S14 UP refuses: a column has the wrong type
+PASS | S14 refused UP changed nothing: a column has the wrong type
+PASS | S14 confirmed DOWN cleans it up: a column has the wrong type
+PASS | S14 fresh UP works after cleanup: a column has the wrong type
+PASS | S15 UP refuses: a policy is missing
+PASS | S15 refused UP changed nothing: a policy is missing
+PASS | S15 confirmed DOWN cleans it up: a policy is missing
+PASS | S15 fresh UP works after cleanup: a policy is missing
+PASS | S16 UP refuses: a safety constraint is missing
+PASS | S16 refused UP changed nothing: a safety constraint is missing
+PASS | S16 confirmed DOWN cleans it up: a safety constraint is missing
+PASS | S16 fresh UP works after cleanup: a safety constraint is missing
+PASS | S17 UP refuses: a trigger is disabled
+PASS | S17 refused UP changed nothing: a trigger is disabled
+PASS | S17 confirmed DOWN cleans it up: a trigger is disabled
+PASS | S17 fresh UP works after cleanup: a trigger is disabled
+PASS | S18 UP refuses: anon was given access
+PASS | S18 refused UP changed nothing: anon was given access
+PASS | S18 confirmed DOWN cleans it up: anon was given access
+PASS | S18 fresh UP works after cleanup: anon was given access
+PASS | S19 UP refuses: a function was made public
+PASS | S19 refused UP changed nothing: a function was made public
+PASS | S19 confirmed DOWN cleans it up: a function was made public
+PASS | S19 fresh UP works after cleanup: a function was made public
+PASS | S20 UP refuses: the job-type domain is missing (dropped with its column)
+PASS | S20 refused UP changed nothing: the job-type domain is missing (dropped with its column)
+PASS | S20 confirmed DOWN cleans it up: the job-type domain is missing (dropped with its column)
+PASS | S20 fresh UP works after cleanup: the job-type domain is missing (dropped with its column)
+PASS | F1 UP refuses an unrelated pi_policies table on an otherwise empty database
+PASS | F2 DOWN refuses to touch unrecognised pi_ objects without partial-cleanup confirmation
+PASS | F3 the foreign table and its row are untouched by the refused UP and DOWN
+PASS | F4 DOWN with data present still refuses without data confirmation (foreign row counts as data)
+PASS | G1 first-draft migration installs (fixture)
+PASS | G2 hardened UP refuses to run over the first draft (it would silently keep the weaker constraints)
+PASS | G3 hardened DOWN removes the first draft (no data, so no confirmation needed)
+PASS | G3b nothing named pi_ is left after removing the first draft
+PASS | G4 hardened UP installs after the first draft was removed
+PASS | H1 a migration that builds something different from its manifest fails
+PASS | H2 and it rolled back completely (no pi_ object left)
+PASS | E10 NOTE: an ordinary user inserting a comment already fails on the PRISTINE baseline (bmn_enforce_interaction_account_status), so it is not caused by pi_
 PASS | R1 rollback refuses when pi_ data exists and is not confirmed
 PASS | R2 nothing was removed by the refused rollback (transaction rolled back)
 PASS | R3 confirmed rollback runs cleanly
@@ -217,5 +421,5 @@ PASS | C1x UP refuses to run when an unrelated pi_policies table already exists
 PASS | C2x the refused UP left the foreign table untouched and created nothing else
 PASS | C3x after the foreign object is removed, UP applies normally
 -----------------------------------------
-TOTAL=182  PASSED=182  FAILED=0
-fingerprints: after_down=e9eaba89  after_up=32e914d1  baseline=32e914d1  before_rollback=e9eaba89
+TOTAL=418  PASSED=418  FAILED=0
+fingerprints: after_down=f7848200  after_up=11d8378f  baseline=11d8378f  before_rollback=f7848200
