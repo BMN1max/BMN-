@@ -163,7 +163,7 @@ SELECT pgtest.q('K14a failing the FINAL attempt returns "dead"', $$public.pi_fai
 SELECT pgtest.q('K14b the dead-lettered job is finished and unlocked', $$(SELECT status='dead' AND finished_at IS NOT NULL AND locked_by IS NULL FROM public.pi_jobs WHERE idempotency_key='q:lo')$$, 'service_role');
 SELECT pgtest.t('K15 setup: crashed worker (job running, lease about to expire)', $$INSERT INTO public.pi_jobs (job_type, idempotency_key, max_attempts) VALUES ('purge_retention','crash:1',3), ('purge_retention','crash:last',1)$$, 'service_role');
 SELECT pgtest.q('K16 workers claim both', $$(SELECT count(*)=2 FROM public.pi_claim_jobs('wCrash',5,interval '5 minutes',ARRAY['purge_retention']))$$, 'service_role');
-SELECT pgtest.t('K17 (simulate crash: leases expire)', $$UPDATE public.pi_jobs SET lease_expires_at = now() - interval '1 minute' WHERE locked_by='wCrash'$$, 'service_role');
+SELECT pgtest.t('K17 (simulate crash: leases expire)', $$UPDATE public.pi_jobs SET locked_at = now() - interval '2 minutes', lease_expires_at = now() - interval '1 minute' WHERE locked_by='wCrash'$$, 'service_role');
 SELECT pgtest.q('K18 expired lease with attempts left is reclaimed by another worker', $$(SELECT attempts FROM public.pi_claim_jobs('wRescue',5,interval '5 minutes',ARRAY['purge_retention']) WHERE idempotency_key='crash:1') = 2$$, 'service_role');
 SELECT pgtest.q('K19 expired lease on the final attempt dead-letters instead of retrying forever', $$(SELECT status='dead' FROM public.pi_jobs WHERE idempotency_key='crash:last')$$, 'service_role');
 SELECT pgtest.t('K20 a running job must record its lock (constraint)', $$UPDATE public.pi_jobs SET status='running', locked_by=NULL WHERE idempotency_key='q:future'$$, 'service_role', NULL, '23514');
@@ -190,6 +190,7 @@ SELECT pgtest.t('M1 setup: pi_ rows referencing user3', format($$
   INSERT INTO public.pi_security_events (user_id, event_type, severity, source) VALUES (%2$L,'suspicious_login','medium','login_monitor');
   INSERT INTO public.pi_protective_restrictions (user_id, restriction_type, reason_code, actor_type, expires_at) VALUES (%2$L,'limit_posting','test','system', now()+interval '1 day');
   INSERT INTO public.pi_verification_evaluations (verification_request_id, user_id, criteria_version, checks, outcome) VALUES (%6$L,%2$L,1,'[{"check":"a","result":"fail"}]','insufficient_evidence');
+  INSERT INTO public.pi_verification_decisions (user_id, evaluation_id, decision, decided_by_type, reason) SELECT %2$L, id, 'referred_to_human', 'system', 'needs a human' FROM public.pi_verification_evaluations WHERE verification_request_id = %6$L;
   SELECT public.pi_write_audit(%2$L,'user','test_event','account',%2$L::text,NULL,NULL,'before deletion');
 $$, pgtest.u(601), pgtest.u(4), pgtest.u(602), pgtest.u(603), pgtest.u(1), pgtest.u(604)), 'service_role');
 SELECT pgtest.q('M2 snapshot: existing BMN data for user3 is present', format($$(SELECT count(*)=1 FROM public.profiles WHERE id=%L) AND (SELECT count(*)=1 FROM public.posts WHERE user_id=%L)$$, pgtest.u(4), pgtest.u(4)));

@@ -112,3 +112,23 @@ CREATE OR REPLACE FUNCTION pgtest.pi_object_count() RETURNS integer LANGUAGE sql
        + (SELECT count(*) FROM pg_proc  WHERE pronamespace = 'public'::regnamespace AND proname  LIKE 'pi\_%')
        + (SELECT count(*) FROM pg_type  WHERE typnamespace = 'public'::regnamespace AND typname   LIKE 'pi\_%' AND typtype = 'd')
 $$;
+
+-- Fingerprint of the ENTIRE pi_ installation (structure + row counts). Used to prove a refused migration changed nothing.
+CREATE OR REPLACE FUNCTION pgtest.pi_fp() RETURNS text LANGUAGE sql AS $$
+  SELECT md5(concat_ws('#',
+    (SELECT coalesce(string_agg(c.relname || ':' || c.relkind::text || ':' || c.relrowsecurity::text || ':' || coalesce(c.relacl::text, ''), ',' ORDER BY c.relname), '')
+       FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%'),
+    (SELECT coalesce(string_agg(c.relname || '.' || a.attname || ':' || format_type(a.atttypid, a.atttypmod) || ':' || a.attnotnull::text, ',' ORDER BY c.relname, a.attname), '')
+       FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid
+      WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind = 'r' AND a.attnum > 0 AND NOT a.attisdropped),
+    (SELECT coalesce(string_agg(c.relname || '.' || o.conname || ':' || pg_get_constraintdef(o.oid), ',' ORDER BY c.relname, o.conname), '')
+       FROM pg_constraint o JOIN pg_class c ON c.oid = o.conrelid WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%'),
+    (SELECT coalesce(string_agg(pg_get_triggerdef(t.oid), ',' ORDER BY t.tgname), '')
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid WHERE NOT t.tgisinternal AND c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%'),
+    (SELECT coalesce(string_agg(p.proname || '(' || pg_get_function_identity_arguments(p.oid) || '):' || md5(p.prosrc) || ':' || coalesce(p.proacl::text, ''), ',' ORDER BY p.proname, p.oid::text), '')
+       FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace AND p.proname LIKE 'pi\_%'),
+    (SELECT coalesce(string_agg(tablename || ':' || policyname || ':' || cmd || ':' || roles::text || ':' || coalesce(qual, ''), ',' ORDER BY tablename, policyname), '')
+       FROM pg_policies WHERE schemaname = 'public' AND tablename LIKE 'pi\_%'),
+    (SELECT coalesce(string_agg(c.relname || '=' || (xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM public.%I', c.relname), false, true, '')))[1]::text, ',' ORDER BY c.relname), '')
+       FROM pg_class c WHERE c.relnamespace = 'public'::regnamespace AND c.relname LIKE 'pi\_%' AND c.relkind = 'r')))
+$$;
