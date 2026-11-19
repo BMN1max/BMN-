@@ -1,0 +1,96 @@
+BMN Platform Intelligence — Batch 2 test results (2026-11-18T11:15Z)
+Local disposable PostgreSQL 16 + Node v22.23.4. NOT run: real Supabase/PostgREST, Render, a real iPhone/Safari/Android.
+
+=== A. Database: migration 002 (run_db_tests_002.sh: clean UP/DOWN, idempotency, damaged installs, rollback, 2 mutation checks, Batch 1 regression) ===
+TOTAL=361  PASSED=361  FAILED=0   (plus the 305 Batch 1 checks run in section 9: 0 failed)
+
+=== B. Node unit tests (node --test test/pi.unit.test.js) ===
+ok 1 - moderation: scam text is high risk with reasons; benign text is zero
+ok 2 - moderation: obfuscated scam wording is still caught
+ok 3 - moderation: engine makes no hate or sexual claim from rules alone
+ok 4 - moderation: custom owner term and provider score feed a category
+ok 5 - moderation: hash never equals or contains the text and is stable
+ok 6 - moderation: impersonation of a verified account is flagged
+ok 7 - moderation: decide NEVER recommends a destructive action, for any input
+ok 8 - moderation: hiding only for public content, never for messages or always-human categories
+ok 9 - moderation: a disabled policy records but takes no action and opens no review
+ok 10 - moderation: user report alone raises priority but is not a conviction
+ok 11 - account: normal activity is low risk and recommends nothing
+ok 12 - account: mass following by a new account is high risk with a TEMPORARY restriction capped at 72h
+ok 13 - account: output can never contain ban/suspend/delete
+ok 14 - account: configured limits change the outcome; verified standing lowers but does not remove risk
+ok 15 - verification: all required checks pass -> eligible_for_auto_approval
+ok 16 - verification: any failed check -> human review, NEVER rejection
+ok 17 - verification: manual evidence review and unknown checks never auto-pass
+ok 18 - verification: already verified accounts are never auto-approved again
+ok 19 - verification: optional checks are informational, not stored
+ok 20 - rules: published version wins, otherwise built-in v1
+ok 21 - owner routes: validation rejects bad input before the database is called
+ok 22 - owner routes: needs a signed-in actor; unknown path is 404; good call passes the actor id
+ok 23 - owner routes: no endpoint exposes ban / delete / revoke
+ok 24 - http: non-owner gets 403 and no route function runs
+ok 25 - http: DB errors never leak internals; owner-safe errors are shown
+ok 26 - http: session beacon stores keyed hashes only, never the raw IP or device id; disabled without a key
+ok 27 - worker: everything off -> claims only housekeeping job types, runs no sweepers of disabled features
+ok 28 - worker: halted -> no sweeping, no claiming
+ok 29 - worker: success completes the job; a throwing handler is failed (retry) and the worker keeps going
+ok 30 - worker: ticks never overlap
+ok 31 - worker: configuration outage is reported, not thrown
+ok 32 - handlers: switched-off features skip the job instead of failing it
+ok 33 - handlers: private messages are never read while message scanning is off
+ok 34 - handlers: external AI provider is not called for messages, when its flag is off, or when its circuit is open
+ok 35 - handlers: a provider failure is reported to the circuit breaker and analysis continues rules-only
+ok 36 - handlers: the commit payload only ever carries a safe recommended action and the rule-set version used
+ok 37 - openai adapter: maps categories, sends the key only in the header, handles errors and timeouts
+ok 38 - store: maps database error codes to safe statuses
+# tests 38
+# pass 38
+# fail 0
+
+=== C. Node integration vs the REAL database functions, local Postgres (PI_TEST_DB=pinode node --test test/pi.integration.test.js) ===
+ok 1 - 00 setup: users exist, all flags are OFF by default
+ok 2 - 01 everything off: a worker tick does nothing but report in
+ok 3 - 02 owner console: only the owner may use it
+ok 4 - 03 flag dependencies are enforced by the database and surfaced as a clear 4xx
+ok 5 - 04 content analysis: a scam post creates a human-review case, in SHADOW mode, and the post is NOT hidden
+ok 6 - 05 re-processing the same content does not duplicate cases or decisions
+ok 7 - 06 the owner decides the case (human decision, audited); automation cannot do it
+ok 8 - 07 failing job: retried with back-off, error recorded, other jobs unaffected
+ok 9 - 08 account risk: burst activity creates a risk assessment + investigation + SHADOW restriction, nothing enforced
+ok 10 - 09 verification: an incomplete profile goes to human review and stays pending (never auto-rejected)
+ok 11 - 10 auto-verification: only when ALL checks pass and the owner has switched it on; otherwise human review
+ok 12 - 11 human verification decision requires a note and cannot revoke
+ok 13 - 12 session beacon stores hashes only
+ok 14 - 13 emergency halt: the worker stops all automated work at once
+ok 15 - 14 system health and audit are readable by the owner
+# tests 15
+# pass 15
+# fail 0
+
+=== D. Console UI in headless Chromium, phone viewport 390x844, MOCKED API ===
+PASS non-owner: no Intelligence button
+PASS beacon sent with fresh token and random device id
+PASS non-owner: no owner API call made
+PASS beacon is throttled (once per 30 min)
+PASS non-owner: no page errors 
+PASS owner: Intelligence button appears
+PASS overview renders
+PASS overview states shadow mode / OFF
+PASS tab cases renders
+PASS tab accounts renders
+PASS tab verification renders
+PASS tab alerts renders
+PASS tab appeals renders
+PASS tab audit renders
+PASS tab controls renders
+PASS untrusted text from the API is escaped (no XSS)
+PASS no horizontal overflow at 390px width
+PASS every owner call carries the bearer token
+PASS resolve sends resolution + required note
+PASS flag switch asks to confirm and sends reason
+PASS flag change warns it is audited
+PASS owner can reject manually (human decision)
+PASS console offers no ban / delete / revoke control
+PASS Escape closes the console
+PASS owner: no page errors 
+UI TOTAL=25 PASSED=25 FAILED=0
