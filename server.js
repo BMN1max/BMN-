@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const http = require('http');
 const express = require('express');
@@ -6,7 +7,7 @@ const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const { Server } = require('socket.io');
 const Stripe = require('stripe');
-const { supabaseAdmin, verifyAccessToken } = require('./supabase');
+const { supabaseAdmin, verifyAccessToken, requireUser } = require('./supabase');
 const mediaRouter = require('./routes/media');
 const tipsRouter = require('./routes/tips');
 
@@ -20,7 +21,7 @@ const corsOrigin = (origin, callback) => {
 
 app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: corsOrigin, methods: ['GET', 'HEAD', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'Stripe-Signature'] }));
+app.use(cors({ origin: corsOrigin, methods: ['GET', 'HEAD', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'Stripe-Signature', 'X-BMN-Device'] }));
 
 // Stripe webhook must receive the exact raw body for signature verification.
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), async (req, res) => {
@@ -88,6 +89,17 @@ app.use('/api/media', (req, res, next) => (
   req.path === '/play' ? mediaPlaybackLimiter(req, res, next) : mediaUploadLimiter(req, res, next)
 ), mediaRouter);
 app.use('/api/monetization', rateLimit({ windowMs: 60_000, limit: 8, standardHeaders: true, legacyHeaders: false }), tipsRouter);
+// Platform Intelligence (moderation, account protection, verification checks, owner console).
+// Mounted defensively: if it cannot start, the rest of the API keeps running. Every automated feature is controlled by
+// database feature flags that are OFF until the owner switches them on in the Intelligence console.
+let platformIntelligence = null;
+try {
+  const { createPlatformIntelligence } = require('./platform-intelligence/server');
+  platformIntelligence = createPlatformIntelligence({ express, supabaseAdmin, requireUser, rateLimit });
+  app.use('/api/pi', platformIntelligence.router);
+} catch (error) {
+  console.error('Platform Intelligence was not mounted:', error.message);
+}
 app.use((error, _req, res, _next) => {
   if (error.message?.includes('CORS policy')) return res.status(403).json({ error: 'This origin is not allowed.' });
   console.error('API error:', error.message);
@@ -163,3 +175,10 @@ io.on('connection', socket => {
 
 const port = Number(process.env.PORT || 4000);
 server.listen(port, () => console.log(`BMN Community API and Socket.IO listening on port ${port}`));
+
+// Optional in-process Platform Intelligence worker. Off unless PI_WORKER_ENABLED=true (or run worker-main.js as a Render Background Worker instead).
+if (platformIntelligence && process.env.PI_WORKER_ENABLED === 'true') {
+  const handle = platformIntelligence.worker.start();
+  for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => handle.stop());
+  console.log('Platform Intelligence worker started in-process.');
+}
