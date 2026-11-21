@@ -1,0 +1,25 @@
+BMN Community — Batch 3 test results (run 2026-11-21)
+Environment: local disposable PostgreSQL 16.15 + Node v22.23.4 + headless Chromium (Playwright). Fake Supabase, no network.
+NOT RUN (needs a real iPhone/Safari, an Android phone, real Supabase, Render, R2): everything in docs/BMN_DEVICE_TEST_CHECKLIST.md.
+
+RUN, with result
+1. Spotlight database (spotlight/db/run_spotlight_tests.sh)            76 checks, 76 passed, 0 failed
+   (clean UP/DOWN on the real baseline, repeatable UP, rollback refuses with data, owner-only gate, RLS/privileges, link and date validation,
+   ordering/limit, audit; two deliberate sabotages — owner check removed, link check removed — were each CAUGHT by the tests)
+2. Platform Intelligence DB 001+002 (platform-intelligence/db/run_db_tests_002.sh)  361 checks, 361 passed, 0 failed  (+305 Batch 1 regression checks, 0 failed)
+3. Platform Intelligence Node unit tests (test/pi.unit.test.js)       38 tests, 38 passed
+4. Platform Intelligence Node integration vs real SQL (test/pi.integration.test.js)  15 tests, 15 passed
+5. Intelligence console UI against a mock API (test/ui.playwright.js)  25 checks passed, 0 failed
+6. Spotlight in the REAL index.html, fake Supabase (spotlight/test/spotlight_ui.test.js)  26 checks, 26 passed, 0 failed
+7. Intelligence console visible inside the REAL index.html (spotlight/test/pi_console_visible.test.js)  passed
+   (this test exists because check 5 did not load the real index.html and therefore missed a real defect: see below)
+8. Performance harness, 3 runs per cell: docs/BMN_PERF_RESULTS.md (measurements, not pass/fail)
+
+PRE-EXISTING FAILURE (not caused by this batch, not touched)
+ - recommendation.test.js (repo root): "Cannot find module '../src/services/recommendation'". Fails identically on the untouched repo (commit 65f526b). The test points at a path that does not exist.
+
+DEFECTS FOUND AND FIXED DURING THIS BATCH
+ - Batch 2 Intelligence console was invisible in the real app (site CSS hides body children except #lgtt). Also, bmn-intelligence.js was in the repo but not loaded by index.html. Both fixed; test 7 covers it.
+ - Escape did not close the console (site stops key events from bubbling). Fixed with a capture-phase listener.
+ - Spotlight script originally ran before window.bmnSupabase existed. Found by test 6, fixed (waits for the client).
+ - My first performance harness never loaded the Supabase stub (route-order bug). Discarded, rebuilt.
