@@ -2123,6 +2123,7 @@ body.community-mode #bmnProfileV2.bmn-founder-profile .bmn-profile-menu{border-c
 
 <style id="bmn-discover-search-repair">#bmnDiscoverResults{display:grid;gap:8px;margin:4px 0 18px}.bmn-discover-result{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:13px 14px;border:1px solid var(--clear-glass-border);border-radius:16px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;cursor:pointer}.bmn-discover-result>span:first-child{display:flex;align-items:center;gap:8px}.bmn-discover-result strong{font-size:12px}.bmn-discover-result small{font-size:10px;color:var(--muted)}.bmn-discover-result-caption{font-size:12px;line-height:1.45;color:var(--muted)}.bmn-discover-result-count{margin:4px 2px;font-size:11px;color:var(--muted)}.bmn-discover-creator{min-height:42px}</style>
 <style id="bmn-action-sheet-visibility-repair">html.bmn-community-app body>#bmnActionSheetHost{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;position:fixed!important;inset:0!important;z-index:2147482500!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-backdrop.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet:not(.open){pointer-events:none!important}</style>
+<script src="/bmn-perf.js"></script>
 <script id="bmn-glass-tier">
 /* BMN Glass device tier. Decided once, before first paint, by capability first and platform second.
    lite    = Android, or no backdrop-filter: CSS-only frosted glass, the React Liquid Glass engine is never downloaded.
@@ -10107,7 +10108,8 @@ let cv=null,ctx=null,last=0;
 function ensure(){const lens=document.getElementById('lgttLens');if(!lens)return null;
   if(cv&&cv.parentNode===lens)return lens;cv=document.createElement('canvas');cv.className='bmn-lens-cv';cv.setAttribute('aria-hidden','true');lens.insertBefore(cv,lens.firstChild);ctx=cv.getContext('2d');return lens}
 function frame(t){
-  requestAnimationFrame(frame);if(t-last<45||document.hidden)return;last=t;
+  if(window.BMN_PERF&&BMN_PERF.skipHeavy()){setTimeout(function(){requestAnimationFrame(frame)},600);return}
+  requestAnimationFrame(frame);if(t-last<45||document.hidden||(window.BMN_PERF&&BMN_PERF.scrolling()))return;last=t;
   const lens=ensure();if(!lens||!ctx)return;
   const st=document.getElementById('lgttStage');
   if(!st||st.dataset.view!=='feed'||st.classList.contains('bmn-inbox-open')||st.classList.contains('bmn-cam-open')){cv.style.opacity=0;lens.classList.remove('has-cv');return}
@@ -11145,7 +11147,7 @@ function build(w,h){W=w;H=h;bw=w+2*P;bh=h+2*P;const n=w*h;map=new Int32Array(n*3
   const qx=Math.max(Math.abs(x+.5-w/2)-(w/2-r),0),qy=y+.5-h/2,d=r-Math.hypot(qx,qy);   /* distance inside the capsule edge */
   let ox=0,oy=0;if(d<B){const k=Math.pow(1-Math.max(d,0)/B,2)*B*.9;const L=Math.hypot(qx,qy)||1;const nx=(Math.sign(x+.5-w/2)*qx)/L,ny=qy/L;ox=-nx*k;oy=-ny*k}
   for(let c=0;c<3;c++){const ca=(c-1)*.22;const sx=Math.min(bw-1,Math.max(0,Math.round(x+P+ox*(1+ca)))),sy=Math.min(bh-1,Math.max(0,Math.round(y+P+oy*(1+ca))));map[(y*w+x)*3+c]=(sy*bw+sx)*4+c}}}
-function frame(t){requestAnimationFrame(frame);if(dead||t-last<40||document.hidden)return;last=t;
+function frame(t){if(window.BMN_PERF&&BMN_PERF.skipHeavy()){setTimeout(function(){requestAnimationFrame(frame)},600);return}requestAnimationFrame(frame);if(dead||t-last<40||document.hidden||(window.BMN_PERF&&BMN_PERF.scrolling()))return;last=t;
  dock=dock&&dock.isConnected?dock:document.querySelector('#lgtt .lgtt-dock');if(!dock)return;
  const st=document.getElementById('lgttStage');let v=null;try{v=window.LGTT&&LGTT.audioState?LGTT.audioState().active:null}catch(_){}
  const ok=st&&st.dataset.view==='feed'&&!st.classList.contains('bmn-inbox-open')&&!st.classList.contains('bmn-cam-open')&&v&&v.readyState>=2&&v.videoWidth;
@@ -11880,6 +11882,8 @@ html.bmn-high-contrast #lgtt .lgtt-set-txt small,html.bmn-high-contrast #lgtt .l
 html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-high-contrast .lgtt-act-n{text-shadow:0 1px 3px #000,0 0 6px #000}
 </style>
 <script id="bmn-glass-loader">/* loads the Liquid Glass engine once, never on the lite (Android) tier */(function(){if(window.__bmnGlassTier==="lite"||window.BMNGlass||document.getElementById("bmn-glass-js"))return;var s=document.createElement("script");s.id="bmn-glass-js";s.async=true;s.src="bmn-glass/bmn-glass.js";document.body.appendChild(s)})();</script>
+<script src="/bmn-intelligence.js" defer></script>
+<script src="/bmn-spotlight.js" defer></script>
 </body>
 </html>
 
