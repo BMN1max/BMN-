@@ -1,3 +1,4 @@
+
 # Files that are not part of the website.
 # Vercel serves the repository root statically (see vercel.json).
 # The browser needs index.html, manifest.webmanifest, icons and bmn-glass/.
@@ -52,3 +53,6 @@ tiktok_webapp.html
 
 # Platform Intelligence: database migrations, tests and design docs. Never part of the website.
 platform-intelligence/
+
+# BMN Spotlight: database migration, DB tests and browser tests. Never part of the website.
+spotlight/
