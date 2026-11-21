@@ -53,7 +53,9 @@
     '.pi-muted{opacity:.7;font-size:13px}.pi-pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;background:rgba(255,255,255,.12);margin-right:4px}.pi-pill.high,.pi-pill.critical{background:rgba(255,92,92,.28)}.pi-pill.medium{background:rgba(255,190,70,.28)}.pi-pill.low,.pi-pill.on{background:rgba(80,200,140,.28)}' +
     '.pi-btn{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:inherit;border-radius:12px;padding:8px 12px;font-size:14px;margin:6px 6px 0 0}.pi-btn.primary{background:rgba(111,166,255,.35);border-color:rgba(111,166,255,.7)}.pi-btn.danger{background:rgba(255,92,92,.22);border-color:rgba(255,92,92,.5)}.pi-btn:disabled{opacity:.5}' +
     '.pi-note{border-left:3px solid #6fa6ff;padding:8px 12px;background:rgba(111,166,255,.1);border-radius:8px;margin:0 0 12px;font-size:13px}.pi-err{color:#ff9a9a}.pi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.pi-stat b{display:block;font-size:22px}' +
-    '.pi-opener{margin-left:6px}';
+    '.pi-opener{margin-left:6px}' +
+    /* The site hides every direct child of <body> except #lgtt while the community app is open (html.bmn-community-app body>:not(#lgtt){display:none!important}). Without this rule the console would be invisible. Higher specificity, so it wins. */
+    'html.bmn-community-app body>#bmnPi.open{display:flex!important;visibility:visible!important;pointer-events:auto!important;opacity:1!important}';
   function injectCss() { if (document.getElementById('bmnPiCss')) return; var s = document.createElement('style'); s.id = 'bmnPiCss'; s.textContent = CSS; document.head.appendChild(s); }
 
   /* ---------------------------------------------------------------- UI */
@@ -70,7 +72,7 @@
       TABS.map(function (t) { return '<button type="button" role="tab" data-pi-tab="' + t[0] + '" aria-selected="false">' + t[1] + '</button>'; }).join('') + '</div><div class="pi-body" id="bmnPiBody" aria-live="polite"></div>';
     document.body.appendChild(root); bodyEl = root.querySelector('#bmnPiBody');
     root.addEventListener('click', onClick);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('open')) close(); });
+    window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('open')) close(); }, true);   // capture: the app has handlers that stop key events from bubbling
   }
   function open(tab) { build(); root.classList.add('open'); document.documentElement.style.overflow = 'hidden'; show(tab || current); }
   function close() { if (!root) return; root.classList.remove('open'); document.documentElement.style.overflow = ''; }
