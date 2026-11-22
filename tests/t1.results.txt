@@ -1,0 +1,28 @@
+PASS no page errors on load (A,B)  [[]]
+PASS old inline inbox not built
+PASS dock badge = real unread (3) before opening  [3]
+PASS list shows 2 real conversations
+PASS list: Bob unread badge = 2, preview latest
+PASS no demo/fake names anywhere in inbox
+PASS chat shows 3 messages in order
+PASS unread divider shown before first unread
+PASS opening chat marks Bob->Alice read on server (RPC, not blocked UPDATE)  [["mark_read by aaaa of bbbb n=2 @53555"]]
+PASS dock badge dropped to 1 (Dan only)
+PASS B sees own messages as READ (double tick) after A opened the chat
+PASS A optimistic bubble appears immediately
+PASS PERSISTENCE: message stored in DB with correct sender/recipient
+PASS exactly one copy (no duplicate from realtime echo)
+PASS REALTIME: B receives it live in open chat
+PASS B (viewing chat) auto-marks A message read
+PASS A sees read double-tick live
+PASS notification row created for recipient
+PASS A list: unread badge 1 on Bob + dock badge 2, live  [2]
+PASS RELOAD: dock badge still real unread (2)  [2]
+PASS RELOAD: full history restored (5 msgs incl. sent + received)
+PASS PERMISSIONS: stranger C cannot read A/B messages  [{"read":0,"impersonate":"42501","upd":[],"readB":0}]
+PASS PERMISSIONS: forged sender_id rejected (42501)
+PASS PERMISSIONS: no UPDATE of others messages
+PASS C inbox is empty (no leakage) and shows empty state
+PASS LOGGED OUT: inbox click asks to sign in, inbox not opened, badge hidden
+PASS no page errors during the whole run  [[[],[],[],[]]]
+{"pass":27,"fail":0}

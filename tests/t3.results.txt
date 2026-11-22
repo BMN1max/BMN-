@@ -1,0 +1,24 @@
+PASS NEW MESSAGE sheet opens; suggestions list real followed people (Bob)
+PASS NEW MESSAGE: search finds real profile (Cara), excludes self
+PASS NEW MESSAGE: tapping a person opens an empty conversation
+PASS NEW MESSAGE: first message persisted to DB
+PASS LIST: new conversation (Cara) appears at top after back
+PASS LIST SEARCH filters conversations by name
+PASS PHOTO: uploaded to storage under sender folder and message stored  [bmn-img:aaaaaaaa-0000-4000-8000-000000000001/messages/1795334156639-mi1qj4.jpg]
+PASS PHOTO: renders as an image bubble (not raw bmn-img: text)
+PASS PHOTO: tap opens viewer; tap closes
+PASS PHOTO: non-image rejected with a message
+PASS CHAT MENU lists View profile / Wallpaper / Clear
+PASS WALLPAPER: preset applied to this chat and saved on device
+PASS WALLPAPER: persists after reload
+PASS WALLPAPER: other chats unaffected
+PASS ROW MENU opens (long-press/right-click) with Clear
+PASS CLEAR: asks for confirmation first, nothing deleted yet
+PASS CLEAR: server soft-deletes for A only; rows still exist for B
+PASS CLEAR: conversation disappears from A list
+PASS CLEAR: B still sees the whole conversation
+PASS SAVED MESSAGES: opens self chat, no Clear action offered (server rejects it)
+PASS SAVED MESSAGES: note persisted, not counted as unread, no read tick
+PASS OPTIONAL RPC: when bmn_inbox_conversations exists the list uses it and matches
+PASS no page errors in suite 3  [[[],[],[]]]
+{"pass":23,"fail":0}

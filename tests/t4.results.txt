@@ -1,0 +1,18 @@
+PASS iPHONE LIST: no horizontal overflow  [{"vw":390,"overflowX":false,"small":0,"searchFont":"16px","rowH":72,"padBottom":"112px","dockTop":586,"lastRowBottom":268}]
+PASS iPHONE LIST: all round buttons >= 44x44 (touch targets)
+PASS iPHONE LIST: search input font >= 16px (no iOS focus-zoom)  [16px]
+PASS iPHONE LIST: rows >= 56px tall; list scroll clears the dock
+PASS iPHONE CHAT: no horizontal overflow, long unbroken text wraps inside bubbles  [{"overflowX":false,"taFont":"16px","maxR":380,"minL":10,"vw":390,"compBottom":664,"vh":664,"dockHidden":true,"headTop":0,"atBottom":true}]
+PASS iPHONE CHAT: composer font >= 16px, composer inside viewport, dock hidden
+PASS KEYBOARD (emulated 300px): composer lifts above keyboard, header stays, thread keeps space  [{"compBottom":364,"vh":664,"headBottom":66,"msgsH":305}]
+PASS SAFE AREA (emulated notch 59 / home bar 34): header below notch, send button above home bar  [{"head":63,"comp":664,"vh":664,"send":620}]
+PASS LIGHT MODE: app resolves to light
+PASS LIGHT MODE: surface turns light, text dark  [{"rootBg":"rgb(238, 242, 249)","ink":"rgb(16, 24, 39)","theirsBg":"rgb(255, 255, 255)","theirsInk":"rgb(16, 24, 39)","mineInk":"rgb(255, 255, 255)","sub":"rgba(16, 24, 39, 0.58)"}]
+PASS LIGHT MODE: received-bubble text contrast >= 4.5:1  [17.8]
+PASS LIGHT MODE: sent-bubble white text on blue gradient (mid colour) >= 4.0:1  [4.37]
+PASS ANDROID tier: glass surfaces have no backdrop-filter (solid fallback)
+PASS DESKTOP: Enter sends once, Shift+Enter inserts a newline  ["line1\nline2"]
+PASS DESKTOP: Escape goes back to list
+PASS DESKTOP: second Escape closes Messages only (app stays open)
+PASS no page errors in suite 4  [[[],[],[],[]]]
+{"pass":17,"fail":0}

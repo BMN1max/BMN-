@@ -1,0 +1,21 @@
+PASS PAGING: opens with newest 60 messages (not oldest)  [rendered 60]
+PASS PAGING: stays scrolled to the newest message
+PASS PAGING: scrolling to top loads earlier messages (120)  [rendered 120]
+PASS PAGING: scroll position anchored after prepend (msg 91 not thrown off-screen)  [msg91 top 170]
+PASS PAGING: all 150 loaded, unique, in order, no "load earlier" button left  [count 150]
+PASS day separators rendered (sticky)
+PASS FAILED SEND: bubble marked failed with retry hint, text not lost
+PASS FAILED SEND: nothing stored in DB
+PASS RETRY: tap resends, stored exactly once, failed state cleared
+PASS OFFLINE: message kept as failed (not silently dropped)
+PASS OFFLINE: retry after reconnect succeeds
+PASS XSS: HTML in a message is shown as text, never executed  [{"xss":0,"injected":0,"link":"noopener noreferrer nofollow","linkText":"https://example.com/a?b=1","emoji":true,"share":true}]
+PASS LINKS: URL linkified safely (noopener, trailing comma excluded)  [https://example.com/a?b=1]
+PASS EMOJI-only message gets large emoji style
+PASS SHARED POST card rendered for BMN share messages (arrived via polling)
+PASS LENGTH: > 5000 chars refused with a message, not sent
+PASS NO-REALTIME FALLBACK: new message appears via polling in open chat  [5s]
+PASS NO-REALTIME FALLBACK: conversation list preview + unread update via polling  [4s]
+PASS NO-REALTIME FALLBACK: dock badge updates while inbox closed
+PASS no page errors in suite 2  [[[],[]]]
+{"pass":20,"fail":0}

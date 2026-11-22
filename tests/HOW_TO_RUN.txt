@@ -1,1 +1,5 @@
-
+Optional. These are the automated tests used for Batch 2 (Playwright + Chromium). Not part of the site.
+1. Serve the repo root:  python3 -m http.server 8124
+2. Start the stand-in backend:  node dbserver.js        (in-memory Supabase + RLS emulation, port 8130)
+3. node t1.js ... t5.js   (needs `playwright`; run `node dbserver.js` fresh before each suite)
+The stand-in backend was written from supabase/migrations/20261102090000_bmn_baseline.sql. It is NOT your production database.
