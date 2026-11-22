@@ -7859,7 +7859,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
     const preview = c => { const m = last(c); if (!m) return 'Say hi 👋'; return (m.me ? 'You: ' : '') + (m.share ? '🎬 Shared a video' + (m.text ? ' — ' + m.text : '') : m.text); };
     const totalUnread = () => chats.reduce((n, c) => n + (c.unread || 0), 0);
     function badge() {
-      const n = totalUnread(), b = $('#lgttInboxBadge'); b.hidden = n === 0; if (n) { b.textContent = n > 9 ? '9+' : n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; }
+      const n = window.__bmnRealUnread | 0, b = $('#lgttInboxBadge'); b.hidden = n === 0; if (n) { b.textContent = n > 99 ? '99+' : n > 9 ? '9+' : n; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; }
     }
     function renderList() {
       const q = normalize(filter);
@@ -9077,16 +9077,16 @@ const LENS={feed:0,discover:1,inbox:3,profile:4};
 function currentLgttView(){const v=document.getElementById('lgttStage')?.dataset.view||'feed';return v==='discover'||v==='profile'?v:'feed'}
 function setDock(name){const dk=$('#lgttDock'),lens=$('#lgttLens'),i=LENS[name];if(!dk||i==null)return;$$('.lgtt-dk[data-dock]',dk).forEach(b=>{const on=b.dataset.dock===name;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});if(lens){lens.style.opacity='1';lens.style.setProperty('--i',i);lens.classList.remove('bmn-jelly');void lens.offsetWidth;lens.classList.add('bmn-jelly')}dk.classList.remove('bmn-dock-wob');void dk.offsetWidth;dk.classList.add('bmn-dock-wob');try{window.LGTT?.haptic?.('tap')}catch(_){}}
 window.bmnSetDock=setDock;
+const BI=()=>window.BMNRealInbox||{open(){},close(){},openChat(){}};
 function patchDock(){const dock=$('#lgttDock');if(!dock||dock.dataset.bmnFinalBound)return;dock.dataset.bmnFinalBound='1';dock.addEventListener('click',e=>{const b=e.target.closest('[data-dock]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();const type=b.dataset.dock;
- if(type==='inbox'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}setDock('inbox');open();return}
- if(type==='profile'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('profile');return}close(true);setDock('profile');window.LGTT?.setView('profile');return}
- if(type==='feed'){chat?.classList.remove('open');close(true);setDock('feed');window.LGTT?.setView('feed');return}
- if(type==='discover'){close(true);setDock('discover');window.LGTT?.setView('discover');return}
+ if(type==='inbox'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}setDock('inbox');BI().open();return}
+ if(type==='profile'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('profile');return}BI().close(true);setDock('profile');window.LGTT?.setView('profile');return}
+ if(type==='feed'){BI().close(true);setDock('feed');window.LGTT?.setView('feed');return}
+ if(type==='discover'){BI().close(true);setDock('discover');window.LGTT?.setView('discover');return}
  if(type==='create'){if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('create');return}if(typeof window.bmnOpenCamera==='function')window.bmnOpenCamera();else window.LGTT?.openCreate();return}},true)}
-function patchProfileMessage(){document.addEventListener('click',e=>{const b=e.target.closest('[data-act="message"],[data-act="profile-message"],#bmnProfileMessage');if(!b)return;e.preventDefault();e.stopImmediatePropagation();let id=b.dataset.u||b.dataset.userId||b.dataset.profileId||'';if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(id==='bmn')id=session().id;setDock('inbox');open();if(id)setTimeout(()=>openChat(id),60)},true)}
-function boot(){shell();patchDock();patchProfileMessage();}
+function patchProfileMessage(){document.addEventListener('click',e=>{const b=e.target.closest('[data-act="message"],[data-act="profile-message"],#bmnProfileMessage');if(!b)return;e.preventDefault();e.stopImmediatePropagation();let id=b.dataset.u||b.dataset.userId||b.dataset.profileId||'';if(!session()){if(window.requestCommunityAuth)window.requestCommunityAuth('inbox');return}if(id==='bmn')id=session().id;setDock('inbox');BI().open();if(id)setTimeout(()=>BI().openChat(id),60)},true)}
+function boot(){patchDock();patchProfileMessage();}/* BMN Messaging: the inbox UI now lives in bmn-messaging.js; this module only keeps the dock + profile Message hooks */
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.BMNRealInbox={open,close,openChat,refresh:loadList};
 })();
 </script>
 
@@ -9104,46 +9104,7 @@ window.BMNRealInbox={open,close,openChat,refresh:loadList};
 .bmn-ri-wp-row button{flex:1;min-height:40px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:inherit;font:inherit;font-size:13px;cursor:pointer}
 .bmn-ri-btn:focus-visible,.bmn-ri-wp-panel button:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
 </style>
-<script id="bmn-inbox-wallpaper-keyboard-js">
-(()=>{'use strict';
-const PRESETS=[['Default',''],['Midnight','linear-gradient(160deg,#0b1020,#1a2347)'],['Storm','linear-gradient(160deg,#1c2b4a,#3b5b8f)'],['Violet','linear-gradient(160deg,#1b1038,#5b3a9e)'],['Cyan','linear-gradient(160deg,#06222e,#0e7490)'],['Pearl','linear-gradient(160deg,#e8edf7,#b9c4dc)'],['Ember','linear-gradient(160deg,#2a0f1a,#8a3b4f)'],['Forest','linear-gradient(160deg,#08201a,#1f6b53)'],['Doodle','url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%27120%27%3E%3Cg fill=%27none%27 stroke=%27%23ffffff%27 stroke-opacity=%27.07%27 stroke-width=%271.6%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2724%27 cy=%2724%27 r=%278%27/%3E%3Cpath d=%27M70 18l10 10M80 18L70 28%27/%3E%3Cpath d=%27M20 80q8-12 16 0t16 0%27/%3E%3Cpath d=%27M84 76l8 14H76z%27/%3E%3Crect x=%2750%27 y=%2754%27 width=%2714%27 height=%2714%27 rx=%273%27/%3E%3C/g%3E%3C/svg%3E"),linear-gradient(160deg,#0b1020,#1a2347)']];
-let peer=null,panel=null;
-const key=id=>'bmn-chat-wp:'+id;
-const get=id=>{try{return localStorage.getItem(key(id))||''}catch(_){return ''}};
-const set=(id,v)=>{try{v?localStorage.setItem(key(id),v):localStorage.removeItem(key(id));return true}catch(_){return false}};
-const note=t=>{const n=document.getElementById('bmnRiNote');if(n)n.textContent=t};
-function apply(){const m=document.getElementById('bmnRiChat');if(!m)return;let w=m.querySelector(':scope>.bmn-ri-wall');if(!w){w=document.createElement('div');w.className='bmn-ri-wall';w.setAttribute('aria-hidden','true');m.insertBefore(w,m.firstChild)}const v=peer?get(peer):'';w.style.backgroundImage=v&&v.startsWith('data:')?'url("'+v+'")':(v||'');w.style.backgroundSize=v&&v.startsWith('url(')?'120px 120px,cover':'';w.style.backgroundRepeat=v&&v.startsWith('url(')?'repeat,no-repeat':''}
-function mark(){if(!panel)return;const v=get(peer);panel.querySelectorAll('.bmn-ri-wp-grid button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.v||'')===v)))}
-function build(){
-  const chat=document.getElementById('bmnRiChat');if(!chat||panel)return;
-  const head=chat.querySelector('.bmn-ri-chat-head'),clear=document.getElementById('bmnRiClear');if(!head||!clear)return;
-  const btn=document.createElement('button');btn.type='button';btn.className='bmn-ri-btn';btn.id='bmnRiWallpaper';btn.setAttribute('aria-label','Chat wallpaper');btn.setAttribute('aria-haspopup','true');btn.textContent='\u25D0';
-  head.insertBefore(btn,clear);
-  panel=document.createElement('div');panel.className='bmn-ri-wp-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Chat wallpaper');
-  panel.innerHTML='<p>Wallpaper for this conversation. Saved on this device only, it is not synced to your account.</p><div class="bmn-ri-wp-grid"></div><div class="bmn-ri-wp-row"><button type="button" data-up>Upload image</button><button type="button" data-reset>Reset</button></div><input type="file" accept="image/*" hidden>';
-  const grid=panel.querySelector('.bmn-ri-wp-grid');
-  PRESETS.forEach(([n,v])=>{const b=document.createElement('button');b.type='button';b.dataset.v=v;b.title=n;b.setAttribute('aria-label',n+' wallpaper');b.style.background=v||'rgba(255,255,255,.12)';b.onclick=()=>{if(!set(peer,v))note('Wallpaper could not be saved on this device.');apply();mark()};grid.appendChild(b)});
-  const file=panel.querySelector('input');
-  panel.querySelector('[data-up]').onclick=()=>file.click();
-  panel.querySelector('[data-reset]').onclick=()=>{set(peer,'');apply();mark()};
-  file.onchange=()=>{const f=file.files&&file.files[0];file.value='';if(!f)return;if(!/^image\//.test(f.type)){note('Please choose an image file.');return}
-    const img=new Image(),url=URL.createObjectURL(f);
-    img.onload=()=>{const sc=Math.min(1,1100/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
-      let out='';try{out=c.toDataURL('image/jpeg',.72)}catch(_){}
-      if(!out||!set(peer,out)){note('That image is too large to save as a wallpaper on this device.');return}apply();mark();note('')};
-    img.onerror=()=>{URL.revokeObjectURL(url);note('That image could not be read.')};img.src=url};
-  chat.appendChild(panel);
-  btn.onclick=e=>{e.stopPropagation();const o=panel.classList.toggle('open');btn.setAttribute('aria-expanded',String(o));mark()};
-  document.addEventListener('click',e=>{if(panel.classList.contains('open')&&!panel.contains(e.target)&&e.target!==btn)panel.classList.remove('open')});
-  try{const st=document.getElementById('lgttStage');if(st&&!chat._bmnObs){chat._bmnObs=new MutationObserver(()=>st.classList.toggle('bmn-chat-open',chat.classList.contains('open')));chat._bmnObs.observe(chat,{attributes:true,attributeFilter:['class']})}}catch(_){}
-  const inp=document.getElementById('bmnRiInput');
-  if(inp)inp.addEventListener('focus',()=>setTimeout(()=>{const m=document.getElementById('bmnRiMessages');if(m)m.scrollTop=m.scrollHeight},300));
-}
-window.__bmnRiPeer=id=>{peer=id;build();apply();mark();if(panel)panel.classList.remove('open')};
-// keyboard-safe composer: lift the conversation by the on-screen keyboard height
-if(window.visualViewport){const vv=window.visualViewport,upd=()=>{const kb=Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));document.documentElement.style.setProperty('--bmn-kb',kb>80?kb+'px':'0px');if(kb>80){const m=document.getElementById('bmnRiMessages');if(m)m.scrollTop=m.scrollHeight}};vv.addEventListener('resize',upd);vv.addEventListener('scroll',upd)}
-})();
-</script>
+
 
 <style id="bmn-fullscreen-dock-css">
 /* Full-bleed app: no floating card on tablets/desktop, edge-to-edge on phones */
@@ -11905,6 +11866,8 @@ html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-hi
 </style>
 <script id="bmn-glass-loader">/* loads the Liquid Glass engine once, never on the lite (Android) tier */(function(){if(window.__bmnGlassTier==="lite"||window.BMNGlass||document.getElementById("bmn-glass-js"))return;var s=document.createElement("script");s.id="bmn-glass-js";s.async=true;s.src="bmn-glass/bmn-glass.js";document.body.appendChild(s)})();</script>
 <script src="/bmn-intelligence.js" defer></script>
+<link rel="stylesheet" href="/bmn-messaging.css">
+<script src="/bmn-messaging.js" defer></script>
 <script src="/bmn-spotlight.js" defer></script>
 </body>
 </html>
