@@ -1,0 +1,73 @@
+ set_config 
+------------
+ 
+(1 row)
+baseline objects: 20 tables, 53 policies, 16 functions
+--- apply migrations (pass 1)
+--- apply migrations again (idempotency)
+--- tests
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+PASS: 230  FAIL: 0
+--- rollback in reverse order, then compare with the baseline snapshot
+ROLLBACK RESTORES THE BASELINE OBJECT SET: yes
+--- reapply after rollback
+done
