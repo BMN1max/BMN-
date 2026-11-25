@@ -1,0 +1,73 @@
+PASS no page errors on load (A,B,C)  [[]]
+PASS capability probes see the migrations (actions, groups, conversation settings, blocks, presence)  [{"actions":true,"groups":true,"privacy":null,"probed":"aaaaaaaa-0000-4000-8000-000000000001","at":1795565643497,"cfg":true,"cs":true,"blocks":true,"req":true,"set1":true,"set2":true,"pres":true}]
+PASS dark theme: near-black solid background, light text, no blur on the list  [{"theme":"dark","bg":"rgb(10, 10, 12)","listBg":"rgb(10, 10, 12)","listBlur":"none","rowsBlur":"none","ink":"rgb(245, 245, 247)"}]
+PASS liquid glass only on the small surfaces (back, title, search, filter pill, new)  [[true,true,true,true,true]]
+PASS light theme: soft white background, dark text, still no blur on the list  [{"theme":"light","bg":"rgb(244, 245, 248)","listBg":"rgb(244, 245, 248)","listBlur":"none","rowsBlur":"none","ink":"rgb(15, 17, 21)"}]
+PASS theme saved to the account (bmn_messaging_settings)
+PASS accent theme applied and saved
+PASS system theme follows the device (dark scheme -> dark)
+PASS system theme live-updates when the device switches to light
+PASS read receipts toggle writes the existing user_settings row
+PASS create button enabled with name + members
+PASS group created through the real RPC (3 members, creator is owner)
+PASS group chat opened with name in header and member count
+PASS system message "created the group" shown
+PASS group message stored in group_messages (not messages)
+PASS B inbox: group row with name, "Alice: ..." preview and unread 1  [{"name":"BMN Crew","prev":"Alice: Welcome to the crew","badge":"1"}]
+PASS B dock badge counts the group unread
+PASS B sees the group thread with the sender name
+PASS opening the group marks it read on the server (last_read_at moved)
+PASS B unread badge cleared
+PASS member menu: Reply/Copy/Forward/Save/Select/Delete for me/Report; NO Pin, Edit or Unsend for others  [["Reply","Copy","Forward","Save","Select","Delete for me","Report"]]
+PASS reply preview appears in the composer
+PASS reply stored with reply_to_id
+PASS reply shows a quote of the original
+PASS reaction stored once per user
+PASS reaction chip shown
+PASS A sees B’s reply and the reaction (polling)
+PASS tapping the quote jumps to the original message
+PASS owner menu adds Pin, Edit and Unsend for everyone  [["Reply","Copy","Forward","Edit","Pin","Save","Select","Delete for me","Unsend for everyone"]]
+PASS edit mode fills the composer
+PASS edit saved with edited_at and history row
+PASS edited label shown
+PASS admin can pin; pinned bar visible
+PASS server rejects a member pinning in a group (not just the UI)  [{"code":"P0001","message":"Only group admins can pin messages"}]
+PASS forward picker lists chats (saved messages offered)  [["g:79a69314-5337-402d-8546-de32becb6910","p:aaaaaaaa-0000-4000-8000-000000000001"]]
+PASS forwarded message carries the forwarded label data
+PASS group owner can unsend someone else’s message
+PASS unsent for everyone (tombstone on server)  [{"which":[{"content":"bmn-sys:created","unsent_at":null},{"content":"Welcome to the BMN crew","unsent_at":null},{"content":"bmn-unsent:","unsent_at":"2026-11-25T01:14:47.425464+01:00"}],"db":1,"ui":"TodayYou created the groupWelcome to the BMN crewedited1:14 AM❤️BBob TestThis message was unsent1:14 AM"}]
+PASS delete for me hides it only for me
+PASS group info lists members with roles
+PASS owner promoted Bob to admin
+PASS server: a plain member cannot change roles
+PASS removed member no longer in group_members
+PASS removed member can no longer read group messages (RLS)  [{"data":[]}]
+PASS removed member cannot post (RLS)  [{"code":"42501","message":"new row violates row-level security policy for table \"group_messages\""}]
+PASS removed member’s inbox no longer shows the group
+PASS group settings saved (rename + only admins post)
+PASS rename produced a system message
+PASS server enforces "only admins can post" for members  [{"code":"42501","message":"new row violates row-level security policy for table \"group_messages\""}]
+PASS DM still stored in messages
+PASS DM edit works through the RPC
+PASS direct UPDATE on messages is still impossible (edit only via RPC)
+PASS B sees the DM as edited and A’s message read
+PASS swipe right on a message starts a reply
+PASS edge swipe: chat follows the finger and goes back past the threshold  [{"moved":70,"back":"list"}]
+PASS draft indicator in the inbox row
+PASS draft restored when the chat is reopened
+PASS pin a conversation (saved in conversation_settings, shown in a Pinned section)
+PASS mute shows a muted indicator and is stored
+PASS archive hides the conversation and shows an Archived entry
+PASS archived list shows it again
+PASS swipe left on a row reveals Mute / Archive / Delete  [-228]
+PASS delete asks for confirmation first
+PASS stranger may send ONE message; the second is blocked by the database  [{"err":{"code":"42501","message":"new row violates row-level security policy \"BMN restrict blocked or gated sends\" for table \"messages\""},"first":1,"req":[{"status":"pending","created_at":"2026-11-25T01:15:38.318395+01:00","recipient_id":"aaaaaaaa-0000-4000-8000-000000000001","requester_id":"dddddddd-0000-4000-8000-000000000004","responded_at":null}],"lock":"Only admins can send messages in this group."}]
+PASS A sees a Message requests banner (not mixed into the main list)
+PASS request bar offers Accept / Decline / Block
+PASS accepting updates message_requests
+PASS block stored in the existing user_blocks table (kind=block)
+PASS blocked user cannot message (RLS), and composer says so  [{"code":"42501","message":"new row violates row-level security policy \"BMN restrict blocked or gated sends\" for table \"messages\""}]
+PASS message report stored for moderators (content_reports.message_id)
+PASS no fake users or demo text anywhere
+PASS no page errors during the whole run  [[]]
+SUMMARY pass 72 fail 0

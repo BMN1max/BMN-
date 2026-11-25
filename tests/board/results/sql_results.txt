@@ -1,0 +1,411 @@
+PASS|M1 baseline: alice can send to bob|
+PASS|M1 baseline: bob can reply|
+PASS|M1 baseline: cannot send as someone else|You can only act as your own account
+PASS|M1 alice blocks bob|
+PASS|M1 cannot block as someone else|new row violates row-level security policy for table "user_blocks"
+PASS|M1 blocked: alice cannot send to bob|new row violates row-level security policy "BMN restrict blocked or gated sends" for table "messages"
+PASS|M1 blocked: bob cannot send to alice|new row violates row-level security policy "BMN restrict blocked or gated sends" for table "messages"
+PASS|M1 blocked user cannot see the block row|
+PASS|M1 bob can still message carol|
+PASS|M1 blocker sees own block|
+PASS|M1 alice unblocks bob|
+PASS|M1 after unblock alice can send again|
+PASS|M1 carol sets who_can_message in the EXISTING user_settings|
+PASS|M1 cannot write another user's user_settings|new row violates row-level security policy for table "user_settings"
+PASS|M1 carol creates own extra settings|
+PASS|M1 cannot create settings for another user|new row violates row-level security policy for table "bmn_messaging_settings"
+PASS|M1 settings value constraint|new row for relation "bmn_messaging_settings" violates check constraint "bmn_messaging_settings_last_seen_check"
+PASS|M1 other users cannot read carol settings|
+PASS|M1 request: first message from stranger is allowed|
+PASS|M1 request: second message blocked while pending|new row violates row-level security policy "BMN restrict blocked or gated sends" for table "messages"
+PASS|M1 request: pending row visible to requester|
+PASS|M1 request: recipient sees pending request|
+PASS|M1 request: stranger cannot respond to someone else's request|No such request
+PASS|M1 request: carol accepts dave|
+PASS|M1 request: after accept dave can send|
+PASS|M1 request: erin first message|
+PASS|M1 request: carol declines erin|
+PASS|M1 request: declined sender cannot send|new row violates row-level security policy "BMN restrict blocked or gated sends" for table "messages"
+PASS|M1 request: carol can write to erin first|
+PASS|M1 request: replying to someone who wrote you is allowed|
+PASS|M1 carol follows mallory|
+PASS|M1 followed user can message carol repeatedly|
+PASS|M1 last_seen=nobody hides last seen|
+PASS|M1 last_seen=nobody also hides online status|
+PASS|M1 read receipts flag reported as off|
+PASS|M1 typing indicator flag reported as off|
+PASS|M1 last_seen=followers hides from non-followed viewer|
+PASS|M1 last_seen=followers shows to a viewer the peer follows|
+PASS|M1 recently active peer shows online|
+PASS|M1 stale last_seen is not online|
+PASS|M1 blocked viewer gets no presence and blocked=true|
+PASS|M1 NOTE service_role bypasses the restrictive policy (server must call bmn_can_message)|
+PASS|M1 bmn_can_message() reports the block for the server|
+PASS|M1 mute/restrict rows do not count as a block|
+PASS|M1 mute row: bob can still message alice|
+PASS|M1 who_can_message=following behaves like followers|
+PASS|M1 unknown who_can_message value behaves like everyone|
+PASS|M1 who_can_message=nobody blocks a stranger|new row violates row-level security policy "BMN restrict blocked or gated sends" for table "messages"
+PASS|M1 who_can_message=nobody still allows replies to someone they wrote to|
+PASS|M1 show_activity_status=false hides online and last seen|
+PASS|M1 show_activity_status=true shows online again|
+PASS|M2 create: group created|
+PASS|M2 create: creator is owner|
+PASS|M2 create: invitees added, "nobody" invitee skipped, creator not duplicated|
+PASS|M2 create: roster readable by a member|
+PASS|M2 create: empty name rejected|Group name must be 1-80 characters
+PASS|M2 create: 81-char name rejected|Group name must be 1-80 characters
+PASS|M2 outsider cannot see the group|
+PASS|M2 outsider cannot see roster|
+PASS|M2 outsider cannot read group messages|
+PASS|M2 outsider cannot post|new row violates row-level security policy for table "group_messages"
+PASS|M2 direct insert into group_members is blocked for users|new row violates row-level security policy for table "group_members"
+PASS|M2 direct update of group_chats by a user runs but matches no rows|
+PASS|M2 group name was not changed by the direct update|
+PASS|M2 member posts text|
+PASS|M2 member posts image message|
+PASS|M2 cannot post as another member|new row violates row-level security policy for table "group_messages"
+PASS|M2 cannot forge a system message|new row violates row-level security policy for table "group_messages"
+PASS|M2 empty message rejected|new row for relation "group_messages" violates check constraint "group_messages_content_check"
+PASS|M2 forged edited/unsent/forward fields are cleared on insert|
+PASS|M2 forged fields really were cleared|
+PASS|M2 member reads group history|
+PASS|M2 member replies in-group|
+PASS|M2 reply notification created for the replied-to member|
+PASS|M2 reply target from another group rejected|Reply target is not in this group
+PASS|M2 member cannot change group settings|Only group admins can change group settings
+PASS|M2 owner restricts posting to admins|
+PASS|M2 admins-only: member cannot post|new row violates row-level security policy for table "group_messages"
+PASS|M2 admins-only: owner can post|
+PASS|M2 owner reopens posting + edits info|
+PASS|M2 group info updated|
+PASS|M2 rename posted a system message|
+PASS|M2 member cannot add when members_can_add=false|You cannot add members to this group
+PASS|M2 admin/owner adds a member|
+PASS|M2 adding an existing member adds nobody|
+PASS|M2 member with group_invites=nobody is not added|
+PASS|M2 added member received a notification|
+PASS|M2 users who blocked the adder are skipped|
+PASS|M2 owner lets members add|
+PASS|M2 plain member can add when allowed|
+PASS|M2 owner turns member-adding off|
+PASS|M2 new member sees only messages after joining|
+PASS|M2 new member sees new messages|
+PASS|M2 member cannot remove another member|You do not have permission to remove this member
+PASS|M2 member cannot change roles|Only the group owner can change roles
+PASS|M2 owner promotes bob to admin|
+PASS|M2 admin removes a plain member (mallory)|
+PASS|M2 removed member can no longer read the group|
+PASS|M2 removed member can no longer see the group|
+PASS|M2 removed member cannot post|new row violates row-level security policy for table "group_messages"
+PASS|M2 owner promotes carol to admin|
+PASS|M2 admin cannot remove another admin|You do not have permission to remove this member
+PASS|M2 admin cannot remove the owner|You do not have permission to remove this member
+PASS|M2 owner removes an admin|
+PASS|M2 inbox runs|
+PASS|M2 inbox returns the group with a preview|
+PASS|M2 unread count is only messages from others after last read|unread=1
+PASS|M2 mark-read clears unread|unread=0
+PASS|M2 new message raises unread to 1|unread=1
+PASS|M2 own messages never count as unread|unread=0
+PASS|M2 non-member inbox excludes the group|
+PASS|M2 cannot give role to yourself|Transfer ownership to someone else instead
+PASS|M2 owner transfers ownership to bob|
+PASS|M2 exactly one owner after transfer|
+PASS|M2 old owner became admin|
+PASS|M2 owner leaves: next admin becomes owner|
+PASS|M2 ownership moved to the remaining admin|
+PASS|M2 leaver is no longer a member|
+PASS|M2 member leaves|
+PASS|M2 last member leaves|
+PASS|M2 last leave closes the group but keeps history|
+PASS|M2 closed group disappears from inbox|
+PASS|M2 member cap enforced on create (cap 3 = owner + 2)|
+PASS|M2 member cap enforced on add|
+PASS|M2 admin sets disappearing timer|
+PASS|M2 messages in a timed group get expires_at|
+PASS|M2 negative timer rejected|Invalid timer
+PASS|M3 reply: stored with reply_to_id|
+PASS|M3 reply: cannot reply to a message from another conversation|Reply target is not in this conversation
+PASS|M3 forged edited_at/unsent_at/forwarded on insert accepted but cleared|
+PASS|M3 forged fields really were cleared|
+PASS|M3 direct UPDATE of a message by a user is accepted but matches no rows (no UPDATE policy)|
+PASS|M3 direct UPDATE changed nothing|
+PASS|M3 edit: recipient cannot edit|You can only edit your own messages
+PASS|M3 edit: outsider cannot edit|Message not found
+PASS|M3 edit: sender edits|
+PASS|M3 edit: content and edited_at updated|
+PASS|M3 edit: history row kept for the sender|
+PASS|M3 edit: recipient cannot read edit history|
+PASS|M3 edit: recipient sees the edited text and indicator|
+PASS|M3 edit: unchanged text is a no-op|
+PASS|M3 edit: empty rejected|Invalid message length
+PASS|M3 edit: cannot turn text into a fake media message|Invalid message
+PASS|M3 edit: media messages are not editable|Only text messages can be edited
+PASS|M3 edit: window expired|The edit window has passed
+PASS|M3 unsend: window expired|The unsend window has passed
+PASS|M3 react: add|
+PASS|M3 react: change|
+PASS|M3 react: still one reaction per user|
+PASS|M3 react: sender can see the recipient reaction|
+PASS|M3 react: second participant adds own|
+PASS|M3 react: outsider cannot see reactions|
+PASS|M3 react: outsider cannot react|Message not found
+PASS|M3 react: direct insert blocked|new row violates row-level security policy for table "message_reactions"
+PASS|M3 react: same emoji removes|
+PASS|M3 react: empty emoji rejected|Invalid emoji
+PASS|M3 pin: participant pins a DM message|
+PASS|M3 pin: other participant sees the pin|
+PASS|M3 pin: outsider cannot see the pin|
+PASS|M3 pin: outsider cannot pin|Message not found
+PASS|M3 pin: unpin|
+PASS|M3 pin: pin row removed|
+PASS|M3 forward: creates a message to the new peer|
+PASS|M3 forward: label names the ORIGINAL author, set by the server|
+PASS|M3 forward: cannot forward a message you cannot see|Message not found
+PASS|M3 forward: exactly one destination|Choose exactly one destination
+PASS|M3 forward: to yourself is allowed (Saved messages) and keeps the original-author label|
+PASS|M3 forward to yourself: stored as a note to self|
+PASS|M3 forward: blocked recipient is refused|You cannot message this person
+PASS|M3 unsend: recipient cannot unsend|You can only unsend your own messages
+PASS|M3 unsend: sender unsends|
+PASS|M3 unsend: recipient sees a tombstone, not the text|
+PASS|M3 unsend: reactions and pin removed|
+PASS|M3 unsend: cannot react to an unsent message|Cannot react to this message
+PASS|M3 unsend: cannot forward an unsent message|This message cannot be forwarded
+PASS|M3 unsend: cannot edit an unsent message|Message was unsent
+PASS|M3 unsend: the original text is gone from the row (edit history is the only trace, sender-only)|
+PASS|M3 delete-for-me: recipient hides|
+PASS|M3 delete-for-me: hidden for recipient|
+PASS|M3 delete-for-me: still visible to the sender|
+PASS|M3 delete-for-me: outsider cannot|Message not found
+PASS|M3 report: recipient can report a message|
+PASS|M3 report: points at the sender and the message|
+PASS|M3 report: cannot report your own message|You cannot report your own message
+PASS|M3 report: invalid reason rejected by existing check|new row for relation "content_reports" violates check constraint "content_reports_reason_check"
+PASS|M3 report: cannot report a message you cannot see|Message not found
+PASS|M3 group edit: another member cannot edit|You can only edit your own messages
+PASS|M3 group edit: sender edits|
+PASS|M3 group edit: edited_at set|
+PASS|M3 group react: member reacts|
+PASS|M3 group react: others see reactions|
+PASS|M3 group react: outsider sees none|
+PASS|M3 group react: outsider cannot react|Message not found
+PASS|M3 group pin: plain member cannot pin|Only group admins can pin messages
+PASS|M3 group pin: owner pins|
+PASS|M3 group pin: members see the pin|
+PASS|M3 forward: group message to a person keeps the original author label|
+PASS|M3 forward: DM into a group|
+PASS|M3 forward: refused where the user cannot post|You cannot post in this group
+PASS|M3 group unsend: member cannot unsend someone else's message|You can only unsend your own messages
+PASS|M3 group unsend: owner can remove a member's message|
+PASS|M3 group unsend: members see a tombstone|
+PASS|M3 group unsend: its reactions and pin are gone|
+PASS|M3 group unsend: system messages are protected|System messages cannot be unsent
+PASS|M3 group delete-for-me|
+PASS|M3 group delete-for-me: hidden from me|
+PASS|M3 group delete-for-me: still visible to others|
+PASS|M3 group report works|
+PASS|M3 group report stores group_message_id|
+PASS|M3 settings: pin a DM conversation|
+PASS|M3 settings: mute a group I belong to|
+PASS|M3 settings: cannot configure a group I am not in|new row violates row-level security policy for table "conversation_settings"
+PASS|M3 settings: cannot write another user's settings|new row violates row-level security policy for table "conversation_settings"
+PASS|M3 settings: duplicate row rejected|duplicate key value violates unique constraint "conversation_settings_peer_uq"
+PASS|M3 settings: archive via update|
+PASS|M3 settings: others cannot read my settings|
+PASS|M3 settings: self-conversation rejected|new row for relation "conversation_settings" violates check constraint "conversation_settings_check1"
+PASS|B2 compat: unread query as Batch 2 runs it|
+PASS|B2 compat: bmn_mark_messages_read still works|
+PASS|B2 compat: nothing left unread|
+PASS|B2 compat: bmn_clear_conversation still works|
+PASS|B2 compat: cleared conversation hidden for me|
+PASS|B2 compat: other side still sees their copy|
+PASS|M3 pins list: DM pin returned|
+PASS|M3 pins list: outsider gets nothing for a DM they are not in|
+PASS|M3 pins list: needs exactly one target|Choose a person or a group
+PASS|M3 pins list: group pin returned to members|
+PASS|M3 pins list: non-member gets nothing for a group|
+PASS|M1 batch presence returns one row per distinct peer|
+PASS|M1 batch presence honours privacy like the single call|
+PASS|B1 RLS enabled on board_posts|
+PASS|B1 RLS enabled on board_likes|
+PASS|B1 RLS enabled on board_reposts|
+PASS|B1 RLS enabled on board_bookmarks|
+PASS|B1 RLS enabled on board_post_tags|
+PASS|B1 RLS enabled on board_post_mentions|
+PASS|B1 RLS enabled on board_views|
+PASS|B1 RLS enabled on board_notifications|
+PASS|B1 RLS enabled on board_post_edits|
+PASS|B1 video posts table has no board columns|
+PASS|B1 content_reports reuses the existing moderation queue (new column)|
+PASS|B1 no board table duplicates profiles|
+PASS|B1 author FK points at the existing profiles table|
+PASS|B1 direct INSERT into board_posts is refused|permission denied for table board_posts
+PASS|B1 direct INSERT into board_likes is refused|permission denied for table board_likes
+PASS|B1 direct INSERT into board_notifications is refused|permission denied for table board_notifications
+PASS|B1 board_views is not readable|permission denied for table board_views
+PASS|B1 internal helper board_notify is not callable|permission denied for function board_notify
+PASS|B1 anonymous cannot post|permission denied for function board_create_post
+PASS|B1 anonymous cannot like|permission denied for function board_set_like
+PASS|B1 anonymous can read the latest feed (empty at first)|
+PASS|B1 alice posts text|
+PASS|B1 body is trimmed|
+PASS|B1 counters start at zero|
+PASS|B1 hashtags extracted (lowercase, deduped, digits-only ignored)|
+PASS|B1 mention resolved to bob only (not self, not unknown)|
+PASS|B1 bob got one mention notification from alice|
+PASS|B1 empty post refused|Write something or add a photo or video
+PASS|B1 501 characters refused|Posts can be at most 500 characters
+PASS|B1 exactly 500 characters accepted|
+PASS|B1 image-only post accepted (https)|
+PASS|B1 video with thumbnail accepted (storage key)|
+PASS|B1 four images accepted|
+PASS|B1 five attachments refused|You can attach up to 4 photos or videos
+PASS|B1 two videos refused|Only one video per post
+PASS|B1 unknown media type refused|Attachments must be photos or videos
+PASS|B1 javascript: url refused|Invalid attachment address
+PASS|B1 http: (not https) url refused|Invalid attachment address
+PASS|B1 url with a quote character refused|Invalid attachment address
+PASS|B1 media that is not a list refused|Media must be a list
+PASS|B1 media is normalised (only known keys kept)|
+PASS|B1 extra unknown keys are dropped, not stored|
+PASS|B1 unknown media keys not stored|
+PASS|B1 reply points at its parent and the thread root|
+PASS|B1 reply to a top post: root is that post|
+PASS|B1 parent reply_count counts real replies|
+PASS|B1 ancestors of the nested reply are root first|
+PASS|B1 alice was notified of bob's reply|
+PASS|B1 bob was notified of carol's reply|
+PASS|B1 quote post keeps the quoted id, is top level|
+PASS|B1 quoted post quote_count increments|
+PASS|B1 quote without any text or media refused|Write something or add a photo or video
+PASS|B1 a post cannot be both reply and quote|A post is either a reply or a quote, not both
+PASS|B1 reply to a missing post refused|The post you are replying to is not available
+PASS|B1 alice was notified of the quote|
+PASS|B1 bob likes alice's post|
+PASS|B1 liking twice is harmless|
+PASS|B1 like_count is the real number of likes (1)|
+PASS|B1 bob sees his own like|
+PASS|B1 alice cannot see who liked (likes are private to the liker)|
+PASS|B1 exactly one like notification despite two taps|
+PASS|B1 bob unlikes|
+PASS|B1 like_count back to 0|
+PASS|B1 bob likes again|
+PASS|B1 carol likes|
+PASS|B1 like_count 2|
+PASS|B1 carol reposts|
+PASS|B1 repost_count 1|
+PASS|B1 carol undoes the repost|
+PASS|B1 repost_count back to 0|
+PASS|B1 carol reposts again (kept for the timelines)|
+PASS|B1 bob bookmarks|
+PASS|B1 bob sees his bookmark|
+PASS|B1 bookmarks are private (alice sees none of bob's)|
+PASS|B1 bob removes the bookmark|
+PASS|B1 bookmark gone|
+PASS|B1 bob views|
+PASS|B1 bob views again|
+PASS|B1 repeat views by one person count once|
+PASS|B1 author viewing own post|
+PASS|B1 author's own views are not counted|
+PASS|B1 carol views|
+PASS|B1 view_count = 2 distinct viewers|
+PASS|B1 liking a missing post refused|Post not available
+PASS|B1 alice blocks dave (existing user_blocks table)|
+PASS|B1 alice no longer sees dave's post|
+PASS|B1 dave cannot see alice's post (block works both ways)|
+PASS|B1 dave's latest feed hides alice|
+PASS|B1 blocked: dave cannot reply|The post you are replying to is not available
+PASS|B1 blocked: dave cannot like|Post not available
+PASS|B1 blocked: dave cannot repost|Post not available
+PASS|B1 blocked: dave cannot bookmark|Post not available
+PASS|B1 blocked: dave cannot quote|The post you are quoting is not available
+PASS|B1 blocked: alice cannot reply to dave either|The post you are replying to is not available
+PASS|B1 dave mentions alice (allowed, but no notification)|
+PASS|B1 no notification across a block|
+PASS|B1 alice unblocks dave|
+PASS|B1 after unblock alice sees dave's post again|
+PASS|B1 erin mutes bob|
+PASS|B1 bob posts after being muted|
+PASS|B1 bob likes erin's post|
+PASS|B1 muted: erin gets no like notification from bob|
+PASS|B1 muted: bob's posts are absent from erin's Latest|
+PASS|B1 muted: erin can still open bob's post directly|
+PASS|B1 erin unmutes bob|
+PASS|B1 private: non-follower cannot see carol's posts|
+PASS|B1 private: non-follower cannot like|Post not available
+PASS|B1 private: follower sees carol's posts|
+PASS|B1 private: carol sees her own posts|
+PASS|B1 private: signed-out visitors cannot see carol's posts|
+PASS|B1 allow_comments=nobody: bob cannot reply to carol|This person has turned replies off
+PASS|B1 allow_comments=nobody: carol can reply to herself|
+PASS|B1 allow_comments=following: bob (not followed by carol) refused|Only people this person follows can reply
+PASS|B1 allow_comments=following: bob allowed once carol follows him|
+PASS|B1 suspended account cannot post|Your BMN account is restricted
+PASS|B1 suspended account cannot like|Your BMN account is restricted
+PASS|B1 an expired suspension no longer blocks posting|
+PASS|B1 banned account cannot post|Your BMN account is restricted
+PASS|B1 the 30th post in ten minutes is accepted|
+PASS|B1 the 31st post in ten minutes is refused (rate limit)|You are posting too quickly. Try again in a few minutes.
+PASS|B1 alice edits her post|
+PASS|B1 edited_at is set and body changed|
+PASS|B1 hashtags re-derived on edit|
+PASS|B1 alice can read her edit history|
+PASS|B1 an unchanged edit is a no-op|
+PASS|B1 no extra history row for a no-op|
+PASS|B1 bob cannot edit alice's post|You can only edit your own posts
+PASS|B1 bob cannot read alice's edit history|
+PASS|B1 bob cannot delete alice's post|You can only delete your own posts
+PASS|B1 edit window closes after 24 hours|Posts can only be edited for 24 hours
+PASS|B1 bob deletes his reply|
+PASS|B1 deleted post is an empty tombstone|
+PASS|B1 parent reply_count falls when a reply is deleted|
+PASS|B1 tombstone keeps the thread intact (carol's nested reply still points at it)|
+PASS|B1 tags of the deleted post are gone|
+PASS|B1 notifications about the deleted post are gone|
+PASS|B1 cannot like a deleted post|Post not available
+PASS|B1 deleted posts are not in any feed|
+PASS|B1 deleting twice is refused|Post not found
+PASS|B1 BMN owner can delete another user's post (moderation)|
+PASS|B1 report lands in the existing content_reports queue|
+PASS|B1 a second report of the same post by the same person is de-duplicated|
+PASS|B1 invalid report reason refused|Choose a reason for the report
+PASS|B1 cannot report your own post|You cannot report your own post
+PASS|B1 report row names the reporter, the author and the Board post|
+PASS|B1 alice sees her own notifications|
+PASS|B1 alice sees only hers|
+PASS|B1 mark all read returns how many changed|
+PASS|B1 nothing unread afterwards|
+PASS|B1 bob's notifications were not touched by alice|
+PASS|B1 cannot update notifications directly|permission denied for table board_notifications
+PASS|B1 Latest holds only top-level posts|
+PASS|B1 Latest is newest first|
+PASS|B1 the page size is capped at 50|
+PASS|B1 paging with p_before returns only older posts|
+PASS|B1 Following starts with only bob's own posts (he follows nobody yet)|
+PASS|B1 bob follows alice (existing follows table)|
+PASS|B1 bob follows carol|
+PASS|B1 Following shows alice's post|
+PASS|B1 Following hides people bob does not follow|
+PASS|B1 Following shows alice's post once, marked reposted_by carol (carol reposted it later)|
+PASS|B1 Following has no replies|
+PASS|B1 signed-out Following is empty|
+PASS|B1 signed-out For You still works|
+PASS|B1 For You puts the engaged post above an unengaged older-or-equal one|
+PASS|B1 For You paging with offset gives different posts|
+PASS|B1 tag page finds posts (case-insensitive, # optional)|
+PASS|B1 tag page respects visibility (dave blocked? no, alice visible after unblock)|
+PASS|B1 search finds a real word|
+PASS|B1 search treats % literally (matches nothing)|
+PASS|B1 search ignores queries shorter than 2 characters|
+PASS|B1 trending lists real tags with real counts|
+PASS|B1 suggestions exclude me|
+PASS|B1 suggestions exclude people bob already follows|
+PASS|B1 suggestions hide a blocked pair even when the block is the other way round|
+PASS|B1 deleting a profile removes her likes from the counter|
+PASS|B1 deleting a profile removes her replies from the counter|
+PASS|B1 every counter equals the real rows|
+PASS|B1 Board wrote nothing into the video posts table|
+PASS|B1 no trigger on the video posts table mentions board|
+PASS|B1 no policy on the video posts table mentions board|

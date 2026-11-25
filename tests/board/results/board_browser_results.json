@@ -1,0 +1,290 @@
+{
+ "pass": 66,
+ "fail": 0,
+ "results": [
+  {
+   "name": "no page errors on load (A,B,C,signed-out)",
+   "ok": true,
+   "extra": "[]"
+  },
+  {
+   "name": "Board module loaded and exposes open/close/openPost/openTag",
+   "ok": true
+  },
+  {
+   "name": "B button relabelled \"Open BMN Board\"",
+   "ok": true,
+   "extra": "{\"label\":\"Open BMN Board\",\"title\":\"BMN Board\",\"vis\":true}"
+  },
+  {
+   "name": "tapping B opens BMN Board inside the Community stage (not the personal page)",
+   "ok": true,
+   "extra": "{\"board\":true,\"inStage\":\"lgttStage\",\"topbar\":\"none\",\"title\":\"BMN Board\"}"
+  },
+  {
+   "name": "Board opens on the For You tab, nav shows Home active",
+   "ok": true
+  },
+  {
+   "name": "no demo/fake posts: empty DB shows the empty state",
+   "ok": true,
+   "extra": 0
+  },
+  {
+   "name": "composer: Post disabled when empty",
+   "ok": true
+  },
+  {
+   "name": "composer: whitespace-only stays disabled",
+   "ok": true
+  },
+  {
+   "name": "composer: counter appears near the limit (20 left)",
+   "ok": true
+  },
+  {
+   "name": "composer: hard 500-character limit (maxlength)",
+   "ok": true
+  },
+  {
+   "name": "post created through the RPC, authored by the signed-in user",
+   "ok": true
+  },
+  {
+   "name": "hashtags and mentions stored server-side",
+   "ok": true
+  },
+  {
+   "name": "new post appears at the top with author name/@handle from the EXISTING profile",
+   "ok": true,
+   "extra": "{\"tags\":[\"bmn\",\"launch\"],\"men\":[\"bob_test\"],\"link\":{\"href\":\"https://example.com/x\",\"rel\":\"noopener noreferrer nofollow ugc\",\"trailing\":\"example.com/x\"},\"name\":\"Alice Test\",\"handle\":\"@alice_test\"}"
+  },
+  {
+   "name": "hashtags, @mention and link are linkified; link opens safely and drops trailing punctuation",
+   "ok": true,
+   "extra": "{\"tags\":[\"bmn\",\"launch\"],\"men\":[\"bob_test\"],\"link\":{\"href\":\"https://example.com/x\",\"rel\":\"noopener noreferrer nofollow ugc\",\"trailing\":\"example.com/x\"},\"name\":\"Alice Test\",\"handle\":\"@alice_test\"}"
+  },
+  {
+   "name": "no video-feed leakage: Board post never written to posts",
+   "ok": true
+  },
+  {
+   "name": "HTML in a post is shown as text, never executed",
+   "ok": true,
+   "extra": "{\"x\":0,\"imgs\":0,\"txt\":\"<img src=x onerror=\\\"window.__xss=1\\\"> <script>window.__xss=2</script>\"}"
+  },
+  {
+   "name": "B sees A's posts in Latest (public timeline)",
+   "ok": true
+  },
+  {
+   "name": "like: stored once, counter trigger and UI agree",
+   "ok": true
+  },
+  {
+   "name": "unlike removes it (count back to 0)",
+   "ok": true
+  },
+  {
+   "name": "bookmark stored privately",
+   "ok": true
+  },
+  {
+   "name": "repost stored; count 1",
+   "ok": true
+  },
+  {
+   "name": "undo repost",
+   "ok": true
+  },
+  {
+   "name": "quote repost: new post linking the original, quote_count 1",
+   "ok": true
+  },
+  {
+   "name": "quoted post is embedded in the feed card",
+   "ok": true
+  },
+  {
+   "name": "tap a post opens the thread with the post as main",
+   "ok": true
+  },
+  {
+   "name": "reply stored with parent/root; reply_count 1; shown under the post",
+   "ok": true
+  },
+  {
+   "name": "reply thread shows the ancestor above the reply",
+   "ok": true
+  },
+  {
+   "name": "back returns to the timeline",
+   "ok": true
+  },
+  {
+   "name": "views: recorded for the viewer B only, never the author",
+   "ok": true,
+   "extra": "[{\"user_id\":\"bbbbbbbb-0000-4000-8000-000000000002\"}]"
+  },
+  {
+   "name": "view_count equals the number of distinct viewers",
+   "ok": true
+  },
+  {
+   "name": "author is notified of like/repost/quote/reply/mention-free events (real rows)",
+   "ok": true,
+   "extra": "[{\"type\":\"like\"},{\"type\":\"quote\"},{\"type\":\"reply\"},{\"type\":\"repost\"}]"
+  },
+  {
+   "name": "unread badge shows on Alerts",
+   "ok": true
+  },
+  {
+   "name": "notifications list shows who did what",
+   "ok": true,
+   "extra": "[\"BBob Test replied to your post nowFirst reply from B\",\"BBob Test quoted your post nowQuoting this one\",\"BBob Test reposted your post nowHello BMN Board! #BMN #Launch with @bob_test see https://example.com/x.\",\"BBob Test liked your post nowHello BMN Board! #BMN #Launch with @bob_test see https://example.com/x.\"]"
+  },
+  {
+   "name": "opening notifications marks them read (badge clears, DB read_at set)",
+   "ok": true
+  },
+  {
+   "name": "tapping a notification opens that post thread",
+   "ok": true
+  },
+  {
+   "name": "Following timeline shows posts from followed people (A follows B)",
+   "ok": true,
+   "extra": "[\"4f567381-bfba-4e34-b78f-6af9da3e9abe\",\"70cfe180-8b99-4781-a8df-d69ec61e4562\",\"ec2dd887-2afc-4895-920e-afc98bb1b4d3\"]"
+  },
+  {
+   "name": "Following feed (server) returns reposts by followed people with reposted_by set",
+   "ok": true,
+   "extra": 1
+  },
+  {
+   "name": "reposted entries render a \"reposted\" context line",
+   "ok": true
+  },
+  {
+   "name": "Bookmarks tab lists B's saved post, private to B",
+   "ok": true
+  },
+  {
+   "name": "tapping an avatar opens the normal Community profile (LGTT profile view), Board steps aside",
+   "ok": true,
+   "extra": "{\"v\":\"profile\",\"b\":true,\"p\":true}"
+  },
+  {
+   "name": "\"← Board\" pill returns to Board where we were",
+   "ok": true
+  },
+  {
+   "name": "tapping the display name opens the profile too",
+   "ok": true
+  },
+  {
+   "name": "tapping @bob_test resolves the username and opens that existing profile",
+   "ok": true
+  },
+  {
+   "name": "hashtag opens the tag timeline",
+   "ok": true
+  },
+  {
+   "name": "search finds posts by word / hashtag",
+   "ok": true
+  },
+  {
+   "name": "people search finds existing BMN profiles",
+   "ok": true
+  },
+  {
+   "name": "Discover: real trending hashtags, people and popular posts",
+   "ok": true,
+   "extra": "{\"trend\":[\"#bmn\",\"#launch\"],\"people\":2,\"pop\":3}"
+  },
+  {
+   "name": "Follow from Discover writes the existing follows table",
+   "ok": true
+  },
+  {
+   "name": "edit own post: body changed, edited_at set, history row kept",
+   "ok": true
+  },
+  {
+   "name": "own post menu offers Edit/Delete, no Report/Block",
+   "ok": true
+  },
+  {
+   "name": "report goes to the existing content_reports table with board_post_id",
+   "ok": true
+  },
+  {
+   "name": "delete own post: soft-deleted tombstone, removed from feeds, counts intact",
+   "ok": true
+  },
+  {
+   "name": "before block: C sees B's post",
+   "ok": true
+  },
+  {
+   "name": "block writes the existing user_blocks table (kind=block)",
+   "ok": true
+  },
+  {
+   "name": "blocked author disappears from C's Board",
+   "ok": true
+  },
+  {
+   "name": "server enforces the block too (RLS): C cannot read B's posts, B cannot read C's",
+   "ok": true,
+   "extra": 0
+  },
+  {
+   "name": "signed-out visitor can read public posts",
+   "ok": true
+  },
+  {
+   "name": "signed-out like asks to sign in, writes nothing",
+   "ok": true
+  },
+  {
+   "name": "Following asks signed-out visitors to sign in",
+   "ok": true
+  },
+  {
+   "name": "dark theme: solid near-black timeline, no blur on the scroll area",
+   "ok": true,
+   "extra": "{\"t\":\"dark\",\"bg\":\"rgb(10, 10, 12)\",\"sc\":\"none\"}"
+  },
+  {
+   "name": "system theme: Board follows the device (light)",
+   "ok": true,
+   "extra": "{\"t\":\"light\",\"bg\":\"rgb(244, 245, 248)\"}"
+  },
+  {
+   "name": "no horizontal overflow at iPhone 14 width",
+   "ok": true
+  },
+  {
+   "name": "Settings (App tab) has an \"About BMN\" row",
+   "ok": true,
+   "extra": "settings opened=true"
+  },
+  {
+   "name": "About BMN opens the preserved personal BMN page",
+   "ok": true,
+   "extra": "{\"top\":\"flex\",\"main\":\"block\",\"boardHidden\":true}"
+  },
+  {
+   "name": "original personal page content is still in index.html (hero/sections intact)",
+   "ok": true
+  },
+  {
+   "name": "no page errors during the whole run",
+   "ok": true,
+   "extra": "[]"
+  }
+ ]
+}

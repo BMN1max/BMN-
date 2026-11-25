@@ -1,0 +1,78 @@
+ set_config 
+------------
+ 
+(1 row)
+baseline objects: 20 tables, 53 policies, 16 functions
+--- apply migrations (pass 1)
+--- apply migrations again (idempotency)
+--- apply Board B1 (pass 1)
+--- apply Board B1 again (idempotency)
+--- tests
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+ su 
+----
+ 
+(1 row)
+PASS: 411  FAIL: 0
+--- rollback B1 only, then compare with the post-M3 snapshot
+B1 ROLLBACK RESTORES THE POST-M3 OBJECT SET: yes
+--- reapply B1 after its rollback
+--- rollback B1 again, then M3..M1 in reverse order, compare with the baseline snapshot
+ROLLBACK RESTORES THE BASELINE OBJECT SET: yes
+--- reapply after rollback
+done

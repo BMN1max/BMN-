@@ -1,0 +1,68 @@
+PASS no page errors on load (A,B,C,signed-out)  [[]]
+PASS Board module loaded and exposes open/close/openPost/openTag
+PASS B button relabelled "Open BMN Board"  [{"label":"Open BMN Board","title":"BMN Board","vis":true}]
+PASS tapping B opens BMN Board inside the Community stage (not the personal page)  [{"board":true,"inStage":"lgttStage","topbar":"none","title":"BMN Board"}]
+PASS Board opens on the For You tab, nav shows Home active
+PASS no demo/fake posts: empty DB shows the empty state  [0]
+PASS composer: Post disabled when empty
+PASS composer: whitespace-only stays disabled
+PASS composer: counter appears near the limit (20 left)
+PASS composer: hard 500-character limit (maxlength)
+PASS post created through the RPC, authored by the signed-in user
+PASS hashtags and mentions stored server-side
+PASS new post appears at the top with author name/@handle from the EXISTING profile  [{"tags":["bmn","launch"],"men":["bob_test"],"link":{"href":"https://example.com/x","rel":"noopener noreferrer nofollow ugc","trailing":"example.com/x"},"name":"Alice Test","handle":"@alice_test"}]
+PASS hashtags, @mention and link are linkified; link opens safely and drops trailing punctuation  [{"tags":["bmn","launch"],"men":["bob_test"],"link":{"href":"https://example.com/x","rel":"noopener noreferrer nofollow ugc","trailing":"example.com/x"},"name":"Alice Test","handle":"@alice_test"}]
+PASS no video-feed leakage: Board post never written to posts
+PASS HTML in a post is shown as text, never executed  [{"x":0,"imgs":0,"txt":"<img src=x onerror=\"window.__xss=1\"> <script>window.__xss=2</script>"}]
+PASS B sees A's posts in Latest (public timeline)
+PASS like: stored once, counter trigger and UI agree
+PASS unlike removes it (count back to 0)
+PASS bookmark stored privately
+PASS repost stored; count 1
+PASS undo repost
+PASS quote repost: new post linking the original, quote_count 1
+PASS quoted post is embedded in the feed card
+PASS tap a post opens the thread with the post as main
+PASS reply stored with parent/root; reply_count 1; shown under the post
+PASS reply thread shows the ancestor above the reply
+PASS back returns to the timeline
+PASS views: recorded for the viewer B only, never the author  [[{"user_id":"bbbbbbbb-0000-4000-8000-000000000002"}]]
+PASS view_count equals the number of distinct viewers
+PASS author is notified of like/repost/quote/reply/mention-free events (real rows)  [[{"type":"like"},{"type":"quote"},{"type":"reply"},{"type":"repost"}]]
+PASS unread badge shows on Alerts
+PASS notifications list shows who did what  [["BBob Test replied to your post nowFirst reply from B","BBob Test quoted your post nowQuoting this one","BBob Test reposted your post nowHello BMN Board! #BMN #Launch with @bob_test see https://example.com/x.","BBob Test liked your post nowHello BMN Board! #BMN #Launch with @bob_test see https://example.com/x."]]
+PASS opening notifications marks them read (badge clears, DB read_at set)
+PASS tapping a notification opens that post thread
+PASS Following timeline shows posts from followed people (A follows B)  [["4f567381-bfba-4e34-b78f-6af9da3e9abe","70cfe180-8b99-4781-a8df-d69ec61e4562","ec2dd887-2afc-4895-920e-afc98bb1b4d3"]]
+PASS Following feed (server) returns reposts by followed people with reposted_by set  [1]
+PASS reposted entries render a "reposted" context line
+PASS Bookmarks tab lists B's saved post, private to B
+PASS tapping an avatar opens the normal Community profile (LGTT profile view), Board steps aside  [{"v":"profile","b":true,"p":true}]
+PASS "← Board" pill returns to Board where we were
+PASS tapping the display name opens the profile too
+PASS tapping @bob_test resolves the username and opens that existing profile
+PASS hashtag opens the tag timeline
+PASS search finds posts by word / hashtag
+PASS people search finds existing BMN profiles
+PASS Discover: real trending hashtags, people and popular posts  [{"trend":["#bmn","#launch"],"people":2,"pop":3}]
+PASS Follow from Discover writes the existing follows table
+PASS edit own post: body changed, edited_at set, history row kept
+PASS own post menu offers Edit/Delete, no Report/Block
+PASS report goes to the existing content_reports table with board_post_id
+PASS delete own post: soft-deleted tombstone, removed from feeds, counts intact
+PASS before block: C sees B's post
+PASS block writes the existing user_blocks table (kind=block)
+PASS blocked author disappears from C's Board
+PASS server enforces the block too (RLS): C cannot read B's posts, B cannot read C's  [0]
+PASS signed-out visitor can read public posts
+PASS signed-out like asks to sign in, writes nothing
+PASS Following asks signed-out visitors to sign in
+PASS dark theme: solid near-black timeline, no blur on the scroll area  [{"t":"dark","bg":"rgb(10, 10, 12)","sc":"none"}]
+PASS system theme: Board follows the device (light)  [{"t":"light","bg":"rgb(244, 245, 248)"}]
+PASS no horizontal overflow at iPhone 14 width
+PASS Settings (App tab) has an "About BMN" row  [settings opened=true]
+PASS About BMN opens the preserved personal BMN page  [{"top":"flex","main":"block","boardHidden":true}]
+PASS original personal page content is still in index.html (hero/sections intact)
+PASS no page errors during the whole run  [[]]
+
+BOARD BROWSER: PASS 66  FAIL 0
