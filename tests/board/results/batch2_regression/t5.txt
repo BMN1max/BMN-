@@ -1,0 +1,16 @@
+PASS DOCK: Inbox opens Messages and highlights Inbox  [{"stage":"feed","msgOpen":true,"inboxCls":true,"chatCls":false,"on":"inbox"}]
+PASS DOCK: Friends/Discover closes Messages and switches view  [{"stage":"discover","msgOpen":false,"inboxCls":false,"chatCls":false,"on":"discover"}]
+PASS DOCK: Profile closes Messages and switches view  [{"stage":"profile","msgOpen":false,"inboxCls":false,"chatCls":false,"on":"profile"}]
+PASS DOCK: Home closes Messages and returns to feed  [{"stage":"feed","msgOpen":false,"inboxCls":false,"chatCls":false,"on":"feed"}]
+PASS CHAT: stage gets bmn-chat-open (dock hides) while chatting
+PASS CHAT: back to list restores dock (chat class removed)
+PASS CLOSE button leaves Messages and re-highlights the current view  [{"stage":"feed","msgOpen":false,"inboxCls":false,"chatCls":false,"on":"feed"}]
+PASS ENTRY: LGTT.openInbox() opens Messages
+PASS ENTRY: LGTT.openSelfChat() opens Saved messages chat
+PASS ENTRY: profile Message button opens that member chat
+PASS ROBUSTNESS: invalid peer id refused, stays on list with a message
+PASS ROBUSTNESS: unknown member id refused (no broken chat)
+PASS ROBUSTNESS: rapid open/close x6 leaves clean state
+PASS SESSION EXPIRY: message kept as failed + sign-in requested, nothing stored
+PASS no page errors in suite 5  [[]]
+{"pass":15,"fail":0}
