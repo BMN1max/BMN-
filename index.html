@@ -6496,7 +6496,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
         <!-- Top bar: tabs + stories (glass, floats over the video) -->
         <header class="lgtt-top" id="lgttTop">
           <div class="lgtt-top-row">
-            <button class="lgtt-btn lgtt-round lgtt-sm bmn-switch-personal" type="button" data-act="bmn-home" aria-label="Switch to BMN page" title="BMN page"><span aria-hidden="true">B</span></button>
+            <button class="lgtt-btn lgtt-round lgtt-sm bmn-switch-personal" type="button" data-act="bmn-home" aria-label="Open BMN Board" title="BMN Board"><span aria-hidden="true">B</span></button>
             <div class="lgtt-tabs lgtt-glass" id="lgttTabs" role="tablist" aria-label="Feed">
               <i class="lgtt-tab-ind" aria-hidden="true"></i>
               <button type="button" role="tab" data-tab="following" aria-selected="false">Following</button>
@@ -8807,7 +8807,7 @@ function enterPersonal(){
  safe(()=>history.replaceState({bmnPersonal:true},'','#home'));
 }
 function bindRouting(){document.addEventListener('click',e=>{
- const b=e.target.closest('#lgtt [data-act="bmn-home"]');if(b){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterPersonal();return}
+ const b=e.target.closest('#lgtt [data-act="bmn-home"]');if(b){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();if(window.BMNBoard&&typeof window.BMNBoard.open==='function'){try{window.BMNBoard.open();return}catch(err){console.warn('BMN Board failed to open, falling back to BMN page',err)}}enterPersonal();return}
  const c=e.target.closest('[data-view="community"],a[href="#community"],a[href="#community-page"],#communityNav,#bmnCommunityButton');if(c&&!c.closest('#lgtt')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();enterCommunity()}
 },true)}
 
@@ -11868,6 +11868,40 @@ html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-hi
 <script src="/bmn-intelligence.js" defer></script>
 <link rel="stylesheet" href="/bmn-messaging.css">
 <script src="/bmn-messaging.js" defer></script>
+<link rel="stylesheet" href="/bmn-board.css">
+<script src="/bmn-board.js" defer></script>
+<script id="bmn-board-integration">
+/* BMN Board integration: Settings -> About BMN (the original personal BMN page, preserved unchanged) and a way back to Board from it. */
+(function(){
+  var D=document;
+  function toast(t){try{window.LGTT&&LGTT.toast&&LGTT.toast(t)}catch(_){}}
+  function openAbout(){
+    var f=window.BMN_FINAL_COMPLETE;
+    if(!f||typeof f.enterPersonal!=="function"){toast("About BMN is not ready yet. Try again in a moment.");return}
+    try{window.BMNBoard&&window.BMNBoard.close&&window.BMNBoard.close()}catch(_){}
+    f.enterPersonal();
+  }
+  window.bmnOpenAbout=openAbout;
+  var BOOK='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>';
+  function addCommunityAbout(){
+    var body=D.getElementById("lgttSetBody");if(!body||D.getElementById("bmnSetAbout"))return;
+    var tab=D.querySelector("#lgttSetTabs .on");if(!tab||tab.dataset.stab!=="app"||!body.firstElementChild)return;
+    var g=D.createElement("div");g.className="lgtt-set-group";g.style.setProperty("--n","11");
+    g.innerHTML='<h4>About</h4><div class="lgtt-set-card lgtt-glass"><button type="button" class="lgtt-set-row" id="bmnSetAbout"><span class="lgtt-set-ic" style="--c1:#2563eb;--c2:#5b4bd8">'+BOOK+'</span><span class="lgtt-set-txt"><strong>About BMN</strong><small>The BMN page: what BMN is, links and information.</small></span><span class="lgtt-set-val">Open</span></button></div>';
+    g.querySelector("button").addEventListener("click",openAbout);
+    body.appendChild(g);
+  }
+  var wt=0,wi=setInterval(function(){var body=D.getElementById("lgttSetBody");if(body){clearInterval(wi);var q=0;new MutationObserver(function(){if(q)return;q=requestAnimationFrame(function(){q=0;try{addCommunityAbout()}catch(_){}})}).observe(body,{childList:true});try{addCommunityAbout()}catch(_){}}else if(++wt>60)clearInterval(wi)},700);
+  function addPersonalBoardRow(){
+    var t=D.getElementById("themeSetting");var row=t&&t.closest(".setting-row");if(!row||D.getElementById("bmnSetBoardP"))return false;
+    var r=D.createElement("div");r.className="setting-row";
+    r.innerHTML='<div><strong>BMN Board</strong><small>Open the Board, BMN\u2019s text-first discussion page.</small></div><button class="pill" id="bmnSetBoardP" type="button">Open</button>';
+    r.querySelector("button").addEventListener("click",function(){var f=window.BMN_FINAL_COMPLETE;try{f&&f.enterCommunity&&f.enterCommunity()}catch(_){}setTimeout(function(){try{window.BMNBoard&&window.BMNBoard.open()}catch(_){}},350)});
+    row.after(r);return true;
+  }
+  var pt=0,pi=setInterval(function(){if(addPersonalBoardRow()||++pt>20)clearInterval(pi)},500);
+})();
+</script>
 <script src="/bmn-spotlight.js" defer></script>
 </body>
 </html>
