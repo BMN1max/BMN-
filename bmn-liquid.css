@@ -1,0 +1,180 @@
+/* ==========================================================================================================
+   BMN LIQUID LAYER (bmn-liquid.css) - additive material + refinement layer. NOT an engine.
+   - Sits AFTER the existing glass engine (bmn-glass/*) and the app styles. It never replaces them: it removes duplicated
+     capsules, unifies the material tokens, and restyles surfaces the engine does not own (lists, switches, Inbox).
+   - Everything is scoped under html.bmn-lq (class set by a one-line script in <head>). Kill switch: ?liquid=off (remembered), ?liquid=on.
+     Or delete the <link> to this file: the app returns to exactly its previous look.
+   - No animation, no filters on big surfaces, no JS required. Big surfaces get tint + rim light; blur only on small floating things.
+   - Tiers: default (iOS + desktop, engine on) | html.bmn-glass-lite / html.bmn-android (lighter) | html.bmn-fx-2 (governor saver) |
+     prefers-reduced-transparency | prefers-reduced-motion.
+   Honest limit: Safari/WebKit cannot refract through backdrop-filter:url(#svg). True lens refraction stays limited to the engine's
+   small DOM-mirror lenses (dock selection lens, tabs lens). This layer adds blur + edge light + tint, not fake refraction.
+   ========================================================================================================== */
+
+/* ---------- 1. Material tokens (one vocabulary for every surface) ---------- */
+html.bmn-lq {
+  --lq-edge: rgba(255,255,255,.26);          /* hairline edge light */
+  --lq-edge-hot: rgba(255,255,255,.55);      /* top-edge catch light */
+  --lq-sep: rgba(255,255,255,.10);           /* list separators */
+  --lq-fill: rgba(255,255,255,.07);          /* thin material (cards on glass) */
+  --lq-fill-2: rgba(255,255,255,.12);        /* pressed / selected */
+  --lq-glass: rgba(34,40,62,.46);            /* floating glass (menus, bars) */
+  --lq-glass-strong: rgba(26,30,48,.62);     /* sheets, long-press menus */
+  --lq-spec: linear-gradient(158deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.04) 34%, rgba(255,255,255,0) 60%, rgba(255,255,255,.07) 100%);
+  --lq-rim: inset 0 0 0 .5px var(--lq-edge), inset 0 1px 0 var(--lq-edge-hot), inset 0 -1px 0 rgba(255,255,255,.06);
+  --lq-rim-soft: inset 0 0 0 .5px var(--lq-edge), inset 0 .5px 0 var(--lq-edge-hot);
+  --lq-shadow: 0 16px 38px -14px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.20);
+  --lq-blur: 24px; --lq-sat: 1.8;
+  --lq-ambient-a: rgba(112,140,255,.20); --lq-ambient-b: rgba(255,120,190,.12);
+  --lq-ink: #f5f6fa; --lq-ink-2: rgba(245,246,250,.66);
+  --lq-switch-off: rgba(120,124,140,.38);
+  --lq-thumb: radial-gradient(120% 120% at 28% 14%, #ffffff 0%, #eef2ff 55%, #cfd8f3 100%);
+}
+html.bmn-lq[data-bmn-theme="light"] {
+  --lq-edge: rgba(255,255,255,.92);
+  --lq-edge-hot: #ffffff;
+  --lq-sep: rgba(20,28,50,.10);
+  --lq-fill: rgba(255,255,255,.50);
+  --lq-fill-2: rgba(20,28,50,.07);
+  --lq-glass: rgba(255,255,255,.58);
+  --lq-glass-strong: rgba(250,252,255,.78);
+  --lq-spec: linear-gradient(158deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,.18) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,.35) 100%);
+  --lq-rim: inset 0 0 0 .5px rgba(255,255,255,.95), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(20,28,50,.07);
+  --lq-rim-soft: inset 0 0 0 .5px rgba(255,255,255,.95), inset 0 .5px 0 #fff;
+  --lq-shadow: 0 14px 34px -14px rgba(30,44,80,.28), 0 1px 4px rgba(30,44,80,.10);
+  --lq-ambient-a: rgba(110,150,255,.24); --lq-ambient-b: rgba(255,150,200,.18);
+  --lq-ink: #0f1420; --lq-ink-2: rgba(15,20,32,.62);
+  --lq-switch-off: rgba(120,128,150,.34);
+}
+
+/* ---------- 2. One capsule per control: remove the duplicated native capsule under the engine capsule ----------
+   The engine mounts its own glass track over these controls; the native element underneath kept its own rim, which showed as an
+   offset second outline. When the engine is on, the native layer keeps only its layout (the engine draws the material). */
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-v-feed .lgtt-tabs.lgtt-glass,
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-seg.lgtt-glass,
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-seg,
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-prof-tabs.lgtt-glass {
+  background: transparent !important; box-shadow: none !important; border-color: transparent !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-seg::before, html.bmn-lq.bmn-glass-on body #lgtt .lgtt-seg::after,
+html.bmn-lq.bmn-glass-on body #lgtt .lgtt-tabs::before, html.bmn-lq.bmn-glass-on body #lgtt .lgtt-tabs::after { display: none !important; }
+
+/* ---------- 3. Grouped lists (Settings): one inset group, hairline separators, NOT a floating card per row ----------
+   The app's late override block (index.html "Settings: every row is its own rounded card") outranks plain selectors, so these use a longer
+   chain. High-contrast mode (html.bmn-high-contrast) keeps its own bordered rows, so it is excluded here. */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card.lgtt-set-card.lgtt-set-card {
+  display: block !important; gap: 0 !important; overflow: hidden !important; border-radius: 22px !important; padding: 0 !important; border: 0 !important;
+  background: var(--lq-fill) !important; box-shadow: var(--lq-rim-soft) !important;
+}
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card .lgtt-set-row.lgtt-set-row.lgtt-set-row {
+  min-height: 52px; padding: 11px 16px !important; border: 0 !important; border-radius: 0 !important; overflow: visible;
+  background-color: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  background-image: linear-gradient(var(--lq-sep), var(--lq-sep)) !important; background-repeat: no-repeat !important;
+  background-size: calc(100% - 32px) .5px !important; background-position: 16px 100% !important; scale: 1 !important;
+}
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card .lgtt-set-row.lgtt-set-row.lgtt-set-row:last-child { background-image: none !important; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-row.bmn-ctl-ov::after, html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-prof.bmn-ctl-ov::after { display: none !important; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card button.lgtt-set-row.lgtt-set-row.lgtt-set-row:active,
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-card.lgtt-set-card .lgtt-set-row.lgtt-set-row[data-bmn-pressed] { background-color: var(--lq-fill-2) !important; transform: none !important; scale: 1 !important; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group .lgtt-set-prof.lgtt-set-prof.lgtt-set-prof {
+  padding: 14px 16px; border: 0 !important; border-radius: 22px !important; background: var(--lq-fill) !important; box-shadow: var(--lq-rim-soft) !important; scale: 1 !important;
+}
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt .lgtt-set-group > h4 { margin: 0 6px 8px 16px; }
+html.bmn-lq body #lgtt .lgtt-opts { box-shadow: var(--lq-rim-soft) !important; }
+
+/* Switch: glass thumb on a calm track, no whole-row swell, no engine tint */
+html.bmn-lq body #lgtt .lgtt-switch {
+  width: 52px; height: 32px; scale: 1 !important; filter: none !important;
+  background: var(--lq-switch-off) !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.30), inset 0 0 0 .5px var(--lq-edge) !important;
+}
+html.bmn-lq body #lgtt .lgtt-switch[aria-checked="true"] {
+  background: linear-gradient(135deg, #34d6c4, #4f9dff) !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.22), inset 0 0 0 .5px rgba(255,255,255,.35), 0 0 16px -5px rgba(79,157,255,.7) !important;
+}
+html.bmn-lq body #lgtt .lgtt-switch::after {
+  background: var(--lq-thumb) !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.32), inset 0 1px 0 #fff, inset 0 -2px 4px rgba(40,60,120,.14), 0 0 0 .5px rgba(255,255,255,.55) !important;
+}
+html.bmn-lq body #lgtt .lgtt-switch.bmn-ctl-ov::after { inset: auto !important; }
+
+/* ---------- 3b. Discover / Profile scroll surfaces ----------
+   Light theme kept the dark night fill (rgba(8,10,20,.72)) under dark ink = muddy grey, low contrast. Light now gets the same quiet colour field as the Inbox.
+   Scroll-edge effect: content fades out as it passes under the floating dock instead of showing sharp through the glass (a mask: no extra layer, no blur). */
+html.bmn-lq[data-bmn-theme="light"] body #lgtt .lgtt-scroll {
+  background:
+    radial-gradient(120% 55% at 8% -4%, var(--lq-ambient-a), transparent 62%),
+    radial-gradient(90% 50% at 104% 102%, var(--lq-ambient-b), transparent 62%),
+    #f3f5fb;
+  color: var(--lq-ink);
+}
+html.bmn-lq body #lgtt .lgtt-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 104px), rgba(0,0,0,.08) 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 104px), rgba(0,0,0,.08) 100%);
+}
+
+/* Light theme: the selected Profile tab lens is white, but its icon stayed white (invisible). Ink colour for the selected state. */
+html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button.on, html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button[aria-selected="true"],
+html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button.is-on, html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button.active { color: var(--lq-ink) !important; }
+html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button.on svg, html.bmn-lq[data-bmn-theme="light"] body #lgtt #lgttProfTabs button[aria-selected="true"] svg { stroke: currentColor; }
+
+/* ---------- 4. Inbox / messaging (#bmnMsg is token driven: refresh the tokens, then the few shapes) ---------- */
+html.bmn-lq #bmnMsg { --bm-edge: var(--lq-edge); --bm-hi: var(--lq-edge-hot); --bm-glass: var(--lq-glass); --bm-sheet: var(--lq-glass-strong); --bm-shadow: var(--lq-shadow); }
+/* quiet colour field behind the glass so it has something to catch (static gradients: no animation, no filter) */
+html.bmn-lq #bmnMsg .bm-list, html.bmn-lq #bmnMsg .bm-chat {
+  background:
+    radial-gradient(120% 55% at 8% -4%, var(--lq-ambient-a), transparent 62%),
+    radial-gradient(90% 50% at 104% 102%, var(--lq-ambient-b), transparent 62%),
+    var(--bm-bg);
+}
+/* floating glass: edge light as an inset rim instead of a 1px border; single surface (composer has no backing capsule) */
+html.bmn-lq #bmnMsg .bm-glass {
+  border: 0; background: var(--lq-spec), var(--bm-glass);
+  -webkit-backdrop-filter: blur(var(--lq-blur)) saturate(var(--lq-sat)); backdrop-filter: blur(var(--lq-blur)) saturate(var(--lq-sat));
+  box-shadow: var(--lq-rim), var(--lq-shadow);
+}
+html.bmn-lq #bmnMsg .bm-composer { background: none !important; box-shadow: none !important; border: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html.bmn-lq #bmnMsg .bm-composer::before, html.bmn-lq #bmnMsg .bm-composer::after { display: none !important; }
+html.bmn-lq #bmnMsg .bm-input:focus-within, html.bmn-lq #bmnMsg .bm-search:focus-within { box-shadow: var(--lq-rim), 0 0 0 2px color-mix(in srgb, var(--bm-acc-t) 55%, transparent), var(--lq-shadow); }
+html.bmn-lq #bmnMsg .bm-quick button { border: 0; background: var(--lq-spec), var(--bm-glass); box-shadow: var(--lq-rim), 0 8px 18px -10px rgba(0,0,0,.45); }
+html.bmn-lq #bmnMsg .bm-send, html.bmn-lq #bmnMsg .bm-accent { border: 0; background: var(--lq-spec), var(--bm-mine); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.4), inset 0 1px 0 rgba(255,255,255,.55), 0 8px 18px -8px color-mix(in srgb, var(--bm-a1) 70%, transparent); }
+html.bmn-lq #bmnMsg .bm-chip { border: 0; box-shadow: var(--lq-rim-soft); }
+html.bmn-lq #bmnMsg .bm-chip.on { background: var(--lq-spec), var(--bm-mine); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.4), inset 0 1px 0 rgba(255,255,255,.5); }
+/* bubbles: theirs = thin glass, mine = tinted glass with a top catch light */
+html.bmn-lq #bmnMsg .bm-bub { border: 0; box-shadow: var(--lq-rim-soft); }
+html.bmn-lq #bmnMsg:not([data-bm-theme="light"]) .bm-msg:not(.mine) .bm-bub { background: var(--lq-spec), rgba(255,255,255,.085); }
+html.bmn-lq #bmnMsg[data-bm-theme="light"] .bm-msg:not(.mine) .bm-bub { background: var(--lq-spec), rgba(255,255,255,.74); box-shadow: var(--lq-rim-soft), 0 6px 14px -10px rgba(30,44,80,.35); }
+html.bmn-lq #bmnMsg .bm-msg.mine .bm-bub { background: var(--lq-spec), var(--bm-mine); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.28), inset 0 1px 0 rgba(255,255,255,.45), 0 8px 16px -10px color-mix(in srgb, var(--bm-a1) 70%, transparent); }
+/* long-press menu + reactions: the strongest glass, hairline separators, large radius */
+html.bmn-lq #bmnMsg .bm-ctx-scrim { background: rgba(8,10,20,.34); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); }
+html.bmn-lq #bmnMsg .bm-ctx-menu, html.bmn-lq #bmnMsg .bm-ctx-react {
+  border: 0; background: var(--lq-spec), var(--lq-glass-strong);
+  -webkit-backdrop-filter: blur(30px) saturate(1.9); backdrop-filter: blur(30px) saturate(1.9);
+  box-shadow: var(--lq-rim), 0 24px 56px -18px rgba(0,0,0,.6), 0 2px 10px rgba(0,0,0,.2);
+}
+html.bmn-lq #bmnMsg .bm-ctx-menu { border-radius: 24px; padding: 6px; }
+html.bmn-lq #bmnMsg .bm-ctx-item { border-radius: 16px; background-image: none; position: relative; }
+html.bmn-lq #bmnMsg .bm-ctx-item + .bm-ctx-item::before { content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: .5px; background: var(--lq-sep); pointer-events: none; }
+html.bmn-lq #bmnMsg .bm-ctx-item:active { background: var(--lq-fill-2); }
+html.bmn-lq #bmnMsg .bm-sheetbox { background: var(--lq-spec), var(--lq-glass-strong); -webkit-backdrop-filter: blur(var(--lq-blur)) saturate(var(--lq-sat)); backdrop-filter: blur(var(--lq-blur)) saturate(var(--lq-sat)); box-shadow: var(--lq-rim), 0 -18px 50px -20px rgba(0,0,0,.5); border: 0; }
+
+/* Lite tier (Android / no backdrop-filter): the Create pill is white, but its "+" inherited white in dark theme = a blank white pill. Dark ink on the pill. */
+html.bmn-lq.bmn-glass-lite body #lgtt .lgtt-plus-pill, html.bmn-lq.bmn-glass-lite body #lgtt .lgtt-plus-pill .lgtt-ico { color: #0b1020 !important; }
+html.bmn-lq.bmn-glass-lite body #lgtt .lgtt-plus-pill .lgtt-ico { stroke: #0b1020 !important; }
+
+/* ---------- 5. Tiers ---------- */
+/* Android / lite: engine is CSS-only here, so keep this layer light: shorter blur, no big shadows */
+html.bmn-lq.bmn-glass-lite, html.bmn-lq.bmn-android { --lq-blur: 12px; --lq-sat: 1.5; --lq-shadow: 0 8px 18px -10px rgba(0,0,0,.45); }
+html.bmn-lq.bmn-glass-lite #bmnMsg .bm-ctx-menu, html.bmn-lq.bmn-glass-lite #bmnMsg .bm-ctx-react,
+html.bmn-lq.bmn-android #bmnMsg .bm-ctx-menu, html.bmn-lq.bmn-android #bmnMsg .bm-ctx-react { -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5); }
+html.bmn-lq.bmn-glass-lite #bmnMsg .bm-ctx-scrim, html.bmn-lq.bmn-android #bmnMsg .bm-ctx-scrim { -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* governor saver (level 2) and reduced transparency: solid tinted fills, no backdrop filters from this layer */
+html.bmn-lq.bmn-fx-2 #bmnMsg .bm-glass, html.bmn-lq.bmn-fx-2 #bmnMsg .bm-ctx-menu, html.bmn-lq.bmn-fx-2 #bmnMsg .bm-ctx-react,
+html.bmn-lq.bmn-fx-2 #bmnMsg .bm-ctx-scrim, html.bmn-lq.bmn-fx-2 #bmnMsg .bm-sheetbox { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html.bmn-lq.bmn-fx-2 #bmnMsg .bm-ctx-menu, html.bmn-lq.bmn-fx-2 #bmnMsg .bm-ctx-react, html.bmn-lq.bmn-fx-2 #bmnMsg .bm-sheetbox { background: var(--bm-sheet); }
+@media (prefers-reduced-transparency: reduce) {
+  html.bmn-lq #bmnMsg .bm-glass, html.bmn-lq #bmnMsg .bm-ctx-menu, html.bmn-lq #bmnMsg .bm-ctx-react, html.bmn-lq #bmnMsg .bm-ctx-scrim, html.bmn-lq #bmnMsg .bm-sheetbox { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  html.bmn-lq #bmnMsg .bm-ctx-menu, html.bmn-lq #bmnMsg .bm-ctx-react, html.bmn-lq #bmnMsg .bm-sheetbox { background: var(--bm-sheet); }
+}
