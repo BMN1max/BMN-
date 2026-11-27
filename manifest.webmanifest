@@ -8,27 +8,39 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone"],
+  "display_override": [
+    "standalone"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#070711",
   "theme_color": "#070711",
-  "categories": ["social", "entertainment", "photo"],
+  "categories": [
+    "social",
+    "entertainment",
+    "photo"
+  ],
   "prefer_related_applications": false,
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
   "icons": [
     {
+      "src": "/bmn-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/bmn-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/bmn-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/bmn-icon.svg",
