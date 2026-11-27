@@ -66,7 +66,10 @@
   frame.__perf = true;
   function begin() { if (mode !== 'auto' || level >= 2 || sampling) return; sampling = true; last = 0; samples = []; requestAnimationFrame(frame); }
   function schedule() { clearTimeout(timer); if (mode !== 'auto' || level >= 2) return; windowsRun++; timer = setTimeout(begin, windowsRun < 10 ? 6000 : 45000); }
-  document.addEventListener('visibilitychange', function () { last = 0; samples = []; });
+  /* Stage 1A: expose tab visibility as a class so CSS can pause decorative infinite animations while the tab is hidden. */
+  function tabFlag() { root.classList.toggle('bmn-tab-hidden', !!document.hidden); }
+  tabFlag();
+  document.addEventListener('visibilitychange', function () { last = 0; samples = []; tabFlag(); });
   timer = setTimeout(begin, 2000);
 
   window.BMN_PERF = {

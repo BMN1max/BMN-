@@ -2124,6 +2124,8 @@ body.community-mode #bmnProfileV2.bmn-founder-profile .bmn-profile-menu{border-c
 <style id="bmn-discover-search-repair">#bmnDiscoverResults{display:grid;gap:8px;margin:4px 0 18px}.bmn-discover-result{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:13px 14px;border:1px solid var(--clear-glass-border);border-radius:16px;background:var(--clear-glass-bg);color:var(--fg);font:inherit;cursor:pointer}.bmn-discover-result>span:first-child{display:flex;align-items:center;gap:8px}.bmn-discover-result strong{font-size:12px}.bmn-discover-result small{font-size:10px;color:var(--muted)}.bmn-discover-result-caption{font-size:12px;line-height:1.45;color:var(--muted)}.bmn-discover-result-count{margin:4px 2px;font-size:11px;color:var(--muted)}.bmn-discover-creator{min-height:42px}</style>
 <style id="bmn-action-sheet-visibility-repair">html.bmn-community-app body>#bmnActionSheetHost{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;position:fixed!important;inset:0!important;z-index:2147482500!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-backdrop.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet.open{display:block!important;visibility:visible!important;pointer-events:auto!important}html.bmn-community-app body>#bmnActionSheetHost #bmn-action-sheet:not(.open){pointer-events:none!important}</style>
 <script src="/bmn-perf.js"></script>
+<script id="bmn-liquid-switch">/* BMN Liquid layer switch: ?liquid=off turns bmn-liquid.css off (remembered), ?liquid=on turns it back on. Default on. */(function(){var r=document.documentElement;try{var q=/[?&]liquid=(on|off)(&|$)/.exec(location.search);if(q)localStorage.setItem('bmn-liquid',q[1]);if(localStorage.getItem('bmn-liquid')!=='off')r.classList.add('bmn-lq')}catch(e){r.classList.add('bmn-lq')}})();</script>
+<link rel="stylesheet" href="/bmn-liquid.css">
 <script id="bmn-glass-tier">
 /* BMN Glass device tier. Decided once, before first paint, by capability first and platform second.
    lite    = Android, or no backdrop-filter: CSS-only frosted glass, the React Liquid Glass engine is never downloaded.
@@ -6352,6 +6354,22 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
 @keyframes lgttIn { from { opacity: 0; transform: scale(.9) translateY(4%); } to { opacity: 1; transform: none; } }
 @keyframes lgttAmb { to { transform: translate3d(8vmax, 6vmax, 0) scale(1.15); } }
 @keyframes lgttDrift { 0% { transform: translate3d(0,0,0) scale(1); } 100% { transform: translate3d(14%, 10%, 0) scale(1.18); } }
+/* BMN Stage 1A: ambient animation gating. The infinite decorative animations (lgttAmb / lgttDrift) used to run forever, even while the
+   overlay was closed (visibility:hidden does not stop CSS animations). They now pause whenever nothing can show them, and resume where
+   they stopped: overlay closed, Inbox or Board covering it, tab hidden, governor level >= 1, or reduced motion. Pause only; no visual change. */
+.lgtt:not(.is-open) .lgtt-ambient i, .lgtt:not(.is-open) .lgtt-scene .bl, .lgtt:not(.is-open) .lgtt-bmn::after,
+body.bmn-real-inbox-open .lgtt-ambient i, body.bmn-real-inbox-open .lgtt-scene .bl, body.bmn-real-inbox-open .lgtt-bmn::after,
+body.bmn-board-open .lgtt-ambient i, body.bmn-board-open .lgtt-scene .bl, body.bmn-board-open .lgtt-bmn::after,
+html.bmn-tab-hidden .lgtt-ambient i, html.bmn-tab-hidden .lgtt-scene .bl, html.bmn-tab-hidden .lgtt-bmn::after,
+html.bmn-fx-1 .lgtt-ambient i, html.bmn-fx-1 .lgtt-scene .bl, html.bmn-fx-1 .lgtt-bmn::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .lgtt-ambient i, .lgtt-scene .bl, .lgtt-bmn::after { animation-play-state: paused !important; } }
+/* Covered-by-another-view cases. (1) The ambient glows sit behind every view; while the Feed is showing an active slide (opaque video or scene)
+   they cannot be seen, so they pause (they still run on the empty feed state, Discover and Profile, where they are visible). (2) The Feed's scene
+   blobs are invisible while Discover/Profile cover the Feed; the Profile BMN card shine is invisible outside Profile. Needs :has(); where it is
+   not supported the rules are simply ignored and the animation keeps running as before. */
+.lgtt:has(#lgttStage[data-view="feed"] .lgtt-slide.is-active) .lgtt-ambient i,
+.lgtt-stage:not([data-view="feed"]) .lgtt-v-feed .lgtt-scene .bl,
+.lgtt-stage:not([data-view="profile"]) .lgtt-bmn::after { animation-play-state: paused !important; }
 @keyframes lgttFloat { 0%,100% { transform: translate(-50%, -50%) rotate(-4deg); } 50% { transform: translate(-50%, -56%) rotate(4deg) scale(1.05); } }
 @keyframes lgttGrid { to { background-position: 0 46px, 0 0; } }
 @keyframes lgttRing { 0% { transform: translate(-50%, -50%) scale(.2); opacity: .9; } 100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; } }
@@ -8204,6 +8222,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
   const Overlay = {
     open(o) {
       o = o || {};
+      if (!R.root) { ST.pendingOpen = o; return; } /* BMN Stage 1C: asked to open before mount() built the overlay (auto-open timer can beat DOMContentLoaded). Keep the request; boot() replays it. */
       S.settings.sound = true;
       if (!ST.open) {
         ST.open = true; ST.lastFocus = document.activeElement;
@@ -8413,6 +8432,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
       if (/^#reel-/.test(location.hash)) setTimeout(() => Overlay.open({ post: location.hash.slice(6) }), 400);
       else if (location.hash === '#reels') setTimeout(() => Overlay.open({}), 400);
       if (ST.standalone) Overlay.open({});
+      if (ST.pendingOpen) { const po = ST.pendingOpen; ST.pendingOpen = null; Overlay.open(po); } /* BMN Stage 1C: replay an open() requested before mount */
       // make sure indicator positions are right after fonts load
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => R.root && moveInd(R.Tabs));
     }
@@ -8601,7 +8621,7 @@ body.light .lgtt-launch .lgtt-story-name { color: #1b2233; } body.light .lgtt-la
  function openOnCommunityEntry(){
    const body=document.body;
    const active=body.classList.contains('community-mode');
-   if(!active){body.dataset.bmnImmersiveOpened='';return;}
+   if(!active){if(body.dataset.bmnImmersiveOpened!=='')body.dataset.bmnImmersiveOpened='';return;}/* BMN Stage 1B: write only on change, so observers are not woken every second */
    if(body.dataset.bmnImmersiveOpened==='yes')return;
    body.dataset.bmnImmersiveOpened='yes';
    setTimeout(()=>{if(body.classList.contains('community-mode')&&window.LGTT&&typeof window.LGTT.open==='function')window.LGTT.open();},180);
