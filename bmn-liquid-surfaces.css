@@ -1,0 +1,323 @@
+/* ==========================================================================================================
+   BMN LIQUID SURFACES (bmn-liquid-surfaces.css) - batch 2 of the additive Liquid Glass layer. NOT an engine.
+   Loads AFTER bmn-liquid.css (same token vocabulary: --lq-*) and after the glass engine (bmn-glass/*).
+   Scope: html.bmn-lq only. Kill switch is the same as batch 1: ?liquid=off (remembered) / ?liquid=on, or remove the <link>.
+   Surfaces: 1 comments + share sheets | 2 feed media controls | 3 dock | 4 Settings (Account/Privacy/Alerts)
+             5 BMN Board + notifications | 6 Spotlight | 7 Platform Intelligence console | 8 tiers
+   Rules kept: no JS, no new animation, no backdrop-filter on big surfaces (small floating items only), no extra backing
+   layers (one material per component; rims are inset shadows on the element itself), the engine bundle is untouched,
+   high-contrast mode excluded where the base rule is structural.
+   Honest limit (same as batch 1): Safari/WebKit cannot refract through backdrop-filter:url(#svg). Large surfaces get
+   blur + rim light + tint; true bending exists only in the engine's small DOM-mirror lenses.
+   ========================================================================================================== */
+
+/* ---------- 0. Extra tokens (dark default, light override) ---------- */
+html.bmn-lq {
+  --lqs-hair: rgba(255,255,255,.10);
+  --lqs-chip: rgba(255,255,255,.085);
+  --lqs-chip-on: rgba(255,255,255,.16);
+  --lqs-catch: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.04) 46%, rgba(255,255,255,0) 100%);
+  --lqs-rim-pill: inset 0 0 0 .5px rgba(255,255,255,.30), inset 0 1px 0 rgba(255,255,255,.46), inset 0 -1px 0 rgba(255,255,255,.07);
+  --lqs-lift: 0 6px 18px -8px rgba(0,0,0,.55);
+  --lqs-grab: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.34));
+  --lqs-panel: rgba(18,21,34,.84);
+  --lqs-panel-2: rgba(255,255,255,.055);
+  --lqs-ink: #f5f6fa; --lqs-ink-2: rgba(245,246,250,.68); --lqs-ink-3: rgba(245,246,250,.46);
+  --lqs-acc: #8fb6ff; --lqs-acc-fill: rgba(111,166,255,.30); --lqs-acc-edge: rgba(143,182,255,.55);
+  --lqs-warn: #ffb866; --lqs-bad: #ff8d8d; --lqs-ok: #6fe0a6;
+}
+html.bmn-lq[data-bmn-theme="light"] {
+  --lqs-hair: rgba(20,28,50,.10);
+  --lqs-chip: rgba(255,255,255,.62);
+  --lqs-chip-on: rgba(255,255,255,.92);
+  --lqs-catch: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.22) 50%, rgba(255,255,255,0) 100%);
+  --lqs-rim-pill: inset 0 0 0 .5px rgba(255,255,255,.95), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(30,45,80,.08);
+  --lqs-lift: 0 6px 16px -9px rgba(40,56,90,.28);
+  --lqs-grab: linear-gradient(180deg, rgba(60,72,100,.46), rgba(60,72,100,.30));
+  --lqs-panel: rgba(250,252,255,.88);
+  --lqs-panel-2: rgba(255,255,255,.64);
+  --lqs-ink: #12151c; --lqs-ink-2: rgba(18,21,28,.68); --lqs-ink-3: rgba(18,21,28,.46);
+  --lqs-acc: #1f5fe0; --lqs-acc-fill: rgba(37,99,235,.14); --lqs-acc-edge: rgba(37,99,235,.40);
+  --lqs-warn: #9a5b00; --lqs-bad: #b3261e; --lqs-ok: #0b7a49;
+}
+
+/* ==========================================================================================================
+   1. COMMENTS + SHARE SHEETS
+   One strong sheet (engine material), a real grabber, hairline structure, single input pill, thin glass chips.
+   ========================================================================================================== */
+html.bmn-lq body #lgtt aside.lgtt-sheet .lgtt-grab {
+  width: 38px !important; height: 5px !important; border-radius: 3px !important;
+  background: var(--lqs-grab) !important; box-shadow: 0 .5px 0 rgba(255,255,255,.25) !important; opacity: .9;
+}
+html.bmn-lq body #lgtt aside.lgtt-sheet .lgtt-sheet-h h3 { font-weight: 760; letter-spacing: -.02em; }
+html.bmn-lq body #lgtt aside.lgtt-sheet .lgtt-sheet-h small { opacity: .62; font-weight: 600; letter-spacing: 0; }
+/* hairline between header and body, no extra panel */
+html.bmn-lq body #lgtt aside.lgtt-sheet .lgtt-sheet-h { box-shadow: 0 .5px 0 var(--lqs-hair); }
+
+/* emoji quick-reaction row: thin glass chips with a top catch light (was flat 8% discs) */
+html.bmn-lq body #lgtt .lgtt-emoji-row button {
+  background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill);
+  transition: transform .35s var(--lg-spring, cubic-bezier(.34,1.56,.64,1)), background .2s;
+}
+html.bmn-lq body #lgtt .lgtt-emoji-row button:active { background: var(--lqs-chip-on); }
+
+/* comment rows */
+html.bmn-lq body #lgtt .lgtt-cm { border-radius: 16px; }
+html.bmn-lq body #lgtt .lgtt-cm + .lgtt-cm { box-shadow: 0 -.5px 0 var(--lqs-hair); }
+html.bmn-lq body #lgtt .lgtt-cm-user { font-weight: 700; letter-spacing: -.01em; }
+html.bmn-lq body #lgtt .lgtt-cm-meta { opacity: .6; }
+html.bmn-lq body #lgtt .lgtt-cm-like { transition: transform .3s var(--lg-spring, cubic-bezier(.34,1.56,.64,1)); }
+html.bmn-lq body #lgtt .lgtt-cm-like:active { transform: scale(.86); }
+html.bmn-lq body #lgtt .lgtt-reply-chip {
+  background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill); border: 0;
+}
+
+/* share channels: equal tiles, labels never wrap ("WhatsApp" used to break into "WhatsAp / p") */
+html.bmn-lq body #lgtt .lgtt-share-channels { gap: 4px; }
+html.bmn-lq body #lgtt .lgtt-chan { width: 74px; letter-spacing: -.02em; }
+html.bmn-lq body #lgtt .lgtt-chan > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+html.bmn-lq body #lgtt .lgtt-chan .lgtt-btn {
+  width: 54px; height: 54px; border-radius: 19px; background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill), var(--lqs-lift);
+}
+/* share actions (Favourite / Repost / Not interested / Report): same chip language */
+html.bmn-lq body #lgtt .lgtt-share-actions .lgtt-btn {
+  border-radius: 18px; background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill); font-weight: 650; letter-spacing: -.01em;
+}
+html.bmn-lq body #lgtt .lgtt-share-actions .lgtt-btn:active { background: var(--lqs-chip-on); }
+/* share-send bar: one pill (the input inside stays transparent) */
+html.bmn-lq body #lgtt .lgtt-share-send { border-radius: 24px; box-shadow: var(--lqs-rim-pill); }
+
+/* the sheet's own search / compose pills: no second capsule behind the engine pill */
+html.bmn-lq.bmn-glass-on body #lgtt aside.lgtt-sheet .lgtt-search > input,
+html.bmn-lq.bmn-glass-on body #lgtt aside.lgtt-sheet .lgtt-compose-pill > input,
+html.bmn-lq.bmn-glass-on body #lgtt aside.lgtt-sheet .lgtt-compose-pill > textarea { background: transparent !important; box-shadow: none !important; }
+
+/* ==========================================================================================================
+   2. FEED MEDIA CONTROLS (action rail, counts, sound pill, progress)
+   The rail buttons are engine droplets; here they get one shared rim + a calmer adaptive tint so the four buttons read
+   as one set. The mute control stays hidden by design (unchanged). Play/pause = tap on video (unchanged).
+   ========================================================================================================== */
+html.bmn-lq body #lgtt .lgtt-act-btn { box-shadow: var(--lqs-rim-pill), 0 6px 14px -8px rgba(0,0,0,.6); }
+html.bmn-lq body #lgtt .lgtt-act-n {
+  font-weight: 700; letter-spacing: -.01em; color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.55), 0 0 10px rgba(0,0,0,.35);
+}
+/* liked / saved states keep the BMN accent but with a softer glow */
+html.bmn-lq body #lgtt .lgtt-act-btn.on { box-shadow: var(--lqs-rim-pill), 0 0 18px -4px rgba(255,92,138,.55); }
+
+/* sound pill: one frosted capsule; smaller blur than before (12px -> 10px) = cheaper while scrolling the feed */
+html.bmn-lq body #lgtt .lgtt-music {
+  background: rgba(255,255,255,.10); -webkit-backdrop-filter: blur(10px) saturate(1.5); backdrop-filter: blur(10px) saturate(1.5);
+  box-shadow: var(--lqs-rim-pill); border: 0; letter-spacing: -.01em;
+}
+/* hashtag chips in the caption */
+html.bmn-lq body #lgtt .lgtt-cap .tag { box-shadow: var(--lqs-rim-pill); }
+
+/* progress: a thin glass rail, bright fill with a soft head glow, glass thumb while seeking */
+html.bmn-lq body #lgtt .lgtt-prog-track {
+  background: rgba(255,255,255,.20); box-shadow: inset 0 .5px 0 rgba(255,255,255,.24), 0 0 0 .5px rgba(0,0,0,.18);
+}
+html.bmn-lq body #lgtt .lgtt-prog.is-seek .lgtt-prog-track, html.bmn-lq body #lgtt .lgtt-prog:focus-visible .lgtt-prog-track { height: 7px; }
+html.bmn-lq body #lgtt .lgtt-prog-fill { box-shadow: 0 0 10px rgba(255,255,255,.28); }
+html.bmn-lq body #lgtt .lgtt-prog-thumb {
+  width: 16px; height: 16px; margin: -8px 0 0 -8px; background: radial-gradient(120% 120% at 30% 15%, #fff, #e9eefc 60%, #c6d2f3);
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.7), 0 3px 8px rgba(0,0,0,.45);
+}
+html.bmn-lq body #lgtt .lgtt-prog:focus-visible { outline: 2px solid rgba(255,255,255,.75); outline-offset: 2px; border-radius: 8px; }
+html.bmn-lq body #lgtt .lgtt-prog-time { font-weight: 700; letter-spacing: .02em; }
+
+/* ==========================================================================================================
+   3. DOCK
+   iOS/desktop (engine capsule + selection capsule): the selected capsule was dim and its coral label sank into it on dark
+   video; in light theme the feed labels were black on video. Android lite: the selection pill was a flat grey disc.
+   No backplate is added anywhere: only the existing selection element, its ink and its rim change.
+   ========================================================================================================== */
+/* 3a. feed is always video: keep the dock ink light even when the app theme is light */
+html.bmn-lq[data-bmn-theme="light"] body #lgtt:has(#lgttStage[data-view="feed"]) .bmn-gn .lg-track__item { color: rgba(255,255,255,.94) !important; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
+html.bmn-lq[data-bmn-theme="light"] body #lgtt:has(#lgttStage[data-view="feed"]) .bmn-gn .lg-track__item[aria-selected="true"] { color: #ff9aa6 !important; }
+html.bmn-lq body #lgtt .bmn-gn .lg-track__item[aria-selected="true"] { color: #ff8e9c; }
+html.bmn-lq[data-bmn-theme="light"] body #lgtt:not(:has(#lgttStage[data-view="feed"])) .bmn-gn .lg-track__item[aria-selected="true"] { color: #d1323e; }
+/* 3b. selection capsule: brighter, top-lit, still translucent (the video/colour stays visible through it) */
+html.bmn-lq.bmn-glass-on body #lgtt .bmn-gn .lg-track__select {
+  background-image:
+    radial-gradient(120% 90% at 28% 0%, rgba(255,255,255,.30), rgba(255,255,255,0) 58%),
+    linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.06));
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.46), inset 0 1.5px 1px -.5px rgba(255,255,255,.78), inset 0 -2px 3px -1.5px rgba(255,255,255,.26), 0 4px 12px -6px rgba(0,0,0,.45);
+}
+html.bmn-lq.bmn-glass-on[data-bmn-theme="light"] body #lgtt:not(:has(#lgttStage[data-view="feed"])) .bmn-gn .lg-track__select {
+  background-image:
+    radial-gradient(120% 90% at 28% 0%, rgba(255,255,255,.95), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.34));
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.98), inset 0 1.5px 1px -.5px #fff, inset 0 -2px 3px -1.5px rgba(40,60,100,.14), 0 5px 14px -8px rgba(40,56,90,.34);
+}
+/* 3c. Android / lite dock: selection pill = the same top-lit capsule, no flat grey disc */
+html.bmn-lq.bmn-glass-lite body #lgtt .lgtt-dock-lens {
+  background: linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.08)) !important;
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.42), inset 0 1px 0 rgba(255,255,255,.70), 0 4px 12px -7px rgba(0,0,0,.45);
+}
+html.bmn-lq.bmn-glass-lite[data-bmn-theme="light"] body #lgtt:not(:has(#lgttStage[data-view="feed"])) .lgtt-dock-lens {
+  background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.46)) !important;
+  box-shadow: inset 0 0 0 .5px #fff, inset 0 1px 0 #fff, 0 4px 12px -8px rgba(40,56,90,.34);
+}
+html.bmn-lq.bmn-glass-lite body #lgtt .lgtt-dk.on { background-image: none !important; box-shadow: none !important; }  /* the lens carries the selection: no second pill inside it */
+
+/* ==========================================================================================================
+   4. SETTINGS - Account / Privacy / Alerts  (grouped rows are batch 1; this finishes the tabs)
+   Appearance row = one group like the rest; profile row; inline selects/option rows; list-style Sign-out / danger rows.
+   Switches stay engine-owned (BMN red tint): unchanged by design.
+   ========================================================================================================== */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeRowV17 {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 4px 0 16px; padding: 14px 16px;
+  border-radius: 20px; background: var(--lqs-panel-2); box-shadow: var(--lqs-rim-pill); border: 0;
+}
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeRowV17 > div { min-width: 0; flex: 1; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeRowV17 strong { display: block; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeRowV17 small { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; opacity: .66; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeSelectV17 {
+  flex: none; min-width: 96px; height: 38px; padding: 0 12px; border-radius: 19px; border: 0; color: inherit; font: 650 15px/1 inherit; font-family: inherit;
+  background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill); text-align: center; text-align-last: center;
+}
+/* section titles */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-group > h4 {
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin: 18px 6px 8px;
+}
+/* profile row: avatar + names + small glass Edit */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-prof { padding: 14px 16px; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-prof strong { font-size: 17px; font-weight: 750; letter-spacing: -.015em; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-prof small { opacity: .62; }
+/* row values and chevrons */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-val { color: var(--lqs-ink-2); opacity: 1; font-weight: 600; }
+/* secondary text was white-on-white in the light theme (values, captions, handle, section titles): explicit ink instead of inherited white */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-txt small,
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-prof small,
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings #bmnThemeModeRowV17 small { color: var(--lqs-ink-2); opacity: 1; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-ic { opacity: .86; }
+/* segmented option rows (.lgtt-opts): one capsule, selected = top-lit capsule, no stacked outlines */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-opts { border-radius: 999px; background: var(--lqs-panel-2); box-shadow: var(--lqs-rim-pill); border: 0; padding: 3px; gap: 2px; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-opts button { border-radius: 999px; font-weight: 650; letter-spacing: -.01em; background: transparent; box-shadow: none; border: 0; }
+/* option labels were white-on-white in the light theme on the iOS/desktop tier (pre-existing): explicit ink */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-opts button { color: var(--lqs-ink-2); text-shadow: none; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-opts button.on { color: var(--lqs-ink); }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-opts button.on { background: var(--lqs-chip-on); box-shadow: var(--lqs-rim-pill), var(--lqs-lift); }
+/* keyword / blocked chips (Privacy) */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-chip { background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill); border: 0; border-radius: 999px; font-weight: 600; }
+/* native selects in rows (Language...) had white text on a white pill in the light theme */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-row select { color: var(--lqs-ink); background-color: var(--lqs-chip); border: 0; box-shadow: var(--lqs-rim-pill); border-radius: 999px; }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-row select option { color: #12151c; background: #fff; }
+/* text inputs inside settings */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-card input[type="text"],
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-card input[type="search"] { background: var(--lqs-panel-2); border: 0; border-radius: 14px; box-shadow: var(--lqs-rim-pill); color: inherit; }
+/* sign-out / delete rows keep their red, readable in both themes */
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-row.danger { color: var(--lqs-bad); }
+html.bmn-lq:not(.bmn-high-contrast) body #lgtt #lgttSettings .lgtt-set-group > h4 { color: var(--lqs-ink-2); opacity: 1; }
+
+/* ==========================================================================================================
+   5. BMN BOARD + NOTIFICATIONS
+   The Board stays a calm solid timeline (its own rule, kept). Glass only on small floating parts: top controls, bottom
+   navigation, composer button, sheets, toast. They get the shared rim, a top catch light, a lit selection capsule.
+   ========================================================================================================== */
+html.bmn-lq #bmnBoard .bd-glass {
+  box-shadow: inset 0 0 0 .5px var(--bd-edge), inset 0 1px 0 var(--bd-hi), inset 0 -1px 0 rgba(255,255,255,.05), var(--bd-shadow);
+  background-image: var(--lqs-catch);
+}
+html.bmn-lq #bmnBoard[data-bd-theme="light"] .bd-glass { box-shadow: inset 0 0 0 .5px #fff, inset 0 1px 0 #fff, inset 0 -1px 0 rgba(30,45,80,.07), 0 8px 22px -10px rgba(30,40,70,.22); }
+html.bmn-lq #bmnBoard .bd-ib.bd-glass { background-color: var(--bd-glass); }
+/* nav: selected tab = lit capsule behind the icon, no extra element */
+html.bmn-lq #bmnBoard .bd-nav button { transition: color .15s, background .25s; }
+html.bmn-lq #bmnBoard .bd-nav button.on {
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05));
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.28), inset 0 1px 0 rgba(255,255,255,.4);
+}
+html.bmn-lq #bmnBoard[data-bd-theme="light"] .bd-nav button.on { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.55)); box-shadow: inset 0 0 0 .5px #fff, 0 2px 8px -4px rgba(30,40,70,.28); }
+/* tab underline = short bright glass bar (was flat gradient) */
+html.bmn-lq #bmnBoard .bd-tabs button.on::after { height: 3px; border-radius: 3px; box-shadow: 0 0 10px -1px rgba(91,75,216,.6), inset 0 .5px 0 rgba(255,255,255,.5); }
+/* composer FAB: glass-lit accent, one rim, softer cast */
+html.bmn-lq #bmnBoard .bd-fab {
+  background-image: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%), linear-gradient(135deg, var(--bd-a1), var(--bd-a2));
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.4), inset 0 1.5px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(37,99,235,.6);
+}
+html.bmn-lq #bmnBoard .bd-btn:not(.ghost) {
+  background-image: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0) 58%), linear-gradient(135deg, var(--bd-a1), var(--bd-a2));
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.34), inset 0 1px 0 rgba(255,255,255,.5);
+}
+html.bmn-lq #bmnBoard .bd-btn.ghost { box-shadow: inset 0 0 0 .5px var(--bd-line); border: 0; }
+/* sheets, context menus */
+html.bmn-lq #bmnBoard .bd-sh { box-shadow: inset 0 1px 0 var(--bd-hi), inset 0 0 0 .5px var(--bd-edge), 0 -18px 40px -22px rgba(0,0,0,.5); }
+html.bmn-lq #bmnBoard .bd-grab { background: var(--lqs-grab); }
+html.bmn-lq #bmnBoard .bd-toast { box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2), 0 10px 24px -12px rgba(0,0,0,.5); }
+/* chips and pills */
+html.bmn-lq #bmnBoard .bd-pill, html.bmn-lq #bmnBoard .bd-seg { box-shadow: var(--lqs-rim-pill); }
+/* notifications: hairline rows, readable unread state */
+html.bmn-lq #bmnBoard .bd-nb { box-shadow: 0 .5px 0 var(--bd-line); }
+html.bmn-lq #bmnBoard .bd-has-unread::after { box-shadow: 0 0 0 2px var(--bd-bg), 0 0 8px rgba(125,176,255,.6); }
+
+/* ==========================================================================================================
+   6. SPOTLIGHT (profile card + owner manager). Spotlight injects its own CSS from JS; this file only restyles it.
+   Manager panel follows the app theme (it was always dark), same material as the other panels.
+   ========================================================================================================== */
+html.bmn-lq .bmn-sp { box-shadow: var(--lqs-rim-pill), 0 12px 28px -16px rgba(0,0,0,.55); border: 0; }
+html.bmn-lq .bmn-sp .bmn-sp-cta { box-shadow: var(--lqs-rim-pill); border: 0; }
+html.bmn-lq #bmnSpMgr { --lqs-solid: #12151f; }
+html.bmn-lq[data-bmn-theme="light"] #bmnSpMgr { --lqs-solid: #f3f5fa; }
+html.bmn-lq #bmnSpMgr, html.bmn-lq #bmnSpMgr .sp-panel { background: var(--lqs-solid); color: var(--lqs-ink); }
+html.bmn-lq #bmnSpMgr .sp-head { box-shadow: 0 .5px 0 var(--lqs-hair); }
+html.bmn-lq #bmnSpMgr button { box-shadow: var(--lqs-rim-pill); border: 0; }
+html.bmn-lq #bmnSpMgr .sp-row, html.bmn-lq #bmnSpMgr .sp-acts + * { box-shadow: var(--lqs-rim-pill); border: 0; background: var(--lqs-panel-2); }
+html.bmn-lq #bmnSpMgr input, html.bmn-lq #bmnSpMgr select, html.bmn-lq #bmnSpMgr textarea { background: var(--lqs-panel-2); color: inherit; border: 0; box-shadow: var(--lqs-rim-pill); border-radius: 12px; }
+html.bmn-lq #bmnSpMgr .sp-hint, html.bmn-lq #bmnSpMgr .sp-meta, html.bmn-lq #bmnSpMgr .sp-empty { color: var(--lqs-ink-2); }
+html.bmn-lq #bmnSpMgr .sp-err, html.bmn-lq #bmnSpMgr button.dng { color: var(--lqs-bad); }
+html.bmn-lq #bmnSpMgr .sp-ok { color: var(--lqs-ok); }
+
+/* ==========================================================================================================
+   7. PLATFORM INTELLIGENCE console (#bmnPi). Visual only: no markup, no JS, no API behaviour touched.
+   Panel was fixed dark in both themes; now follows the app theme. Tabs = glass capsule row; cards = rim-lit tiles with
+   hairline structure; severity pills keep their meaning (colour + text), buttons get the shared rim.
+   ========================================================================================================== */
+html.bmn-lq #bmnPi { --lqs-pi: rgba(16,19,31,.95); background: var(--lqs-pi); color: var(--lqs-ink); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
+html.bmn-lq #bmnPi .pi-head h2 { font-weight: 780; letter-spacing: -.02em; }
+html.bmn-lq #bmnPi .pi-x { background: var(--lqs-chip); box-shadow: var(--lqs-rim-pill); border: 0; color: inherit; border-radius: 999px; }
+html.bmn-lq #bmnPi .pi-tabs button {
+  background: var(--lqs-chip); border: 0; box-shadow: var(--lqs-rim-pill); color: var(--lqs-ink-2); font-weight: 650; letter-spacing: -.01em;
+}
+html.bmn-lq #bmnPi .pi-tabs button[aria-selected="true"] {
+  background: linear-gradient(180deg, var(--lqs-acc-fill), rgba(255,255,255,.04)); color: var(--lqs-ink);
+  box-shadow: inset 0 0 0 .5px var(--lqs-acc-edge), inset 0 1px 0 rgba(255,255,255,.35);
+}
+html.bmn-lq #bmnPi .pi-card, html.bmn-lq #bmnPi .pi-stat, html.bmn-lq #bmnPi .pi-row {
+  background: var(--lqs-panel-2); border: 0; box-shadow: var(--lqs-rim-pill);
+}
+html.bmn-lq #bmnPi .pi-stat b { font-weight: 780; letter-spacing: -.02em; }
+html.bmn-lq #bmnPi .pi-muted { color: var(--lqs-ink-2); opacity: 1; }
+html.bmn-lq #bmnPi .pi-note { background: var(--lqs-acc-fill); border-left-color: var(--lqs-acc); color: var(--lqs-ink); box-shadow: var(--lqs-rim-pill); }
+html.bmn-lq #bmnPi .pi-btn:not(.primary):not(.danger) { background: var(--lqs-chip); border: 0; box-shadow: var(--lqs-rim-pill); color: inherit; font-weight: 650; }
+html.bmn-lq #bmnPi .pi-btn:not(.primary):not(.danger):active { background: var(--lqs-chip-on); }
+/* destructive action keeps its red meaning (colour + the button's own text), now with the shared rim */
+html.bmn-lq #bmnPi .pi-btn.danger { background: rgba(255,92,92,.22); border: 0; box-shadow: inset 0 0 0 .5px rgba(255,92,92,.55), inset 0 1px 0 rgba(255,255,255,.28); color: inherit; font-weight: 650; }
+html.bmn-lq #bmnPi .pi-btn.primary { border: 0; font-weight: 650; background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 60%), var(--lqs-acc-fill); box-shadow: inset 0 0 0 .5px var(--lqs-acc-edge), inset 0 1px 0 rgba(255,255,255,.4); }
+/* severity pills (high/critical red, medium amber, low/on green) keep their own colours: only neutral pills get the glass chip */
+html.bmn-lq #bmnPi .pi-pill:not(.high):not(.critical):not(.medium):not(.low):not(.on) { background: var(--lqs-chip); color: var(--lqs-ink); }
+html.bmn-lq #bmnPi .pi-pill { box-shadow: var(--lqs-rim-pill); }
+html.bmn-lq #bmnPi .pi-err { color: var(--lqs-bad); }
+html.bmn-lq #bmnPi input, html.bmn-lq #bmnPi select, html.bmn-lq #bmnPi textarea { background: var(--lqs-panel-2); color: inherit; border: 0; box-shadow: var(--lqs-rim-pill); border-radius: 12px; }
+
+/* ==========================================================================================================
+   8. TIERS
+   - Android / lite: blur only where this file added it already small; panels use solid tint.
+   - Governor saver (html.bmn-fx-2) and prefers-reduced-transparency: no backdrop filters from this file.
+   - Reduced motion: this file has no animation; its transitions are removed.
+   ========================================================================================================== */
+html.bmn-lq[data-bmn-theme="light"] #bmnPi { --lqs-pi: rgba(248,250,255,.96); }
+/* a data console must never show the page behind it: tiers without backdrop blur get a solid panel */
+html.bmn-lq.bmn-android #bmnPi, html.bmn-lq.bmn-glass-lite #bmnPi { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--lqs-solid-pi, #10131f); }
+html.bmn-lq[data-bmn-theme="light"].bmn-android #bmnPi, html.bmn-lq[data-bmn-theme="light"].bmn-glass-lite #bmnPi { background: #f5f7fc; }
+html.bmn-lq.bmn-fx-2 #bmnPi { background: #10131f; }
+html.bmn-lq[data-bmn-theme="light"].bmn-fx-2 #bmnPi { background: #f5f7fc; }
+html.bmn-lq.bmn-fx-2 #bmnPi, html.bmn-lq.bmn-fx-2 body #lgtt .lgtt-music { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+@media (prefers-reduced-transparency: reduce) {
+  html.bmn-lq #bmnPi, html.bmn-lq body #lgtt .lgtt-music { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  html.bmn-lq #bmnPi { background: #10131f; }
+  html.bmn-lq[data-bmn-theme="light"] #bmnPi { background: #f5f7fc; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.bmn-lq #bmnBoard .bd-nav button, html.bmn-lq body #lgtt .lgtt-cm-like, html.bmn-lq body #lgtt .lgtt-emoji-row button { transition: none !important; }
+}

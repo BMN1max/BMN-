@@ -2126,6 +2126,7 @@ body.community-mode #bmnProfileV2.bmn-founder-profile .bmn-profile-menu{border-c
 <script src="/bmn-perf.js"></script>
 <script id="bmn-liquid-switch">/* BMN Liquid layer switch: ?liquid=off turns bmn-liquid.css off (remembered), ?liquid=on turns it back on. Default on. */(function(){var r=document.documentElement;try{var q=/[?&]liquid=(on|off)(&|$)/.exec(location.search);if(q)localStorage.setItem('bmn-liquid',q[1]);if(localStorage.getItem('bmn-liquid')!=='off')r.classList.add('bmn-lq')}catch(e){r.classList.add('bmn-lq')}})();</script>
 <link rel="stylesheet" href="/bmn-liquid.css">
+<link rel="stylesheet" href="/bmn-liquid-surfaces.css">
 <script id="bmn-glass-tier">
 /* BMN Glass device tier. Decided once, before first paint, by capability first and platform second.
    lite    = Android, or no backdrop-filter: CSS-only frosted glass, the React Liquid Glass engine is never downloaded.
@@ -11890,6 +11891,7 @@ html.bmn-high-contrast .lgtt-cap,html.bmn-high-contrast .lgtt-author,html.bmn-hi
 <script src="/bmn-messaging.js" defer></script>
 <link rel="stylesheet" href="/bmn-board.css">
 <script src="/bmn-board.js" defer></script>
+<script src="/bmn-glass-touch.js" defer></script>
 <script id="bmn-board-integration">
 /* BMN Board integration: Settings -> About BMN (the original personal BMN page, preserved unchanged) and a way back to Board from it. */
 (function(){
